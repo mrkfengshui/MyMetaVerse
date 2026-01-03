@@ -52,20 +52,41 @@ export const AdBanner = ({ onRemoveAds }) => (
 );
 
 // --- 4. 設定頁組件 (會員狀態、按鈕) ---
-export const ProStatusCard = ({ isPro, onPurchase }) => (
+export const ProStatusCard = ({ isPro, onTogglePro }) => (
     <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>會員狀態</h3>
+        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>版本狀態</h3>
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', overflow: 'hidden', border: `1px solid ${THEME.border}`, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: isPro ? THEME.orange : THEME.black }}>{isPro ? '專業版' : '免費廣告版'}</div>
-              <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>{isPro ? '已啟用無限功能' : '升級以移除所有廣告'}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: isPro ? THEME.orange : THEME.black }}>{isPro ? '專業版 (已啟用)' : '免費版'}</div>
+              <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>
+                  {isPro ? '感謝您的支持，已移除廣告並開啟備份功能' : '功能限制：含廣告、最多5筆紀錄'}
+              </div>
             </div>
-            {!isPro ? ( 
-              <button onClick={onPurchase} style={{ backgroundColor: THEME.blue, color: 'white', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>升級</button> 
-            ) : ( 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.orange, fontWeight: 'bold', fontSize: '13px' }}><Check size={16} /> 已啟用</div> 
-            )}
+            
+            {/* 這裡改成一個簡單的切換，或者你可以連結到 PayPal */}
+            <button 
+                onClick={onTogglePro} 
+                style={{ 
+                    backgroundColor: isPro ? THEME.bgOrange : THEME.black, 
+                    color: isPro ? THEME.orange : 'white', 
+                    border: isPro ? `1px solid ${THEME.orange}` : 'none', 
+                    padding: '8px 16px', 
+                    borderRadius: '20px', 
+                    fontWeight: 'bold', 
+                    fontSize: '13px', 
+                    cursor: 'pointer' 
+                }}
+            >
+                {isPro ? '停用' : '啟用 Pro'}
+            </button> 
         </div>
+        
+        {/* 如果需要贊助連結，可以加在下面 */}
+        {!isPro && (
+            <div style={{ marginTop: '8px', fontSize: '12px', color: THEME.gray, textAlign: 'center' }}>
+                喜歡這個 App 嗎？ <a href="https://buymeacoffee.com/kanekyosan" target="_blank" style={{ color: THEME.blue }}>贊助開發者</a>
+            </div>
+        )}
     </div>
 );
 
