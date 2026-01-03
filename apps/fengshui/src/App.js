@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, GitCommit, MapPin, DoorOpen, Calendar, Eye, EyeOff, AlertTriangle, Briefcase, Calculator } from 'lucide-react';
-
-// --- 核心數據定義 (不動) ---
-
+// 1. 引入共用 UI 和 工具
+import { AppHeader, useProtection, THEME, COMMON_STYLES } from '@my-meta/ui';
+// 2. 引入 Icon (原本的)
+import { Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase } from 'lucide-react';
+// --- 核心數據定義 ---
 const MOUNTAINS = [
     { name: '子', angle: 0, gua: '坎', yuan: '天' }, { name: '癸', angle: 15, gua: '坎', yuan: '人' },
     { name: '丑', angle: 30, gua: '艮', yuan: '地' }, { name: '艮', angle: 45, gua: '艮', yuan: '天' }, { name: '寅', angle: 60, gua: '艮', yuan: '人' },
@@ -955,7 +956,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
 
 // --- UI 元件 ---
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
-    const requestAccess = () => {
+const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
@@ -971,13 +972,14 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         setHeading(compass);
     };
 
-    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);
-    
-    const facingMt = getMountain(heading);
+    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);    
+const facingMt = getMountain(heading);
     const sittingMt = getMountain(heading + 180);
 
     return (
         <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow:'hidden', minHeight:'100vh'}}>
+             {/* 這裡可以選擇性加入 AppHeader，或是保持全黑沈浸式體驗 */}
+             
              {!isFrozen && (
                 <button onClick={requestAccess} style={{position:'absolute', top: 20, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
@@ -1007,11 +1009,11 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
                 <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
                 <div style={{display:'flex', gap:'20px', justifyContent:'center', marginTop:'20px'}}>
-                    <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? '#ff4d4f' : '#1890ff', color:'white'}}>
+                    <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
                         {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
                     </button>
                     {isFrozen && (
-                        <button onClick={onAnalyze} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: '#52c41a', color:'white'}}>
+                        <button onClick={onAnalyze} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
                             <RefreshCw size={18}/> 排盤
                         </button>
                     )}
@@ -1027,8 +1029,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     const [naQiDoor, setNaQiDoor] = useState(null); 
     const [showAnnual, setShowAnnual] = useState(true);
     const [showMonthly, setShowMonthly] = useState(true);
-    const [showCommercial, setShowCommercial] = useState(false); // 商戰彈窗狀態
-
+    const [showCommercial, setShowCommercial] = useState(false);
     const data = useMemo(() => {
         try {
             return calculateEverything(heading, period, year, month);
@@ -1038,11 +1039,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
         }
     }, [heading, period, year, month]);
 
-    useEffect(() => {
-        if (data) {
-            setNaQiDoor(data.facing.gua);
-        }
-    }, [data]);
+    useEffect(() => { if (data) setNaQiDoor(data.facing.gua); }, [data]);
 
     if (!data) return <div style={{padding:20, color:'red'}}>資料計算異常，請返回重試。</div>;
 
@@ -1050,7 +1047,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
     const naQiGuas = ["坎", "坤", "震", "巽", "乾", "兌", "艮", "離"];
 
-    const cardStyle = { background:'white', borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
+    const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
     const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#333', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
     const tagStyle = { fontSize:'10px', padding:'2px 4px', borderRadius:'4px', color:'#fff', fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1' };
 
@@ -1150,13 +1147,21 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     const naQiResult = naQiDoor ? calculateNaQi(period, naQiDoor) : null;
 
     return (
-        <div style={{display:'flex', flexDirection:'column', height:'100vh', background:'#f0f2f5'}}>
-            <div style={{padding:'16px', background:'#fff', borderBottom:'1px solid #ddd', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px'}}><ArrowLeft size={20}/> 返回</button>
-                <div style={{fontWeight:'bold', fontSize:'18px'}}>風水分析</div>
+        <div style={{display:'flex', flexDirection:'column', height:'100vh', background: THEME.bg}}>
+            
+            {/* 使用共用 Header */}
+            <AppHeader 
+                title="元星風水" 
+                isPro={true} // 假設風水 App 全開
+                logoChar={{ main: '羅', sub: '庚' }} 
+            />
+
+            {/* 自定義的次標題列 (保留原本的返回按鈕) */}
+            <div style={{padding:'10px 16px', background: THEME.white, borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回羅盤</button>
+                <div style={{fontWeight:'bold', fontSize:'16px'}}>分析報告</div>
                 <div style={{width:'24px'}}></div>
             </div>
-
             <div style={{flex: 1, overflowY: 'auto', padding:'16px', paddingBottom:'50px'}}>
                 <div style={cardStyle}>
                     <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
@@ -1499,63 +1504,22 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 };
 
 export default function FengShuiApp() {
-  const [mode, setMode] = useState('compass'); 
+    useProtection(['meta-fengshui.vercel.app', 'mrkcompass.com']);
+const [mode, setMode] = useState('compass'); 
   const [heading, setHeading] = useState(180); 
   const [isFrozen, setIsFrozen] = useState(false);
   const [period, setPeriod] = useState(9);
   const [year, setYear] = useState(new Date().getFullYear()); 
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-  // --- 新增：保護機制代碼 ---
-  useEffect(() => {
-    // 1. 禁止右鍵
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      return false;
-    };
-
-    // 2. 禁止開發者工具快捷鍵 & 複製
-    const handleKeyDown = (e) => {
-      // F12
-      if (e.key === 'F12') {
-        e.preventDefault();
-        return false;
-      }
-      // Ctrl+Shift+I (檢查), Ctrl+Shift+J (控制台), Ctrl+Shift+C (元素), Ctrl+U (原始碼)
-      if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
-        e.preventDefault();
-        return false;
-      }
-      if (e.ctrlKey && e.key.toUpperCase() === 'U') {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    // 3. 簡單的 Debugger 陷阱 (讓嘗試打開控制台的人感到卡頓)
-    const antiDebug = setInterval(() => {
-        // 使用 Function 構造函數來避免代碼靜態分析時被輕易移除
-        (function(){})['constructor']('debugger')();
-    }, 2000);
-
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(antiDebug);
-    };
-  }, []);
-  // --- 保護機制結束 ---
-
   return (
-    // 在最外層 div 加入禁止選取樣式 userSelect: 'none'
     <div style={{
         fontFamily: '-apple-system, sans-serif', 
-        userSelect: 'none', // 禁止文字選取
+        userSelect: 'none', 
         WebkitUserSelect: 'none', 
-        MozUserSelect: 'none'
+        MozUserSelect: 'none',
+        height: '100vh', 
+        background: mode === 'compass' ? '#222' : THEME.bg
     }}>
         {mode === 'compass' ? (
             <CompassView heading={heading} setHeading={setHeading} isFrozen={isFrozen} setIsFrozen={setIsFrozen} onAnalyze={() => setMode('chart')}/>
