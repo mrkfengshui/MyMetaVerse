@@ -534,7 +534,6 @@ const calculateEverything = (degree, period, year, month = 1) => {
     const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
     const wuHuangGua = dirNames[wuHuangIndex];
 
-
     // 格局判斷
     const sitPalaceMtStar = mtGrid[sitIndex];
     const sitPalaceFaceStar = faceGrid[sitIndex];
@@ -1504,38 +1503,50 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 };
 
 export default function FengShuiApp() {
-    useProtection(['meta-fengshui.vercel.app', 'mrkcompass.com']);
-const [mode, setMode] = useState('compass'); 
-  const [heading, setHeading] = useState(180); 
-  const [isFrozen, setIsFrozen] = useState(false);
-  const [period, setPeriod] = useState(9);
-  const [year, setYear] = useState(new Date().getFullYear()); 
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+    useProtection(['meta-fengshui.vercel.app', 'mrkfengshui.com']);
+    const [mode, setMode] = useState('compass'); 
+    const [heading, setHeading] = useState(180); 
+    const [isFrozen, setIsFrozen] = useState(false);
+    const [period, setPeriod] = useState(9);
+    const [year, setYear] = useState(new Date().getFullYear()); 
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-  return (
-    <div style={{
-        fontFamily: '-apple-system, sans-serif', 
-        userSelect: 'none', 
-        WebkitUserSelect: 'none', 
-        MozUserSelect: 'none',
-        height: '100vh', 
-        background: mode === 'compass' ? '#222' : THEME.bg
-    }}>
-        {mode === 'compass' ? (
-            <CompassView heading={heading} setHeading={setHeading} isFrozen={isFrozen} setIsFrozen={setIsFrozen} onAnalyze={() => setMode('chart')}/>
-        ) : (
-            <ChartView 
-                heading={heading} 
-                setHeading={setHeading} 
-                period={period} 
-                setPeriod={setPeriod} 
-                year={year} 
-                setYear={setYear}
-                month={month} 
-                setMonth={setMonth}
-                onBack={() => setMode('compass')}
+    return (
+        <div style={COMMON_STYLES.fullScreen}> {/* 1. 改用共用的全螢幕容器 */}
+            
+            {/* 2. 強制加入 Header (即使是羅庚模式) */}
+            <AppHeader 
+                title="元星風水" 
+                isPro={true} 
+                logoChar={{ main: '羅', sub: '庚' }} 
             />
-        )}
-    </div>
-  );
-}
+
+            {/* 3. 內容區域 */}
+            <div style={{
+                ...COMMON_STYLES.contentArea, 
+                background: mode === 'compass' ? '#222' : THEME.bg // 羅庚模式保持深底色
+            }}>
+                {mode === 'compass' ? (
+                    <CompassView 
+                        heading={heading} 
+                        setHeading={setHeading} 
+                        isFrozen={isFrozen} 
+                        setIsFrozen={setIsFrozen} 
+                        onAnalyze={() => setMode('chart')}
+                    />
+                ) : (
+                    <ChartView
+                    heading={heading} 
+                    setHeading={setHeading} 
+                    period={period} 
+                    setPeriod={setPeriod} 
+                    year={year} 
+                    setYear={setYear}
+                    month={month} 
+                    setMonth={setMonth}
+                    onBack={() => setMode('compass')}
+                    />
+                )}
+            </div>
+        </div>
+    )}
