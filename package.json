@@ -1,9 +1,14 @@
 {
-  "name": "@my-meta/ui",
-  "version": "1.0.0",
-  "main": "index.jsx",
-  "dependencies": {
-    "lucide-react": "^0.263.1",
-    "react": "^18.2.0"
-  }
+  "name": "my-meta-verse",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
