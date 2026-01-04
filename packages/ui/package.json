@@ -4,7 +4,8 @@
   "private": true,
   "main": "./index.jsx",
   "exports": {
-    ".": "./index.jsx"
+    ".": "./index.jsx",
+    "./fonts.css": "./fonts.css"
   },
   "dependencies": {
     "lucide-react": "^0.263.1",

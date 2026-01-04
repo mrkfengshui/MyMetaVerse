@@ -10,12 +10,11 @@ export const AppHeader = ({ title, isPro, logoChar = { main: '易', sub: '經' }
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         {/* Logo 圓圈 */}
         <div style={{ width: '36px', height: '36px', backgroundColor: THEME.vermillion, borderRadius: '50%', position: 'relative', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <span style={{ fontFamily: "serif", position: 'absolute', color: 'white', fontSize: '12px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none' }}>{logoChar.sub}</span>
-            <span style={{ fontFamily: "serif", position: 'absolute', color: 'black', fontSize: '30px', lineHeight: 1, top: '12%', left: '2%', pointerEvents: 'none' }}>{logoChar.main}</span>
+            <span style={{ fontFamily: THEME.fonts.heading, position: 'absolute', color: 'white', fontSize: '12px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none' }}>{logoChar.sub}</span>
+            <span style={{ fontFamily: THEME.fonts.heading, position: 'absolute', color: 'black', fontSize: '30px', lineHeight: 1, top: '12%', left: '2%', pointerEvents: 'none' }}>{logoChar.main}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
           <span style={{ fontSize: '17px', fontWeight: 'normal', color: '#262626', marginLeft: '4px' }}>{title}</span>
-          {isPro && ( <span style={{ fontSize: '10px', color: THEME.orange, border: `1px solid ${THEME.orange}`, borderRadius: '4px', padding: '1px 4px', marginLeft: '6px', fontWeight: 'bold', transform: 'translateY(-2px)' }}>專業版</span> )}
         </div>
       </div>
     </div>
