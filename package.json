@@ -6,9 +6,6 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "dev": "echo '請進入各個 app 資料夾執行 npm run dev'"
+  }
 }

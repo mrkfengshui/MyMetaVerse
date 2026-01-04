@@ -1,0 +1,13 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style type="text/css">
+      /* 從 Google Fonts 匯入馬善政字體 */
+      @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+    </style>
+  </defs>
+  
+  <circle cx="512" cy="512" r="512" fill="#fa8c16"/>
+  
+  <text x="200" y="550" font-size="500" fill="white" font-family="'Ma Shan Zheng', cursive" font-weight="normal">進</text>
+  <text x="520" y="850" font-size="500" fill="white" font-family="'Ma Shan Zheng', cursive" font-weight="normal">氣</text>
+</svg>
