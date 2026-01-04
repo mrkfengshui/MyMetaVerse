@@ -503,8 +503,8 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
     }
   };
 
-  const getTabBtnStyle = (isActive) => ({ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${isActive ? THEME.blue : THEME.border}`, backgroundColor: isActive ? THEME.bgBlue : THEME.white, color: isActive ? THEME.blue : THEME.black, fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' });
-
+  const getTabBtnStyle = (isActive) => ({ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${isActive ? THEME.blue : THEME.border}`, backgroundColor: isActive ? THEME.bgBlue : '#ffffff', color: isActive ? THEME.blue : '#000000', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' });
+  const inputStyle = { width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, backgroundColor: '#ffffff', color: '#000000', fontSize: '16px' };
   const renderPillarInput = (label, pillarKey) => {
       const pData = manualPillars[pillarKey];
       const ganColor = STEM_COLORS[pData.gan] || THEME.black;
@@ -651,26 +651,52 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        return type === 'stem' ? (STEM_COLORS[char] || '#555555') : (BRANCH_COLORS[char] || '#555555');
    };
 
+   // 修正：加強版流月計算，防止崩潰
    const getLiuYueData = (yearGan, yearZhi, year) => {
        const yearGanIdx = TIANGAN.indexOf(yearGan);
+       if (yearGanIdx === -1) return []; // 防呆
+
        const startGanIdx = (yearGanIdx % 5) * 2 + 2; 
        const months = [];
        const JIE_QI_NAMES = ["立春", "驚蟄", "清明", "立夏", "芒種", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
+       
        for(let i=0; i<12; i++) {
            const ganIdx = (startGanIdx + i) % 10;
            const zhiIdx = (2 + i) % 12; 
            let searchYear = year, searchMonth = i + 2; 
            if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
+           
            let jieQiDateStr = "";
            try {
-               const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
-               const lunar = solarCheck.getLunar();
-               const jieQi = lunar.getPrevJieQi(true); 
-               if (jieQi && toTraditional(jieQi.getName()) === JIE_QI_NAMES[i]) {
-                   const solarJie = jieQi.getSolar(); jieQiDateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
-               } else { jieQiDateStr = `${searchMonth}/?`; }
+               // 確保 window.Solar 存在
+               if (window.Solar) {
+                   const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
+                   const lunar = solarCheck.getLunar();
+                   const jieQi = lunar.getPrevJieQi(true); 
+                   // 這裡做嚴格檢查
+                   if (jieQi) {
+                        const jqName = jieQi.getName();
+                        if (toTraditional(jqName) === JIE_QI_NAMES[i]) {
+                            const solarJie = jieQi.getSolar(); 
+                            jieQiDateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
+                        } else {
+                            jieQiDateStr = `${searchMonth}月`;
+                        }
+                   } else {
+                       jieQiDateStr = `${searchMonth}月`;
+                   }
+               }
            } catch (e) { jieQiDateStr = `${searchMonth}月`; }
-           months.push({ seq: i + 1, name: JIE_QI_NAMES[i], dateStr: jieQiDateStr, gan: TIANGAN[ganIdx], zhi: DIZHI[zhiIdx], ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] });
+           
+           months.push({ 
+               seq: i + 1, 
+               name: JIE_QI_NAMES[i], 
+               dateStr: jieQiDateStr, 
+               gan: TIANGAN[ganIdx] || '', 
+               zhi: DIZHI[zhiIdx] || '', 
+               ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), 
+               zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] 
+           });
        }
        return months;
    };
@@ -693,7 +719,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
                                 <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
                             </div>
-                            {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}歲</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
+                            {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: '#000000', fontWeight: 'bold' }}>{dy.startAge}歲</div> <div style={{ fontSize: '11px', color: '#888' }}>{dy.startYear}</div> </> )}                            
                         </div>
                     );
                 })}
@@ -707,10 +733,10 @@ const renderLiuNianGrid = () => {
         const targetDaYun = data.daYuns[selectedDaYunIndex];
         if (!targetDaYun || !targetDaYun.liuNians || targetDaYun.liuNians.length === 0) return null;
         return (
-            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                    <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: '15px' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
-                    <span style={{ fontSize: '12px', color: THEME.gray, marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
+                    <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: '15px', color: '#000' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
+                    <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
                  </div>
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', direction: 'rtl' }}>
                      {targetDaYun.liuNians.map((ln) => {
@@ -729,8 +755,8 @@ const renderLiuNianGrid = () => {
                                       <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
                                   </div>
                                   <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                      <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}歲</div>
-                                      <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
+                                      <div style={{ fontSize: '11px', color: '#000000', fontWeight: 'bold' }}>{ln.age}歲</div>
+                                      <div style={{ fontSize: '10px', color: '#888' }}>{ln.year}</div>
                                   </div>
                              </div>
                          );
@@ -747,10 +773,10 @@ const renderLiuNianGrid = () => {
        if(!lnData) return null;
        const liuYues = getLiuYueData(lnData.gan, lnData.zhi, lnData.year);
        return (
-           <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+           <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>{lnData.gan}{lnData.zhi}流年 ({lnData.year}年) - 流月</h4>
-                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px' }}><X size={16} /></button>
+                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px', color: '#000' }}>{lnData.gan}{lnData.zhi}流年 ({lnData.year}年) - 流月</h4>
+                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: '#888', fontSize: '12px' }}><X size={16} /></button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px', direction: 'rtl' }}>
                     {liuYues.map((ly) => {
@@ -768,8 +794,8 @@ const renderLiuNianGrid = () => {
                                     <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '12px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
-                                    <div style={{ fontSize: '10px', color: THEME.gray }}>{ly.name}</div>
+                                    <div style={{ fontSize: '12px', color: '#000000', fontWeight: 'bold' }}>{ly.dateStr}</div>
+                                    <div style={{ fontSize: '10px', color: '#888' }}>{ly.name}</div>
                                 </div>
                             </div>
                         );
@@ -788,19 +814,19 @@ const renderLiuNianGrid = () => {
 
    const firstRow = data.daYuns ? data.daYuns.slice(0, 5) : [];
    const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
-   const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
+   const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: '#888', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
 return (
      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+       <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
           <div style={{ flex: 1, marginRight: '8px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black }}>{data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span></div>
-                 <button onClick={() => setShowHiddenStems(!showHiddenStems)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', border: `1px solid ${THEME.border}`, backgroundColor: showHiddenStems ? THEME.black : THEME.white, color: showHiddenStems ? THEME.white : THEME.black, fontSize: '12px', cursor: 'pointer' }}>
+                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#000000' }}>{data.name} <span style={{ fontSize: '14px', color: '#888', fontWeight: 'normal' }}>({data.genderText})</span></div>
+                 <button onClick={() => setShowHiddenStems(!showHiddenStems)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', border: `1px solid ${THEME.border}`, backgroundColor: showHiddenStems ? '#000000' : '#ffffff', color: showHiddenStems ? '#ffffff' : '#000000', fontSize: '12px', cursor: 'pointer' }}>
                      {showHiddenStems ? <Eye size={14}/> : <EyeOff size={14}/>} {showHiddenStems ? '藏干' : '十神'}
                  </button>
              </div>
-             {data.isManual ? ( <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px' }}></div> ) : ( <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> </div> )}
+             {data.isManual ? ( <div style={{ fontSize: '13px', color: '#888', marginTop: '6px' }}></div> ) : ( <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> <div style={{ fontSize: '13px', color: '#888' }}>西曆 {data.solarDate}</div> <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> </div> )}
              {data.yunInfo ? ( <> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>{data.yunInfo.detail}</div> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>(西元 {data.yunInfo.startDate} 起運)</div> </> ) : null}
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexShrink: 0 }}>
@@ -814,15 +840,15 @@ return (
           <PillarCard title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} naYin={data.naYin.month} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
           <PillarCard title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} naYin={data.naYin.year} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
        </div>
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-           <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
+       <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+           <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px', color: '#000' }}>大運</h4>
            <div>{renderDaYunRow(firstRow)}{renderDaYunRow(secondRow)}</div>
        </div>
        {renderLiuNianGrid()}
        {renderLiuYueGrid()}
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <h4 style={{ margin: '0 0 10px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>五行強弱</h4>
-            {(() => { const wxCounts = calculateWuXingStrength(); const order = ['木', '火', '土', '金', '水']; return ( <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}> <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}> {order.map(elm => ( <div key={elm} style={{ padding: '6px 12px', backgroundColor: THEME.bgGray, borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}> {elm}: <span style={{ fontWeight: 'bold', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>{wxCounts[elm]}</span> </div> ))} </div> </div> ); })()}
+       <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <h4 style={{ margin: '0 0 10px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', color: '#000' }}>五行強弱</h4>
+            {(() => { const wxCounts = calculateWuXingStrength(); const order = ['木', '火', '土', '金', '水']; return ( <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}> <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}> {order.map(elm => ( <div key={elm} style={{ padding: '6px 12px', backgroundColor: THEME.bgGray, borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}> <span style={{color: '#000'}}>{elm}:</span> <span style={{ fontWeight: 'bold', color: wxCounts[elm] > 2 ? THEME.red : '#000000' }}>{wxCounts[elm]}</span> </div> ))} </div> </div> ); })()}
       </div>
      </div>
    );
