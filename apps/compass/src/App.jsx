@@ -1503,7 +1503,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 };
 
 export default function FengShuiApp() {
-    useProtection(['meta-fengshui.vercel.app', 'mrkfengshui.com']);
+    useProtection(['mrkcompass.vercel.app/', 'mrkfengshui.com']);
     const [mode, setMode] = useState('compass'); 
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
