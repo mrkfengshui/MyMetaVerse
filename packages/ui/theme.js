@@ -1,4 +1,8 @@
 // packages/ui/theme.js
+export const COLORS = {
+  jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
+  ji: '#D2B48C', geng: '#FFA500', xin: '#FFD700', ren: '#00008B', gui: '#87CEEB',
+};
 
 export const THEME = {
   red: '#ff4d4f', blue: '#1890ff', teal: '#13c2c2', orange: '#fa8c16',
@@ -12,15 +16,13 @@ export const THEME = {
     main: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
   
-  // 新增：版面尺寸定義
   layout: {
-    headerHeight: '50px', // 收窄 Header 高度
+    headerHeight: '50px',
     tabBarHeight: '60px',
   }
 };
 
 export const COMMON_STYLES = {
-  // 全螢幕容器 (防滾動溢出)
   fullScreen: { 
     height: '100vh', 
     display: 'flex', 
