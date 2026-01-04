@@ -1,91 +1,126 @@
 // packages/ui/DataComponents.jsx
 import React from 'react';
 import { THEME } from './theme';
-import { Trash2, Edit3, CloudUpload, Download } from 'lucide-react';
+import { Trash2, Edit3, CloudUpload, Download, User, Calendar } from 'lucide-react';
 
-// --- 純網頁版備份管理器 ---
-export const WebBackupManager = ({ data, onRestore, isPro, prefix = "BACKUP" }) => {
-
-    // 1. 下載 JSON (匯出)
+// --- 1. 網頁版備份管理器 ---
+export const WebBackupManager = ({ data, onRestore, prefix = "BACKUP" }) => {
+    
+    // 匯出功能
     const handleDownload = () => {
-        if (!isPro) return alert('此為專業版功能'); // 如果你想保留限制
         try {
             const jsonString = JSON.stringify(data, null, 2);
-            // 建立一個 Blob 物件
             const blob = new Blob([jsonString], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            
-            // 建立一個隱藏的 <a> 標籤來觸發下載
             const link = document.createElement('a');
             link.href = url;
             link.download = `${prefix}_${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
-            
-            // 清理
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error(e);
-            alert('匯出失敗');
-        }
+        } catch (e) { console.error(e); alert('匯出失敗'); }
     };
 
-    // 2. 上傳 JSON (還原)
+    // 匯入功能
     const handleUpload = (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const importedData = JSON.parse(e.target.result);
                 if (Array.isArray(importedData)) {
-                    if (window.confirm(`讀取到 ${importedData.length} 筆資料。\n確定要覆蓋現有紀錄嗎？`)) {
+                    if (window.confirm(`讀取到 ${importedData.length} 筆資料。\n確定要還原嗎？(會覆蓋現有紀錄)`)) {
                         onRestore(importedData);
                         alert('還原成功！');
                     }
-                } else {
-                    alert('檔案格式錯誤');
-                }
-            } catch (err) {
-                alert('解析失敗，請確認檔案是否正確');
-            }
+                } else { alert('檔案格式錯誤'); }
+            } catch (err) { alert('解析失敗'); }
         };
         reader.readAsText(file);
     };
 
     return (
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden', marginTop: '16px' }}>
-            <div style={{ padding: '12px 16px', backgroundColor: THEME.bgGray, borderBottom: `1px solid ${THEME.border}`, fontSize: '14px', fontWeight: 'bold', color: THEME.black }}>
-                資料備份 (網頁版)
+            <div style={{ padding: '10px 16px', backgroundColor: THEME.bgGray, borderBottom: `1px solid ${THEME.border}`, fontSize: '13px', fontWeight: 'bold', color: THEME.gray }}>
+                資料備份 (JSON)
             </div>
-            <div style={{ padding: '8px' }}>
+            <div>
                 <input type="file" id="restore-input" accept=".json" style={{ display: 'none' }} onChange={handleUpload}/>
                 
                 {/* 下載按鈕 */}
-                <button onClick={handleDownload} disabled={!isPro} style={dataBtnStyle(isPro)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={handleDownload} style={dataBtnStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <CloudUpload size={18} color={THEME.purple} />
-                        <span style={{ fontSize: '14px' }}>下載備份檔 (Download JSON)</span>
+                        <span style={{ fontSize: '14px' }}>匯出備份 (Download)</span>
                     </div>
-                    {!isPro && <ProTag />}
                 </button>
 
                 {/* 上傳按鈕 */}
-                <button onClick={() => isPro ? document.getElementById('restore-input').click() : alert('請先解鎖功能')} disabled={!isPro} style={{ ...dataBtnStyle(isPro), borderBottom: 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={() => document.getElementById('restore-input').click()} style={{ ...dataBtnStyle, borderBottom: 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Download size={18} color={THEME.green} />
-                        <span style={{ fontSize: '14px' }}>讀取備份檔 (Restore JSON)</span>
+                        <span style={{ fontSize: '14px' }}>還原備份 (Restore)</span>
                     </div>
-                    {!isPro && <ProTag />}
                 </button>
             </div>
         </div>
     );
 };
 
-// ... (保留原本的 BookmarkList, ProTag, dataBtnStyle) ...
-export const BookmarkList = ({ ...props }) => { /* ...沿用原本代碼... */ };
-const ProTag = () => <span style={{ fontSize: '10px', color: THEME.orange, border: `1px solid ${THEME.orange}`, padding: '1px 4px', borderRadius: '4px' }}>Pro</span>;
-const dataBtnStyle = (enabled) => ({ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: 'none', background: 'none', borderBottom: `1px solid ${THEME.bg}`, cursor: enabled ? 'pointer' : 'not-allowed', opacity: enabled ? 1 : 0.5 });
+// --- 2. 書籤列表 ---
+export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
+    if (bookmarks.length === 0) {
+        return <div style={{ padding: '40px', textAlign: 'center', color: THEME.gray, fontSize: '14px' }}>暫無紀錄</div>;
+    }
+
+    return (
+        <div style={{ paddingBottom: '20px' }}>
+            <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: THEME.gray, fontSize: '12px' }}>
+                <span>已儲存 {bookmarks.length} 筆紀錄</span>
+            </div>
+            
+            {bookmarks.map((b, i) => (
+                <div key={b.id || i} onClick={() => onSelect(b)} style={{ 
+                    margin: '0 16px 10px 16px', padding: '16px', backgroundColor: THEME.white, 
+                    borderRadius: '12px', border: `1px solid ${THEME.border}`, 
+                    cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                   <div>
+                       <div style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                           <User size={16} color={THEME.blue} />
+                           {b.name || '未命名'} 
+                           <span style={{ fontSize: '12px', color: THEME.gray, fontWeight: 'normal' }}>({b.genderText || b.gender})</span>
+                       </div>
+                       <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                           <Calendar size={14} />
+                           {b.solarDate || '未知日期'}
+                       </div>
+                   </div>
+                   
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                       {onEdit && (
+                           <button onClick={(e) => { e.stopPropagation(); onEdit(b); }} style={{ padding: '8px', backgroundColor: THEME.bgBlue, border: 'none', borderRadius: '50%', color: THEME.blue, cursor: 'pointer' }}>
+                               <Edit3 size={16} />
+                           </button>
+                       )}
+                       {onDelete && (
+                           <button onClick={(e) => { e.stopPropagation(); onDelete(b.id); }} style={{ padding: '8px', backgroundColor: THEME.bgRed, border: 'none', borderRadius: '50%', color: THEME.red, cursor: 'pointer' }}>
+                               <Trash2 size={16} />
+                           </button>
+                       )}
+                   </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// 按鈕樣式
+const dataBtnStyle = { 
+    width: '100%', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+    border: 'none', background: 'none', borderBottom: `1px solid ${THEME.bg}`, 
+    cursor: 'pointer'
+};

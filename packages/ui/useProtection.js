@@ -23,7 +23,7 @@ export const useProtection = (allowedDomains = []) => {
       return;
     }
 
-    // 2. 簡單的防右鍵/防檢查元素 (雖然防不了高手，但能防小白)
+    // 2. 簡單的防右鍵/防檢查元素
     const handleContext = (e) => e.preventDefault(); // 禁用右鍵
     
     const handleKey = (e) => {

@@ -1,4 +1,4 @@
-// src/components/theme.js
+// packages/ui/theme.js
 
 export const THEME = {
   red: '#ff4d4f', blue: '#1890ff', teal: '#13c2c2', orange: '#fa8c16',
@@ -9,10 +9,34 @@ export const THEME = {
 
   fonts: {
     heading: "'MyMetaFont', sans-serif",
+    main: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  },
+  
+  // 新增：版面尺寸定義
+  layout: {
+    headerHeight: '50px', // 收窄 Header 高度
+    tabBarHeight: '60px',
   }
 };
 
 export const COMMON_STYLES = {
-  fullScreen: { height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: THEME.white, width: '100vw', overflow: 'hidden' },
-  contentArea: { flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, width: '100%' },
+  // 全螢幕容器 (防滾動溢出)
+  fullScreen: { 
+    height: '100vh', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    backgroundColor: THEME.bg, 
+    width: '100vw', 
+    overflow: 'hidden',
+    position: 'fixed', // 防止 iOS 彈性滾動效果影響佈局
+    top: 0, left: 0
+  },
+  // 內容滾動區
+  contentArea: { 
+    flex: 1, 
+    overflowY: 'auto', 
+    WebkitOverflowScrolling: 'touch', // iOS 順滑滾動
+    width: '100%',
+    paddingBottom: '20px' 
+  },
 };
