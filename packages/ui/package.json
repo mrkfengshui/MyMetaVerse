@@ -1,10 +1,14 @@
 {
   "name": "@my-meta/ui",
-  "version": "1.0.0",
-  "main": "index.jsx",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.jsx",
+  "exports": {
+    ".": "./index.jsx"
+  },
   "dependencies": {
-    "@my-meta/ui": "*",
     "lucide-react": "^0.263.1",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
