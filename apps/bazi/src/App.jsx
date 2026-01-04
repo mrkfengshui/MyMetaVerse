@@ -665,24 +665,40 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
 
    const getLiuYueData = (yearGan, yearZhi, year) => {
        const yearGanIdx = TIANGAN.indexOf(yearGan);
+       if (yearGanIdx === -1) return [];
        const startGanIdx = (yearGanIdx % 5) * 2 + 2; 
        const months = [];
        const JIE_QI_NAMES = ["立春", "驚蟄", "清明", "立夏", "芒種", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
        for(let i=0; i<12; i++) {
            const ganIdx = (startGanIdx + i) % 10;
            const zhiIdx = (2 + i) % 12; 
-           let searchYear = year, searchMonth = i + 2; 
+           let searchYear = parseInt(year), searchMonth = i + 2; 
            if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
-           let jieQiDateStr = "";
+           
+           let jieQiDateStr = `${searchMonth}月`; // 預設值
            try {
-               const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
-               const lunar = solarCheck.getLunar();
-               const jieQi = lunar.getPrevJieQi(true); 
-               if (jieQi && toTraditional(jieQi.getName()) === JIE_QI_NAMES[i]) {
-                   const solarJie = jieQi.getSolar(); jieQiDateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
-               } else { jieQiDateStr = `${searchMonth}/?`; }
-           } catch (e) { jieQiDateStr = `${searchMonth}月`; }
-           months.push({ seq: i + 1, name: JIE_QI_NAMES[i], dateStr: jieQiDateStr, gan: TIANGAN[ganIdx], zhi: DIZHI[zhiIdx], ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] });
+               if (window.Solar) {
+                   const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
+                   const lunar = solarCheck.getLunar();
+                   const jieQi = lunar.getPrevJieQi(true); 
+                   if (jieQi && toTraditional(jieQi.getName()) === JIE_QI_NAMES[i]) {
+                       const solarJie = jieQi.getSolar(); 
+                       jieQiDateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
+                   }
+               }
+           } catch (e) { 
+               console.warn("節氣計算錯誤", e); 
+           }
+           
+           months.push({ 
+               seq: i + 1, 
+               name: JIE_QI_NAMES[i], 
+               dateStr: jieQiDateStr, 
+               gan: TIANGAN[ganIdx] || '', 
+               zhi: DIZHI[zhiIdx] || '', 
+               ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), 
+               zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] 
+           });
        }
        return months;
    };
