@@ -1,6 +1,7 @@
 {
-  "name": "mrkcompass",
+  "name": "mrkbazi",
   "private": true,
+  "main": "./index.jsx",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

@@ -3,7 +3,7 @@
 /* 定義一般粗細 (Regular) */
 @font-face {
   font-family: 'MyMetaFont'; /* 這是你自己取的名字，以後都用這個 */
-  src: url('./fonts/AoyagiReishoSIMO2_T.ttf') format('ttf');
+  src: url('./fonts/AoyagiReishoSIMO2_T.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap; /* 確保字體載入前先顯示系統字體，避免文字隱形 */
@@ -12,7 +12,7 @@
 /* 定義粗體 (Bold) */
 @font-face {
   font-family: 'MyMetaFont';
-  src: url('./fonts/AoyagiReishoSIMO2_T.ttf') format('ttf');
+  src: url('./fonts/AoyagiReishoSIMO2_T.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;

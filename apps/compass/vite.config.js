@@ -8,7 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // 2. 強制指定：當有人叫 @my-meta/ui 時，直接去隔壁房找 index.jsx
-      '@my-meta/ui': path.resolve(__dirname, '../../packages/ui/index.jsx'),
+      '@my-meta/ui': path.resolve(__dirname, '../../packages/ui'),
     },
   },
   server: {
