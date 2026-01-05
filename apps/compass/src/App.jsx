@@ -687,8 +687,8 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     return (
         <div style={{flex: 1, display:'flex', flexDirection:'column', width: '100%'}}>
             <div style={{padding:'10px 16px', background: THEME.white, borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回羅盤</button>
-                <div style={{fontWeight:'bold', fontSize:'16px'}}>分析報告</div>
+                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回</button>
+                <div style={{fontWeight:'bold', fontSize:'16px', alignItems:'center' }}>分析</div>
                 <div style={{width:'24px'}}></div>
             </div>
             <div style={{flex: 1, overflowY: 'auto', padding:'16px', paddingBottom:'20px'}}>
@@ -827,8 +827,12 @@ export default function FengShuiApp() {
 
     return (
         <div style={COMMON_STYLES.fullScreen}> 
+            <style>{`
+                    * { box-sizing: border-box; } 
+                    body { margin: 0; }
+                `}</style>
             {/* Header */}
-            <AppHeader title="元星風水" logoChar={{ main: '羅', sub: '庚' }} />
+            <AppHeader title="元星風水" logoChar={{ main: '風', sub: '水' }} />
 
             {/* 內容區域 */}
             <div style={{ 
