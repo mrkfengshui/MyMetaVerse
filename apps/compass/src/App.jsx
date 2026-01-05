@@ -570,41 +570,24 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
                 </button>
             )}
-            <div style={{ position: 'relative' }}>
-                
-                {/* 1. 紅色十字線 (現在會跟著羅庚跑) */}
-                {/* 直線：使用 fixed height 超出容器沒關係，因為外層有 overflow: hidden */}
-                <div style={{
-                    position: 'absolute', left: '50%', top: '-100vh', bottom: '-100vh', 
-                    width: '1px', background: 'red', zIndex: 20, opacity: 0.8,
-                    transform: 'translateX(-50%)' // 修正 1px 偏差
-                }}></div>
-                {/* 橫線 */}
-                <div style={{
-                    position: 'absolute', top: '50%', left: '-100vw', right: '-100vw', 
-                    height: '1px', background: 'red', zIndex: 20, opacity: 0.8,
-                    transform: 'translateY(-50%)' // 修正 1px 偏差
-                }}></div>
-
-                {/* 2. 羅庚本體 (保持不變) */}
-                <div style={{
-                    width: '85vw', height: '85vw', maxWidth:'350px', maxHeight:'350px',
-                    borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c',
-                    transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear',
-                    display: 'flex', justifyContent: 'center', alignItems: 'center',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative'
-                }}>
-                     {MOUNTAINS.map((m, i) => (
-                        <div key={i} style={{
-                            position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
-                            transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
-                        }}>
-                            <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)'}}>{m.name}</span>
-                        </div>
-                     ))}
-                     {/* 天池 */}
-                     <div style={{width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red'}}></div>
-                </div>
+            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.6}}></div>
+            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.6}}></div>
+            <div style={{
+                width: '85vw', height: '85vw', maxWidth:'350px', maxHeight:'350px',
+                borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c',
+                transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative'
+            }}>
+                 {MOUNTAINS.map((m, i) => (
+                    <div key={i} style={{
+                        position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
+                        transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
+                    }}>
+                        <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)'}}>{m.name}</span>
+                    </div>
+                 ))}
+                 <div style={{width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red'}}></div>
             </div>
             <div style={{marginTop: '30px', textAlign:'center', zIndex: 10}}>
                 <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
