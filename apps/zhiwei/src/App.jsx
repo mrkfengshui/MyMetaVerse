@@ -937,7 +937,8 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
 const SettingsView = ({ 
     siHuaRules, setSiHuaRules, kuiYueRules, setKuiYueRules,
     huoLingRules, setHuoLingRules, tianMaRules, setTianMaRules,
-    tianMaType, setTianMaType, mingHasDaXian, setMingHasDaXian 
+    tianMaType, setTianMaType, mingHasDaXian, setMingHasDaXian,
+    bookmarks, setBookmarks
 }) => {
   const [openSection, setOpenSection] = useState(null);
   const toggleSection = (sec) => setOpenSection(openSection === sec ? null : sec);
@@ -1017,6 +1018,7 @@ const SettingsView = ({
           <ToggleSelector options={[{val: 'year', label: '年馬'}, {val: 'month', label: '月馬'}]} currentValue={tianMaType} onChange={setTianMaType} />
       </div>
 
+      <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="ZHIWEI_BACKUP" />
       <AppInfoCard info={APP_INFO} />
       <BuyMeCoffee />
 
@@ -1151,8 +1153,6 @@ export default function ZwdsApp() {
                         </div>
                     </div>
                 ))}
-                {/* 使用共用的備份管理器 */}
-                <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="ZHIWEI_BACKUP" />
               </div>
           )}
           {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
@@ -1164,6 +1164,7 @@ export default function ZwdsApp() {
                 tianMaRules={tianMaRules} setTianMaRules={setTianMaRules}
                 tianMaType={tianMaType} setTianMaType={setTianMaType}
                 mingHasDaXian={mingHasDaXian} setMingHasDaXian={setMingHasDaXian}
+                bookmarks={bookmarks} setBookmarks={setBookmarks}
             />
           }
       </div>
