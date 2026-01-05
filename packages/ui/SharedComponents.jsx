@@ -184,7 +184,7 @@ const handleContactClick = () => {
         </div>
       </div>
       
-      <div style={{ marginTop: '30px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px', paddingBottom: '40px' }}>
+      <div style={{ marginTop: '10px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px', paddingBottom: '10px' }}>
           System Build: {finalInfo.version}
       </div>
     </div>
