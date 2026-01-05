@@ -780,7 +780,7 @@ const renderLiuNianGrid = () => {
                    <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>{lnData.gan}{lnData.zhi}流年 ({lnData.year}年) - 流月</h4>
                    <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px' }}><X size={16} /></button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px', direction: 'rtl' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', direction: 'rtl' }}>
                     {liuYues.map((ly) => {
                         const displayTopRight = showHiddenStems ? null : ly.ganGod;
                         const displayBottomRight = showHiddenStems ? ly.zhiHidden : ly.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
