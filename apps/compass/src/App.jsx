@@ -1,8 +1,14 @@
+// apps/fengshui/src/App.jsx
+
 import React, { useState, useEffect, useMemo } from 'react';
-// 1. 引入共用 UI 和 工具
-import { AppHeader, useProtection, THEME, COMMON_STYLES, AdBanner } from '@my-meta/ui';
-// 2. 引入 Icon
-import { Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase } from 'lucide-react';
+// 1. 引入共用 UI (加入 AppInfoCard, BuyMeCoffee)
+import { AppHeader, useProtection, THEME, COMMON_STYLES, AdBanner, AppInfoCard, BuyMeCoffee } from '@my-meta/ui';
+// 2. 引入 Icon (加入 Settings, Grid)
+import { 
+  Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, 
+  DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase, 
+  Settings, Grid // <--- 新增這兩個
+} from 'lucide-react';
 
 // --- 核心數據定義 (保持不變) ---
 const MOUNTAINS = [
@@ -780,39 +786,99 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     );
 };
 
+// --- 設定頁面 ---
+const SettingsView = () => {
+    const APP_INFO = {
+        appName: "元星風水",
+        version: "v1.0",
+        about: "本程式結合三元九運、玄空飛星與常用水法，提供專業的風水羅盤與排盤分析功能。",
+    };
+
+    return (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: THEME.bg, paddingBottom: '100px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
+                <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
+            </div>
+
+            {/* 關於與支援 */}
+            <AppInfoCard info={APP_INFO} />
+
+            {/* 贊助按鈕 */}
+            <BuyMeCoffee />
+        </div>
+    );
+};
+
+// --- 主程式 ---
 export default function FengShuiApp() {
-    // 網域保護
     useProtection(['mrkcompass.vercel.app', 'mrkfengshui.com']);
     
-    const [mode, setMode] = useState('compass'); 
+    // 將 mode 改為 view，新增 'settings' 狀態
+    const [view, setView] = useState('compass'); 
+    
+    // 羅盤相關狀態
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
+    
+    // 排盤相關狀態
     const [period, setPeriod] = useState(9);
     const [year, setYear] = useState(new Date().getFullYear()); 
     const [month, setMonth] = useState(new Date().getMonth() + 1);
 
     return (
         <div style={COMMON_STYLES.fullScreen}> 
-            {/* 共用 Header (無 Pro 標籤) */}
+            {/* Header */}
             <AppHeader title="元星風水" logoChar={{ main: '羅', sub: '庚' }} />
 
             {/* 內容區域 */}
-            <div style={{ ...COMMON_STYLES.contentArea, background: mode === 'compass' ? '#222' : THEME.bg }}>
-                {mode === 'compass' ? (
+            <div style={{ 
+                ...COMMON_STYLES.contentArea, 
+                // 只有在羅盤模式下才用深色背景
+                background: view === 'compass' ? '#222' : THEME.bg 
+            }}>
+                {view === 'compass' && (
                     <CompassView 
                         heading={heading} setHeading={setHeading} 
                         isFrozen={isFrozen} setIsFrozen={setIsFrozen} 
-                        onAnalyze={() => setMode('chart')}
+                        onAnalyze={() => setView('chart')} // 點擊排盤跳轉
                     />
-                ) : (
+                )}
+
+                {view === 'chart' && (
                     <ChartView
                         heading={heading} setHeading={setHeading} 
                         period={period} setPeriod={setPeriod} 
                         year={year} setYear={setYear}
                         month={month} setMonth={setMonth}
-                        onBack={() => setMode('compass')}
+                        onBack={() => setView('compass')} // 返回跳轉
                     />
                 )}
+
+                {view === 'settings' && (
+                    <SettingsView />
+                )}
+            </div>
+
+            {/* 👇 新增：底部導航欄 (Footer) */}
+            <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
+                <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
+                    
+                    <button onClick={() => setView('compass')} style={{ background: 'none', border: 'none', color: view==='compass' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <Compass size={22} />
+                        <span style={{ fontSize: '10px' }}>羅庚</span>
+                    </button>
+
+                    <button onClick={() => setView('chart')} style={{ background: 'none', border: 'none', color: view==='chart' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <Grid size={22} />
+                        <span style={{ fontSize: '10px' }}>排盤</span>
+                    </button>
+
+                    <button onClick={() => setView('settings')} style={{ background: 'none', border: 'none', color: view==='settings' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <Settings size={22} />
+                        <span style={{ fontSize: '10px' }}>設定</span>
+                    </button>
+
+                </div>
             </div>
         </div>
     );
