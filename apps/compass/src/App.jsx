@@ -686,11 +686,44 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 
     return (
         <div style={{flex: 1, display:'flex', flexDirection:'column', width: '100%'}}>
-            <div style={{padding:'10px 16px', background: THEME.white, borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回</button>
-                <div style={{fontWeight:'bold', fontSize:'16px', alignItems:'center' }}>分析</div>
-                <div style={{width:'24px'}}></div>
+            <div style={{
+                position: 'relative', // 關鍵：讓內部的絕對定位以這裡為基準
+                height: '44px',       // 固定高度
+                background: THEME.white, 
+                borderBottom:`1px solid ${THEME.border}`, 
+                display:'flex', 
+                alignItems:'center', 
+                justifyContent:'center' // 讓標題水平置中
+            }}>
+                {/* 左邊：返回按鈕 (絕對定位) */}
+                <button 
+                    onClick={onBack} 
+                    style={{
+                        position: 'absolute', // 強制靠左
+                        left: '10px',
+                        top: '0',
+                        height: '100%',
+                        background:'none', 
+                        border:'none', 
+                        display:'flex', 
+                        alignItems:'center', 
+                        gap:'4px', 
+                        cursor:'pointer',
+                        color: THEME.gray,
+                        padding: '0 8px'
+                    }}
+                >
+                    <ArrowLeft size={20}/> 
+                    <span style={{fontSize: '14px'}}>返回</span>
+                </button>
+
+                {/* 中間：標題 (自然置中) */}
+                <div style={{fontWeight:'bold', fontSize:'16px', color: THEME.black}}>
+                    分析報告
+                </div>
             </div>
+            {/* 👆 修改結束 */}
+
             <div style={{flex: 1, overflowY: 'auto', padding:'16px', paddingBottom:'20px'}}>
                 <div style={cardStyle}>
                     <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
