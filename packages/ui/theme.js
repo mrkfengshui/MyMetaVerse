@@ -17,7 +17,7 @@ export const THEME = {
   },
   
   layout: {
-    headerHeight: '50px',
+    headerHeight: '30px',
     tabBarHeight: '60px',
   }
 };
@@ -39,6 +39,6 @@ export const COMMON_STYLES = {
     overflowY: 'auto', 
     WebkitOverflowScrolling: 'touch', // iOS 順滑滾動
     width: '100%',
-    paddingBottom: '10px' 
+    paddingBottom: '20px' 
   },
 };
