@@ -42,26 +42,37 @@ export const WebBackupManager = ({ data, onRestore, prefix = "BACKUP" }) => {
     };
 
     return (
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden', marginTop: '16px' }}>
-            <div style={{ padding: '10px 16px', backgroundColor: THEME.bgGray, borderBottom: `1px solid ${THEME.border}`, fontSize: '13px', fontWeight: 'bold', color: THEME.gray }}>
-                資料備份 (JSON)
-            </div>
-            <div>
+        <div style={{ marginTop: '20px' }}>
+            {/* 外部小標題 */}
+            <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>
+                資料備份與還原
+            </h3>
+
+            {/* 白底圓角卡片 (移除了原本內部的灰色標題列) */}
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden' }}>
+                
+                {/* 隱藏的檔案輸入框 */}
                 <input type="file" id="restore-input" accept=".json" style={{ display: 'none' }} onChange={handleUpload}/>
                 
                 {/* 下載按鈕 */}
                 <button onClick={handleDownload} style={dataBtnStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <CloudUpload size={18} color={THEME.purple} />
-                        <span style={{ fontSize: '14px' }}>匯出備份 (Download)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <CloudUpload size={20} color={THEME.purple} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '15px', fontWeight: '500', color: THEME.black }}>匯出備份 (Download)</span>
+                            <span style={{ fontSize: '11px', color: THEME.gray }}>儲存目前的命盤紀錄為 JSON 檔</span>
+                        </div>
                     </div>
                 </button>
 
                 {/* 上傳按鈕 */}
                 <button onClick={() => document.getElementById('restore-input').click()} style={{ ...dataBtnStyle, borderBottom: 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Download size={18} color={THEME.green} />
-                        <span style={{ fontSize: '14px' }}>還原備份 (Restore)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Download size={20} color={THEME.green} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '15px', fontWeight: '500', color: THEME.black }}>還原備份 (Restore)</span>
+                            <span style={{ fontSize: '11px', color: THEME.gray }}>從 JSON 檔案讀取紀錄</span>
+                        </div>
                     </div>
                 </button>
             </div>
