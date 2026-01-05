@@ -4,7 +4,7 @@ import { THEME } from './theme';
 import { ChevronRight, Coffee } from 'lucide-react';
 
 // --- 1. AppHeader ---
-export const AppHeader = ({ title, logoChar = { main: '元', sub: '星' } }) => {
+export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
   const apps = [
     { name: '八字', url: 'https://mrkbazi.vercel.app', id: 'bazi' },
     { name: '紫微', url: 'https://mrkzhiwei.vercel.app', id: 'zhiwei' },
@@ -32,7 +32,7 @@ export const AppHeader = ({ title, logoChar = { main: '元', sub: '星' } }) => 
             backgroundColor: THEME.vermillion, borderRadius: '50%', 
             position: 'relative', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
         }}>
-            <span style={{ fontFamily: THEME.fonts.heading, position: 'absolute', color: 'white', fontSize: '10px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none' }}>{logoChar.sub}</span>
+            <span style={{ fontFamily: THEME.fonts.heading, position: 'absolute', color: 'white', fontSize: '14px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none' }}>{logoChar.sub}</span>
             <span style={{ fontFamily: THEME.fonts.heading, position: 'absolute', color: 'black', fontSize: '26px', lineHeight: 1, top: '12%', left: '2%', pointerEvents: 'none' }}>{logoChar.main}</span>
         </div>
         <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#262626' }}>{title}</span>
