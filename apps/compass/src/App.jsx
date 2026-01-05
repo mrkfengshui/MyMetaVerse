@@ -773,7 +773,32 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                 <div style={cardStyle}>
                     <div style={{...sectionTitle, color:'#096dd9'}}>💨 三元納氣法 (門/窗/陽台)</div>
                     <div style={{fontSize:'12px', color:'#666', marginBottom:'8px'}}> 請選擇住宅主要納氣口(大門/落地窗)之方位。預設為向首({data.facing.gua})。 </div>
-                    <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'12px'}}> {naQiGuas.map(gua => ( <button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 12px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? '#1890ff' : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer', fontSize:'14px', fontWeight:'bold' }}> {gua} </button> ))} </div>
+                        <div style={{
+                            display:'grid', 
+                            gridTemplateColumns: 'repeat(4, 1fr)', // 強制分成 4 列
+                            gap:'8px', 
+                            marginBottom:'12px'
+                        }}>
+                            {naQiGuas.map(gua => (
+                                <button 
+                                    key={gua}
+                                    onClick={() => setNaQiDoor(gua)}
+                                    style={{
+                                        padding:'10px 0', // 上下撐開一點，左右自動
+                                        borderRadius:'6px', 
+                                        border:'1px solid #ddd',
+                                        background: naQiDoor === gua ? '#1890ff' : 'white',
+                                        color: naQiDoor === gua ? 'white' : '#333',
+                                        cursor:'pointer', 
+                                        fontSize:'16px', // 字體稍微加大
+                                        fontWeight:'bold',
+                                        width: '100%' // 填滿格子
+                                    }}
+                                >
+                                    {gua}
+                                </button>
+                            ))}
+                        </div>
                     {naQiResult && ( <div style={{ background: naQiResult.type === '吉' || naQiResult.type === '大吉' ? '#f6ffed' : (naQiResult.type === '平' ? '#f5f5f5' : '#fff1f0'), border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}> <div> <div style={{fontSize:'12px', color:'#666'}}>納氣方位：<span style={{fontWeight:'bold', color:'#333'}}>{naQiDoor}方</span></div> <div style={{fontSize:'18px', fontWeight:'bold', color: naQiResult.color}}>{naQiResult.text}</div> </div> <div style={{textAlign:'right'}}> <div style={{fontSize:'12px', color:naQiResult.color, fontWeight:'bold'}}>{naQiResult.sub}</div> <DoorOpen size={24} color={naQiResult.color} style={{marginTop:'4px'}}/> </div> </div> )}
                 </div>
 
