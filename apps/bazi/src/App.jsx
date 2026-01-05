@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ChevronRight, Bookmark, Settings, 
   CalendarCheck, Sparkles, Grid, 
-  Trash2, Edit3, Eye, EyeOff, RefreshCw, Check
+  Trash2, Edit3, Eye, EyeOff, RefreshCw, Check, X
 } from 'lucide-react';
 
 import { Preferences } from '@capacitor/preferences';
