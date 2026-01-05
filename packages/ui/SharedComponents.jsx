@@ -28,7 +28,7 @@ export const AppHeader = ({ title, logoChar = { main: '元', sub: '星' } }) => 
       {/* 左邊：Logo 與 標題 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         <div style={{ 
-            width: '30px', height: '30px',
+            width: '38px', height: '38px',
             backgroundColor: THEME.vermillion, borderRadius: '50%', 
             position: 'relative', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
         }}>

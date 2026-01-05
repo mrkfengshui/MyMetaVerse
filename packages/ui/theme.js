@@ -17,8 +17,8 @@ export const THEME = {
   },
   
   layout: {
-    headerHeight: '30px',
-    tabBarHeight: '60px',
+    headerHeight: '40px',
+    tabBarHeight: '40px',
   }
 };
 
