@@ -39,6 +39,6 @@ export const COMMON_STYLES = {
     overflowY: 'auto', 
     WebkitOverflowScrolling: 'touch', // iOS 順滑滾動
     width: '100%',
-    paddingBottom: '20px' 
+    paddingBottom: '10px' 
   },
 };
