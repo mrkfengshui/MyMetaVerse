@@ -1,5 +1,5 @@
 // packages/ui/SharedComponents.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { THEME } from './theme';
 import { ChevronRight, Coffee } from 'lucide-react';
 
