@@ -25,6 +25,19 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
       flexShrink: 0,
       zIndex: 100
     }}>
+      <style>{`
+        @media screen and (orientation: landscape) {
+          body::after {
+            display: none !important;
+            content: none !important;
+          }
+        }
+        /* 確保背景色在電腦版是深色的 */
+        body {
+            background-color: #111;
+        }
+      `}</style>
+
       {/* 左邊：Logo 與 標題 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         <div style={{ 
@@ -47,7 +60,6 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
             style={{
               textDecoration: 'none',
               color: title.includes(app.name) ? THEME.vermillion : '#999',
-              fontFamily: THEME.fonts.heading,
               fontSize: '13px',
               fontWeight: title.includes(app.name) ? 'bold' : 'normal',
               whiteSpace: 'nowrap'
