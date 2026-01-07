@@ -1,6 +1,7 @@
 {
-  "name": "home",
+  "name": "mrkhome",
   "private": true,
+  "main": "./index.jsx",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -10,8 +11,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
+    "@capacitor/share": "^8.0.0",
     "lucide-react": "^0.562.0",
+    "lunar-javascript": "^1.7.7",
     "react": "^19.2.0",
+    "react-calendar": "^6.0.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
