@@ -82,15 +82,45 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
   </div>
 );
 
-// --- 3. 廣告條 ---
-export const AdBanner = () => (
-  <div style={{ height: '50px', backgroundColor: '#f0f0f0', borderTop: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', flexShrink: 0 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.7 }}>
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '1px 3px', fontSize: '9px', color: '#999' }}>Ad</div>
-      <div style={{ fontSize: '11px', color: '#555' }}>請收看廣告</div>
+// --- 3. 廣告條 (已整合 Google AdSense) ---
+export const AdBanner = () => {
+  useEffect(() => {
+    // 當組件載入後，通知 Google 顯示廣告
+    try {
+      // 確保 window.adsbygoogle 存在才執行
+      if (typeof window !== 'undefined') {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (e) {
+      console.error("AdSense error:", e);
+    }
+  }, []);
+
+  return (
+    <div style={{ 
+      margin: '16px 0', 
+      textAlign: 'center', 
+      minHeight: '100px', 
+      backgroundColor: '#f9f9f9', // 預設背景色，避免廣告載入前是一片白
+      overflow: 'hidden'
+    }}>
+      <ins className="adsbygoogle"
+           style={{ display: 'block' }}
+           data-ad-client="ca-pub-7726414602786917"  // 🔴 請在此填入你的發布商 ID
+           data-ad-slot="5586624662"                 // 🔴 請在此填入你的廣告單元 ID
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+      </ins>
+
+      {/* 開發模式提示 */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ padding: '10px', fontSize: '12px', color: '#999' }}>
+          [廣告開發模式] ID: 5586624662 (上線後會顯示真廣告)
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // --- 4. 設定頁組件群 ---
 
