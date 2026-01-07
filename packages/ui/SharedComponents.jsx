@@ -6,10 +6,10 @@ import { ChevronRight, Coffee } from 'lucide-react';
 // --- 1. AppHeader ---
 export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
   const apps = [
-    { name: '八字', url: 'https://mrkbazi.vercel.app', id: 'bazi' },
-    { name: '紫微', url: 'https://mrkzhiwei.vercel.app', id: 'zhiwei' },
-    { name: '萬年曆', url: 'https://mrkcalendar.vercel.app', id: 'calendar' },
-    { name: '風水', url: 'https://mrkcompass.vercel.app', id: 'compass' },
+    { name: '八字', url: 'https://bazi.mrkfengshui.com', id: 'bazi' },
+    { name: '紫微', url: 'https://zhiwei.mrkfengshui.com', id: 'zhiwei' },
+    { name: '風水', url: 'https://compass.mrkfengshui.com', id: 'compass' },
+    { name: '萬年曆', url: 'https://calendar.mrkfengshui.com', id: 'calendar' },
   ];
 
   return (
@@ -47,6 +47,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
             style={{
               textDecoration: 'none',
               color: title.includes(app.name) ? THEME.vermillion : '#999',
+              fontFamily: THEME.fonts.heading,
               fontSize: '13px',
               fontWeight: title.includes(app.name) ? 'bold' : 'normal',
               whiteSpace: 'nowrap'
@@ -106,8 +107,8 @@ export const AdBanner = () => {
     }}>
       <ins className="adsbygoogle"
            style={{ display: 'block' }}
-           data-ad-client="ca-pub-7726414602786917"  // 🔴 請在此填入你的發布商 ID
-           data-ad-slot="5586624662"                 // 🔴 請在此填入你的廣告單元 ID
+           data-ad-client="ca-pub-7726414602786917"
+           data-ad-slot="5586624662"
            data-ad-format="auto"
            data-full-width-responsive="true">
       </ins>
@@ -148,7 +149,7 @@ export const BuyMeCoffee = () => (
 
 const COMMON_INFO = {
   agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。\n開發者不對因使用本程式而產生的任何直接或間接後果負責。",
-  contactEmail: "masterk@mrkfengshui.com",
+  contactEmail: "mail@mrkfengshui.com",
 };
 
 // --- 5. 應用程式資訊卡 (關於、條款、聯絡) ---
