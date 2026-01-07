@@ -27,57 +27,61 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     }}>
       {/* 注入全域 CSS，控制所有 App 的旋轉行為 */}
       <style>{`
-        /* 1. 基礎設定 (確保所有 App 預設樣式一致) */
+        /* 1. 基礎設定 */
         body {
           margin: 0;
           padding: 0;
           background-color: #f5f5f5;
           width: 100vw;
           height: 100vh;
-          overflow: hidden; 
+          /* 預設直屏時隱藏多餘捲軸 */
+          overflow-x: hidden; 
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        #root {
-          width: 100%;
-          height: 100%;
-          background-color: #fff;
-          position: relative;
-          overflow-y: auto;
-          overflow-x: hidden;
-        }
 
-        /* 2. 針對「橫屏手機」的強制旋轉設定 */
+        /* 2. 針對「橫屏手機」的強制旋轉修復版 */
         @media screen and (orientation: landscape) and (max-width: 1024px) {
+          
+          /* 鎖定 Body，變成全黑背景 */
           body {
-            background-color: #000; /* 旋轉時背景變黑 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: #000 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important; /* 禁止 Body 捲動，只讓 #root 捲動 */
+            position: fixed !important;  /* 鎖死畫面，避免被彈性拉動 */
           }
+
+          /* App 本體 */
           #root {
-            /* 交換寬高：讓 App 寬度 = 手機的高度 */
-            width: 100vh;  
-            height: 100vw; 
-            
-            /* 強制旋轉 -90 度 */
-            transform: rotate(-90deg);
-            transform-origin: center center;
-            
-            /* 定位修正：把旋轉後的 App 拉回螢幕正中間 */
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            margin-left: -50vh; /* 寬度的一半 */
-            margin-top: -50vw;  /* 高度的一半 */
-            
-            /* 確保旋轉後依然可以滑動 */
-            overflow-y: auto;
-            overflow-x: hidden;
+            /* 步驟 A: 交換寬高 */
+            /* 讓 App 的寬度 = 手機螢幕的高度 (100vh) */
+            width: 100vh !important;
+            /* 讓 App 的高度 = 手機螢幕的寬度 (100vw) */
+            height: 100vw !important;
+
+            /* 步驟 B: 強制絕對置中 */
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+
+            /* 步驟 C: 核心魔法 (旋轉 + 校正中心) */
+            /* translate(-50%, -50%) 會把元素的中心點拉回螢幕正中心 */
+            /* rotate(-90deg) 逆時針轉 90 度 */
+            transform: translate(-50%, -50%) rotate(-90deg) !important;
+            transform-origin: center center !important;
+
+            /* 步驟 D: 確保內容可滑動 */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            background-color: #fff; /* 確保內容背景是白的 */
+            z-index: 9999;
           }
-          /* 隱藏橫屏時的捲軸 */
+
+          /* 隱藏橫屏時的捲軸條 (美觀) */
           #root::-webkit-scrollbar { display: none; }
         }
       `}</style>
+      
       {/* 左邊：Logo 與 標題 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         <div style={{ 
