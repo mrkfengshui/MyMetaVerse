@@ -25,19 +25,59 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
       flexShrink: 0,
       zIndex: 100
     }}>
+      {/* 注入全域 CSS，控制所有 App 的旋轉行為 */}
       <style>{`
-        @media screen and (orientation: landscape) {
-          body::after {
-            display: none !important;
-            content: none !important;
-          }
-        }
-        /* 確保背景色在電腦版是深色的 */
+        /* 1. 基礎設定 (確保所有 App 預設樣式一致) */
         body {
-            background-color: #111;
+          margin: 0;
+          padding: 0;
+          background-color: #f5f5f5;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden; 
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        #root {
+          width: 100%;
+          height: 100%;
+          background-color: #fff;
+          position: relative;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+
+        /* 2. 針對「橫屏手機」的強制旋轉設定 */
+        @media screen and (orientation: landscape) and (max-width: 1024px) {
+          body {
+            background-color: #000; /* 旋轉時背景變黑 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          #root {
+            /* 交換寬高：讓 App 寬度 = 手機的高度 */
+            width: 100vh;  
+            height: 100vw; 
+            
+            /* 強制旋轉 -90 度 */
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            
+            /* 定位修正：把旋轉後的 App 拉回螢幕正中間 */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -50vh; /* 寬度的一半 */
+            margin-top: -50vw;  /* 高度的一半 */
+            
+            /* 確保旋轉後依然可以滑動 */
+            overflow-y: auto;
+            overflow-x: hidden;
+          }
+          /* 隱藏橫屏時的捲軸 */
+          #root::-webkit-scrollbar { display: none; }
         }
       `}</style>
-
       {/* 左邊：Logo 與 標題 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         <div style={{ 
