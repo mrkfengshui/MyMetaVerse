@@ -17,10 +17,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
       backgroundColor: THEME.white, 
       minheight: '40px', 
       // ✅ 設定內距：上(安全區域+10px) 下(10px) 左(12px) 右(12px)
-      paddingTop: 'max(env(safe-area-inset-top), 4px)', 
-      paddingBottom: '4px',
-      paddingLeft: '4px',
-      paddingRight: '4px',
+      paddingTop: 'max(env(safe-area-inset-top), 0px)', 
       boxSizing: 'border-box',
       borderBottom: `1px solid ${THEME.border}`, 
       display: 'flex', 
@@ -128,7 +125,7 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
       backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`,
       paddingBottom: 'env(safe-area-inset-bottom)' 
   }}>
-      <div style={{ display: 'flex', justifyContent: 'space-around', height: '100px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-around', height: '60px', alignItems: 'center' }}>
           {tabs.map(tab => {
               const isActive = currentTab === tab.id;
               const Icon = tab.icon;
