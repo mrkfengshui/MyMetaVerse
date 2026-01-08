@@ -15,11 +15,6 @@ export const THEME = {
     heading: "'MyMetaFont', sans-serif",
     main: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
-  
-  layout: {
-    headerHeight: '50px',
-    tabBarHeight: '20px',
-  }
 };
 
 export const COMMON_STYLES = {
