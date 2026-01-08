@@ -868,7 +868,7 @@ return (
                                 borderRadius: '8px', 
                                 fontSize: '13px', 
                                 display: 'flex', 
-                                flexDirection: 'column', // 改為垂直排列 (字在下，數字在上，或反之)，這裡保持水平但置中
+                                flexDirection: 'row', // 改為垂直排列 (字在下，數字在上，或反之)，這裡保持水平但置中
                                 alignItems: 'center', 
                                 justifyContent: 'center',
                                 whiteSpace: 'nowrap' // 強制不換行
