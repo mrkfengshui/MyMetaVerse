@@ -20,7 +20,7 @@ import {
 
 // 全域設定
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "元星八字 v1.0";
+const APP_VERSION = "八字 v1.0";
 
 const COLORS = {
   jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
@@ -288,7 +288,7 @@ const SettingsView = ({
 }) => {
   // 定義這個 App 獨有的資訊
   const APP_INFO = {
-    appName: "元星八字",
+    appName: "八字",
     version: APP_VERSION,
     about: "本程式旨在提供專業八字排盤服務，結合子平命理與現代演算法，輔助使用者進行命理分析。",
   };
@@ -868,12 +868,12 @@ return (
                                 borderRadius: '8px', 
                                 fontSize: '13px', 
                                 display: 'flex', 
-                                flexDirection: 'row', // 改為垂直排列 (字在下，數字在上，或反之)，這裡保持水平但置中
+                                flexDirection: 'row',
                                 alignItems: 'center', 
                                 justifyContent: 'center',
                                 whiteSpace: 'nowrap' // 強制不換行
                             }}> 
-                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}:</span>
+                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}: </span>
                                 <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
                                     {wxCounts[elm]}
                                 </span> 
@@ -979,7 +979,7 @@ export default function BaziApp() {
       `}</style>
       
       {/* 1. Header (無 Pro 標籤) */}
-      <AppHeader title="元星八字" logoChar={{ main: '八', sub: '字' }} />
+      <AppHeader title="八字" logoChar={{ main: '八', sub: '字' }} sub=" by 許甯博" />
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%' }}>
           {view === 'input' && (
