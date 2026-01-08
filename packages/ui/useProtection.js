@@ -37,12 +37,33 @@ export const useProtection = (allowedDomains = []) => {
       }
     };
 
+    const style = document.createElement('style');
+    style.innerHTML = `
+      body {
+        -webkit-user-select: none; /* Chrome/Safari */
+        -moz-user-select: none;    /* Firefox */
+        -ms-user-select: none;     /* IE10+ */
+        user-select: none;         /* Standard */
+      }
+    `;
+    document.head.appendChild(style);
+
     document.addEventListener('contextmenu', handleContext);
     document.addEventListener('keydown', handleKey);
+    document.addEventListener('copy', preventDefault);        // 防 Ctrl+C
+    document.addEventListener('cut', preventDefault);         // 防 Ctrl+X
+    document.addEventListener('selectstart', preventDefault); // 防滑鼠選取
 
     return () => {
-      document.removeEventListener('contextmenu', handleContext);
+      document.removeEventListener('contextmenu', preventDefault);
       document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('copy', preventDefault);
+      document.removeEventListener('cut', preventDefault);
+      document.removeEventListener('selectstart', preventDefault);
+      // 移除樣式 (如果需要的話，通常 body 防選取可以保留)
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, [allowedDomains]);
 

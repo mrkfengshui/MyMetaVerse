@@ -15,9 +15,8 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
   return (
     <header style={{ 
       backgroundColor: THEME.white, 
-      minheight: '20px', 
+      minheight: '2px', 
       paddingTop: 'max(env(safe-area-inset-top), 4px)', 
-      boxSizing: 'border-box',
       borderBottom: `1px solid ${THEME.border}`, 
       display: 'flex', 
       justifyContent: 'space-between', 
@@ -138,7 +137,7 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
       backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`,
       paddingBottom: 'env(safe-area-inset-bottom)' 
   }}>
-      <div style={{ display: 'flex', justifyContent: 'space-around', height: '60px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-around', height: '75px', alignItems: 'center' }}>
           {tabs.map(tab => {
               const isActive = currentTab === tab.id;
               const Icon = tab.icon;
