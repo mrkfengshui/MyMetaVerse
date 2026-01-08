@@ -16,7 +16,9 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     <header style={{ 
       backgroundColor: THEME.white, 
       minheight: '2px', 
-      paddingTop: 'max(env(safe-area-inset-top), 4px)', 
+      paddingTop: 'max(env(safe-area-inset-top), 2px)', 
+      paddingLeft: '12px',
+      paddingRight: '12px',
       borderBottom: `1px solid ${THEME.border}`, 
       display: 'flex', 
       justifyContent: 'space-between', 
@@ -60,7 +62,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           border-color: #e8e8e8; /* 確保邊框顏色正常 */
           
           /* iOS 特有屬性：強制填色 */
-          -webkit-text-fill-color: #000000 !important; 
+          -webkit-text-fill-color: #8c8c8c !important; 
           -webkit-opacity: 1 !important;
           -webkit-user-select: text !important;
           user-select: text !important;
