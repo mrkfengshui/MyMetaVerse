@@ -25,7 +25,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
       flexShrink: 0,
       zIndex: 100
     }}>
-      {/* 注入全域 CSS，控制所有 App 的旋轉行為 */}
+      {/* 注入全域 CSS，控制所有 App 的旋轉與顯示行為 */}
       <style>{`
         /* 1. 基礎設定 */
         body {
@@ -39,46 +39,44 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        /* 2. 針對「橫屏手機」的強制旋轉修復版 */
+        /* 2. 針對「橫屏手機」的遮罩提示 (修改版) */
         @media screen and (orientation: landscape) and (max-width: 1024px) {
           
-          /* 鎖定 Body，變成全黑背景 */
+          /* 隱藏 App 實際內容，防止破版或誤觸 */
+          #root {
+            display: none !important;
+          }
+
+          /* 鎖定 Body，變成全黑背景提示層 */
           body {
             background-color: #000 !important;
             width: 100vw !important;
             height: 100vh !important;
-            overflow: hidden !important; /* 禁止 Body 捲動，只讓 #root 捲動 */
-            position: fixed !important;  /* 鎖死畫面，避免被彈性拉動 */
-          }
-
-          /* App 本體 */
-          #root {
-            /* 步驟 A: 交換寬高 */
-            /* 讓 App 的寬度 = 手機螢幕的高度 (100vh) */
-            width: 100vh !important;
-            /* 讓 App 的高度 = 手機螢幕的寬度 (100vw) */
-            height: 100vw !important;
-
-            /* 步驟 B: 強制絕對置中 */
+            overflow: hidden !important;
             position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-
-            /* 步驟 C: 核心魔法 (旋轉 + 校正中心) */
-            /* translate(-50%, -50%) 會把元素的中心點拉回螢幕正中心 */
-            /* rotate(-90deg) 逆時針轉 90 度 */
-            transform: translate(-50%, -50%) rotate(-90deg) !important;
-            transform-origin: center center !important;
-
-            /* 步驟 D: 確保內容可滑動 */
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            background-color: #fff; /* 確保內容背景是白的 */
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            z-index: 99999;
+            
+            /* 使用 Flex 將提示文字置中 */
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
           }
 
-          /* 隱藏橫屏時的捲軸條 (美觀) */
-          #root::-webkit-scrollbar { display: none; }
+          /* 顯示提示文字 */
+          body::after {
+            content: "為了最佳體驗，請將螢幕轉為直向 📱";
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-align: center;
+            white-space: pre-wrap;
+            pointer-events: none;
+            opacity: 0.9;
+          }
         }
       `}</style>
       
@@ -157,9 +155,12 @@ export const AdBanner = () => {
     <div style={{ 
       margin: '16px 0', 
       textAlign: 'center', 
-      minHeight: '100px', 
-      backgroundColor: '#f9f9f9', // 預設背景色，避免廣告載入前是一片白
-      overflow: 'hidden'
+      minHeight: '60px', 
+      backgroundColor: '#f9f9f9', 
+      overflow: 'hidden',
+      display: 'flex',            // 新增：確保內容垂直置中
+      alignItems: 'center',       // 新增：確保內容垂直置中
+      justifyContent: 'center'    // 新增：確保內容水平置中
     }}>
       <ins className="adsbygoogle"
            style={{ display: 'block' }}
@@ -172,7 +173,7 @@ export const AdBanner = () => {
       {/* 開發模式提示 */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{ padding: '10px', fontSize: '12px', color: '#999' }}>
-          [廣告開發模式] ID: 5586624662 (上線後會顯示真廣告)
+          [廣告開發] ID: 5586624662
         </div>
       )}
     </div>
