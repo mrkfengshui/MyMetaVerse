@@ -46,6 +46,11 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           /* 強制文字顏色，防止系統反轉 */
           color: #262626; 
           -webkit-font-smoothing: antialiased;
+          -webkit-user-select: none; /* Safari 專用 */
+          -moz-user-select: none;    /* Firefox */
+          -ms-user-select: none;     /* IE */
+          user-select: none;         /* 標準屬性 */
+          -webkit-touch-callout: none; /* 關鍵！禁止 iOS 長按彈出放大鏡/選單 */
         }
 
         /* 1.1 強制表單元件顏色 (解決輸入框變黑、文字變白問題) */
@@ -57,6 +62,9 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           /* iOS 特有屬性：強制填色 */
           -webkit-text-fill-color: #000000 !important; 
           -webkit-opacity: 1 !important;
+          -webkit-user-select: text !important;
+          user-select: text !important;
+          -webkit-touch-callout: default !important; /* 恢復輸入框的長按貼上功能 */
         }
 
         /* 修正 placeholder (提示文字) 在某些夜間模式下變太淡的問題 */
