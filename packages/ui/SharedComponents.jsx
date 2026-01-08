@@ -15,14 +15,20 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
   return (
     <header style={{ 
       backgroundColor: THEME.white, 
-      height: '64px', 
-      padding: '0 12px',
+      minheight: '50px', 
+      // ✅ 設定內距：上(安全區域+10px) 下(10px) 左(12px) 右(12px)
+      paddingTop: 'max(env(safe-area-inset-top), 10px)', 
+      paddingBottom: '10px',
+      paddingLeft: '12px',
+      paddingRight: '12px',
+      boxSizing: 'border-box',
       borderBottom: `1px solid ${THEME.border}`, 
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center',
-      paddingTop: 'max(env(safe-area-inset-top), 4px)',
       flexShrink: 0,
+      position: 'sticky',
+      top: 0,
       zIndex: 100
     }}>
       {/* 注入全域 CSS，控制所有 App 的旋轉與顯示行為 */}
@@ -122,7 +128,7 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
       backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`,
       paddingBottom: 'env(safe-area-inset-bottom)' 
   }}>
-      <div style={{ display: 'flex', justifyContent: 'space-around', height: '64px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-around', height: '50px', alignItems: 'center' }}>
           {tabs.map(tab => {
               const isActive = currentTab === tab.id;
               const Icon = tab.icon;
