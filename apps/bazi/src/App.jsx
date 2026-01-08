@@ -873,7 +873,7 @@ return (
                                 justifyContent: 'center',
                                 whiteSpace: 'nowrap' // 強制不換行
                             }}> 
-                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}</span>
+                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}:</span>
                                 <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
                                     {wxCounts[elm]}
                                 </span> 
