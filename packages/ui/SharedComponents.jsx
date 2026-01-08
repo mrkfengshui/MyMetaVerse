@@ -1,7 +1,7 @@
 // packages/ui/SharedComponents.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { THEME } from './theme';
-import { ChevronRight, Coffee } from 'lucide-react';
+import { ChevronRight, Coffee, Share, X, PlusSquare } from 'lucide-react';
 
 // --- 1. AppHeader ---
 export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
@@ -275,6 +275,95 @@ const handleContactClick = () => {
       <div style={{ marginTop: '10px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px', paddingBottom: '10px' }}>
           System Build: {finalInfo.version}
       </div>
+    </div>
+  );
+};
+
+// --- 6. 安裝引導提示 (InstallGuide) ---
+export const InstallGuide = () => {
+  const [show, setShow] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    // 1. 檢查是否已經是 Standalone 模式 (已安裝)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    
+    // 2. 檢查是否已經關閉過提示 (避免每次煩使用者)
+    const hasClosed = localStorage.getItem('installGuideClosed');
+
+    if (!isStandalone && !hasClosed) {
+      // 簡單的 iOS 偵測
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+      setIsIOS(isIosDevice);
+      
+      // 延遲 2 秒顯示，讓使用者先看到內容
+      setTimeout(() => setShow(true), 2000);
+    }
+  }, []);
+
+  const handleClose = () => {
+    setShow(false);
+    // 記錄已關閉，7天內不再顯示 (可自行調整邏輯)
+    localStorage.setItem('installGuideClosed', 'true');
+  };
+
+  if (!show) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: '20px', left: '16px', right: '16px',
+      backgroundColor: 'rgba(30, 30, 30, 0.95)', color: '#fff',
+      padding: '20px', borderRadius: '16px',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+      zIndex: 1000, backdropFilter: 'blur(10px)',
+      animation: 'slideUp 0.3s ease-out'
+    }}>
+      {/* 關閉按鈕 */}
+      <button onClick={handleClose} style={{ 
+        position: 'absolute', top: '10px', right: '10px', 
+        background: 'none', border: 'none', color: '#999', cursor: 'pointer' 
+      }}>
+        <X size={20} />
+      </button>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📲 獲得最佳體驗</span>
+        </div>
+        
+        <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: '#ddd' }}>
+          將此應用程式加入主畫面，即可<strong>全螢幕使用</strong>並隱藏網址列。
+        </p>
+
+        {isIOS ? (
+          // iOS 專用教學
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span>1. 點擊瀏覽器下方的</span>
+              <Share size={16} style={{ color: '#007AFF' }} />
+              <span>分享按鈕</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>2. 選擇</span>
+              <span style={{ fontWeight: 'bold', color: '#fff' }}>加入主畫面</span>
+              <PlusSquare size={16} />
+            </div>
+          </div>
+        ) : (
+          // Android / 其他 教學
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
+            點擊瀏覽器選單 (通常在右上角)，選擇 <strong>加入主畫面</strong> 或 <strong>安裝應用程式</strong>。
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };

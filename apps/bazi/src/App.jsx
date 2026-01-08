@@ -7,14 +7,15 @@ import {
 
 import { Preferences } from '@capacitor/preferences';
 
-// 👇 1. 引入我們刚刚做好的共用組件
 import { 
   AppHeader, 
   BookingSystem, 
   AppInfoCard, 
   WebBackupManager, 
   BuyMeCoffee, 
-  AdBanner 
+  AdBanner, 
+  InstallGuide,
+  BottomTabBar
 } from '@my-meta/ui';
 
 // 全域設定
@@ -992,6 +993,8 @@ export default function BaziApp() {
             bookmarks={bookmarks} setBookmarks={setBookmarks}
           />}
       </div>
+
+      <InstallGuide />
 
       <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
           <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
