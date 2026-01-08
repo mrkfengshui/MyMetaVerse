@@ -1,7 +1,7 @@
 // packages/ui/SharedComponents.jsx
 import React, { useEffect, useState } from 'react';
 import { THEME } from './theme';
-import { ChevronRight, Coffee, Share, X, PlusSquare } from 'lucide-react';
+import { ChevronRight, Coffee, Share, X, PlusSquare, Share2, Download, UploadCloud, FileText } from 'lucide-react';
 
 // --- 1. AppHeader ---
 export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
@@ -180,7 +180,7 @@ export const AdBanner = () => {
     <div style={{ 
       margin: '16px 0', 
       textAlign: 'center', 
-      minHeight: '60px', 
+      minHeight: '50px', 
       backgroundColor: '#f9f9f9', 
       overflow: 'hidden',
       display: 'flex',            // 新增：確保內容垂直置中
@@ -389,6 +389,132 @@ export const InstallGuide = () => {
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
+    </div>
+  );
+};
+
+// --- 7. WebBackupManager (支援雲端備份) ---
+export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => {
+  
+  // 產生檔案並觸發備份 (分享或下載)
+  const handleBackup = async () => {
+    if (!data || data.length === 0) return alert('目前沒有資料可供備份');
+
+    const fileName = `${prefix}_${new Date().toISOString().slice(0, 10)}.json`;
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const file = new File([blob], fileName, { type: 'application/json' });
+
+    // 檢測是否支援原生分享 (手機通常支援)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: '備份資料',
+          text: `這是您的 ${prefix} 備份檔案，請選擇儲存至 iCloud、Google Drive 或其他雲端硬碟。`,
+          files: [file],
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('分享失敗:', error);
+          // 如果分享失敗 (例如 PC 不支援)，降級為普通下載
+          downloadFile(blob, fileName);
+        }
+      }
+    } else {
+      // 電腦版或不支援分享的瀏覽器 -> 直接下載
+      downloadFile(blob, fileName);
+    }
+  };
+
+  // 輔助：傳統下載方式
+  const downloadFile = (blob, fileName) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // 處理檔案匯入
+  const handleFileImport = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (Array.isArray(parsed)) {
+          const confirmRestore = window.confirm(
+            `檢測到備份檔案包含 ${parsed.length} 筆資料。\n\n確定要匯入嗎？\n(這將會覆蓋/合併您現有的資料)`
+          );
+          if (confirmRestore) {
+            onRestore(parsed);
+          }
+        } else {
+          alert('檔案格式錯誤：這似乎不是有效的備份檔。');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('讀取失敗：檔案可能已損壞。');
+      }
+      // 清空 input 讓同一個檔案可以再次被選取
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>資料備份與還原</h3>
+      
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, padding: '16px' }}>
+        <p style={{ fontSize: '13px', color: THEME.gray, margin: '0 0 16px 0', lineHeight: '1.5' }}>
+          您可以將資料備份至 <strong>iCloud / Google Drive / Dropbox</strong>，或下載到本機。
+          <br/>換手機時，請在新手機選擇「還原」並選取該檔案。
+        </p>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {/* 備份按鈕 */}
+          <button 
+            onClick={handleBackup}
+            style={{ 
+              flex: 1, padding: '12px', borderRadius: '8px', border: 'none', 
+              backgroundColor: THEME.black, color: 'white', fontWeight: 'bold',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer'
+            }}
+          >
+            <Share2 size={18} />
+            <span>備份 / 匯出</span>
+          </button>
+
+          {/* 還原按鈕 (隱藏 input) */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input 
+              type="file" 
+              accept=".json" 
+              onChange={handleFileImport}
+              style={{ 
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
+                opacity: 0, cursor: 'pointer', zIndex: 2 
+              }} 
+            />
+            <button 
+              style={{ 
+                width: '100%', height: '100%', padding: '12px', borderRadius: '8px', 
+                border: `1px solid ${THEME.border}`, backgroundColor: THEME.white, color: THEME.black, 
+                fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+              }}
+            >
+              <UploadCloud size={18} />
+              <span>還原 / 匯入</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
