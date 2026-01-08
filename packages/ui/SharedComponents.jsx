@@ -416,7 +416,6 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error('分享失敗:', error);
-          // 如果分享失敗 (例如 PC 不支援)，降級為普通下載
           downloadFile(blob, fileName);
         }
       }
@@ -461,7 +460,6 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
         console.error(error);
         alert('讀取失敗：檔案可能已損壞。');
       }
-      // 清空 input 讓同一個檔案可以再次被選取
       event.target.value = '';
     };
     reader.readAsText(file);
@@ -473,25 +471,35 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
       
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, padding: '16px' }}>
         <p style={{ fontSize: '13px', color: THEME.gray, margin: '0 0 16px 0', lineHeight: '1.5' }}>
-          您可以將資料備份至 <strong>iCloud / Google Drive / Dropbox</strong>，或下載到本機。
-          <br/>換手機時，請在新手機選擇「還原」並選取該檔案。
+          您可以將資料備份至 <strong>iCloud / Google Drive</strong>，或下載到本機。
         </p>
 
         <div style={{ display: 'flex', gap: '12px' }}>
-          {/* 備份按鈕 */}
+          {/* 備份按鈕 (主藍色) */}
           <button 
             onClick={handleBackup}
             style={{ 
-              flex: 1, padding: '12px', borderRadius: '8px', border: 'none', 
-              backgroundColor: THEME.black, color: 'white', fontWeight: 'bold',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer'
+              flex: 1, 
+              padding: '12px', 
+              borderRadius: '8px', 
+              border: 'none', 
+              // 改用 THEME.blue
+              backgroundColor: THEME.blue, 
+              color: 'white', 
+              fontWeight: 'bold',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '8px', 
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(24, 144, 255, 0.2)' // 增加一點藍色陰影
             }}
           >
             <Share2 size={18} />
             <span>備份 / 匯出</span>
           </button>
 
-          {/* 還原按鈕 (隱藏 input) */}
+          {/* 還原按鈕 (淺藍色) */}
           <div style={{ flex: 1, position: 'relative' }}>
             <input 
               type="file" 
@@ -504,9 +512,19 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
             />
             <button 
               style={{ 
-                width: '100%', height: '100%', padding: '12px', borderRadius: '8px', 
-                border: `1px solid ${THEME.border}`, backgroundColor: THEME.white, color: THEME.black, 
-                fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                width: '100%', 
+                height: '100%', 
+                padding: '12px', 
+                borderRadius: '8px', 
+                border: 'none', // 移除邊框，讓背景色更純粹
+                // 改用 THEME.bgBlue 和 THEME.blue
+                backgroundColor: THEME.bgBlue, 
+                color: THEME.blue, 
+                fontWeight: 'bold', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '8px'
               }}
             >
               <UploadCloud size={18} />

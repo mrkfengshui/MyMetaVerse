@@ -20,7 +20,8 @@ import {
 
 // 全域設定
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "八字 v1.0";
+const CURRENT_APP_NAME = "八字 by 許甯博"; 
+const APP_VERSION = "v1.0";
 
 const COLORS = {
   jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
@@ -287,8 +288,8 @@ const SettingsView = ({
     colorTheme, setColorTheme,
 }) => {
   // 定義這個 App 獨有的資訊
-  const APP_INFO = {
-    appName: "八字",
+const APP_INFO = {
+    appName: CURRENT_APP_NAME,
     version: APP_VERSION,
     about: "本程式旨在提供專業八字排盤服務，結合子平命理與現代演算法，輔助使用者進行命理分析。",
   };
