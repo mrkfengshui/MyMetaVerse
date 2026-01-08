@@ -868,6 +868,13 @@ export default function BaziApp() {
   
   // 顯示主題 (預設: 五行配色)
   const [colorTheme, setColorTheme] = useState('elemental');
+  // 統一底部導航
+  const tabs = [
+    { id: 'input', label: '排盤', icon: Grid },
+    { id: 'bookmarks', label: '紀錄', icon: Bookmark },
+    { id: 'booking', label: '預約', icon: CalendarCheck },
+    { id: 'settings', label: '設定', icon: Settings },
+  ];
 
   // 讀取設定
   useEffect(() => {
@@ -996,14 +1003,17 @@ export default function BaziApp() {
 
       <InstallGuide />
 
-      <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
-          <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
-              <button onClick={() => { setEditingData(null); setView('input'); }} style={{ background: 'none', border: 'none', color: (view==='input'||view==='result') ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Grid size={22} /><span style={{ fontSize: '10px' }}>排盤</span></button>
-              <button onClick={() => setView('bookmarks')} style={{ background: 'none', border: 'none', color: view==='bookmarks' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Bookmark size={22} /><span style={{ fontSize: '10px' }}>紀錄</span></button>
-              <button onClick={() => setView('booking')} style={{ background: 'none', border: 'none', color: view==='booking' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><CalendarCheck size={22} /><span style={{ fontSize: '10px' }}>預約</span></button>
-              <button onClick={() => setView('settings')} style={{ background: 'none', border: 'none', color: view==='settings' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Settings size={22} /><span style={{ fontSize: '10px' }}>設定</span></button>
-          </div>
-      </div>
+      {/* 底部導航欄 */}
+      <BottomTabBar 
+        tabs={tabs} 
+        currentTab={view === 'result' ? 'input' : view} // 讓 'result' 頁面也亮起 'input' (排盤) 的燈
+        onTabChange={(id) => {
+          if (id === 'input') {
+            setEditingData(null); // 排盤按鈕的特殊邏輯
+          }
+          setView(id);
+        }} 
+      />
     </div>
   );
 }
