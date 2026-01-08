@@ -15,9 +15,8 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
   return (
     <header style={{ 
       backgroundColor: THEME.white, 
-      minheight: '40px', 
-      // ✅ 設定內距：上(安全區域+10px) 下(10px) 左(12px) 右(12px)
-      paddingTop: 'max(env(safe-area-inset-top), 0px)', 
+      minheight: '20px', 
+      paddingTop: 'max(env(safe-area-inset-top), 4px)', 
       boxSizing: 'border-box',
       borderBottom: `1px solid ${THEME.border}`, 
       display: 'flex', 
@@ -30,45 +29,59 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     }}>
       {/* 注入全域 CSS，控制所有 App 的旋轉與顯示行為 */}
       <style>{`
+        /* 0. 強制鎖定為亮色模式 (關鍵修改) */
+        :root {
+          color-scheme: light; /* 告訴瀏覽器此網站不支援深色模式 */
+        }
+
         /* 1. 基礎設定 */
         body {
           margin: 0;
           padding: 0;
-          background-color: #f5f5f5;
+          background-color: #f5f5f5; /* 你的背景色 */
           width: 100vw;
           height: 100vh;
-          /* 預設直屏時隱藏多餘捲軸 */
           overflow-x: hidden; 
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          
+          /* 強制文字顏色，防止系統反轉 */
+          color: #262626; 
+          -webkit-font-smoothing: antialiased;
         }
 
-        /* 2. 針對「橫屏手機」的遮罩提示 (修改版) */
-        @media screen and (orientation: landscape) and (max-width: 1024px) {
+        /* 1.1 強制表單元件顏色 (解決輸入框變黑、文字變白問題) */
+        input, select, textarea {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #e8e8e8; /* 確保邊框顏色正常 */
           
-          /* 隱藏 App 實際內容，防止破版或誤觸 */
-          #root {
-            display: none !important;
-          }
+          /* iOS 特有屬性：強制填色 */
+          -webkit-text-fill-color: #000000 !important; 
+          -webkit-opacity: 1 !important;
+        }
 
-          /* 鎖定 Body，變成全黑背景提示層 */
+        /* 修正 placeholder (提示文字) 在某些夜間模式下變太淡的問題 */
+        ::placeholder {
+          color: #999999 !important;
+          opacity: 1;
+        }
+
+        /* 2. 針對「橫屏手機」的遮罩提示 (原本的邏輯) */
+        @media screen and (orientation: landscape) and (max-width: 1024px) {
+          #root { display: none !important; }
           body {
             background-color: #000 !important;
             width: 100vw !important;
             height: 100vh !important;
             overflow: hidden !important;
             position: fixed !important;
-            top: 0;
-            left: 0;
-            z-index: 99999;
-            
-            /* 使用 Flex 將提示文字置中 */
+            top: 0; left: 0; z-index: 99999;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
             align-items: center !important;
+            color: #fff !important; /* 橫屏提示必須是白色 */
           }
-
-          /* 顯示提示文字 */
           body::after {
             content: "為了最佳體驗，請將螢幕轉為直向 📱";
             color: #fff;
@@ -82,7 +95,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           }
         }
       `}</style>
-      
+
       {/* 左邊：Logo 與 標題 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
         <div style={{ 
