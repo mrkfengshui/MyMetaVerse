@@ -209,7 +209,7 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
   const renderServiceStep = () => (
     <div>
       <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: THEME.black }}>請選擇預約項目</h3>
-      {loadingData ? ( <div style={{ textAlign: 'center', padding: '20px', color: THEME.gray }}>請在努力加載中...</div> ) : (
+      {loadingData ? ( <div style={{ textAlign: 'center', padding: '20px', color: THEME.gray }}>正在努力加載中...</div> ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {onlineServices.map(srv => (
             <div key={srv.id} onClick={() => handleServiceSelect(srv)} style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
