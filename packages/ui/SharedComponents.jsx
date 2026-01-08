@@ -480,7 +480,7 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
             onClick={handleBackup}
             style={{ 
               flex: 1, 
-              padding: '12px', 
+              padding: '14px 16px',
               borderRadius: '8px', 
               border: 'none', 
               // 改用 THEME.blue
@@ -492,7 +492,6 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
               justifyContent: 'center', 
               gap: '8px', 
               cursor: 'pointer',
-              boxShadow: '0 4px 6px rgba(24, 144, 255, 0.2)' // 增加一點藍色陰影
             }}
           >
             <Share2 size={18} />
@@ -514,7 +513,7 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
               style={{ 
                 width: '100%', 
                 height: '100%', 
-                padding: '12px', 
+                padding: '14px 16px', 
                 borderRadius: '8px', 
                 border: 'none', // 移除邊框，讓背景色更純粹
                 // 改用 THEME.bgBlue 和 THEME.blue
