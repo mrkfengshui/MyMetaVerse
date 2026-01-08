@@ -849,10 +849,40 @@ return (
        </div>
        {renderLiuNianGrid()}
        {renderLiuYueGrid()}
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <h4 style={{ margin: '0 0 10px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>五行強弱</h4>
-            {(() => { const wxCounts = calculateWuXingStrength(); const order = ['木', '火', '土', '金', '水']; return ( <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}> <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}> {order.map(elm => ( <div key={elm} style={{ padding: '6px 12px', backgroundColor: THEME.bgGray, borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}> {elm}: <span style={{ fontWeight: 'bold', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>{wxCounts[elm]}</span> </div> ))} </div> </div> ); })()}
-      </div>
+        {/* 五行強弱 (修改後：5等分, 單行, 不換行) */}
+        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
+            {(() => { 
+                const wxCounts = calculateWuXingStrength(); 
+                const order = ['木', '火', '土', '金', '水']; 
+                return ( 
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(5, 1fr)', // 關鍵：5等分
+                        gap: '4px' // 間距縮小一點，避免手機版太擠
+                    }}> 
+                        {order.map(elm => ( 
+                            <div key={elm} style={{ 
+                                padding: '8px 2px', // 上下8px, 左右2px (節省空間)
+                                backgroundColor: THEME.bgGray, 
+                                borderRadius: '8px', 
+                                fontSize: '13px', 
+                                display: 'flex', 
+                                flexDirection: 'column', // 改為垂直排列 (字在下，數字在上，或反之)，這裡保持水平但置中
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                whiteSpace: 'nowrap' // 強制不換行
+                            }}> 
+                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}</span>
+                                <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
+                                    {wxCounts[elm]}
+                                </span> 
+                            </div> 
+                        ))} 
+                    </div> 
+                ); 
+            })()}
+        </div>
      </div>
    );
 };
