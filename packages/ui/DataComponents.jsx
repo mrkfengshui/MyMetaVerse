@@ -53,7 +53,7 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
 };
 
 // 按鈕樣式
-const dataBtnStyle = { 
+export const dataBtnStyle = { 
     width: '100%', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
     border: 'none', background: 'none', borderBottom: `1px solid ${THEME.bg}`, 
     cursor: 'pointer'
