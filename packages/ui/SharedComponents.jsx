@@ -15,7 +15,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
   return (
     <header style={{ 
       backgroundColor: THEME.white, 
-      minheight: '2px', 
+      minHeight: '4px', 
       paddingTop: 'max(env(safe-area-inset-top), 2px)', 
       paddingLeft: '12px',
       paddingRight: '12px',
