@@ -890,6 +890,7 @@ return (
 
 // --- 7. 主程式 (BaziApp) ---
 export default function BaziApp() {
+  useProtection(['mrkfengshui.com', 'localhost']);
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
   const [baziData, setBaziData] = useState(null);

@@ -1,32 +1,37 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
 // 1. 引入共用 UI 與 設定
 import { 
   AppHeader, 
-  BookingSystem, 
+  BottomTabBar,      // 新增：底部導航
+  AdBanner, 
   AppInfoCard, 
   WebBackupManager, 
   BuyMeCoffee, 
-  AdBanner,
+  InstallGuide,      // 新增：安裝引導
+  BookmarkList,      // 新增：共用書籤列表
+  BookingSystem, 
+  useProtection,     // 新增：網域保護
   THEME, 
-  COLORS 
+  COLORS,
+  COMMON_STYLES      // 新增：共用版面樣式
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
   ChevronLeft, ChevronRight, Bookmark, Settings, 
-  Calendar as CalendarIcon, X, Sparkles, Grid, 
-  Check, CalendarCheck, User, Trash2, Edit3, 
-  RefreshCw, Search
+  Calendar as CalendarIcon, Sparkles, Grid, 
+  CalendarCheck, Trash2, Edit3, RefreshCw, 
+  ChevronDown // 用於 Settings 的折疊
 } from 'lucide-react';
 
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 // 全域設定
-const APP_VERSION = "元星紫微 v1.0";
+const APP_VERSION = "元星紫微 v1.1";
+// 替換為您的 Apps Script URL
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-
-// 註：COLORS 和 THEME 已改從 @my-meta/ui 引入，這裡不再重複定義
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -1018,12 +1023,15 @@ const SettingsView = ({
           <ToggleSelector options={[{val: 'year', label: '年馬'}, {val: 'month', label: '月馬'}]} currentValue={tianMaType} onChange={setTianMaType} />
       </div>
 
+      {/* 使用 WebBackupManager 共用組件 */}
       <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="ZHIWEI_BACKUP" />
+      {/* 使用 AppInfoCard 共用組件 */}
       <AppInfoCard info={APP_INFO} />
+      {/* 使用 BuyMeCoffee 共用組件 */}
       <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
-          <button onClick={handleReset} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+          <button onClick={handleReset} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
@@ -1033,6 +1041,7 @@ const SettingsView = ({
 
 // --- 主程式 ---
 export default function ZwdsApp() {
+  useProtection(['mrkfengshui.com', 'localhost']);
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
   const [resultData, setResultData] = useState(null);
@@ -1108,18 +1117,36 @@ export default function ZwdsApp() {
       } catch (e) { console.error("Open Bookmark Error:", e); alert('讀取失敗：' + (e.message || '未知錯誤')); }
   };
 
+// 定義底部導航欄的 Tabs
+  const TABS = [
+    { id: 'input', label: '排盤', icon: Grid },
+    { id: 'bookmarks', label: '紀錄', icon: Bookmark },
+    { id: 'booking', label: '預約', icon: CalendarCheck },
+    { id: 'settings', label: '設定', icon: Settings },
+  ];
+
+  // 處理 Tab 切換邏輯
+  const handleTabChange = (tabId) => {
+      if (tabId === 'input') {
+          // 如果正在看結果，切回輸入頁時清空編輯狀態
+          setEditingData(null);
+      }
+      setView(tabId);
+  };
+
+  // 計算當前激活的 Tab (如果 view 是 'result'，視為 'input' Tab)
+  const currentTab = view === 'result' ? 'input' : view;
+
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入斗數星曆...</div>;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: THEME.white, fontFamily: '-apple-system, sans-serif', paddingTop: 'max(env(safe-area-inset-top), 25px)', width: '100vw', overflow: 'hidden' }}>
-      <style>{`
-        @font-face { font-family: '青柳隷書SIMO2_T'; src: url('/fonts/AoyagiReishoSIMO2_T.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
-        * { box-sizing: border-box; } body { margin: 0; }
-      `}</style>
-
+    // 使用 COMMON_STYLES.fullScreen 取代手寫樣式
+    <div style={COMMON_STYLES.fullScreen}>
+      {/* 2. 使用 AppHeader (自動注入 fonts, global CSS) */}
       <AppHeader title="元星紫微" logoChar={{ main: '紫', sub: '微' }} />
 
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {/* 內容區塊使用 COMMON_STYLES.contentArea */}
+      <div style={COMMON_STYLES.contentArea}>
           {view === 'input' && (
             <>
               <ZwdsInput onCalculate={handleCalculate} initialData={editingData} />
@@ -1133,29 +1160,23 @@ export default function ZwdsApp() {
             </>
           )}
           {view === 'bookmarks' && (
-              <div style={{ padding: '16px', backgroundColor: THEME.bg, flex: 1 }}>
+              <div style={{ padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: '#ffffff', borderRadius: '8px' }}>
-                    <h2 style={{ fontWeight: 'bold', color: '#000', margin: 0 }}>我的命盤紀錄 ({bookmarks.length})</h2>
+                    <h2 style={{ fontWeight: 'bold', color: '#000', margin: 0 }}>我的命盤紀錄</h2>
                   </div>
-                  {bookmarks.length === 0 ? <p style={{ color: '#888', textAlign: 'center', marginTop: '40px' }}>暫無紀錄</p> : bookmarks.map((b, i) => (
-                    <div key={b.id || i} onClick={() => openBookmark(b)} style={{ padding: '16px', backgroundColor: '#ffffff', marginBottom: '10px', borderRadius: '12px', border: `1px solid ${THEME.border}`, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{b.name}</div>
-                                <div style={{ fontSize: '12px', color: '#888' }}>({b.genderText})</div>
-                            </div>
-                            <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: '500' }}>{b.mingGongStars || '未定義'}</div>
-                            <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{b.solarDateStr}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={(e) => {e.stopPropagation(); setEditingData({...b.rawDate, id: b.id}); setView('input');}} style={{ padding: '8px', backgroundColor: THEME.bgBlue, border: 'none', borderRadius: '50%', color: THEME.blue, cursor: 'pointer' }}><Edit3 size={16} /></button>
-                            <button onClick={(e) => deleteBookmark(b.id, e)} style={{ padding: '8px', backgroundColor: THEME.bgRed, border: 'none', borderRadius: '50%', color: THEME.red, cursor: 'pointer' }}><Trash2 size={16} /></button>
-                        </div>
-                    </div>
-                ))}
+                  {/* 3. 使用共用 BookmarkList */}
+                  <BookmarkList 
+                    bookmarks={bookmarks}
+                    onSelect={openBookmark}
+                    onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
+                    onDelete={deleteBookmark}
+                  />
               </div>
           )}
-          {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
+          {view === 'booking' && (
+             // 4. 使用 BookingSystem
+             <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />
+          )}
           {view === 'settings' && 
             <SettingsView 
                 siHuaRules={siHuaRules} setSiHuaRules={setSiHuaRules}
@@ -1169,14 +1190,11 @@ export default function ZwdsApp() {
           }
       </div>
 
-      <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
-        <div style={{ backgroundColor: '#ffffff', borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
-              <button onClick={() => { setEditingData(null); setView('input'); }} style={{ background: 'none', border: 'none', color: (view==='input'||view==='result') ? THEME.blue : '#888', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Grid size={22} /><span style={{ fontSize: '10px' }}>排盤</span></button>
-              <button onClick={() => setView('bookmarks')} style={{ background: 'none', border: 'none', color: view==='bookmarks' ? THEME.blue : '#888', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Bookmark size={22} /><span style={{ fontSize: '10px' }}>紀錄</span></button>
-              <button onClick={() => setView('booking')} style={{ background: 'none', border: 'none', color: view==='booking' ? THEME.blue : '#888', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><CalendarCheck size={22} /><span style={{ fontSize: '10px' }}>預約</span></button>
-              <button onClick={() => setView('settings')} style={{ background: 'none', border: 'none', color: view==='settings' ? THEME.blue : '#888', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Settings size={22} /><span style={{ fontSize: '10px' }}>設定</span></button>
-          </div>
-      </div>
+      {/* 5. 使用 BottomTabBar */}
+      <BottomTabBar tabs={TABS} currentTab={currentTab} onTabChange={handleTabChange} />
+
+      {/* 6. 加入 InstallGuide */}
+      <InstallGuide />
     </div>
   );
 }
