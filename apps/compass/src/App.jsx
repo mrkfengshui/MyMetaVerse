@@ -1,1552 +1,1110 @@
-import React, { useState, useEffect, useMemo } from 'react';
-// 1. 引入共用 UI 和 工具
-import { AppHeader, useProtection, THEME, COMMON_STYLES } from '@my-meta/ui';
-// 2. 引入 Icon (原本的)
-import { Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase } from 'lucide-react';
-// --- 核心數據定義 ---
-const MOUNTAINS = [
-    { name: '子', angle: 0, gua: '坎', yuan: '天' }, { name: '癸', angle: 15, gua: '坎', yuan: '人' },
-    { name: '丑', angle: 30, gua: '艮', yuan: '地' }, { name: '艮', angle: 45, gua: '艮', yuan: '天' }, { name: '寅', angle: 60, gua: '艮', yuan: '人' },
-    { name: '甲', angle: 75, gua: '震', yuan: '地' }, { name: '卯', angle: 90, gua: '震', yuan: '天' }, { name: '乙', angle: 105, gua: '震', yuan: '人' },
-    { name: '辰', angle: 120, gua: '巽', yuan: '地' }, { name: '巽', angle: 135, gua: '巽', yuan: '天' }, { name: '巳', angle: 150, gua: '巽', yuan: '人' },
-    { name: '丙', angle: 165, gua: '離', yuan: '地' }, { name: '午', angle: 180, gua: '離', yuan: '天' }, { name: '丁', angle: 195, gua: '離', yuan: '人' },
-    { name: '未', angle: 210, gua: '坤', yuan: '地' }, { name: '坤', angle: 225, gua: '坤', yuan: '天' }, { name: '申', angle: 240, gua: '坤', yuan: '人' },
-    { name: '庚', angle: 255, gua: '兌', yuan: '地' }, { name: '酉', angle: 270, gua: '兌', yuan: '天' }, { name: '辛', angle: 285, gua: '兌', yuan: '人' },
-    { name: '戌', angle: 300, gua: '乾', yuan: '地' }, { name: '乾', angle: 315, gua: '乾', yuan: '天' }, { name: '亥', angle: 330, gua: '乾', yuan: '人' },
-    { name: '壬', angle: 345, gua: '坎', yuan: '地' }, 
-];
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  ChevronLeft, ChevronRight, Bookmark, Settings, 
+  Calendar as CalendarIcon, X, Sparkles, Grid, 
+  Check, CalendarCheck, User, ArrowRight, Zap, Compass, List,
+  Trash2, Edit3, Eye, EyeOff, RefreshCw, Search,
+  House, LampDesk,
+} from 'lucide-react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
-const YIN_YANG_MAP = {
-    1: { '地': 1, '天': -1, '人': -1 }, 2: { '地': -1, '天': 1, '人': 1 },
-    3: { '地': 1, '天': -1, '人': -1 }, 4: { '地': -1, '天': 1, '人': 1 },
-    5: { '地': -1, '天': 1, '人': 1 },  6: { '地': -1, '天': 1, '人': 1 },
-    7: { '地': 1, '天': -1, '人': -1 }, 8: { '地': -1, '天': 1, '人': 1 },
-    9: { '地': 1, '天': -1, '人': -1 },
+// --- 0. 全域設定 ---
+const APP_VERSION = "v3.4 Calendar Pro (Web Compatible)";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+
+const COLORS = {
+  jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
+  ji: '#D2B48C', geng: '#FFA500', xin: '#FFD700', ren: '#00008B', gui: '#87CEEB',
 };
 
-const LUOSHU_PATH = [4, 8, 5, 6, 1, 7, 2, 3, 0]; 
-const DIRECTION_MAP = { '巽': 0, '離': 1, '坤': 2, '震': 3, '中': 4, '兌': 5, '艮': 6, '坎': 7, '乾': 8 };
-
-// --- 進階風水數據 ---
-
-const EIGHT_KILLINGS = {
-    '坎': '辰', '坤': '卯', '震': '申', '巽': '酉',
-    '乾': '午', '兌': '巳', '艮': '寅', '離': '亥'
+const THEME = {
+  red: '#ff4d4f', blue: '#1890ff', teal: '#13c2c2', orange: '#fa8c16',
+  purple: '#722ed1', black: '#262626', gray: '#8c8c8c', lightGray: '#d1d5db',
+  bg: '#f0f2f5', white: '#ffffff', bgGray: '#f9fafb', border: '#e8e8e8',
+  bgRed: '#fff1f0', bgBlue: '#e6f7ff', bgOrange: '#fff7e6', vermillion: '#ce0000'
 };
 
-const YELLOW_SPRING = {
-    '庚': '坤', '丁': '坤',
-    '坤': ['庚', '丁'],
-    '丙': '巽', '乙': '巽',
-    '巽': ['丙', '乙'],
-    '甲': '艮', '癸': '艮',
-    '艮': ['甲', '癸'],
-    '壬': '乾', '辛': '乾',
-    '乾': ['辛', '壬']
+const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+const SAN_NIANG_DAYS = [3, 7, 13, 18, 22, 27];
+
+// 對應顏色映射
+const STEM_COLORS = [COLORS.jia, COLORS.yi, COLORS.bing, COLORS.ding, COLORS.wu, COLORS.ji, COLORS.geng, COLORS.xin, COLORS.ren, COLORS.gui];
+const BRANCH_COLORS = [COLORS.ren, COLORS.ji, COLORS.jia, COLORS.yi, COLORS.wu, COLORS.ding, COLORS.bing, COLORS.ji, COLORS.geng, COLORS.xin, COLORS.wu, COLORS.gui];
+
+// --- 進退氣規則庫 ---
+const QI_RULES = {
+  stems: [[[-2, 4], [8, 14]], [[-3, 3], [7, 13]], [[-4, 2], [6, 12]], [[5, 11]], [[4, 10]], [[3, 9]], [[2, 8]], [[1, 7]], [[0, 6]], [[-1, 5], [9, 15]]],
+  branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
 };
 
-const EAR_LATE_WATER = {
-    '乾': { early: '離', late: '艮' },
-    '坎': { early: '兌', late: '坤' },
-    '艮': { early: '乾', late: '震' },
-    '震': { early: '艮', late: '離' },
-    '巽': { early: '坤', late: '兌' },
-    '離': { early: '震', late: '乾' },
-    '坤': { early: '坎', late: '巽' },
-    '兌': { early: '巽', late: '坎' }
+// --- 輔助函式與對照表 ---
+const JIAN_FIX_MAP = { '满': '滿', '执': '執', '开': '開', '闭': '閉', '建': '建', '除': '除', '平': '平', '定': '定', '破': '破', '危': '危', '成': '成', '收': '收' };
+const XIU_FIX_MAP = { '虚': '虛', '娄': '婁', '毕': '畢', '参': '參', '张': '張', '轸': '軫', '角': '角', '亢': '亢', '氐': '氐', '房': '房', '心': '心', '尾': '尾', '箕': '箕', '斗': '斗', '牛': '牛', '女': '女', '虛': '虛', '危': '危', '室': '室', '壁': '壁', '奎': '奎', '婁': '婁', '胃': '胃', '昴': '昴', '畢': '畢', '觜': '觜', '參': '參', '井': '井', '鬼': '鬼', '柳': '柳', '星': '星', '張': '張', '翼': '翼', '軫': '軫' };
+const JIAN_CHU_COLOR_MAP = { '建': THEME.red, '除': THEME.blue, '滿': THEME.red, '平': THEME.red, '定': THEME.blue, '執': THEME.blue, '破': THEME.red, '危': THEME.red, '成': THEME.blue, '收': THEME.red, '開': THEME.blue, '閉': THEME.red };
+const XIU_COLOR_MAP = { '角': THEME.blue, '房': THEME.blue, '心': THEME.red, '箕': THEME.blue, '斗': THEME.blue, '牛': THEME.red, '女': THEME.red, '虛': THEME.red, '危': THEME.red, '室': THEME.blue, '壁': THEME.blue, '奎': THEME.red, '婁': THEME.blue, '胃': THEME.blue, '亢': THEME.red, '氐': THEME.red, '尾': THEME.blue, '鬼': THEME.red, '柳': THEME.red, '星': THEME.red, '張': THEME.blue, '翼': THEME.red, '軫': THEME.blue, '畢': THEME.blue, '觜': THEME.red, '參': THEME.blue, '井': THEME.blue, '昴': THEME.red };
+const XIU_FULL_NAME_MAP = { '角': '角木蛟', '亢': '亢金龍', '氐': '氐土貉', '房': '房日兔', '心': '心月狐', '尾': '尾火虎', '箕': '箕水豹', '斗': '斗木獬', '牛': '牛金牛', '女': '女土蝠', '虛': '虛日鼠', '危': '危月燕', '室': '室火豬', '壁': '壁水貐', '奎': '奎木狼', '婁': '婁金狗', '胃': '胃土雉', '昴': '昴日雞', '畢': '畢月烏', '觜': '觜火猴', '參': '參水猿', '井': '井木犴', '鬼': '鬼金羊', '柳': '柳土獐', '星': '星日馬', '張': '張月鹿', '翼': '翼火蛇', '軫': '軫水蚓' };
+
+const DONG_GONG_RULES = {
+  1: { '寅': { r: '凶', t: '建寅日：往亡日。不利起造、結婚姻。' }, '卯': { r: '凶', t: '除卯日：不宜起造、婚姻。' }, '辰': { r: '凶', t: '滿辰日：天富、天賊。' }, '巳': { r: '凶', t: '平巳日：小紅沙日，百事大凶。' }, '午': { r: '吉', t: '定午日：黃沙日，諸吉星蓋照，大吉。' }, '未': { r: '凶', t: '執未日：天賊、朱雀。' }, '申': { r: '凶', t: '破申日：朱雀、勾絞。' }, '酉': { r: '凶', t: '危酉日：辛酉正四廢。', s: {'丁酉': '次吉'} }, '戌': { r: '凶', t: '成戌日：天喜、地網。' }, '亥': { r: '凶', t: '收亥日：勾絞星臨。' }, '子': { r: '次吉', t: '開子日：甲子自死。', s: {'戊子': '吉', '丙子': '吉', '庚子': '吉'} }, '丑': { r: '凶', t: '閉丑日：不利婚姻。' } },
+  2: { '卯': { r: '凶', t: '建卯日：天地轉煞。' }, '辰': { r: '凶', t: '除辰日：不利移居。' }, '巳': { r: '吉', t: '滿巳日：天空、往亡。' }, '午': { r: '平', t: '平午日：只宜作生基。' }, '未': { r: '凶', t: '定未日：不利婚姻。', s: {'癸未': '吉'} }, '申': { r: '吉', t: '執申日：天月二德。', s: {'庚申': '凶'} }, '酉': { r: '凶', t: '破酉日：小紅沙。' }, '戌': { r: '次吉', t: '危戌日：宜合板。', s: {'丙戌': '凶', '壬戌': '凶'} }, '亥': { r: '吉', t: '成亥日：天喜。' }, '子': { r: '凶', t: '收子日：忌婚姻。' }, '丑': { r: '凶', t: '開丑日：不利造作。' }, '寅': { r: '平', t: '閉寅日：黃沙日。' } },
+  3: { '辰': { r: '凶', t: '建辰日：地網。' }, '巳': { r: '吉', t: '除巳日：丁巳吉。', s: {'丁巳': '吉', '己巳': '吉'} }, '午': { r: '平', t: '滿午日：甲午土鬼。', s: {'壬午': '次吉'} }, '未': { r: '凶', t: '平未日：不宜用事。' }, '申': { r: '吉', t: '定申日：甲申大吉。', s: {'戊申': '凶', '庚申': '凶'} }, '酉': { r: '吉', t: '執酉日：乙酉吉。', s: {'辛酉': '凶'} }, '戌': { r: '凶', t: '破戌日：月建沖破。' }, '亥': { r: '次吉', t: '危亥日：己亥次吉。' }, '子': { r: '凶', t: '成子日：黃沙。' }, '丑': { r: '凶', t: '收丑日：小紅沙。' }, '寅': { r: '吉', t: '開寅日：戊寅天赦。' }, '卯': { r: '凶', t: '閉卯日：百事不宜。' } },
+  4: { '巳': { r: '凶', t: '建巳日：小紅沙。' }, '午': { r: '吉', t: '除午日：黃沙。', s: {'丙午': '凶', '戊午': '凶'} }, '未': { r: '次吉', t: '滿未日：辛未次吉。' }, '申': { r: '凶', t: '平申日：朱雀。' }, '酉': { r: '凶', t: '定酉日：九土鬼。' }, '戌': { r: '凶', t: '執戌日：丙戌大凶。', s: {'甲戌': '次吉'} }, '亥': { r: '凶', t: '破亥日：往亡日。' }, '子': { r: '吉', t: '危子日：庚子大吉。', s: {'甲子': '凶', '壬子': '凶'} }, '丑': { r: '凶', t: '成丑日：天喜。' }, '寅': { r: '凶', t: '收寅日：天喜。' }, '卯': { r: '吉', t: '開卯日：辛卯大吉。' }, '辰': { r: '凶', t: '閉辰日：戊辰大凶。' } },
+  5: { '午': { r: '凶', t: '建午日：天地轉煞。', s: {'甲午': '次吉'} }, '未': { r: '次吉', t: '除未日：乙未不利。', s: {'乙未': '凶'} }, '申': { r: '吉', t: '滿申日：甲申吉。', s: {'壬申': '凶', '庚申': '平'} }, '酉': { r: '凶', t: '平酉日：小紅沙。' }, '戌': { r: '吉', t: '定戌日：甲戌大吉。', s: {'丙戌': '凶', '壬戌': '凶'} }, '亥': { r: '次吉', t: '執亥日：乙亥次吉。', s: {'癸亥': '凶'} }, '子': { r: '凶', t: '破子日：天賊。' }, '丑': { r: '凶', t: '危丑日：丁丑大凶。' }, '寅': { r: '吉', t: '成寅日：黃沙。' }, '卯': { r: '凶', t: '收卯日：往亡。' }, '辰': { r: '吉', t: '開辰日：丙辰大吉。', s: {'戊辰': '凶', '甲辰': '凶'} }, '巳': { r: '吉', t: '閉巳日：乙巳大吉。' } },
+  6: { '未': { r: '凶', t: '建未日：乙未大凶。' }, '申': { r: '吉', t: '除申日：甲申大吉。', s: {'丙申': '凶'} }, '酉': { r: '次吉', t: '滿酉日：乙酉次吉。', s: {'丁酉': '凶', '己酉': '凶'} }, '戌': { r: '凶', t: '平成日：諸事招官非。', s: {'甲戌': '次吉'} }, '亥': { r: '吉', t: '定亥日：丁亥大吉。', s: {'辛亥': '凶', '癸亥': '凶'} }, '子': { r: '次吉', t: '執子日：黃沙。', s: {'丙子': '吉', '庚子': '吉', '甲子': '凶', '壬子': '凶'} }, '丑': { r: '凶', t: '破丑日：小紅沙。' }, '寅': { r: '吉', t: '危寅日：甲寅大吉。' }, '卯': { r: '吉', t: '成卯日：天喜。' }, '辰': { r: '次吉', t: '收辰日：甲辰天德。' }, '巳': { r: '次吉', t: '開巳日：乙巳次吉。' }, '午': { r: '平', t: '閉午日：往亡。', s: {'戊午': '凶'} } },
+  7: { '申': { r: '凶', t: '建申日：庚申煞。' }, '酉': { r: '次吉', t: '除酉日：往亡。', s: {'辛酉': '凶'} }, '戌': { r: '凶', t: '滿戌日：天富。' }, '亥': { r: '凶', t: '平亥日：螣蛇纏繞。' }, '子': { r: '吉', t: '定子日：丙子大吉。', s: {'甲子': '凶', '壬子': '凶'} }, '丑': { r: '凶', t: '執丑日：丁丑不可用。' }, '寅': { r: '凶', t: '破寅日：甲寅正四廢。' }, '卯': { r: '吉', t: '危卯日：癸卯大吉。', s: {'乙卯': '凶'} }, '辰': { r: '次吉', t: '成辰日：天喜。', s: {'戊辰': '凶', '甲辰': '凶'} }, '巳': { r: '凶', t: '收巳日：小紅沙。' }, '午': { r: '吉', t: '開午日：黃沙。', s: {'庚午': '凶'} }, '未': { r: '次吉', t: '閉未日：天成。', s: {'乙未': '凶'} } },
+  8: { '酉': { r: '凶', t: '建酉日：小紅沙。' }, '戌': { r: '次吉', t: '除戌日：庚戌次吉。', s: {'丙戌': '凶', '壬戌': '凶'} }, '亥': { r: '吉', t: '滿亥日：天富。', s: {'癸亥': '凶'} }, '子': { r: '吉', t: '平子日：往亡。', s: {'甲子': '凶', '壬子': '凶'} }, '丑': { r: '次吉', t: '定丑日：辛丑次吉。', s: {'己丑': '凶'} }, '寅': { r: '吉', t: '執寅日：黃沙。', s: {'甲寅': '凶'} }, '卯': { r: '次吉', t: '破卯日：天賊。', s: {'乙卯': '凶'} }, '辰': { r: '吉', t: '危辰日：壬辰大吉。', s: {'甲辰': '凶'} }, '巳': { r: '吉', t: '成巳日：天喜。' }, '午': { r: '次吉', t: '收午日：福星。', s: {'戊午': '凶', '庚午': '凶'} }, '未': { r: '次吉', t: '開未日：丁未次吉。', s: {'乙未': '凶'} }, '申': { r: '吉', t: '閉申日：戊申天赦。' } },
+  9: { '戌': { r: '凶', t: '建戌日：餘戌大凶。', s: {'丙戌': '吉'} }, '亥': { r: '吉', t: '除亥日：天成。', s: {'癸亥': '凶'} }, '子': { r: '吉', t: '滿子日：黃沙。', s: {'壬子': '凶'} }, '丑': { r: '凶', t: '平丑日：小紅沙。' }, '寅': { r: '吉', t: '定寅日：丙寅大吉。', s: {'甲寅': '凶'} }, '卯': { r: '吉', t: '執卯日：辛卯大吉。', s: {'乙卯': '凶'} }, '辰': { r: '次吉', t: '破辰日：往亡。', s: {'戊辰': '凶', '甲辰': '凶'} }, '巳': { r: '吉', t: '危巳日：乙巳大吉。' }, '午': { r: '吉', t: '成午日：天喜。' }, '未': { r: '次吉', t: '收未日：己未次吉。', s: {'乙未': '凶'} }, '申': { r: '次吉', t: '開申日：天賊。', s: {'庚申': '凶'} }, '酉': { r: '凶', t: '閉酉日：暴敗。' } },
+  10: { '亥': { r: '凶', t: '建亥日：不利起造。' }, '子': { r: '凶', t: '除子日：轉煞。', s: {'甲子': '次吉'} }, '丑': { r: '凶', t: '滿丑日：天富。' }, '寅': { r: '次吉', t: '平寅日：甲寅上吉。', s: {'甲寅': '吉'} }, '卯': { r: '吉', t: '定卯日：乙卯大吉。' }, '辰': { r: '凶', t: '執辰日：甲辰只可偷修。' }, '巳': { r: '凶', t: '破巳日：小紅沙。', s: {'乙巳': '次吉'} }, '午': { r: '吉', t: '危午日：黃沙。', s: {'丙午': '凶'} }, '未': { r: '凶', t: '成未日：乙未煞。', s: {'癸未': '吉'} }, '申': { r: '吉', t: '收申日：甲申大吉。', s: {'庚申': '凶'} }, '酉': { r: '吉', t: '開酉日：乙酉上吉。' }, '戌': { r: '次吉', t: '閉戌日：甲戌月德。', s: {'丙戌': '凶', '戊戌': '凶'} } },
+  11: { '子': { r: '凶', t: '建子日：火星。' }, '丑': { r: '吉', t: '除丑日：天乙。' }, '寅': { r: '吉', t: '滿寅日：黃沙。' }, '卯': { r: '凶', t: '平卯日：天賊。', s: {'乙卯': '次吉'} }, '辰': { r: '凶', t: '定辰日：天羅地網。', s: {'壬辰': '次吉'} }, '巳': { r: '吉', t: '執巳日：乙巳大吉。', s: {'丁巳': '凶'} }, '午': { r: '凶', t: '破午日：天賊。' }, '未': { r: '吉', t: '危未日：丁未大吉。', s: {'乙未': '凶'} }, '申': { r: '吉', t: '成申日：天喜。', s: {'庚申': '凶', '丙申': '凶'} }, '酉': { r: '凶', t: '收酉日：小紅沙。' }, '戌': { r: '次吉', t: '開戌日：往亡。', s: {'甲戌': '吉', '丙戌': '凶', '壬戌': '凶'} }, '亥': { r: '吉', t: '閉亥日：乙亥大吉。', s: {'癸亥': '凶', '辛亥': '凶'} } },
+  12: { '丑': { r: '次吉', t: '建丑日：小紅沙。' }, '寅': { r: '吉', t: '除寅日：庚寅大吉。' }, '卯': { r: '次吉', t: '滿卯日：天富。' }, '辰': { r: '凶', t: '平辰日：到州星。', s: {'壬辰': '次吉', '庚辰': '次吉'} }, '巳': { r: '凶', t: '定巳日：天成。', s: {'癸巳': '次吉'} }, '午': { r: '吉', t: '執午日：庚午吉。', s: {'丙午': '凶'} }, '未': { r: '吉', t: '破未日：丁未大吉。', s: {'己未': '凶', '辛未': '凶', '乙未': '凶'} }, '申': { r: '次吉', t: '危申日：庚申次吉。' }, '酉': { r: '吉', t: '成酉日：天喜。' }, '戌': { r: '次吉', t: '收戌日：庚戌先凶後吉。', s: {'丙戌': '凶', '壬戌': '凶', '戊戌': '凶'} }, '亥': { r: '吉', t: '開亥日：天賊。', s: {'癸亥': '凶', '辛亥': '凶'} }, '子': { r: '凶', t: '閉子日：黃沙。' } }
 };
 
-const NA_JIA = {
-    '乾': ['甲'],
-    '坎': ['癸', '申', '子', '辰'],
-    '艮': ['丙'],
-    '震': ['庚', '亥', '卯', '未'],
-    '巽': ['辛'],
-    '離': ['壬', '寅', '午', '戌'],
-    '坤': ['乙'],
-    '兌': ['丁', '巳', '酉', '丑']
+const GET_SHI_CHEN_MAPPING = (rule) => {
+  const base = [
+    { name: '丑', time: '01:00-03:00', hour: 2 }, { name: '寅', time: '03:00-05:00', hour: 4 }, { name: '卯', time: '05:00-07:00', hour: 6 },
+    { name: '辰', time: '07:00-09:00', hour: 8 }, { name: '巳', time: '09:00-11:00', hour: 10 }, { name: '午', time: '11:00-13:00', hour: 12 },
+    { name: '未', time: '13:00-15:00', hour: 14 }, { name: '申', time: '15:00-17:00', hour: 16 }, { name: '酉', time: '17:00-19:00', hour: 18 },
+    { name: '戌', time: '19:00-21:00', hour: 20 }, { name: '亥', time: '21:00-23:00', hour: 22 }
+  ];
+  return rule === 'ziShi' 
+    ? [{ name: '子', time: '23:00-01:00', hour: 0 }, ...base]
+    : [{ name: '早子', time: '00:00-01:00', hour: 0 }, ...base, { name: '夜子', time: '23:00-24:00', hour: 23 }];
 };
 
-const FAN_GUA_CONFIG = {
-    '坎': { mt: '兌', water: '坎' }, 
-    '艮': { mt: '離', water: '艮' }, 
-    '震': { mt: '坤', water: '震' }, 
-    '巽': { mt: '乾', water: '巽' }, 
-    '離': { mt: '艮', water: '離' }, 
-    '坤': { mt: '震', water: '坤' }, 
-    '兌': { mt: '坎', water: '兌' }, 
-    '乾': { mt: '巽', water: '乾' }, 
+const getDefaultTimeIndex = (hour, rule) => {
+  const mapping = GET_SHI_CHEN_MAPPING(rule);
+  if (rule === 'ziShi') {
+    if (hour >= 23 || hour < 1) return 0;
+    for (let i = 1; i < mapping.length; i++) { if (hour >= mapping[i].hour && hour < mapping[i].hour + 2) return i; }
+  } else {
+    if (hour === 23) return 12; if (hour === 0) return 0;
+    for (let i = 1; i < mapping.length - 1; i++) { if (hour >= mapping[i].hour && hour < mapping[i].hour + 2) return i; }
+  }
+  return 6; 
 };
 
-const BA_ZHAI_INFO = {
-    '生氣': { type: '吉', color: '#389e0d', star: '貪狼', desc: '大吉之位。主財運亨通、事業騰達、活力充沛。' },
-    '天醫': { type: '吉', color: '#096dd9', star: '巨門', desc: '次吉之位。主健康長壽、貴人相助、祛病消災。' },
-    '延年': { type: '吉', color: '#13c2c2', star: '武曲', desc: '中吉之位。主婚姻和諧、人際圓滿、家庭和睦。' },
-    '伏位': { type: '吉', color: '#595959', star: '輔弼', desc: '小吉之位。主平穩安定、守成待機。' },
-    '絕命': { type: '凶', color: '#cf1322', star: '破軍', desc: '大凶之位。主意外傷災、破財損丁、健康受損。' },
-    '五鬼': { type: '凶', color: '#d46b08', star: '廉貞', desc: '大凶之位。主口舌是非、官司火災、小人背叛。' },
-    '六煞': { type: '凶', color: '#c41d7f', star: '文曲', desc: '中凶之位。主桃花糾紛、家庭不睦、淫亂破財。' },
-    '禍害': { type: '凶', color: '#8c8c8c', star: '祿存', desc: '小凶之位。主官司訴訟、是非口舌、財物遺失。' }
+const useLunarScript = () => {
+  const [status, setStatus] = useState('loading');
+  useEffect(() => {
+    if (window.Lunar && window.Solar) { setStatus('ready'); return; }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js';
+    script.async = true;
+    script.onload = () => { if (window.Solar) setStatus('ready'); else setStatus('error'); };
+    script.onerror = () => setStatus('error');
+    document.body.appendChild(script);
+  }, []);
+  return status;
 };
 
-const BA_ZHAI_MAPPING = {
-    '坎': { '坎': '伏位', '巽': '生氣', '震': '天醫', '離': '延年', '坤': '絕命', '艮': '五鬼', '乾': '六煞', '兌': '禍害' },
-    '坤': { '坤': '伏位', '艮': '生氣', '兌': '天醫', '乾': '延年', '坎': '絕命', '巽': '五鬼', '離': '六煞', '震': '禍害' },
-    '震': { '震': '伏位', '離': '生氣', '坎': '天醫', '巽': '延年', '兌': '絕命', '乾': '五鬼', '艮': '六煞', '坤': '禍害' },
-    '巽': { '巽': '伏位', '坎': '生氣', '離': '天醫', '震': '延年', '艮': '絕命', '坤': '五鬼', '兌': '六煞', '乾': '禍害' },
-    '乾': { '乾': '伏位', '兌': '生氣', '艮': '天醫', '坤': '延年', '離': '絕命', '震': '五鬼', '坎': '六煞', '巽': '禍害' },
-    '兌': { '兌': '伏位', '乾': '生氣', '坤': '天醫', '艮': '延年', '震': '絕命', '離': '五鬼', '巽': '六煞', '坎': '禍害' },
-    '艮': { '艮': '伏位', '坤': '生氣', '乾': '天醫', '兌': '延年', '巽': '絕命', '坎': '五鬼', '震': '六煞', '離': '禍害' },
-    '離': { '離': '伏位', '震': '生氣', '巽': '天醫', '坎': '延年', '乾': '絕命', '兌': '五鬼', '坤': '六煞', '艮': '禍害' }
+const getLocalDateString = (date) => {
+  if (!date || isNaN(date.getTime())) return new Date().toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-const KUN_REN_YI = {
-    '坤': { star: '巨門', type: '吉', color: '#096dd9' }, '壬': { star: '巨門', type: '吉', color: '#096dd9' }, '乙': { star: '巨門', type: '吉', color: '#096dd9' },
-    '艮': { star: '破軍', type: '凶', color: '#cf1322' }, '丙': { star: '破軍', type: '凶', color: '#cf1322' }, '辛': { star: '破軍', type: '凶', color: '#cf1322' },
-    '巽': { star: '武曲', type: '吉', color: '#389e0d' }, '辰': { star: '武曲', type: '吉', color: '#389e0d' }, '亥': { star: '武曲', type: '吉', color: '#389e0d' },
-    '甲': { star: '貪狼', type: '吉', color: '#389e0d' }, '癸': { star: '貪狼', type: '吉', color: '#389e0d' }, '申': { star: '貪狼', type: '吉', color: '#389e0d' },
-    '丑': { star: '祿存', type: '凶', color: '#8c8c8c' }, '未': { star: '祿存', type: '凶', color: '#8c8c8c' }, '乾': { star: '祿存', type: '凶', color: '#8c8c8c' },
-    '寅': { star: '廉貞', type: '凶', color: '#d46b08' }, '庚': { star: '廉貞', type: '凶', color: '#d46b08' }, '丁': { star: '廉貞', type: '凶', color: '#d46b08' },
-    '卯': { star: '文曲', type: '凶', color: '#c41d7f' }, '酉': { star: '文曲', type: '凶', color: '#c41d7f' }, '午': { star: '文曲', type: '凶', color: '#c41d7f' },
-    '子': { star: '左輔', type: '吉', color: '#595959' }, '戌': { star: '左輔', type: '吉', color: '#595959' }, '巳': { star: '左輔', type: '吉', color: '#595959' }
+const getShiGan = (dayGan, timeZhiName) => {
+  if (!dayGan) return '';
+  const dayGanIdx = TIANGAN.indexOf(dayGan);
+  const zhiMap = { '子':0, '早子':0, '丑':1, '寅':2, '卯':3, '辰':4, '巳':5, '午':6, '未':7, '申':8, '酉':9, '戌':10, '亥':11, '夜子':12 };
+  const zhiIdx = zhiMap[timeZhiName] ?? 0;
+  return TIANGAN[((dayGanIdx % 5) * 2 + zhiIdx) % 10];
 };
 
-const SHOU_SHAN_CHU_SHA = {
-    '子': '出煞', '午': '出煞', '卯': '收山', '酉': '收山',
-    '乾': '收山', '坤': '出煞', '艮': '出煞', '巽': '收山',
-    '壬': '收山', '丙': '收山',
-    '寅': '出煞', '申': '出煞', '巳': '收山', '亥': '收山',
-    '辰': '出煞', '戌': '出煞', '丑': '出煞', '未': '出煞',
-    '甲': '收山', '庚': '收山', '乙': '出煞', '辛': '出煞',
-    '丁': '出煞', '癸': '出煞'
+// --- 組件: SettingsView (移植自八字版，調整為萬年曆內容) ---
+const SettingsView = ({ ziHourRule, setZiHourRule, isPro, onPurchase }) => {
+  const APP_INFO = {
+    version: isPro ? "Pro (無廣告版)" : "Free (廣告版)",
+    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合董公擇日、建除十二神、二十八星宿、三娘煞等民間簡易神煞，輔助使用者進行擇日與命理分析。",
+    agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。開發者不對因使用本程式而產生的任何直接或間接後果負責。",
+    contactEmail: "email@mrkfengshui.com", 
+    emailSubject: "關於元星年月進退氣萬年曆的建議"
+  };
+  const handleContactClick = () => { window.location.href = `mailto:${APP_INFO.contactEmail}?subject=${encodeURIComponent(APP_INFO.emailSubject)}`; };
+  const renderInfoRow = (label, content, isLast = false) => (
+    <div style={{ padding: '16px', borderBottom: isLast ? 'none' : `1px solid ${THEME.bg}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>{label}</div>
+      <div style={{ fontSize: '14px', color: THEME.gray, lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{content}</div>
+    </div>
+  );
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
+        <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>會員狀態</h3>
+        <div style={{ backgroundColor: THEME.white, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${THEME.border}`, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div><div style={{ fontSize: '16px', fontWeight: 'bold', color: isPro ? THEME.orange : THEME.black }}>{isPro ? '尊榮專業版' : '免費廣告版'}</div><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>{isPro ? '您已享有永久無廣告體驗' : '升級以移除所有廣告'}</div></div>
+            {!isPro ? ( <button onClick={onPurchase} style={{ backgroundColor: THEME.blue, color: 'white', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>US$35</button> ) : ( <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.orange, fontWeight: 'bold', fontSize: '13px' }}><Check size={16} /> 已啟用</div> )}
+        </div>
+      </div>
+      <div>
+        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>子時設定</h3>
+        <div style={{ backgroundColor: THEME.white, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
+          <div onClick={() => setZiHourRule('ziZheng')} style={{ padding: '16px', borderBottom: `1px solid ${THEME.bg}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+            <div><div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>子正換日 (00:00)</div><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>區分早子(0-1)與夜子(23-00)</div></div>
+            {ziHourRule === 'ziZheng' && <Check size={20} color={THEME.blue} />}
+          </div>
+          <div onClick={() => setZiHourRule('ziShi')} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+            <div><div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>子時換日 (23:00)</div><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>23:00 起算隔日干支，不分早夜</div></div>
+            {ziHourRule === 'ziShi' && <Check size={20} color={THEME.blue} />}
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>關於本程式</h3>
+        <div style={{ backgroundColor: THEME.white, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${THEME.border}` }}>
+          {renderInfoRow("關於", APP_INFO.about)}
+          {renderInfoRow("服務協議", APP_INFO.agreement)}
+          <div style={{ padding: '16px', borderBottom: `1px solid ${THEME.bg}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>版本資訊</span><span style={{ fontSize: '14px', color: THEME.gray }}>{APP_VERSION}</span></div>
+          <div onClick={handleContactClick} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: THEME.white }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.blue }}>聯絡我們</span><span style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>回報問題或提供建議</span></div>
+            <ChevronRight size={20} color={THEME.gray} />
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: '30px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px' }}>System Build: {APP_VERSION}</div>
+    </div>
+  );
 };
 
-const DA_GUA_64 = [
-    {n:'復',q:1,y:8},{n:'頤',q:1,y:3},{n:'屯',q:3,y:4},{n:'益',q:8,y:9},{n:'震',q:8,y:8},{n:'噬嗑',q:8,y:3},{n:'隨',q:4,y:7},{n:'無妄',q:2,y:2},
-    {n:'明夷',q:2,y:3},{n:'賁',q:2,y:8},{n:'既濟',q:9,y:9},{n:'家人',q:4,y:4},{n:'豐',q:4,y:8},{n:'離',q:3,y:3},{n:'革',q:3,y:4},{n:'同人',q:7,y:7},
-    {n:'臨',q:1,y:7},{n:'損',q:1,y:2},{n:'節',q:3,y:9},{n:'中孚',q:8,y:4},{n:'歸妹',q:8,y:7},{n:'睽',q:8,y:2},{n:'兌',q:4,y:1},{n:'履',q:2,y:6},
-    {n:'泰',q:1,y:9},{n:'大畜',q:1,y:4},{n:'需',q:3,y:6},{n:'小畜',q:8,y:1},{n:'大壯',q:2,y:9},{n:'大有',q:2,y:4},{n:'夬',q:4,y:6},{n:'乾',q:9,y:1},
-    {n:'姤',q:9,y:8},{n:'大過',q:9,y:3},{n:'鼎',q:7,y:4},{n:'恒',q:2,y:9},{n:'巽',q:2,y:8},{n:'井',q:2,y:3},{n:'蠱',q:6,y:7},{n:'升',q:8,y:2},
-    {n:'訟',q:8,y:3},{n:'困',q:8,y:8},{n:'未濟',q:1,y:9},{n:'解',q:6,y:4},{n:'渙',q:6,y:8},{n:'坎',q:7,y:3},{n:'蒙',q:7,y:4},{n:'師',q:3,y:7},
-    {n:'遯',q:9,y:7},{n:'咸',q:9,y:2},{n:'旅',q:7,y:9},{n:'小過',q:2,y:4},{n:'漸',q:2,y:7},{n:'蹇',q:2,y:2},{n:'艮',q:6,y:1},{n:'謙',q:8,y:6},
-    {n:'否',q:9,y:9},{n:'萃',q:9,y:4},{n:'晉',q:7,y:6},{n:'豫',q:2,y:1},{n:'觀',q:8,y:9},{n:'比',q:8,y:4},{n:'剝',q:6,y:6},{n:'坤',q:1,y:1}
-];
+// --- 組件: BookingView (完全移植自八字版) ---
+const BookingView = ({ onNavigate }) => {
+  const [viewMode, setViewMode] = useState('book'); 
+  const [step, setStep] = useState(1);
+  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '', email: '', notes: '' });
+  const [searchPhone, setSearchPhone] = useState('');
+  const [myBookings, setMyBookings] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-const STAR_COMBINATIONS = {
-// 1白水
-    '1-1': { title: '坎宮重疊', text: '雙一雙水，主漂泊、桃花、文書往來。吉則利文貴，凶則淫蕩漂流。', source: '玄空秘旨：坎宮重疊，身飄蕩而無依。' },
-    '1-2': { title: '土水相剋', text: '土剋水，主婦女掌權，需防腎病、腸胃病。', source: '紫白訣：一二，土水相剋，中男被中女之欺。' },
-    '1-3': { title: '水木相生', text: '水生木，利長子，發科名，但防是非口舌。', source: '玄機賦：水生木而聲名狼藉？非也，主顯貴。' },
-    '1-4': { title: '文昌大旺', text: '一四同宮，準發科名。利讀書、考試、學術研究，亦主桃花。', source: '紫白訣：四一同宮，準發科名之顯。' },
-    '1-5': { title: '子癸生瘍', text: '土剋水，主性病、腎病、耳疾，防波折。', source: '飛星賦：子癸生瘍，在一五之位。' },
-    '1-6': { title: '金水相生', text: '一六共宗，主武職騰達，技術成名，大吉。', source: '紫白訣：虛聯奎壁，啟八代之文章。' },
-    '1-7': { title: '金水多情', text: '金水相生，主桃花、貪花戀酒，亦利口才。', source: '玄空秘旨：金水多情，貪花戀酒。' },
-    '1-8': { title: '耳腎之疾', text: '土剋水，八白艮土剋一白水，防耳病、腎病、小兒災。', source: '玄機賦：一八剋傷，中男受辱。' },
-    '1-9': { title: '水火既濟', text: '水火交戰，調和則成既濟，主婚喜；不調則主眼疾、心病。', source: '玄空秘旨：南離北坎，位極中央。' },
+  const [onlineServices, setOnlineServices] = useState([]);
+  const [scheduleData, setScheduleData] = useState({ fs: {}, general: {} }); 
+  const [availableTimesForSelectedDate, setAvailableTimesForSelectedDate] = useState([]); 
+  const [loadingData, setLoadingData] = useState(true);
+  
+  const { minDate, maxDate } = useMemo(() => {
+     const now = new Date();
+     const min = new Date(); min.setDate(now.getDate() + 3);
+     const max = new Date(); max.setMonth(now.getMonth() + 2); 
+     max.setDate(new Date(max.getFullYear(), max.getMonth() + 1, 0).getDate()); 
+     return { minDate: min, maxDate: max };
+  }, []);
 
-    // 2黑土
-    '2-1': { title: '土剋水', text: '婦人當家，需防腹疾、腎病、流產。', source: '紫白訣：土水相剋，中男被中女之欺。' },
-    '2-2': { title: '二黑重疊', text: '純陰，主病符、寡婦，醫院常客，大凶。', source: '玄空秘旨：風行地而硬直難當。' },
-    '2-3': { title: '鬥牛煞', text: '木剋土，主口舌是非、官非刑獄、腹痛。', source: '紫白訣：鬥牛煞起惹官刑。' },
-    '2-4': { title: '婆媳不和', text: '木剋土，主婆媳不和、腹疾、風疾。', source: '飛星賦：風行地而硬直難當。' },
-    '2-5': { title: '二五交加', text: '二黑病符會五黃廉貞，主重病、死亡、破財，大凶之最。', source: '飛星賦：二五交加，罹死亡並生疾病。' },
-    '2-6': { title: '富比陶朱', text: '土生金，利財源，主富，但略損健康(腸胃)。', source: '玄機賦：二六富比陶朱。' },
-    '2-7': { title: '先天火數', text: '二七同道化火，主火災、熱病，因女色破財。', source: '玄空秘旨：庶妾難投寡母之歡心。' },
-    '2-8': { title: '比和旺財', text: '二八合十，利田宅、地產，吉。', source: '紫白訣：二八同宮，少男逢老母。' },
-    '2-9': { title: '火炎土燥', text: '火生土，主生愚鈍之子，或眼疾、腸胃病。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
-
-    // 3碧木
-    '3-1': { title: '水木相生', text: '利長子，發科名，稍防四肢受傷。', source: '紫白訣：一三生子，長男得貴。' },
-    '3-2': { title: '鬥牛煞', text: '木剋土，主官非、爭鬥、腸胃病。', source: '紫白訣：鬥牛煞起惹官刑。' },
-    '3-3': { title: '蚩尤煞', text: '雙木成林，主爭鬥、盜賊、官災、神經痛。', source: '玄空秘旨：蚩尤碧色，好勇鬥狠。' },
-    '3-4': { title: '碧綠風魔', text: '桃花劫，主瘋癲、哮喘、中風、盜賊。', source: '紫白訣：三四碧綠風魔，他處廉貞莫見。' },
-    '3-5': { title: '寒戶遭瘟', text: '木剋土，主怪病、中毒、破財、官司。', source: '紫白訣：寒戶遭瘟，緣自三廉夾綠。' },
-    '3-6': { title: '金木相戰', text: '金剋木，主手足受傷、肝膽病、車禍。', source: '飛星賦：三六，長男被老父之剋。' },
-    '3-7': { title: '穿心煞', text: '金剋木，主盜賊、官災、手足傷、肝病。', source: '紫白訣：三七疊至，被劫盜更見官災。' },
-    '3-8': { title: '傷小口', text: '木剋土，不利少男，筋骨損，或絕嗣。', source: '玄空秘旨：八逢三四，損小口而絕嗣。' },
-    '3-9': { title: '木火通明', text: '木生火，主聰明、富貴、生貴子。', source: '玄機賦：木見火而生聰明奇士。' },
-
-    // 4綠木
-    '4-1': { title: '文昌大旺', text: '水生木，大利科名、考試、桃花、聲望。', source: '玄機賦：名揚科第，貪狼星入巽宮。' },
-    '4-2': { title: '腹疾風疾', text: '木剋土，主婆媳不和，脾胃病。', source: '玄空秘旨：風行地而硬直難當。' },
-    '4-3': { title: '碧綠風魔', text: '桃花、竊盜、乞丐、風病。', source: '飛星賦：同來震巽，昧事無常。' },
-    '4-4': { title: '雙木成林', text: '文昌旺，亦主漂泊、桃花、繩索(自縊)。', source: '玄空秘旨：巽宮重疊，懸樑之厄。' },
-    '4-5': { title: '乳癰博奕', text: '木剋土，主皮膚病、乳疾、賭博破財。', source: '飛星賦：乳癰兮，四五。' },
-    '4-6': { title: '金木相剋', text: '主懸樑、刀傷、家中婦女不和。', source: '飛星賦：風逢天，巽宮水木傷。' },
-    '4-7': { title: '刀傷桃花', text: '金剋木，主桃花劫、刀傷、嘔血。', source: '玄機賦：破軍居巽，雷風擊而金勝木，有傷。' },
-    '4-8': { title: '傷小口', text: '木剋土，主精神病、結石、不利幼童。', source: '玄空秘旨：山風值而泉石膏肓。' },
-    '4-9': { title: '木火通明', text: '木火相生，利文職、專業人才、喜慶。', source: '玄機賦：木見火而生聰明奇士。' },
-
-    // 5黃土
-    '5-1': { title: '子癸生瘍', text: '土剋水，主性病、腎病、泌尿系統疾病。', source: '飛星賦：子癸生瘍。' },
-    '5-2': { title: '二五交加', text: '主死亡、重病、破產，大凶。', source: '紫白訣：二五交加，罹死亡並生疾病。' },
-    '5-3': { title: '災瘟劫掠', text: '木剋土，主破財、官非、怪病。', source: '玄空秘旨：我生之子，反遭其辱。' },
-    '5-4': { title: '乳癰博奕', text: '木剋土，主毒瘡、賭博傾家。', source: '飛星賦：乳癰兮，四五。' },
-    '5-5': { title: '二五重疊', text: '大凶，主災禍連連，難以救治。', source: '一般論斷：五黃重疊，兇性最烈。' },
-    '5-6': { title: '土金相生', text: '土生金，主頭痛、骨病，化解五黃之氣。', source: '玄空秘旨：土制水復生金，定主田莊之富。' },
-    '5-7': { title: '紫黃毒藥', text: '土生金，主口舌、性病、中毒、喉疾。', source: '飛星賦：青樓染疾，只因七九之合(誤?應為五七)。' },
-    '5-8': { title: '小口損傷', text: '土多金埋，主筋骨痛、胃病。', source: '玄機賦：五八，小口損傷。' },
-    '5-9': { title: '毒藥入口', text: '火生土，晦火，主眼疾、心病、腦病、中毒。', source: '紫白訣：九七合轍，常招回祿之災(此為95)。' },
-
-    // 6白金
-    '6-1': { title: '金水相生', text: '利武職、技術、財運，大吉。', source: '玄機賦：職掌兵權，武曲入坎宮。' },
-    '6-2': { title: '富比陶朱', text: '土生金，巨富，利地產、金融。', source: '玄機賦：堅金遇土，富比陶朱。' },
-    '6-3': { title: '金木相戰', text: '金剋木，主足疾、刀傷、車禍。', source: '玄空秘旨：足以金而蹣跚。' },
-    '6-4': { title: '金木相剋', text: '主婦女不和、刀傷、自縊。', source: '飛星賦：雷風金伐，定被刀傷。' },
-    '6-5': { title: '骨痛頭痛', text: '五黃煞氣，主頭疾、骨折。', source: '玄空秘旨：庭無耆老，多因寡母遭傷。' },
-    '6-6': { title: '比和旺財', text: '官運亨通，利機械、交通。', source: '一般論斷：乾宮重疊，主要領導地位。' },
-    '6-7': { title: '交劍煞', text: '兩金相擊，主刀傷、搶劫、車禍、爭鬥。', source: '紫白訣：交劍煞興多劫掠。' },
-    '6-8': { title: '武科發跡', text: '土生金，大吉，利軍警、地產、財富。', source: '玄機賦：富比陶朱，堅金遇土。' },
-    '6-9': { title: '火燒天門', text: '火剋金，主老父不利、頭病、肺病、逆子。', source: '玄空秘旨：火燒天門張牙舞爪。' },
-
-    // 7赤金
-    '7-1': { title: '金水多情', text: '主桃花、才藝，亦主漂泊。', source: '玄空秘旨：金水多情，貪花戀酒。' },
-    '7-2': { title: '先天火數', text: '火災、熱病、桃花破財。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
-    '7-3': { title: '穿心煞', text: '金剋木，主盜賊、官災、肝病。', source: '紫白訣：三七疊至，被劫盜更見官災。' },
-    '7-4': { title: '桃花刀傷', text: '金剋木，主婦女淫亂、刀傷。', source: '飛星賦：破軍居巽，雷風擊而金勝木。' },
-    '7-5': { title: '紫黃毒藥', text: '主吸毒、中毒、性病、口舌。', source: '飛星賦：青樓染疾。' },
-    '7-6': { title: '交劍煞', text: '主爭鬥、刀傷、車禍。', source: '紫白訣：交劍煞興多劫掠。' },
-    '7-7': { title: '雙星到會', text: '主醫卜星相、口舌、桃花。', source: '玄空秘旨：兌宮重疊，口舌是非。' },
-    '7-8': { title: '少男少女', text: '土生金，主戀愛、富貴。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
-    '7-9': { title: '回祿之災', text: '火剋金，主火災、心肺病、少女受損。', source: '玄機賦：午酉逢而江湖花酒。' },
-
-    // 8白土
-    '8-1': { title: '中男受辱', text: '土剋水，主耳病、腎病、不孕。', source: '玄機賦：一八剋傷，中男受辱。' },
-    '8-2': { title: '比和旺財', text: '土多金埋，利地產，稍損小口。', source: '紫白訣：二八同宮，少男逢老母。' },
-    '8-3': { title: '傷小口', text: '木剋土，不利兒童、手足傷。', source: '玄空秘旨：八逢三四，損小口而絕嗣。' },
-    '8-4': { title: '山風蠱', text: '木剋土，主精神衰弱、結石。', source: '玄空秘旨：山風值而泉石膏肓。' },
-    '8-5': { title: '小口損傷', text: '土煞重，主筋骨痛、運滯。', source: '玄機賦：五八，小口損傷。' },
-    '8-6': { title: '文武全才', text: '土生金，利功名、財富、健康。', source: '玄機賦：堅金遇土，富比陶朱。' },
-    '8-7': { title: '富足風流', text: '土生金，主財旺，但利偏財、娛樂。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
-    '8-8': { title: '雙星旺財', text: '利置業、地產、財富。', source: '一般論斷：八八雙星，大旺田宅。' },
-    '8-9': { title: '喜慶重來', text: '火生土，主婚喜、置業、大發。', source: '紫白訣：八九和諧，婚喜重來。' },
-
-    // 9紫火
-    '9-1': { title: '水火既濟', text: '吉則婚喜，凶則眼疾、心臟病。', source: '玄空秘旨：南離北坎，位極中央。' },
-    '9-2': { title: '火炎土燥', text: '生愚子，眼疾，血光。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
-    '9-3': { title: '木火通明', text: '聰明、顯貴、生貴子。', source: '玄機賦：木見火而生聰明奇士。' },
-    '9-4': { title: '木火通明', text: '利文昌、桃花、喜慶。', source: '玄機賦：木見火而生聰明奇士。' },
-    '9-5': { title: '毒藥入口', text: '主眼疾、心病、重症、火災。', source: '紫白訣：九七合轍，常招回祿(95同論)。' },
-    '9-6': { title: '火燒天門', text: '主逆子、肺病、腦溢血。', source: '玄空秘旨：火燒天門張牙舞爪。' },
-    '9-7': { title: '回祿之災', text: '主火災、心病、桃花劫。', source: '玄機賦：午酉逢而江湖花酒。' },
-    '9-8': { title: '婚喜重來', text: '火生土，主喜事、進財。', source: '紫白訣：八九和諧，婚喜重來。' },
-    '9-9': { title: '火曜連珠', text: '目疾、火災，吉則大發文名。', source: '玄機賦：火曜連珠，青雲路上。' },
-};
-
-// --- 工具函數 ---
-const normalizeAngle = (angle) => { let a = angle % 360; return a < 0 ? a + 360 : a; };
-
-const getMountain = (degree) => {
-    const normalized = normalizeAngle(degree);
-    let minDiff = 360; 
-    let target = MOUNTAINS[0];
-    for (let m of MOUNTAINS) {
-        let diff = Math.abs(normalizeAngle(m.angle - normalized));
-        if (diff > 180) diff = 360 - diff; 
-        if (diff < minDiff) { minDiff = diff; target = m; }
-    }
-    return target;
-};
-
-const getGuaFromStr = (str) => {
-    if (DIRECTION_MAP[str] !== undefined) return str;
-    const found = MOUNTAINS.find(m => m.name === str);
-    return found ? found.gua : null;
-};
-
-const getStarCombination = (mtStar, faceStar) => {
-    const key1 = `${mtStar}-${faceStar}`;
-    const key2 = `${faceStar}-${mtStar}`;
-    if (STAR_COMBINATIONS[key1]) return STAR_COMBINATIONS[key1];
-    if (STAR_COMBINATIONS[key2]) return STAR_COMBINATIONS[key2];
-    return {
-    };
-};
-
-const getDaGua = (degree) => {
-    const normalized = normalizeAngle(degree);
-    const offsetDegree = normalizeAngle(normalized + 2.8125);
-    const index = Math.floor(offsetDegree / 5.625);
-    const safeIndex = index >= 64 ? 0 : index;
-    return DA_GUA_64[safeIndex];
-};
-
-const findAuspsiciousDirections = (facingGua) => {
-    const suggestions = [];
-    const faceQ = facingGua.q; 
-    
-    DA_GUA_64.forEach((targetGua, idx) => {
-        if (targetGua.n === facingGua.n) return;
-
-        const targetQ = targetGua.q;
-        const relations = [];
-
-        if (targetQ === faceQ) relations.push('一卦純清');
-        if (targetQ + faceQ === 10) relations.push('合十');
-        if (Math.abs(targetQ - faceQ) === 5) relations.push('合生成');
-
-        if (relations.length > 0) {
-            const centerDegree = (idx * 5.625) - 2.8125;
-            const startDegree = normalizeAngle(centerDegree - 2.8125);
-            const endDegree = normalizeAngle(centerDegree + 2.8125);
-            const mt = getMountain(centerDegree);
-
-            suggestions.push({
-                gua: targetGua,
-                relations: relations,
-                location: {
-                    mountain: mt.name,
-                    range: `${startDegree.toFixed(1)}°~${endDegree.toFixed(1)}°`
-                }
-            });
+  const fetchLatestData = useCallback(async () => {
+    setLoadingData(true);
+    try {
+      const response = await fetch(`${API_URL}?action=getServices`);
+      const data = await response.json();
+      
+      if (data.services) {
+         const mappedServices = data.services.map(s => ({
+             ...s,
+             icon: s.id === 'fs_home' ? <House size={24} color={COLORS.yi} /> : 
+                   s.id === 'fs_biz' ? <LampDesk size={24} color={THEME.red} /> : 
+                   s.id === 'bz' ? <Sparkles size={24} color={COLORS.wu} /> :
+                   s.id === 'qm' ? <Grid size={24} color={COLORS.geng} /> :
+                   <CalendarIcon size={24} color={THEME.blue} />
+         }));
+         setOnlineServices(mappedServices);
+      }
+      
+      if (data.schedule) {
+        setScheduleData(data.schedule);
+        if (bookingData.date) {
+            const dateStr = getLocalDateString(bookingData.date);
+            let currentType = bookingData.service?.type || 'general';
+            if (bookingData.service?.id?.includes('fs')) currentType = 'fs';
+            const typeSchedule = (currentType === 'fs') ? data.schedule.fs : data.schedule.general;
+            const newTimes = typeSchedule?.[dateStr] || [];
+            setAvailableTimesForSelectedDate(newTimes);
         }
-    });
-    return suggestions;
+      }
+    } catch (error) {
+      console.error("讀取 Google Sheet 失敗:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  }, [bookingData.date, bookingData.service]);
+
+  useEffect(() => {
+    fetchLatestData();
+  }, []); // 只在開啟時執行一次
+  
+  const handleServiceSelect = (srv) => { setBookingData({ ...bookingData, service: srv }); setStep(2); };
+  
+  const getRelevantSchedule = useCallback(() => {
+     if (bookingData.service?.type === 'fs') return scheduleData.fs || {};
+     return scheduleData.general || {};
+  }, [bookingData.service, scheduleData]);
+  
+  const handleDateChange = (dateObj) => {
+      const dateStr = getLocalDateString(dateObj);
+      const currentSchedule = getRelevantSchedule();
+      const times = currentSchedule[dateStr] || []; 
+      setAvailableTimesForSelectedDate(times);
+      setBookingData({ ...bookingData, date: dateObj, time: null }); 
+  };
+  
+  const handleTimeSelect = (t) => { setBookingData({ ...bookingData, time: t }); setStep(3); };
+  
+  const isDateDisabled = ({ date, view }) => {
+     if (view === 'month') {
+        const dateStr = getLocalDateString(date);
+        const currentSchedule = getRelevantSchedule();
+        return !currentSchedule[dateStr] || currentSchedule[dateStr].length === 0;
+     }
+     return false;
+  };
+  
+  const validateAndSubmit = () => {
+      const { name, phone, email } = bookingData;
+      if (!name) return alert('請填寫聯絡姓名');
+      
+      const phoneRegex = /^852\d{8}$/;
+      if (!phoneRegex.test(phone)) {
+          return alert('電話格式錯誤！\n請輸入 852 開頭的 11 位數字');
+      }
+
+      if (email && !/\S+@\S+\.\S+/.test(email)) {
+          return alert('Email 格式不正確');
+      }
+
+      const isConfirmed = window.confirm(
+          "【預約須知】\n\n" +
+          "1. 按金一經收取，恕不退還。\n" +
+          "2. 按金將全數扣除於您的服務總額中。\n\n" +
+          "請問您確認以上條款並前往支付嗎？"
+      );
+
+      if (isConfirmed) {
+          handlePayment();
+      }
+  };
+
+  const handlePayment = async () => {
+    setStep(4);
+    try {
+      const payload = {
+        name: bookingData.name, 
+        phone: bookingData.phone,
+        email: bookingData.email,
+        service: bookingData.service.name, 
+        date: getLocalDateString(bookingData.date), 
+        time: bookingData.time, 
+        notes: bookingData.notes
+      };
+
+      const response = await fetch(API_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+          body: JSON.stringify(payload) 
+      });
+      const resultData = await response.json();
+
+      if (resultData.result === 'success') {
+          setTimeout(() => { setStep(5); }, 500);
+      } else if (resultData.message === 'occupied') {
+          alert("❌ 預約失敗\n\n哎呀！該時段剛剛被其他客人預約走了。\n系統將自動更新最新時段，請重新選擇。");
+          setBookingData(prev => ({ ...prev, time: null }));
+          await fetchLatestData();
+          setStep(2);
+      } else {
+          throw new Error(resultData.message || "Unknown error");
+      }
+
+    } catch (error) {
+      console.error("預約請求錯誤:", error);
+      alert("⚠️ 連線異常或時段已滿，正在更新最新資料...");
+      await fetchLatestData();
+      setStep(2); 
+    }
+  };
+
+  const handleCheckBooking = async () => {
+    if (!searchPhone) return alert("請輸入電話號碼");
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${API_URL}?action=getMyBookings&phone=${searchPhone}`);
+      const data = await response.json();
+      if (data.bookings) {
+        setMyBookings(data.bookings);
+      } else {
+        setMyBookings([]);
+      }
+    } catch (e) {
+      alert("查詢失敗，請檢查網路");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handlePhoneChange = (text) => {
+      const numericText = text.replace(/\D/g, '');
+      if (numericText.length <= 11) {
+          setBookingData({ ...bookingData, phone: numericText });
+      }
+  };
+
+  const renderCheckBookingView = () => (
+    <div style={{ animation: 'fadeIn 0.3s ease' }}>
+        <div style={{ backgroundColor: THEME.white, padding: '20px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: THEME.black }}>輸入電話號碼查詢</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="tel" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} placeholder="例如: 85291234567" style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
+                <button onClick={handleCheckBooking} disabled={isSearching} style={{ padding: '10px 16px', backgroundColor: THEME.black, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>{isSearching ? '...' : <Search size={20} />}</button>
+            </div>
+        </div>
+        <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: THEME.gray }}>您的預約紀錄</h4>
+        {myBookings.length === 0 ? ( <div style={{ textAlign: 'center', color: THEME.gray, padding: '40px' }}>{isSearching ? '正在搜尋...' : '尚無紀錄'}</div> ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {myBookings.map((bk, idx) => (
+                    <div key={idx} style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, borderLeft: `4px solid ${THEME.blue}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '16px', color: THEME.black }}>{bk.service}</span>
+                            <span style={{ fontSize: '12px', color: THEME.blue, backgroundColor: THEME.bgBlue, padding: '2px 8px', borderRadius: '10px' }}>{bk.status}</span>
+                        </div>
+                        <div style={{ fontSize: '14px', color: THEME.black, marginBottom: '2px' }}>{bk.date} {bk.time}</div>
+                        <div style={{ fontSize: '12px', color: THEME.gray }}>預約人: {bk.name}</div>
+                    </div>
+                ))}
+            </div>
+        )}
+    </div>
+  );
+
+  const renderBookingProcess = () => ( <>{step === 1 && renderServiceStep()} {step === 2 && renderDateStep()} {step === 3 && renderInfoStep()} {step === 4 && renderPaymentLoading()} {step === 5 && renderSuccess()}</> );
+  
+  const renderServiceStep = () => (
+    <div>
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: THEME.black }}>請選擇預約項目</h3>
+      {loadingData ? ( <div style={{ textAlign: 'center', padding: '20px', color: THEME.gray }}>載入中...</div> ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {onlineServices.map(srv => (
+            <div key={srv.id} onClick={() => handleServiceSelect(srv)} style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
+              <div style={{ padding: '10px', backgroundColor: THEME.bgGray, borderRadius: '50%' }}>{srv.icon}</div>
+              <div style={{ flex: 1 }}> <div style={{ fontWeight: 'bold', fontSize: '16px', color: THEME.black }}>{srv.name}</div><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>{srv.desc}</div></div>
+              <div style={{ textAlign: 'right' }}><div style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.blue }}>HK${srv.price}</div><div style={{ fontSize: '10px', color: THEME.red, marginTop: '2px' }}>按金 ${srv.deposit}</div></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+  
+  const renderDateStep = () => (
+    <div>
+      <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', border: 'none', background: 'none', color: THEME.gray, marginBottom: '10px', padding: 0 }}><ChevronLeft size={16}/> 返回服務</button>
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: THEME.black }}>選擇日期與時間</h3>
+      <div style={{ marginBottom: '20px', border: `1px solid ${THEME.border}`, borderRadius: '12px', overflow: 'hidden', padding: '10px', backgroundColor: 'white' }}>
+          <style>{` .react-calendar { width: 100%; border: none; font-family: inherit; } .react-calendar__tile--active { background: ${THEME.blue} !important; color: white !important; } .react-calendar__tile--now { background: ${THEME.bgBlue}; color: ${THEME.black}; } .react-calendar__tile:disabled { background-color: #f5f5f5; color: #ccc; cursor: not-allowed; } `}</style>
+          <Calendar onChange={handleDateChange} value={bookingData.date} minDate={minDate} maxDate={maxDate} tileDisabled={isDateDisabled} locale="zh-TW" />
+      </div>
+      {bookingData.date && ( <div style={{ animation: 'fadeIn 0.3s ease' }}>
+            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: THEME.gray }}>{bookingData.date.getMonth()+1}月{bookingData.date.getDate()}日 可用時段</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              {availableTimesForSelectedDate.length > 0 ? ( availableTimesForSelectedDate.map(t => ( <button key={t} onClick={() => handleTimeSelect(t)} style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.blue}`, backgroundColor: THEME.bgBlue, color: THEME.blue, fontWeight: 'bold', cursor: 'pointer' }}>{t}</button> )) ) : ( <div style={{gridColumn: '1 / -1', color: THEME.red, fontSize: '13px', textAlign: 'center', padding: '10px', backgroundColor: THEME.bgRed, borderRadius: '8px' }}>本日已無可預約時段 (或已額滿)</div> )}
+            </div> 
+            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+         </div> )}
+    </div>
+  );
+
+  const renderInfoStep = () => (
+    <div>
+      <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', border: 'none', background: 'none', color: THEME.gray, marginBottom: '10px', padding: 0 }}><ChevronLeft size={16}/> 返回日期</button>
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: THEME.black }}>填寫預約資料</h3>
+      <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
+        <div style={{ marginBottom: '16px' }}><label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>聯絡姓名</label><input type="text" placeholder="請輸入您的稱呼" value={bookingData.name} onChange={e => setBookingData({...bookingData, name: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} /></div>
+        <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>WhatsApp 電話 <span style={{fontSize:'12px', fontWeight:'normal'}}>(852 + 8位數字)</span></label>
+            <input type="tel" placeholder="例如: 85291234567" value={bookingData.phone} onChange={e => handlePhoneChange(e.target.value)} maxLength={11} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>Email <span style={{fontSize:'12px', fontWeight:'normal'}}>(接收確認信用)</span></label>
+            <input type="email" placeholder="example@email.com" value={bookingData.email} onChange={e => setBookingData({...bookingData, email: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
+        </div>
+        <div><label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>備註事項 (選填)</label><textarea placeholder="例如：想問的問題、準確出生時間等..." rows={3} value={bookingData.notes} onChange={e => setBookingData({...bookingData, notes: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px', resize: 'none' }} /></div>
+      </div>
+      <button onClick={validateAndSubmit} style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: THEME.white, borderRadius: '30px', border: 'none', fontSize: '16px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>前往支付 HK${bookingData.service?.deposit}</button>
+    </div>
+  );
+
+  const renderPaymentLoading = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}><div style={{ width: '40px', height: '40px', border: `4px solid ${THEME.bgBlue}`, borderTop: `4px solid ${THEME.blue}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div><style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style><div style={{ marginTop: '20px', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>正在傳送預約資料...</div></div>
+  );
+
+  const renderSuccess = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '20px' }}>
+      <div style={{ width: '80px', height: '80px', backgroundColor: '#f6ffed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}><Check size={40} color="#52c41a" /></div>
+      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>預約成功！</h2>
+      <p style={{ color: THEME.gray, marginBottom: '30px' }}>我們已收到您的預約，將會盡快聯絡您。</p>
+      <div style={{ width: '100%', backgroundColor: THEME.white, padding: '20px', borderRadius: '12px', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+        <div style={{ borderBottom: `1px solid ${THEME.bg}`, paddingBottom: '12px', marginBottom: '12px', fontWeight: 'bold', fontSize: '16px' }}>預約明細</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>服務項目</span><span>{bookingData.service?.name}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>日期時間</span><span>{bookingData.date?.getMonth()+1}月{bookingData.date?.getDate()}日 {bookingData.time}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>預約人</span><span>{bookingData.name}</span></div>
+      </div>
+      <button onClick={onNavigate} style={{ marginTop: '30px', padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', borderRadius: '24px', border: 'none', fontWeight: 'bold' }}>返回首頁</button>
+    </div>
+  );
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '8px 16px', backgroundColor: THEME.white, borderRadius: '8px' }}>
+        <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0, fontSize: '20px' }}>
+            {viewMode === 'book' ? '線上預約' : '我的預約'}
+        </h2>
+        <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
+            <button onClick={() => setViewMode('book')} style={{ padding: '6px 12px', border: 'none', borderRadius: '18px', backgroundColor: viewMode === 'book' ? THEME.blue : 'transparent', color: viewMode === 'book' ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>預約</button>
+            <button onClick={() => setViewMode('check')} style={{ padding: '6px 12px', border: 'none', borderRadius: '18px', backgroundColor: viewMode === 'check' ? THEME.blue : 'transparent', color: viewMode === 'check' ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>查詢</button>
+        </div>
+      </div>
+      {viewMode === 'book' ? renderBookingProcess() : renderCheckBookingView()}
+    </div>
+  );
 };
 
-// --- 三元納氣法邏輯 (新增) ---
-const calculateNaQi = (period, guaName) => {
-    const p = Number(period);
-    
-    // 卦名對應洛書數
-    const guaMap = { '坎': 1, '坤': 2, '震': 3, '巽': 4, '乾': 6, '兌': 7, '艮': 8, '離': 9 };
-    const doorNum = guaMap[guaName];
+// --- 組件: Calendar 相關 ---
+const YearMonthPicker = ({ visible, onClose, onConfirm, initialDate }) => {
+  const [selectedYear, setSelectedYear] = useState(initialDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(initialDate.getMonth() + 1);
+  useEffect(() => { if (visible) { setSelectedYear(initialDate.getFullYear()); setSelectedMonth(initialDate.getMonth() + 1); } }, [visible, initialDate]);
+  if (!visible) return null;
+  const years = []; for (let y = 1900; y <= 2100; y++) years.push(y);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '85%', maxWidth: '320px', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>跳轉日期</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={24} color={THEME.gray} /></button>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>年份</label>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{years.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>月份</label>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{months.map(m => <option key={m} value={m}>{m}月</option>)}</select>
+          </div>
+        </div>
+        <button onClick={() => { onConfirm(selectedYear, selectedMonth); onClose(); }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>確認跳轉</button>
+      </div>
+    </div>
+  );
+};
 
-    // --- 五運特殊處理 ---
-    if (p === 5) {
-        return { 
-            type: '平', 
-            text: '五運: 前十年寄四運，後十年寄六運', 
-            color: '#fa8c16' // 橙色提示
-        };
+const Header = ({ currentDate, onToday, solarTerms, headerGanZhi, isPro, onToggleQiMenu, onTitleClick }) => (
+  <div style={{ backgroundColor: THEME.white, padding: '10px 16px', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
+        <div style={{ width: '36px', height: '36px', backgroundColor: '#ce0000', borderRadius: '50%', position: 'relative', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <span style={{ fontFamily: "'青柳隷書SIMO2_T', serif", position: 'absolute', color: 'white', fontSize: '12px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none', fontWeight: 'normal' }}>氣</span>
+            <span style={{ fontFamily: "'青柳隷書SIMO2_T', serif", position: 'absolute', color: 'black', fontSize: '30px', lineHeight: 1, top: '12%', left: '2%', pointerEvents: 'none', fontWeight: 'normal' }}>進</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+          <span style={{ fontSize: '17px', fontWeight: 'normal', color: '#262626', marginLeft: '4px' }}>元星年月進氣萬年曆</span>
+          {isPro && ( <span style={{ fontSize: '10px', color: THEME.orange, border: `1px solid ${THEME.orange}`, borderRadius: '4px', padding: '1px 4px', marginLeft: '6px', fontWeight: 'bold', transform: 'translateY(-2px)' }}>專業版</span> )}
+        </div>
+        <button onClick={(e) => { e.stopPropagation(); onToggleQiMenu(); }} style={{ display: 'flex', alignItems: 'center', gap: '2px', backgroundColor: THEME.bgBlue, border: `1px solid ${THEME.blue}`, borderRadius: '12px', padding: '2px 8px', cursor: 'pointer', marginLeft: '8px' }}>
+             <Zap size={12} color={THEME.blue} fill={THEME.blue} />
+             <span style={{ fontSize: '11px', fontWeight: 'bold', color: THEME.blue }}>進退氣</span>
+        </button>
+      </div>
+      <button onClick={onToday} style={{ color: THEME.blue, fontSize: '16px', fontWeight: '500', background: 'none', border: 'none', outline: 'none', cursor: 'pointer' }}>今天</button>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+       <div onClick={onTitleClick} style={{ position: 'relative', display: 'flex', alignItems: 'baseline', cursor: 'pointer', userSelect: 'none' }}>
+          <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black }}>{currentDate.getFullYear()}年</span>
+          <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black, marginLeft: '6px' }}>{currentDate.getMonth()+1}月</span>
+          <ChevronRight size={20} color={THEME.lightGray} style={{ marginLeft: '4px', transform: 'translateY(2px)' }} />
+       </div>
+       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
+           {headerGanZhi && (<span style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', lineHeight: '1.2' }}>{headerGanZhi.year} {headerGanZhi.month}</span>)}
+           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', lineHeight: '1.2' }}>
+              {solarTerms.map((term, idx) => (<span key={idx} style={{ color: THEME.purple, fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap' }}>{term.name}{term.day}日</span>))}
+           </div>
+       </div>
+    </div>
+  </div>
+);
+
+const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender, bookmarks, qiMode }) => {
+  if (!canRender || !date || isNaN(date.getTime())) return <div style={{ height: '75px', background: '#fff' }}></div>;
+  let data = { lunarDisplay: date.getDate(), ganZhi: '', jian: '', xiu: '', isSanNiang: false, colorJian: THEME.black, colorXiu: THEME.black, isJieQi: false, dongGongRating: '', isNewYear: false };
+  let activeColors = [null, null, null, null];
+
+  try {
+      const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      const lunar = solar.getLunar();
+      const d = lunar.getDay();
+      const m = lunar.getMonthInChinese();
+      const term = lunar.getJieQi();
+      if (term) { 
+          data.lunarDisplay = term;
+          data.isJieQi = true;
+      } else {
+        if (lunar.getMonth() === 1 && d <= 3) {
+            data.lunarDisplay = `年初${['一','二','三'][d-1]}`;
+            data.isNewYear = true; 
+        } 
+        else if (d === 1) {
+            let monthDisplay = m;
+            if (m === '冬') monthDisplay = '十一';
+            if (m === '腊') monthDisplay = '十二';
+            else if (m === '臘') monthDisplay = '十二';
+            data.lunarDisplay = `${monthDisplay}月`;
+        } 
+        else {
+            data.lunarDisplay = lunar.getDayInChinese();
+        }
+      }
+
+      data.ganZhi = lunar.getDayInGanZhi();
+      const rawJian = lunar.getZhiXing();
+      const fixJian = JIAN_FIX_MAP[rawJian] || rawJian;
+      data.jian = fixJian; data.colorJian = JIAN_CHU_COLOR_MAP[rawJian] || JIAN_CHU_COLOR_MAP[fixJian] || THEME.teal;
+      const rawXiu = lunar.getXiu();
+      const fixXiu = XIU_FIX_MAP[rawXiu] || rawXiu;
+      data.xiu = fixXiu; data.colorXiu = XIU_COLOR_MAP[rawXiu] || XIU_COLOR_MAP[fixXiu] || THEME.red;
+      if (SAN_NIANG_DAYS.includes(d)) data.isSanNiang = true;
+      const monthNum = Math.abs(lunar.getMonth());
+      const dayZhi = lunar.getDayZhi(); const dayGanZhi = lunar.getDayInGanZhi();
+      const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
+      if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
+      if (qiMode) {
+          let baseStemIdx = -1, baseBranchIdx = -1;
+          let currStemIdx = -1, currBranchIdx = -1;
+          if (qiMode === 'nian') {
+              baseStemIdx = TIANGAN.indexOf(lunar.getYearGan());
+              baseBranchIdx = DIZHI.indexOf(lunar.getYearZhi());
+              currStemIdx = TIANGAN.indexOf(lunar.getMonthGan());
+              currBranchIdx = DIZHI.indexOf(lunar.getMonthZhi());
+          } else if (qiMode === 'yue') {
+              baseStemIdx = TIANGAN.indexOf(lunar.getMonthGan());
+              baseBranchIdx = DIZHI.indexOf(lunar.getMonthZhi());
+              currStemIdx = TIANGAN.indexOf(lunar.getDayGan());
+              currBranchIdx = DIZHI.indexOf(lunar.getDayZhi());
+          }
+          const getRelIdx = (bIdx) => (bIdx - 2 + 12) % 12;
+          const currRelIdx = getRelIdx(currBranchIdx); 
+          [-1, 0, 1].forEach(offset => {
+              const targetStemIdx = (baseStemIdx + offset + 10) % 10;
+              const targetBranchIdx = (baseBranchIdx + offset + 12) % 12;
+              const sRules = QI_RULES.stems[targetStemIdx];
+              const bRules = QI_RULES.branches[targetBranchIdx];
+              const myPos = currRelIdx - (offset * 12);
+              if (sRules) {
+                   sRules.forEach(range => {
+                      if (myPos >= range[0] && myPos <= range[1]) {
+                          const color = STEM_COLORS[targetStemIdx];
+                          if (targetStemIdx % 2 === 0) activeColors[0] = color;
+                          else activeColors[1] = color;
+                      }
+                  });
+              }
+              if (bRules) {
+                  bRules.forEach(range => {
+                      if (myPos >= range[0] && myPos <= range[1]) {
+                          const color = BRANCH_COLORS[targetBranchIdx];
+                          if (targetBranchIdx % 2 === 0) activeColors[2] = color;
+                          else activeColors[3] = color;
+                      }
+                  });
+              }
+          });
+      }
+
+  } catch (e) { console.error(e); }
+
+  const isBookmarked = bookmarks.includes(getLocalDateString(date));
+  const dayOfWeek = date.getDay();
+  const numColor = (dayOfWeek === 0) ? THEME.red : THEME.black;
+  let bg = THEME.white;
+  let textOpacity = 1;
+  if (!isCurrentMonth) { bg = '#e0e0e0'; textOpacity = 0.45; }
+
+return (
+    <div onClick={() => onClick(date)} style={{ height: '75px', backgroundColor: bg, borderRight: `1px solid ${THEME.border}`, borderBottom: `1px solid ${THEME.border}`, position: 'relative', cursor: 'pointer', boxSizing: 'border-box', overflow: 'hidden' }}>
+      {activeColors[0] && <div style={{ position: 'absolute', left: 0, right: 0, top: '0%', height: '25%', backgroundColor: activeColors[0], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[1] && <div style={{ position: 'absolute', left: 0, right: 0, top: '25%', height: '25%', backgroundColor: activeColors[1], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[2] && <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: '25%', backgroundColor: activeColors[2], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[3] && <div style={{ position: 'absolute', left: 0, right: 0, top: '75%', height: '25%', backgroundColor: activeColors[3], opacity: 0.4, zIndex: 1 }} />}
+      <div style={{ opacity: textOpacity, position: 'relative', height: '100%', zIndex: 2, textShadow: qiMode ? '0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff' : 'none', fontWeight: qiMode ? 'bold' : 'normal' }}>
+          <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
+          <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.teal, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
+          {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px' }}>三娘煞</div>)}
+          <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
+          <div style={{ position: 'absolute', bottom: '16px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
+          <div style={{ position: 'absolute', bottom: '2px', left: '4px', fontSize: '14px', fontWeight: 'bold', color: data.colorJian }}>{data.jian}</div>
+          {data.dongGongRating && (
+            <div style={{ position: 'absolute', bottom: '2px', right: '4px', fontSize: '11px', fontWeight: 'bold', color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('凶') ? THEME.red : THEME.gray) }}>{data.dongGongRating}</div>
+          )}
+      </div>
+      {isBookmarked && <div style={{ position: 'absolute', top: '4px', right: '28px', width: '6px', height: '6px', backgroundColor: THEME.red, borderRadius: '50%', zIndex: 3 }}></div>}
+      {isSelected && <div style={{ position: 'absolute', inset: 0, border: `2px solid ${THEME.blue}`, pointerEvents: 'none', zIndex: 10 }}></div>}
+    </div>
+  );
+};
+
+const TimePickerModal = ({ visible, onClose, onSelect, currentRule, currentIndex, dayGan }) => {
+  if (!visible) return null;
+  const mapping = GET_SHI_CHEN_MAPPING(currentRule);
+  const upperRow = mapping.slice(0, 6);
+  const lowerRow = mapping.slice(6);
+  const formatTimeRange = (timeStr) => {
+      const parts = timeStr.split('-');
+      const start = parseInt(parts[0].split(':')[0], 10);
+      let end = parseInt(parts[1].split(':')[0], 10);
+      if (end === 24) end = 0;
+      return `${start}-${end}`;
+  };
+  const renderButton = (item, idx, rowOffset) => {
+      const realIdx = idx + rowOffset;
+      const isSelected = realIdx === currentIndex;
+      const stem = getShiGan(dayGan, item.name);
+      const displayName = item.name.replace('早','').replace('夜','');
+      return (
+        <button key={item.name} onClick={() => onSelect(realIdx)} style={{ flex: 1, padding: '10px 0', margin: 0, borderRadius: '8px', border: isSelected ? `1px solid ${THEME.blue}` : `1px solid ${THEME.border}`, backgroundColor: isSelected ? THEME.bgBlue : THEME.white, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', minWidth: 0 }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: isSelected ? THEME.blue : THEME.black, marginBottom: '2px' }}>{stem}{displayName}</div>
+          <div style={{ fontSize: '11px', color: THEME.lightGray, fontWeight: '500' }}>{formatTimeRange(item.time)}</div>
+        </button>
+      );
+  };
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '96%', maxWidth: '390px', padding: '20px 16px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div><h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>選擇時辰</h3><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>日干: <span style={{ color: THEME.orange, fontWeight: 'bold' }}>{dayGan}</span></div></div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '4px' }}><X size={24} color={THEME.gray} /></button>
+        </div>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>{upperRow.map((item, idx) => renderButton(item, idx, 0))}</div>
+        <div style={{ display: 'flex', gap: '6px' }}>{lowerRow.map((item, idx) => renderButton(item, idx, 6))}</div>
+      </div>
+    </div>
+  );
+};
+
+const InfoBridge = ({ info, date, isBookmarked, toggleBookmark, onOpenTimePicker }) => {
+  if (!info) return null;
+  const baziFontStyle = { fontSize: '18px', color: THEME.orange, fontWeight: '800', fontFamily: 'fangsong' };
+  return (
+    <div style={{ backgroundColor: '#f0f2f5', padding: '6px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+             <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>{date.getFullYear()}年{date.getMonth()+1}月{date.getDate()}日 週{info.weekDay}</div>
+             <button onClick={() => toggleBookmark(date)} style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer' }}><Bookmark size={18} fill={isBookmarked ? THEME.red : 'none'} color={isBookmarked ? THEME.red : THEME.gray} /></button>
+         </div>
+         <div style={{ fontSize: '13px', color: THEME.gray }}>{info.ganZhiYear} 肖{info.zodiacAnimal} {info.lunarStr}</div>
+         {info.isSanNiang && (<div><span style={{ color: THEME.red, border: `1px solid ${THEME.red}`, padding: '0px 4px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', backgroundColor: '#fff1f0' }}>三娘煞 不宜嫁娶</span></div>)}
+      </div>
+      <div style={{ display: 'flex', gap: '4px' }}>
+         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
+             <div style={{ fontSize: '12px', color: THEME.blue, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', textAlign: 'center', width: '110px', marginBottom: '2px' }}><span style={{ cursor: 'pointer' }} onClick={onOpenTimePicker}>時</span><span>日</span><span>月</span><span>年</span></div>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', textAlign: 'center', width: '110px' }}>
+                 <div onClick={onOpenTimePicker} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', backgroundColor: '#e6f7ff', borderRadius: '4px', padding: '0px 0' }}><span style={baziFontStyle}>{info.bazi.timeGan}</span><span style={baziFontStyle}>{info.bazi.timeZhi}</span></div>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}><span style={baziFontStyle}>{info.bazi.dayGan}</span><span style={baziFontStyle}>{info.bazi.dayZhi}</span></div>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}><span style={baziFontStyle}>{info.bazi.monthGan}</span><span style={baziFontStyle}>{info.bazi.monthZhi}</span></div>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}><span style={baziFontStyle}>{info.bazi.yearGan}</span><span style={baziFontStyle}>{info.bazi.yearZhi}</span></div>
+             </div>
+         </div>
+      </div>
+    </div>
+  );
+};
+
+const BottomSection = ({ info }) => {
+  if (!info) return null;
+  const zhiXing = info.jian;
+  const xiu = info.xiu;
+  return (
+    <div style={{ padding: '8px 12px', backgroundColor: '#f0f2f5', flexShrink: 0 }}>
+       <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          <DetailCard title="十二建除" value={zhiXing} color={JIAN_CHU_COLOR_MAP[zhiXing]} />
+          <DetailCard title="二十八星宿" value={info.xiuFull} color={XIU_COLOR_MAP[xiu]} />
+       </div>
+       <DongGongCard rating={info.dongGongRating} text={info.dongGongText} />
+    </div>
+  );
+};
+
+const DetailCard = ({ title, value, sub, color }) => (
+  <div style={{ backgroundColor: THEME.white, borderRadius: '8px', padding: '8px', flex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '2px' }}>{title}</div>
+    <div style={{ fontSize: '18px', fontWeight: 'bold', color: color }}>{value}</div>
+    {sub && <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>{sub}</div>}
+  </div>
+);
+
+const DongGongCard = ({ rating, text }) => {
+  let bg = THEME.white; let borderColor = THEME.border;
+  if (rating.includes('吉')) { bg = THEME.bgBlue; borderColor = THEME.blue; }
+  else if (rating.includes('凶')) { bg = THEME.bgRed; borderColor = THEME.red; }
+  else if (rating.includes('平')) { bg = THEME.bgOrange; borderColor = THEME.orange; }
+  return (
+    <div style={{ backgroundColor: bg, borderRadius: '8px', padding: '8px 12px', border: `1px solid ${borderColor}`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 'bold', color: THEME.black }}>董公擇日</span>
+          <span style={{ fontSize: '13px', fontWeight: 'bold', color: borderColor }}>{rating}</span>
+       </div>
+       <div style={{ fontSize: '13px', color: THEME.black, lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{text}</div>
+    </div>
+  );
+};
+
+const AdBanner = ({ onRemoveAds }) => (
+  <div style={{ height: '60px', backgroundColor: '#f0f0f0', borderTop: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', flexShrink: 0, position: 'relative', zIndex: 5 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.7 }}>
+      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '1px 3px', fontSize: '9px', color: '#999' }}>Ad</div>
+      <div style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}><span style={{ fontWeight: 'bold' }}>贊助商廣告</span><span style={{ fontSize: '10px' }}>點擊此處查看更多優惠資訊...</span></div>
+   </div>
+    <button onClick={(e) => { e.stopPropagation(); onRemoveAds(); }} style={{ fontSize: '11px', color: THEME.white, backgroundColor: THEME.black, border: 'none', borderRadius: '12px', padding: '4px 10px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>移除廣告</button>
+  </div>
+);
+
+// --- Main App Component ---
+
+export default function CalendarApp() {
+  const libStatus = useLunarScript();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [bookmarks, setBookmarks] = useState([]);
+  const [view, setView] = useState('calendar');
+  const [ziHourRule, setZiHourRule] = useState('ziZheng'); 
+  const [timeIndex, setTimeIndex] = useState(6);
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [qiMode, setQiMode] = useState(null);
+  const [showQiMenu, setShowQiMenu] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // 觸控滑動相關 State
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  useEffect(() => {
+    const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
+    lockOrientation();
+  }, []);
+
+  useEffect(() => {
+    const savedRule = localStorage.getItem('zi_hour_rule');
+    if (savedRule) setZiHourRule(savedRule);
+    const savedDateStr = localStorage.getItem('selected_date');
+    if (savedDateStr) { const d = new Date(savedDateStr); if (!isNaN(d.getTime())) { setSelectedDate(d); setCurrentDate(d); } }
+    const savedBk = localStorage.getItem('calendar_bookmarks');
+    if (savedBk) { try { setBookmarks(JSON.parse(savedBk)); } catch(e) {} }
+    const savedPro = localStorage.getItem('calendar_is_pro');
+    if (savedPro === 'true') setIsPro(true);
+    const currentHour = new Date().getHours();
+    const ruleToUse = savedRule || 'ziZheng';
+    setTimeIndex(getDefaultTimeIndex(currentHour, ruleToUse));
+  }, []);
+
+  useEffect(() => { localStorage.setItem('zi_hour_rule', ziHourRule); }, [ziHourRule]);
+  useEffect(() => { if (!isNaN(selectedDate.getTime())) localStorage.setItem('selected_date', getLocalDateString(selectedDate)); }, [selectedDate]);
+  useEffect(() => {
+      const mapping = GET_SHI_CHEN_MAPPING(ziHourRule);
+      if (timeIndex >= mapping.length) setTimeIndex(0); 
+  }, [ziHourRule]);
+
+  const handlePurchase = () => {
+    if (window.confirm("是否支付 US$35 升級為專業版 (移除所有廣告)？\n\n(注意：此為測試模式，點擊確定即模擬付款成功)")) {
+       setIsPro(true);
+       localStorage.setItem('calendar_is_pro', 'true');
+       alert("感謝您的購買！廣告已移除。");
     }
+  };
 
-    // 判斷當前運勢屬於哪一元 (上元:1-4, 下元:6-9)
-    const isUpperEra = p >= 1 && p <= 4;
-    
-    // 判斷門向屬於哪一元
-    const isDoorUpper = doorNum >= 1 && doorNum <= 4;
+  const handleQiModeSelect = (mode) => {
+    setQiMode(mode === qiMode ? null : mode);
+    setShowQiMenu(false);
+  };
 
-    // 定義回傳樣式
-    const resultProsperous = { type: '大吉', text: '當運大發', color: '#389e0d', sub: '同元同運' }; // 深綠
-    const resultFuture = { type: '吉', text: '未來大發', color: '#13c2c2', sub: '同元未運' };     // 青色
-    const resultDeclining = { type: '凶', text: '運過衰退', color: '#cf1322', sub: '同元失運/異元' }; // 紅色
+  const toggleBookmark = (date) => {
+    const s = getLocalDateString(date);
+    let newBookmarks;
+    if (bookmarks.includes(s)) newBookmarks = bookmarks.filter(b => b !== s);
+    else newBookmarks = [s, ...bookmarks];
+    setBookmarks(newBookmarks);
+    localStorage.setItem('calendar_bookmarks', JSON.stringify(newBookmarks));
+  };
 
-    // 邏輯核心
-    if (isUpperEra) {
-        // --- 當前是上元運 (1,2,3,4) ---
-        if (!isDoorUpper) {
-            // 門是下元卦 (6,7,8,9) -> 異元為衰
-            return resultDeclining;
+  // 換月邏輯
+  const changeMonth = (offset) => {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() + offset);
+      setCurrentDate(newDate);
+  };
+  
+  // 直接跳轉到指定年月
+  const jumpToDate = (year, month) => {
+    const newDate = new Date(year, month - 1, 1);
+    setCurrentDate(newDate);
+    // 選擇該月1號為默認選中
+    setSelectedDate(newDate);
+  };
+
+  // 觸控事件偵測 (左右滑動)
+  const onTouchStart = (e) => {
+      setTouchEnd(null);
+      setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+  };
+  const onTouchEnd = () => {
+      if (!touchStart || !touchEnd) return;
+      const distance = touchStart - touchEnd;
+      const minSwipeDistance = 50;
+      if (distance > minSwipeDistance) changeMonth(1);
+      else if (distance < -minSwipeDistance) changeMonth(-1);
+  };
+
+  const solarTerms = useMemo(() => {
+    if (libStatus !== 'ready') return [];
+    try {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const days = [];
+        for (let d = 1; d <= new Date(year, month, 0).getDate(); d++) {
+            const term = window.Solar.fromYmd(year, month, d).getLunar().getJieQi();
+            if (term) days.push({ name: term, day: d });
+        }
+        return days;
+    } catch(e) { return []; }
+  }, [currentDate, libStatus]);
+
+  const headerGanZhi = useMemo(() => {
+      if (libStatus !== 'ready' || !selectedDate) return null;
+      try {
+          const solar = window.Solar.fromYmd(selectedDate.getFullYear(), selectedDate.getMonth() + 1, selectedDate.getDate());
+          const lunar = solar.getLunar();
+          return { year: lunar.getYearInGanZhi() + '年', month: lunar.getMonthInGanZhi() + '月' };
+      } catch(e) { return null; }
+  }, [selectedDate, libStatus]);
+
+  const selectedInfo = useMemo(() => {
+    if (libStatus !== 'ready' || !selectedDate) return null;
+    const mapping = GET_SHI_CHEN_MAPPING(ziHourRule);
+    const safeTimeIndex = (timeIndex >= 0 && timeIndex < mapping.length) ? timeIndex : 0;
+    try {
+        const targetHour = mapping[safeTimeIndex].hour;
+        let lunarForDay, lunarForTime; 
+        if (ziHourRule === 'ziZheng' && targetHour === 23) {
+            const solarDay = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), 22, 0, 0);
+            lunarForDay = solarDay.getLunar();
+            const solarTime = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), 23, 30, 0);
+            lunarForTime = solarTime.getLunar();
         } else {
-            // 門是上元卦 (1,2,3,4) -> 同元
-            if (doorNum === p) return resultProsperous;
-            if (doorNum > p) return resultFuture;
-            return resultDeclining; // 雖然同元，但運已過 (如2運見1坎)
+            const solar = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), targetHour, 0, 0);
+            lunarForDay = solar.getLunar();
+            lunarForTime = solar.getLunar();
         }
-    } else {
-        // --- 當前是下元運 (6,7,8,9) ---
-        if (isDoorUpper) {
-            // 門是上元卦 (1,2,3,4) -> 異元為衰
-            return resultDeclining;
-        } else {
-            // 門是下元卦 (6,7,8,9) -> 同元
-            if (doorNum === p) return resultProsperous;
-            if (doorNum > p) return resultFuture;
-            return resultDeclining; // 雖然同元，但運已過 (如8運見7兌)
+        const isSanNiang = SAN_NIANG_DAYS.includes(lunarForDay.getDay()); 
+        const monthNum = Math.abs(lunarForDay.getMonth());
+        const dayZhi = lunarForDay.getDayZhi();
+        const dayGanZhi = lunarForDay.getDayInGanZhi();
+        const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
+        let dgRating = '平'; let dgText = '暫無資料';
+        if (dgRule) {
+            dgText = dgRule.t;
+            if (dgRule.s && dgRule.s[dayGanZhi]) { dgRating = dgRule.s[dayGanZhi]; dgText += ` (本日${dayGanZhi}為${dgRating})`; } 
+            else { dgRating = dgRule.r; }
         }
-    }
-};
+        const rawJian = lunarForDay.getZhiXing();
+        const fixJian = JIAN_FIX_MAP[rawJian] || rawJian;
+        const rawXiu = lunarForDay.getXiu(); const fixXiu = XIU_FIX_MAP[rawXiu] || rawXiu;
+        const xiuFull = XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿');
 
-// --- 商戰核心邏輯 (新增) ---
-const POSTERIOR_ELEMENTS = { // 樓宇坐向 (後天)
-    '坎': '水', '艮': '土', '震': '木', '巽': '木',
-    '離': '火', '坤': '土', '兌': '金', '乾': '金'
-};
+        let lunarMonthName = lunarForDay.getMonthInChinese();
+        if (lunarMonthName === '冬') lunarMonthName = '十一';
+        if (lunarMonthName === '腊') lunarMonthName = '十二';
+        else if (lunarMonthName === '臘') lunarMonthName = '十二';
 
-const HE_TU_ELEMENTS = { // 舖位宮位 (先天/河圖數) - 依據用戶提供對應
-    '坎': '水', // 1 -> 1/6 水
-    '坤': '火', // 2 -> 2/7 火
-    '震': '木', // 3 -> 3/8 木
-    '巽': '金', // 4 -> 4/9 金
-    '中': '土', // 5 -> 5/10 土
-    '乾': '水', // 6 -> 1/6 水
-    '兌': '火', // 7 -> 2/7 火
-    '艮': '木', // 8 -> 3/8 木
-    '離': '金'  // 9 -> 4/9 金
-};
-
-const SHOP_NUM_ELEMENTS = {
-    1: '水', 6: '水',
-    2: '火', 7: '火',
-    3: '木', 8: '木',
-    4: '金', 9: '金',
-    5: '土', 10: '土',
-    11: '水', 16: '水',
-    12: '火', 17: '火',
-    13: '木', 18: '木',
-    14: '金', 19: '金',
-    15: '土', 20: '土'
-};
-
-const getFiveElementRelation = (me, other) => {
-    // me: 舖位 (我), other: 商場/走廊 (客)
-    // 邏輯: 
-    // 1. 同 (比和): 吉
-    // 2. 我剋客 (剋出): 財旺
-    // 3. 客生我 (生入): 吉
-    // 4. 我生客 (生出): 凶
-    // 5. 客剋我 (剋入): 凶
-
-    if (me === other) return { type: '吉', text: '吉', color: '#13c2c2' };
-    
-    const relations = {
-        '水': { gen: '木', ctrl: '火' },
-        '火': { gen: '土', ctrl: '金' },
-        '土': { gen: '金', ctrl: '水' },
-        '金': { gen: '水', ctrl: '木' },
-        '木': { gen: '火', ctrl: '土' }
-    };
-
-    if (relations[me].ctrl === other) return { type: '大吉', text: '財旺', color: '#fa8c16' };
-    if (relations[other].gen === me) return { type: '吉', text: '吉', color: '#13c2c2' };
-    if (relations[me].gen === other) return { type: '凶', text: '凶', color: '#cf1322' };
-    if (relations[other].ctrl === me) return { type: '凶', text: '凶', color: '#cf1322' };
-    
-    return { type: '平', text: '平', color: '#999' };
-};
-
-// --- 核心計算與進階分析 ---
-const calculateEverything = (degree, period, year, month = 1) => {
-    const safePeriod = Number(period) || 9;
-    const safeYear = Number(year) || new Date().getFullYear();
-    const safeMonth = Number(month) || 1;
-
-    const facingMt = getMountain(degree); 
-    const sittingDegree = normalizeAngle(degree + 180);
-    const sittingMt = getMountain(sittingDegree); 
-
-    // --- 1. 飛星排盤 ---
-    let baseGrid = new Array(9).fill(0);
-    let curr = safePeriod;
-    for (let i = 0; i < 9; i++) { baseGrid[LUOSHU_PATH[i]] = curr; curr = (curr % 9) + 1; }
-
-    const sitIndex = DIRECTION_MAP[sittingMt.gua];
-    const faceIndex = DIRECTION_MAP[facingMt.gua];
-    const sitBaseStar = baseGrid[sitIndex]; 
-    const faceBaseStar = baseGrid[faceIndex]; 
-
-    const getFlightDirection = (starNum, mountainYuan) => {
-        let refStar = (starNum === 5) ? safePeriod : starNum;
-        return YIN_YANG_MAP[refStar] ? YIN_YANG_MAP[refStar][mountainYuan] : 1; 
-    };
-
-    const sitDir = getFlightDirection(sitBaseStar, sittingMt.yuan);
-    const faceDir = getFlightDirection(faceBaseStar, facingMt.yuan);
-
-    let mtGrid = new Array(9).fill(0);
-    curr = sitBaseStar;
-    for (let i = 0; i < 9; i++) {
-        mtGrid[LUOSHU_PATH[i]] = curr;
-        if (sitDir === 1) curr++; else curr--;
-        if (curr > 9) curr = 1; if (curr < 1) curr = 9;
-    }
-
-    let faceGrid = new Array(9).fill(0);
-    curr = faceBaseStar;
-    for (let i = 0; i < 9; i++) {
-        faceGrid[LUOSHU_PATH[i]] = curr;
-        if (faceDir === 1) curr++; else curr--;
-        if (curr > 9) curr = 1; if (curr < 1) curr = 9;
-    }
-
-    // --- 1.5 流年飛星 ---
-    let annualBaseStar = (11 - (safeYear % 9)) % 9;
-    if (annualBaseStar === 0) annualBaseStar = 9;
-    
-    let annualGrid = new Array(9).fill(0);
-    curr = annualBaseStar;
-    for (let i = 0; i < 9; i++) {
-        annualGrid[LUOSHU_PATH[i]] = curr;
-        curr = (curr % 9) + 1;
-    }
-
-    // --- 1.6 流月飛星 ---
-    const yearBranchIdx = safeYear % 12; // 0:申, 1:酉, ..., 4:子, ...
-    let monthlyStartStar = 0;
-    
-    // 子午卯酉八白起 (4, 10, 7, 1) -> 8
-    if ([4, 10, 7, 1].includes(yearBranchIdx)) monthlyStartStar = 8;
-    // 辰戌丑未五黃起 (8, 2, 5, 11) -> 5
-    else if ([8, 2, 5, 11].includes(yearBranchIdx)) monthlyStartStar = 5;
-    // 寅申巳亥二黑起 (6, 0, 9, 3) -> 2
-    else monthlyStartStar = 2;
-
-    let monthlyCenter = (monthlyStartStar - (safeMonth - 1)) % 9;
-    if (monthlyCenter <= 0) monthlyCenter += 9;
-
-    let monthlyGrid = new Array(9).fill(0);
-    curr = monthlyCenter;
-    for (let i = 0; i < 9; i++) {
-        monthlyGrid[LUOSHU_PATH[i]] = curr;
-        curr = (curr % 9) + 1;
-    }
-
-    // --- 1.7 流年神煞計算 (新增) ---
-    // 0:申, 1:酉, 2:戌, 3:亥, 4:子, 5:丑, 6:寅, 7:卯, 8:辰, 9:巳, 10:午, 11:未
-    // 三煞: 申子辰合水(0,4,8)煞南方(離), 寅午戌合火(6,10,2)煞北方(坎), 巳酉丑合金(9,1,5)煞東方(震), 亥卯未合木(3,7,11)煞西方(兌)
-    let sanShaGua = '';
-    if ([0, 4, 8].includes(yearBranchIdx)) sanShaGua = '離';
-    else if ([6, 10, 2].includes(yearBranchIdx)) sanShaGua = '坎';
-    else if ([9, 1, 5].includes(yearBranchIdx)) sanShaGua = '震';
-    else sanShaGua = '兌';
-
-    // 力士 (歲煞): 佔該年三合局之角落
-    // 申子辰(0,4,8) -> 艮(寅方) *註：簡化取卦
-    // 亥卯未(3,7,11) -> 坤(申方)
-    // 寅午戌(6,10,2) -> 乾(亥方)
-    // 巳酉丑(9,1,5) -> 巽(巳方)
-    let liShiGua = '';
-    if ([0, 4, 8].includes(yearBranchIdx)) liShiGua = '艮';
-    else if ([3, 7, 11].includes(yearBranchIdx)) liShiGua = '坤';
-    else if ([6, 10, 2].includes(yearBranchIdx)) liShiGua = '乾';
-    else liShiGua = '巽';
-
-    // 太歲 (當年地支)
-    const TAI_SUI_MAPPING = {
-        4: '坎', // 子
-        5: '艮', 6: '艮', // 丑寅
-        7: '震', // 卯
-        8: '巽', 9: '巽', // 辰巳
-        10: '離', // 午
-        11: '坤', 0: '坤', // 未申
-        1: '兌', // 酉
-        2: '乾', 3: '乾' // 戌亥
-    };
-    const taiSuiGua = TAI_SUI_MAPPING[yearBranchIdx];
-
-    // 歲破 (太歲沖宮)
-    const SUI_PO_MAPPING = { '坎': '離', '艮': '坤', '震': '兌', '巽': '乾', '離': '坎', '坤': '艮', '兌': '震', '乾': '巽' };
-    const suiPoGua = SUI_PO_MAPPING[taiSuiGua];
-
-    // 五黃 (流年飛星為5的方位)
-    const wuHuangIndex = annualGrid.findIndex(n => n === 5);
-    const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
-    const wuHuangGua = dirNames[wuHuangIndex];
-
-    // 格局判斷
-    const sitPalaceMtStar = mtGrid[sitIndex];
-    const sitPalaceFaceStar = faceGrid[sitIndex];
-    const facePalaceMtStar = mtGrid[faceIndex];
-    const facePalaceFaceStar = faceGrid[faceIndex];
-    const p = safePeriod;
-
-    let chartType = '特殊格局';
-    if (sitPalaceMtStar === p && facePalaceFaceStar === p) chartType = '旺山旺向';
-    else if (facePalaceMtStar === p && sitPalaceFaceStar === p) chartType = '上山下水';
-    else if (facePalaceMtStar === p && facePalaceFaceStar === p) chartType = '雙星到向';
-    else if (sitPalaceMtStar === p && sitPalaceFaceStar === p) chartType = '雙星到坐';
-
-    // --- 2. 進階分析邏輯 ---
-    const sha8 = EIGHT_KILLINGS[sittingMt.gua] || '無';
-
-    let huangQuan = null;
-    const yq = YELLOW_SPRING[facingMt.name] || YELLOW_SPRING[facingMt.gua];
-    if (yq) huangQuan = Array.isArray(yq) ? yq.join('/') : yq;
-
-    const waterMethod = EAR_LATE_WATER[sittingMt.gua] || {early:'-', late:'-'};
-
-    const dirSequence = [7, 6, 3, 0, 1, 2, 5, 8]; 
-    const currentFaceGua = facingMt.gua;
-    const seqIdx = dirSequence.findIndex(d => Object.keys(DIRECTION_MAP).find(key => DIRECTION_MAP[key] === d) === currentFaceGua);
-    
-    let chengMen = { main: '計算中', sub: '計算中' };
-    if (seqIdx !== -1) {
-        const prevIdx = (seqIdx - 1 + 8) % 8;
-        const nextIdx = (seqIdx + 1) % 8;
-        const getGuaName = (idx) => Object.keys(DIRECTION_MAP).find(key => DIRECTION_MAP[key] === idx);
-        chengMen.sub = getGuaName(dirSequence[prevIdx]); 
-        chengMen.main = getGuaName(dirSequence[nextIdx]);
-    }
-
-    const fanGuaCfg = FAN_GUA_CONFIG[sittingMt.gua] || { mt: '無', water: '無' };
-    const mountainDragon = { gua: fanGuaCfg.mt, mountains: NA_JIA[fanGuaCfg.mt] || [] };
-    const waterDragon = { gua: fanGuaCfg.water, mountains: NA_JIA[fanGuaCfg.water] || [] };
-
-    const baZhaiMap = BA_ZHAI_MAPPING[sittingMt.gua] || {};
-
-    const faceDaGua = getDaGua(degree);
-    const sitDaGua = getDaGua(sittingDegree);
-    
-    const daGuaSuggestions = findAuspsiciousDirections(faceDaGua);
-
-    return {
-        sitting: sittingMt,
-        facing: facingMt,
-        baseGrid, mtGrid, faceGrid, annualGrid, monthlyGrid,
-        period: safePeriod, 
-        year: safeYear,
-        month: safeMonth,
-        chartType,
-        advanced: {
-            sha8,
-            huangQuan, 
-            waterMethod,
-            chengMen,
-            mountainDragon, 
-            waterDragon,
-            baZhaiMap,
-            daGua: { 
-                sit: sitDaGua, 
-                face: faceDaGua, 
-                suggestions: daGuaSuggestions 
+        return {
+            weekDay: WEEKDAYS[selectedDate.getDay()],
+            ganZhiYear: lunarForDay.getYearInGanZhi(),
+            zodiacAnimal: lunarForDay.getYearShengXiao(),
+            lunarStr: `${lunarMonthName}月${lunarForDay.getDayInChinese()}`,
+            bazi: {
+                yearGan: lunarForDay.getYearGan(), yearZhi: lunarForDay.getYearZhi(),
+                monthGan: lunarForDay.getMonthGan(), monthZhi: lunarForDay.getMonthZhi(),
+                dayGan: lunarForDay.getDayGan(), dayZhi: lunarForDay.getDayZhi(),
+                timeGan: lunarForTime.getTimeGan(), timeZhi: lunarForTime.getTimeZhi()
             },
-            yearlyAfflictions: {
-                sanSha: sanShaGua,
-                liShi: liShiGua,
-                wuHuang: wuHuangGua,
-                taiSui: taiSuiGua,
-                suiPo: suiPoGua
-            }
-        }
-    };
-};
+            jian: fixJian, xiu: fixXiu, xiuFull: xiuFull,
+            dongGongRating: dgRating, dongGongText: dgText, isSanNiang: isSanNiang,
+            currentTimeName: mapping[safeTimeIndex].name + '時',
+            currentTimeRange: mapping[safeTimeIndex].time
+        };
+    } catch(e) { console.error("InfoBridge Error:", e); return null; }
+  }, [selectedDate, libStatus, timeIndex, ziHourRule]);
 
-// --- 商戰彈窗組件 (新增) ---
-const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
-    const [shopSector, setShopSector] = useState(null); 
-    const [shopTotal, setShopTotal] = useState(10); 
-    const [shopIndex, setShopIndex] = useState(1);
-    
-    if (!isOpen) return null;
+  const calendarDays = useMemo(() => {
+    if (isNaN(currentDate.getTime())) return [];
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days = [];
+    for (let i = 0; i < firstDay.getDay(); i++) days.push({ date: new Date(year, month, -firstDay.getDay() + 1 + i), isCurrentMonth: false });
+    for (let i = 1; i <= lastDay.getDate(); i++) days.push({ date: new Date(year, month, i), isCurrentMonth: true });
+    for (let i = 1; i <= 42 - days.length; i++) days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false });
+    return days;
+  }, [currentDate]);
 
-    // --- 處理輸入邏輯 ---
-    const handleTotalChange = (e) => {
-        const val = e.target.value;
-        if (val === '') { setShopTotal(''); return; }
+  if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#8c8c8c' }}>載入萬年曆數據...</div>;
+  if (libStatus === 'error') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'red' }}>載入失敗，請檢查網路連線</div>;
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: THEME.white, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', overflow: 'hidden', paddingTop: 'max(env(safe-area-inset-top), 25px)', width: '100vw' }}>
+      <style>{`
+        @font-face { font-family: '青柳隷書SIMO2_T'; src: url('/fonts/AoyagiReishoSIMO2_T.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+        @font-face { font-family: '崇羲篆體'; src: url('/fonts/ChongXiZhuanTi.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
+      `}</style>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         
-        const newTotal = parseInt(val, 10);
-        if (isNaN(newTotal) || newTotal < 1) return;
+        {/* 進退氣選單 (Overlay) */}
+        {showQiMenu && (
+          <div onClick={() => setShowQiMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 200, backgroundColor: 'transparent' }}>
+             <div style={{ position: 'absolute', top: '60px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', padding: '10px', backgroundColor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: `1px solid ${THEME.border}` }}>
+                <button onClick={(e) => { e.stopPropagation(); handleQiModeSelect('nian'); }} style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', backgroundColor: qiMode === 'nian' ? THEME.blue : '#f0f0f0', color: qiMode === 'nian' ? 'white' : THEME.black }}>流年</button>
+                <button onClick={(e) => { e.stopPropagation(); handleQiModeSelect('yue'); }} style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', backgroundColor: qiMode === 'yue' ? THEME.blue : '#f0f0f0', color: qiMode === 'yue' ? 'white' : THEME.black }}>流月</button>
+             </div>
+          </div>
+        )}
 
-        setShopTotal(newTotal);
-        if (typeof shopIndex === 'number' && shopIndex > newTotal) {
-            setShopIndex(newTotal);
-        }
-    };
-
-    const handleIndexChange = (e) => {
-        const val = e.target.value;
-        if (val === '') { setShopIndex(''); return; }
-
-        const newIndex = parseInt(val, 10);
-        if (isNaN(newIndex) || newIndex < 1) return;
-
-        const currentTotal = Number(shopTotal) || 1;
-        if (newIndex > currentTotal) {
-            setShopIndex(currentTotal);
-        } else {
-            setShopIndex(newIndex);
-        }
-    };
-
-    // --- 計算邏輯 ---
-    const safeTotal = Number(shopTotal) || 0;
-    const safeIndex = Number(shopIndex) || 0;
-
-    const mallElement = POSTERIOR_ELEMENTS[sittingMt.gua];
-    const sectorElement = shopSector ? HE_TU_ELEMENTS[shopSector] : null; 
-    const mallRelation = (mallElement && sectorElement) ? getFiveElementRelation(sectorElement, mallElement) : null;
-
-    const hasValidInput = safeTotal > 0 && safeIndex > 0;
-    
-    const myNumKey = safeIndex > 0 ? safeIndex % 10 || 10 : 0; 
-    const myElementText = SHOP_NUM_ELEMENTS[myNumKey] || '-';
-
-    const corridorVal = safeTotal - safeIndex + 1;
-    const corridorKey = corridorVal > 0 ? corridorVal % 10 || 10 : 0;
-    const corridorElementText = SHOP_NUM_ELEMENTS[corridorKey] || '-';
-    
-    const corridorRelation = (hasValidInput && myElementText !== '-' && corridorElementText !== '-') 
-        ? getFiveElementRelation(myElementText, corridorElementText) 
-        : null;
-
-    const guas = ['巽', '離', '坤', '震', '中', '兌', '艮', '坎', '乾'];
-
-    return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.8)', zIndex: 1200,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px'
-        }} onClick={onClose}>
-            <div style={{
-                background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px',
-                padding: '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                maxHeight: '90vh', overflowY: 'auto'
-            }} onClick={e => e.stopPropagation()}>
-                
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', borderBottom:'1px solid #ddd', paddingBottom:'10px'}}>
-                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#333'}}>
-                        <Briefcase size={20}/> 商戰揀舖要訣
-                    </h3>
-                    <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}><X size={24} color="#666"/></button>
-                </div>
-
-                {/* Section 1: 商場與舖位 */}
-                <div style={{background:'white', borderRadius:'10px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 5px rgba(0,0,0,0.05)'}}>
-                    <div style={{fontSize:'15px', fontWeight:'bold', marginBottom:'12px', color:'#096dd9'}}>大廈坐向 vs 舖位宮位</div>
-                    <div style={{marginBottom:'10px', fontSize:'14px'}}>
-                        大廈坐{sittingMt.name}向{facingMt.name}
-                    </div>
-                    
-                    <div style={{fontSize:'13px', color:'#666', marginBottom:'8px'}}>舖位所在宮位：</div>
-                    <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'8px', marginBottom:'12px'}}>
-                        {guas.map(g => (
-                            <button key={g} 
-                                onClick={() => setShopSector(g)}
-                                style={{
-                                    padding:'12px', 
-                                    borderRadius:'6px', 
-                                    border:`1px solid ${shopSector === g ? '#096dd9' : '#ddd'}`,
-                                    background: shopSector === g ? '#e6f7ff' : 'white',
-                                    color: shopSector === g ? '#096dd9' : '#333',
-                                    cursor:'pointer', 
-                                    fontWeight: shopSector === g ? 'bold' : 'normal',
-                                    fontSize: '16px'
-                                }}>
-                                {g} 
-                            </button>
-                        ))}
-                    </div>
-
-                    {mallRelation && (
-                        <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'6px', borderLeft:`4px solid ${mallRelation.color}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                            <div style={{fontSize:'13px'}}>
-                                此舖宮位
-                            </div>
-                            <div style={{fontWeight:'bold', color:mallRelation.color, fontSize:'16px'}}>{mallRelation.text}</div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Section 2: 走廊與舖號 */}
-                <div style={{background:'white', borderRadius:'10px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 5px rgba(0,0,0,0.05)'}}>
-                    <div style={{fontSize:'15px', fontWeight:'bold', marginBottom:'12px', color:'#722ed1'}}>舖位序號</div>
-                    
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'16px'}}>
-                        <div>
-                            <label style={{display:'block', fontSize:'12px', color:'#666', marginBottom:'4px'}}>總舖位數</label>
-                            <input 
-                                type="number" 
-                                min="1" 
-                                value={shopTotal} 
-                                onChange={handleTotalChange} 
-                                placeholder="如: 10"
-                                style={{
-                                    width:'100%', 
-                                    padding:'12px', 
-                                    borderRadius:'6px', 
-                                    border:'1px solid #ddd', 
-                                    fontSize:'16px',
-                                    boxSizing: 'border-box' // 修正：確保內距不撐大寬度
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <label style={{display:'block', fontSize:'12px', color:'#666', marginBottom:'4px'}}>心儀舖位序號 (從右至左)</label>
-                            <input 
-                                type="number" 
-                                min="1" 
-                                max={safeTotal}
-                                value={shopIndex} 
-                                onChange={handleIndexChange}
-                                placeholder="如: 5"
-                                style={{
-                                    width:'100%', 
-                                    padding:'12px', 
-                                    borderRadius:'6px', 
-                                    border:'1px solid #ddd', 
-                                    fontSize:'16px',
-                                    boxSizing: 'border-box' // 修正：確保內距不撐大寬度
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {hasValidInput ? (
-                        <>
-                            {corridorRelation && (
-                                <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'6px', borderLeft:`4px solid ${corridorRelation.color}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                                    <div style={{fontSize:'13px'}}>
-                                        此舖位數
-                                    </div>
-                                    <div style={{fontWeight:'bold', color:corridorRelation.color, fontSize:'16px'}}>{corridorRelation.text}</div>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div style={{fontSize:'12px', color:'#999', padding:'10px', textAlign:'center', background:'#f5f5f5', borderRadius:'6px'}}>
-                            請輸入有效的舖位數量
-                        </div>
-                    )}
-                </div>
-                
-                <div style={{fontSize:'12px', color:'#999', textAlign:'center'}}>
-                    * 註：舖位如旁邊有通道或缺口必為凶
-                </div>
-
+        {view === 'calendar' && (
+          <>
+            <Header 
+              currentDate={currentDate} 
+              onToday={() => { const n = new Date(); setCurrentDate(n); setSelectedDate(n); }} 
+              solarTerms={solarTerms} 
+              headerGanZhi={headerGanZhi} 
+              isPro={isPro} 
+              onToggleQiMenu={() => setShowQiMenu(!showQiMenu)} 
+              onTitleClick={() => setShowDatePicker(true)}
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', flexShrink: 0, width: '100%' }}>
+              {WEEKDAYS.map((d, i) => (<div key={i} style={{ textAlign: 'center', padding: '6px 0', fontSize: '12px', color: THEME.gray }}>{d}</div>))}
             </div>
-        </div>
-    );
-};
-
-// --- 詳情彈窗組件 (保持不變) ---
-const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
-    if (!isOpen || !data) return null;
-
-    const { mt, face, base, annual, monthly, guaName, combination, baZhaiStar } = data;
-    const baZhaiDetail = baZhaiStar ? BA_ZHAI_INFO[baZhaiStar] : null;
-
-    const palaceMountains = MOUNTAINS.filter(m => m.gua === guaName);
-
-    const getDaGuaRelations = (targetGua, refGua) => {
-        const rels = [];
-        if (targetGua.y === refGua.y) rels.push({t:'同元一氣', c:'#722ed1'});
-        if (targetGua.q + refGua.q === 10) rels.push({t:'卦氣合十', c:'#c41d7f'});
-        if (targetGua.y + refGua.y === 10) rels.push({t:'卦運合十', c:'#eb2f96'});
-        if (Math.abs(targetGua.q - refGua.q) === 5) rels.push({t:'卦氣生成', c:'#13c2c2'});
-        return rels;
-    };
-
-    return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.6)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-        }} onClick={onClose}>
-            <div style={{
-                background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
-                padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                maxHeight: '90vh', overflowY: 'auto'
-            }} onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
-                    <X size={24} color="#666"/>
-                </button>
-
-                <h3 style={{marginTop: 0, fontSize: '20px', textAlign: 'center', borderBottom: '1px solid #eee', paddingBottom: '12px'}}>
-                    {guaName}宮詳解
-                </h3>
-
-                <div style={{display: 'flex', justifyContent: 'center', gap: '20px', margin: '20px 0', alignItems:'center'}}>
-                    <div style={{textAlign: 'center', position:'relative'}}>
-                        <div style={{fontSize: '12px', color: '#666'}}>山星</div>
-                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#333'}}>{mt}</div>
-                         <div style={{fontSize: '14px', fontWeight: 'bold', color: '#722ed1', marginTop: '-4px'}}>
-                           (年{annual})
-                        </div>
-                    </div>
-                    <div style={{textAlign: 'center'}}>
-                        <div style={{fontSize: '12px', color: '#666'}}>運星</div>
-                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '6px'}}>{base}</div>
-                    </div>
-                    <div style={{textAlign: 'center'}}>
-                        <div style={{fontSize: '12px', color: '#666'}}>向星</div>
-                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#d32f2f'}}>{face}</div>
-                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#fa8c16', marginTop: '-4px'}}>
-                           (月{monthly})
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{background: '#f9f9f9', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
-                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#096dd9', marginBottom: '4px'}}>
-                        🚀 玄空飛星：{combination.title}
-                    </div>
-                    <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333', marginBottom: '10px'}}>
-                        {combination.text}
-                    </div>
-                    <div style={{fontSize: '12px', color: '#888', fontStyle: 'italic', borderTop: '1px dashed #ddd', paddingTop: '8px'}}>
-                        📖 {combination.source}
-                    </div>
-                </div>
-
-                {baZhaiDetail && (
-                    <div style={{background: '#fff0f6', padding: '16px', borderRadius: '8px', border: `1px solid ${baZhaiDetail.color}`, marginBottom: '16px'}}>
-                        <div style={{fontSize: '16px', fontWeight: 'bold', color: baZhaiDetail.color, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px'}}>
-                            🏠 八宅法：{baZhaiStar} <span style={{fontSize: '12px', background: baZhaiDetail.color, color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{baZhaiDetail.star}</span>
-                        </div>
-                        <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333'}}>
-                            {baZhaiDetail.desc}
-                        </div>
-                    </div>
-                )}
-
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px'}}>
-                     <div style={{background: '#fff7e6', padding: '12px', borderRadius: '8px', border: '1px solid #ffd591'}}>
-                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#d46b08', marginBottom: '8px'}}>
-                            ⛰️ 收山出煞
-                        </div>
-                        <div style={{display: 'flex', flexDirection:'column', gap: '4px'}}>
-                            {palaceMountains.map(pm => {
-                                const type = SHOU_SHAN_CHU_SHA[pm.name];
-                                const isShou = type === '收山';
-                                return (
-                                    <div key={pm.name} style={{fontSize:'12px', display:'flex', justifyContent:'space-between'}}>
-                                        <span>{pm.name}山</span>
-                                        <span style={{fontWeight:'bold', color: isShou ? '#874d00' : '#096dd9'}}>
-                                            {type} ({isShou ? '宜收藏' : '宜張揚'})
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div style={{background: '#f0f5ff', padding: '12px', borderRadius: '8px', border: '1px solid #adc6ff'}}>
-                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#1d39c4', marginBottom: '8px'}}>
-                            🌊 坤壬乙訣
-                        </div>
-                        <div style={{display: 'flex', flexDirection:'column', gap: '4px'}}>
-                            {palaceMountains.map(pm => {
-                                const kry = KUN_REN_YI[pm.name];
-                                return (
-                                    <div key={pm.name} style={{fontSize:'12px', display:'flex', justifyContent:'space-between'}}>
-                                        <span>{pm.name}山</span>
-                                        <span style={{fontWeight:'bold', color: kry.color}}>{kry.star}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{background: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f'}}>
-                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#389e0d', marginBottom: '8px'}}>
-                        ☯️ 玄空大卦：坐向剋應
-                    </div>
-                    <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
-                         向首({facingDaGua.n})：氣{facingDaGua.q} / 運{facingDaGua.y}
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
-                        {palaceMountains.map(pm => {
-                            const mountainGua = getDaGua(pm.angle);
-                            const relations = getDaGuaRelations(mountainGua, facingDaGua);
-                            return (
-                                <div key={pm.name} style={{display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px dashed #d9d9d9', paddingBottom:'4px'}}>
-                                    <div style={{fontWeight:'bold', color:'#333', fontSize:'14px', minWidth:'50px'}}>{pm.name}山</div>
-                                    <div style={{fontSize:'12px', color:'#555'}}>{mountainGua.n}(氣{mountainGua.q}/運{mountainGua.y})</div>
-                                    <div style={{display:'flex', gap:'2px'}}>
-                                        {relations.length > 0 ? relations.map((r, idx) => (
-                                            <span key={idx} style={{fontSize:'10px', background:r.c, color:'white', padding:'1px 3px', borderRadius:'3px'}}>{r.t}</span>
-                                        )) : <span style={{fontSize:'10px', color:'#999'}}>無</span>}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div style={{fontSize: '12px', color: '#aaa', textAlign: 'center', marginTop: '16px'}}>
-                    * 點擊遮罩層即可關閉
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- UI 元件 ---
-const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
-const requestAccess = () => {
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
-                .catch(console.error);
-        } else {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
-    };
-
-    const handleOrientation = (e) => {
-        if (isFrozen) return;
-        let compass = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
-        setHeading(compass);
-    };
-
-    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);    
-const facingMt = getMountain(heading);
-    const sittingMt = getMountain(heading + 180);
-
-    return (
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow:'hidden', minHeight:'100vh'}}>
-             {/* 這裡可以選擇性加入 AppHeader，或是保持全黑沈浸式體驗 */}
-             
-             {!isFrozen && (
-                <button onClick={requestAccess} style={{position:'absolute', top: 20, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
-                   <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
-                </button>
-            )}
-            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.6}}></div>
-            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.6}}></div>
-            <div style={{
-                width: '85vw', height: '85vw', maxWidth:'350px', maxHeight:'350px',
-                borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c',
-                transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear',
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative'
-            }}>
-                 {MOUNTAINS.map((m, i) => (
-                    <div key={i} style={{
-                        position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
-                        transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
-                    }}>
-                        <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)'}}>{m.name}</span>
-                    </div>
-                 ))}
-                 <div style={{width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red'}}></div>
-            </div>
-            <div style={{marginTop: '30px', textAlign:'center', zIndex: 10}}>
-                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
-                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
-                <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
-                <div style={{display:'flex', gap:'20px', justifyContent:'center', marginTop:'20px'}}>
-                    <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
-                        {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
-                    </button>
-                    {isFrozen && (
-                        <button onClick={onAnalyze} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
-                            <RefreshCw size={18}/> 排盤
-                        </button>
-                    )}
-                </div>
-                {!isFrozen && <input type="range" min="0" max="360" value={heading} onChange={e=>setHeading(Number(e.target.value))} style={{marginTop:'20px', width:'200px', opacity: 0.5}}/>}
-            </div>
-        </div>
-    );
-};
-
-const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth, setHeading, onBack }) => {
-    const [selectedSector, setSelectedSector] = useState(null);
-    const [naQiDoor, setNaQiDoor] = useState(null); 
-    const [showAnnual, setShowAnnual] = useState(true);
-    const [showMonthly, setShowMonthly] = useState(true);
-    const [showCommercial, setShowCommercial] = useState(false);
-    const data = useMemo(() => {
-        try {
-            return calculateEverything(heading, period, year, month);
-        } catch (e) {
-            console.error("排盤計算錯誤:", e);
-            return null;
-        }
-    }, [heading, period, year, month]);
-
-    useEffect(() => { if (data) setNaQiDoor(data.facing.gua); }, [data]);
-
-    if (!data) return <div style={{padding:20, color:'red'}}>資料計算異常，請返回重試。</div>;
-
-    const gridOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8]; 
-    const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
-    const naQiGuas = ["坎", "坤", "震", "巽", "乾", "兌", "艮", "離"];
-
-    const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
-    const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#333', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
-    const tagStyle = { fontSize:'10px', padding:'2px 4px', borderRadius:'4px', color:'#fff', fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1' };
-
-    const getGridTags = (idx) => {
-        const dirGua = dirNames[idx]; 
-        if (dirGua === '中') return []; 
-        
-        const tags = [];
-        const { advanced } = data;
-
-        if (dirGua === advanced.waterMethod.early) tags.push({ text: '先天水', color: '#096dd9' }); 
-        if (dirGua === advanced.waterMethod.late) tags.push({ text: '後天水', color: '#389e0d' }); 
-        if (dirGua === advanced.chengMen.main) tags.push({ text: '正城門', color: '#fa8c16' }); 
-        if (dirGua === advanced.chengMen.sub) tags.push({ text: '副城門', color: '#fa8c16' }); 
-        
-        const mtDragons = advanced.mountainDragon.mountains;
-        const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
-        if (mtMatches.length > 0) {
-            tags.push({ text: `山龍:${mtMatches.join('')}`, color: '#c41d7f' });
-        }
-
-        const waterDragons = advanced.waterDragon.mountains;
-        const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
-        if (waterMatches.length > 0) {
-             tags.push({ text: `水龍:${waterMatches.join('')}`, color: '#096dd9' });
-        }
-
-        if (advanced.sha8 && advanced.sha8 !== '無') {
-            const shaGua = getGuaFromStr(advanced.sha8);
-            if (shaGua === dirGua) tags.push({ text: `曜煞:${advanced.sha8}`, color: '#cf1322' }); 
-        }
-
-        if (advanced.huangQuan) {
-            const hqArr = advanced.huangQuan.split('/');
-            hqArr.forEach(hq => {
-                const hqGua = getGuaFromStr(hq);
-                if (hqGua === dirGua) tags.push({ text: `黃泉:${hq}`, color: '#cf1322' });
-            });
-        }
-        
-        return tags;
-    };
-
-    const handleSectorClick = (idx) => {
-        const guaName = dirNames[idx];
-        if (guaName === '中') return; 
-
-        const mtStar = data.mtGrid[idx];
-        const faceStar = data.faceGrid[idx];
-        const baseStar = data.baseGrid[idx];
-        const annualStar = data.annualGrid[idx];
-        const monthlyStar = data.monthlyGrid[idx];
-        
-        const combination = getStarCombination(mtStar, faceStar);
-        const baZhaiStar = data.advanced.baZhaiMap[guaName];
-
-        setSelectedSector({
-            mt: mtStar,
-            face: faceStar,
-            base: baseStar,
-            annual: annualStar,
-            monthly: monthlyStar,
-            guaName: guaName,
-            combination: combination,
-            baZhaiStar: baZhaiStar
-        });
-    };
-
-    const getBaZhaiDisplay = (idx) => {
-        const guaName = dirNames[idx];
-        if (guaName === '中') return null;
-        const starName = data.advanced.baZhaiMap[guaName];
-        if (!starName) return null;
-        const info = BA_ZHAI_INFO[starName];
-        return { name: starName, color: info.color };
-    };
-    
-    // --- 新增: 取得格子的流年凶煞標籤 ---
-    const getYearlyBadges = (idx) => {
-        if (!showAnnual) return [];
-        const guaName = dirNames[idx];
-        const { yearlyAfflictions } = data.advanced;
-        const badges = [];
-
-        if (yearlyAfflictions.wuHuang === guaName) badges.push('五黃');
-        if (yearlyAfflictions.sanSha === guaName) badges.push('三煞');
-        if (yearlyAfflictions.liShi === guaName) badges.push('力士');
-        
-        // 額外標示太歲歲破，方便參照，若不需可註解掉
-        if (yearlyAfflictions.taiSui === guaName) badges.push('太歲');
-        if (yearlyAfflictions.suiPo === guaName) badges.push('歲破');
-
-        return badges;
-    };
-
-    // 計算納氣結果
-    const naQiResult = naQiDoor ? calculateNaQi(period, naQiDoor) : null;
-
-    return (
-        <div style={{display:'flex', flexDirection:'column', height:'100vh', background: THEME.bg}}>
             
-            {/* 使用共用 Header */}
-            <AppHeader 
-                title="元星風水" 
-                isPro={true} // 假設風水 App 全開
-                logoChar={{ main: '羅', sub: '庚' }} 
-            />
-
-            {/* 自定義的次標題列 (保留原本的返回按鈕) */}
-            <div style={{padding:'10px 16px', background: THEME.white, borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                <button onClick={onBack} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回羅盤</button>
-                <div style={{fontWeight:'bold', fontSize:'16px'}}>分析報告</div>
-                <div style={{width:'24px'}}></div>
+            <div 
+              onTouchStart={onTouchStart} 
+              onTouchMove={onTouchMove} 
+              onTouchEnd={onTouchEnd} 
+              style={{ flex: 1, overflowY: 'auto', backgroundColor: THEME.white, minHeight: 0, width: '100%' }}
+            >
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${THEME.border}`, width: '100%' }}>
+                  {calendarDays.map((item, idx) => (
+                    <DayCell key={idx} {...item} isToday={getLocalDateString(item.date) === getLocalDateString(new Date())} isSelected={getLocalDateString(item.date) === getLocalDateString(selectedDate)} onClick={(d) => !isNaN(d.getTime()) && setSelectedDate(d)} canRender={libStatus === 'ready'} bookmarks={bookmarks} qiMode={qiMode} />
+                  ))}
+                </div>
             </div>
-            <div style={{flex: 1, overflowY: 'auto', padding:'16px', paddingBottom:'50px'}}>
-                <div style={cardStyle}>
-                    <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
-                        <div style={{fontWeight:'bold', fontSize:'18px'}}>{data.sitting.name}山{data.facing.name}向下卦 <span style={{fontSize:'14px', color:'#666', fontWeight:'normal'}}>(坐{data.sitting.gua}向{data.facing.gua})</span></div>
-                        
-                        <div style={{display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap'}}>
-                            <label style={{display:'flex', alignItems:'center', gap:'2px', fontSize:'14px'}}>
-                                運:
-                                <select value={period} onChange={e => setPeriod(Number(e.target.value))} style={{padding:'4px 2px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'14px'}}>
-                                    {[1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}運</option>)}
-                                </select>
-                            </label>
 
-                            <label style={{display:'flex', alignItems:'center', gap:'2px', fontSize:'14px'}}>
-                                年:
-                                <input 
-                                    type="number" 
-                                    value={year} 
-                                    onChange={e => setYear(Number(e.target.value))}
-                                    style={{width:'55px', padding:'4px 2px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'14px'}}
-                                />
-                            </label>
+            {!isPro && <AdBanner onRemoveAds={handlePurchase} />}
+            <div style={{ height: '30vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f0f2f5', borderTop: `1px solid ${THEME.border}`, zIndex: 10, boxShadow: '0 -2px 10px rgba(0,0,0,0.05)', flexShrink: 0, width: '100%' }}>
+               <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                  <InfoBridge info={selectedInfo} date={selectedDate} isBookmarked={bookmarks.includes(getLocalDateString(selectedDate))} toggleBookmark={toggleBookmark} onOpenTimePicker={() => setShowTimeModal(true)} />
+                  <BottomSection info={selectedInfo} />
+              </div>
+            </div>
+          </>
+        )}
 
-                            <label style={{display:'flex', alignItems:'center', gap:'2px', fontSize:'14px'}}>
-                                月:
-                                <select 
-                                    value={month} 
-                                    onChange={e => setMonth(Number(e.target.value))} 
-                                    style={{padding:'4px 2px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'14px'}}
-                                >
-                                    <option value={1}>寅</option>
-                                    <option value={2}>卯</option>
-                                    <option value={3}>辰</option>
-                                    <option value={4}>巳</option>
-                                    <option value={5}>午</option>
-                                    <option value={6}>未</option>
-                                    <option value={7}>申</option>
-                                    <option value={8}>酉</option>
-                                    <option value={9}>戌</option>
-                                    <option value={10}>亥</option>
-                                    <option value={11}>子</option>
-                                    <option value={12}>丑</option>
-                                </select>
-                            </label>
-                        </div>
-                        
-                        {/* 顯示開關 */}
-                        <div style={{display:'flex', gap:'12px', borderTop:'1px solid #eee', paddingTop:'8px'}}>
-                             <button 
-                                onClick={() => setShowAnnual(!showAnnual)} 
-                                style={{
-                                    display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', padding:'4px 8px', borderRadius:'12px',
-                                    border: '1px solid #722ed1',
-                                    background: showAnnual ? '#f9f0ff' : 'white',
-                                    color: '#722ed1'
-                                }}
-                             >
-                                {showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年(紫)
-                             </button>
-                             <button 
-                                onClick={() => setShowMonthly(!showMonthly)} 
-                                style={{
-                                    display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', padding:'4px 8px', borderRadius:'12px',
-                                    border: '1px solid #fa8c16',
-                                    background: showMonthly ? '#fff7e6' : 'white',
-                                    color: '#fa8c16'
-                                }}
-                             >
-                                {showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月(橙)
-                             </button>
-                             
-                             {/* 商戰按鈕 (新增) */}
-                             <button 
-                                onClick={() => setShowCommercial(true)} 
-                                style={{
-                                    display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', padding:'4px 8px', borderRadius:'12px',
-                                    border: '1px solid #333',
-                                    background: '#333',
-                                    color: 'white',
-                                    marginLeft: 'auto' // 推到最右邊
-                                }}
-                             >
-                                <Briefcase size={12}/> 商戰
-                             </button>
-                        </div>
+        {view === 'bookmarks' && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
+              <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的書籤 ({bookmarks.length})</h2>
+            </div>
+            {[...bookmarks].sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).map(b => {
+              const dateObj = new Date(b);
+              const weekDay = WEEKDAYS[dateObj.getDay()];
+              let lunarInfo = '載入中...'; let ganZhiInfo = ''; let jianStr = '', jianColor = THEME.black;
+              let xiuStr = '', xiuColor = THEME.black; let dgStr = '', dgColor = THEME.gray;
+              if (libStatus === 'ready') {
+                  try {
+                      const solar = window.Solar.fromYmd(dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate());
+                      const lunar = solar.getLunar();
+                      
+                      let mName = lunar.getMonthInChinese();
+                      if (mName === '冬') mName = '十一';
+                      if (mName === '腊') mName = '十二';
+                      else if (mName === '臘') mName = '十二';
+                      
+                      lunarInfo = `${mName}月${lunar.getDayInChinese()}`;
+                      ganZhiInfo = `${lunar.getYearInGanZhi()}年 ${lunar.getDayInGanZhi()}日`;
+                      
+                      const rawJian = lunar.getZhiXing();
+                      const fixJian = JIAN_FIX_MAP[rawJian] || rawJian;
+                      jianStr = fixJian + '日';
+                      jianColor = JIAN_CHU_COLOR_MAP[rawJian] || JIAN_CHU_COLOR_MAP[fixJian] || THEME.black;
+                      const rawXiu = lunar.getXiu(); const fixXiu = XIU_FIX_MAP[rawXiu] || rawXiu;
+                      xiuStr = XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿');
+                      xiuColor = XIU_COLOR_MAP[rawXiu] || XIU_COLOR_MAP[fixXiu] || THEME.black;
+                      const monthNum = Math.abs(lunar.getMonth());
+                      const dayZhi = lunar.getDayZhi(); const dayGanZhi = lunar.getDayInGanZhi();
+                      const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi]; let rating = '平';
+                      if (dgRule) { if (dgRule.s && dgRule.s[dayGanZhi]) { rating = dgRule.s[dayGanZhi]; } else { rating = dgRule.r; } }
+                      dgStr = `董公: ${rating}`;
+                      if (rating.includes('吉')) dgColor = THEME.blue; else if (rating.includes('凶')) dgColor = THEME.red; else if (rating.includes('平')) dgColor = THEME.orange;
+                  } catch (e) { console.error("Bookmark Error:", e); }
+              }
+              const Pill = ({ text, color }) => (<div style={{ fontSize: '12px', fontWeight: 'bold', color: color, backgroundColor: THEME.bgGray, padding: '4px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>{text}</div>);
+              return (
+                <div key={b} onClick={()=>{ const d=new Date(b); setCurrentDate(d); setSelectedDate(d); setView('calendar'); }} style={{ padding:'14px 16px', background:'white', marginBottom:'10px', borderRadius:'12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', border: `1px solid ${THEME.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '18px', fontWeight: '800', color: THEME.black, fontFamily: 'monospace', letterSpacing: '-0.5px' }}>{b}</span>
+                        <span style={{ fontSize: '14px', color: THEME.gray }}>週{weekDay}</span>
                     </div>
-                </div>
-
-                <div style={{...cardStyle, padding:'4px', background:'#8B4513'}}>
-                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px', aspectRatio:'1/1'}}>
-                        {gridOrder.map((idx) => {
-                            const tags = getGridTags(idx);
-                            const baZhai = getBaZhaiDisplay(idx); 
-                            const yearlyBadges = getYearlyBadges(idx); // 取得流年標籤
-
-                            return (
-                                <div 
-                                    key={idx} 
-                                    onClick={() => handleSectorClick(idx)}
-                                    style={{
-                                        background: '#fffcf5', display: 'flex', flexDirection: 'column', 
-                                        justifyContent: 'center', alignItems: 'center', position: 'relative', 
-                                        overflow:'hidden', cursor: 'pointer',
-                                        transition: 'background 0.2s',
-                                        ':hover': { background: '#f0f0f0'}
-                                    }}
-                                >
-                                    {/* 山星 (左上) */}
-                                    <div style={{position:'absolute', top:'4px', left:'6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                        <div style={{fontSize:'20px', fontWeight:'900', color:'#ff0000ff', lineHeight:'1'}}>{data.mtGrid[idx]}</div>
-                                        {/* 流年飛星 (山星下方) */}
-                                        {showAnnual && (
-                                            <div style={{fontSize:'14px', fontWeight:'bold', color:'#722ed1', marginTop:'0px'}}>{data.annualGrid[idx]}</div>
-                                        )}
-                                    </div>
-
-                                    {/* 向星 (右上) */}
-                                    <div style={{position:'absolute', top:'4px', right:'6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                        <div style={{fontSize:'20px', fontWeight:'900', color:'#1500ffff', lineHeight:'1'}}>{data.faceGrid[idx]}</div>
-                                        {/* 流月飛星 (向星下方) */}
-                                        {showMonthly && (
-                                            <div style={{fontSize:'14px', fontWeight:'bold', color:'#fa8c16', marginTop:'0px'}}>{data.monthlyGrid[idx]}</div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* 運星 (中間) */}
-                                    <div style={{fontSize:'36px', fontWeight:'bold', color:'#e0e0e0', marginTop:'-10px'}}>{data.baseGrid[idx]}</div>
-                                    
-                                    {/* 中宮不顯示方位與標籤 */}
-                                    {idx !== 4 && (
-                                        <>
-                                            {/* 流年凶煞標籤 (右上偏下或分散佈置) */}
-                                            {yearlyBadges.length > 0 && (
-                                                 <div style={{position:'absolute', top:'40%', right:'2px', display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end'}}>
-                                                    {yearlyBadges.map(b => (
-                                                        <span key={b} style={{fontSize:'9px', background: b==='五黃'||b==='三煞'||b==='歲破' ? '#cf1322':'#d48806', color:'white', padding:'0px 2px', borderRadius:'2px'}}>
-                                                            {b}
-                                                        </span>
-                                                    ))}
-                                                 </div>
-                                            )}
-
-                                            <div style={{position:'absolute', bottom:'2px', width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                                <div style={{display:'flex', gap:'2px', flexWrap:'wrap', justifyContent:'center', width:'95%', marginBottom:'2px'}}>
-                                                    {tags.map((t, i) => (
-                                                        <span key={i} style={{...tagStyle, background: t.color}}>{t.text}</span>
-                                                    ))}
-                                                </div>
-                                                <div style={{fontSize:'12px', color:'#888', fontWeight:'bold'}}>{dirNames[idx]}</div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {idx === 4 && (
-                                        <div style={{
-                                            position:'absolute', bottom: '18px', fontSize:'10px', fontWeight:'bold', 
-                                            background:'rgba(83, 29, 171, 0.1)', padding:'2px 6px', borderRadius:'4px', color: '#531dab', whiteSpace: 'nowrap'
-                                        }}>
-                                            {data.chartType}
-                                        </div>
-                                    )}
-
-                                    {baZhai && (
-                                        <div style={{
-                                            position: 'absolute', bottom: '4px', right: '4px', 
-                                            fontSize: '11px', fontWeight: 'bold', color: baZhai.color,
-                                            background: 'rgba(255,255,255,0.8)', padding: '1px 3px', borderRadius: '4px',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                                        }}>
-                                            {baZhai.name}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '16px', color: THEME.black, fontWeight: '600' }}>{lunarInfo}</span>
+                        <span style={{ fontSize: '14px', color: '#595959' }}>{ganZhiInfo}</span>
                     </div>
-                </div>
-
-                {/* --- 凶煞警示卡片 (更新) --- */}
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#c41d7f'}}>⚠️ 凶煞警示 (忌開門/安床/動土)</div>
-                    <div style={{display:'flex', flexDirection:'column', gap:'8px', fontSize:'14px'}}>
-                        
-                        {/* 這裡顯示流年凶煞 (僅當 showAnnual 開啟時) */}
-                        {showAnnual && (
-                            <div style={{background:'#fff1f0', border:'1px solid #ffa39e', padding:'8px', borderRadius:'6px', marginBottom:'4px'}}>
-                                <div style={{fontWeight:'bold', color:'#cf1322', marginBottom:'4px', display:'flex', alignItems:'center', gap:'4px'}}>
-                                    <AlertTriangle size={14}/> {data.year}流年凶方
-                                </div>
-                                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4px'}}>
-                                    <div>五黃(災病)：<span style={{fontWeight:'bold'}}>{data.advanced.yearlyAfflictions.wuHuang}</span></div>
-                                    <div>三煞(劫煞)：<span style={{fontWeight:'bold'}}>{data.advanced.yearlyAfflictions.sanSha}</span></div>
-                                    <div>力士(血光)：<span style={{fontWeight:'bold'}}>{data.advanced.yearlyAfflictions.liShi}</span></div>
-                                    <div>歲破(衝撞)：<span style={{fontWeight:'bold'}}>{data.advanced.yearlyAfflictions.suiPo}</span></div>
-                                </div>
-                                <div style={{fontSize:'11px', color:'#999', marginTop:'4px'}}>* 此方位忌動土、修造，犯之易招災。</div>
-                            </div>
-                        )}
-
-                        <div style={{display:'flex', justifyContent:'space-between', borderBottom:'1px dashed #eee', paddingBottom:'4px'}}>
-                            <span>龍上八煞 (坐{data.sitting.gua})</span>
-                            <span style={{color:'red', fontWeight:'bold'}}>忌{data.advanced.sha8}方</span>
-                        </div>
-                        <div style={{display:'flex', justifyContent:'space-between'}}>
-                            <span>八路黃泉 (向{data.facing.name})</span>
-                            <span style={{color:'red', fontWeight:'bold'}}>{data.advanced.huangQuan ? `忌${data.advanced.huangQuan}方` : '無'}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- 三元納氣法 --- */}
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#096dd9'}}>💨 三元納氣法 (門/窗/陽台)</div>
-                    <div style={{fontSize:'12px', color:'#666', marginBottom:'8px'}}>
-                        請選擇住宅主要納氣口(大門/落地窗)之方位。預設為向首({data.facing.gua})。
-                    </div>
-                    
-                    <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'12px'}}>
-                        {naQiGuas.map(gua => (
-                            <button 
-                                key={gua}
-                                onClick={() => setNaQiDoor(gua)}
-                                style={{
-                                    padding:'6px 12px', borderRadius:'6px', border:'1px solid #ddd',
-                                    background: naQiDoor === gua ? '#1890ff' : 'white',
-                                    color: naQiDoor === gua ? 'white' : '#333',
-                                    cursor:'pointer', fontSize:'14px', fontWeight:'bold'
-                                }}
-                            >
-                                {gua}
-                            </button>
-                        ))}
-                    </div>
-
-                    {naQiResult && (
-                        <div style={{
-                            background: naQiResult.type === '吉' || naQiResult.type === '大吉' ? '#f6ffed' : (naQiResult.type === '平' ? '#f5f5f5' : '#fff1f0'),
-                            border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px',
-                            display:'flex', alignItems:'center', justifyContent:'space-between'
-                        }}>
-                            <div>
-                                <div style={{fontSize:'12px', color:'#666'}}>納氣方位：<span style={{fontWeight:'bold', color:'#333'}}>{naQiDoor}方</span></div>
-                                <div style={{fontSize:'18px', fontWeight:'bold', color: naQiResult.color}}>{naQiResult.text}</div>
-                            </div>
-                            <div style={{textAlign:'right'}}>
-                                <div style={{fontSize:'12px', color:naQiResult.color, fontWeight:'bold'}}>{naQiResult.sub}</div>
-                                <DoorOpen size={24} color={naQiResult.color} style={{marginTop:'4px'}}/>
-                            </div>
+                    {libStatus === 'ready' && (
+                        <div style={{ display: 'flex', gap: '8px', borderTop: `1px solid ${THEME.bg}`, paddingTop: '10px', overflowX: 'auto' }}>
+                            <Pill text={jianStr} color={jianColor} />
+                            <Pill text={xiuStr} color={xiuColor} />
+                            <Pill text={dgStr} color={dgColor} />
                         </div>
                     )}
                 </div>
+              );
+            })}
+          </div>
+        )}
+        {view === 'settings' && (<SettingsView ziHourRule={ziHourRule} setZiHourRule={setZiHourRule} isPro={isPro} onPurchase={handlePurchase} />)}
+        {view === 'booking' && (<BookingView onNavigate={() => setView('calendar')} />)}
+      </div>
+      
+      <TimePickerModal visible={showTimeModal} onClose={() => setShowTimeModal(false)} currentRule={ziHourRule} currentIndex={timeIndex} dayGan={selectedInfo?.bazi?.dayGan} onSelect={(idx) => { setTimeIndex(idx); setShowTimeModal(false); }} />
 
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#531dab'}}>☯️ 玄空大卦 - 吉位速查 (配合向首{data.advanced.daGua.face.n}卦)</div>
-                    <div style={{maxHeight:'200px', overflowY:'auto'}}>
-                        {data.advanced.daGua.suggestions.length > 0 ? (
-                            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}}>
-                                {data.advanced.daGua.suggestions.map((s, i) => (
-                                    <div key={i} style={{border:'1px solid #eee', borderRadius:'6px', padding:'8px', background:'#f9f9f9'}}>
-                                        <div style={{fontSize:'12px', color:'#531dab', fontWeight:'bold', display:'flex', gap:'4px', marginBottom:'4px'}}>
-                                            {s.relations.map((r,idx) => <span key={idx}>{r}</span>)}
-                                        </div>
-                                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                                            <div style={{fontWeight:'bold', fontSize:'14px'}}>{s.gua.n}卦 <span style={{fontSize:'12px', fontWeight:'normal', color:'#666'}}>({s.gua.q}氣/{s.gua.y}運)</span></div>
-                                        </div>
-                                        <div style={{fontSize:'12px', color:'#666', marginTop:'4px', display:'flex', alignItems:'center', gap:'4px'}}>
-                                            <MapPin size={12}/> {s.location.mountain}山 ({s.location.range})
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div style={{fontSize:'13px', color:'#999', textAlign:'center', padding:'20px'}}>
-                                此向首無特殊合十/生成/純清吉格
-                            </div>
-                        )}
-                    </div>
-                </div>
+      {/* 年月選擇彈窗 */}
+      <YearMonthPicker 
+        visible={showDatePicker} 
+        initialDate={currentDate}
+        onClose={() => setShowDatePicker(false)}
+        onConfirm={jumpToDate}
+      />
 
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#096dd9'}}>💧 先後天水法 (乾坤國寶)</div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
-                        <div style={{background:'#e6f7ff', padding:'10px', borderRadius:'8px', textAlign:'center'}}>
-                            <div style={{fontSize:'12px', color:'#666'}}>先天位 (宜來水/旺丁)</div>
-                            <div style={{fontSize:'18px', fontWeight:'bold', color:'#096dd9'}}>{data.advanced.waterMethod.early}方</div>
-                        </div>
-                        <div style={{background:'#f6ffed', padding:'10px', borderRadius:'8px', textAlign:'center'}}>
-                            <div style={{fontSize:'12px', color:'#666'}}>後天位 (宜去水/旺財)</div>
-                            <div style={{fontSize:'18px', fontWeight:'bold', color:'#389e0d'}}>{data.advanced.waterMethod.late}方</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#fa8c16'}}>🚪 城門訣</div>
-                    <div style={{display:'flex', justifyContent:'space-around', fontSize:'14px'}}>
-                        <div>正城門：<span style={{fontWeight:'bold'}}>{data.advanced.chengMen.main}</span></div>
-                        <div>副城門：<span style={{fontWeight:'bold'}}>{data.advanced.chengMen.sub}</span></div>
-                    </div>
-                    <div style={{fontSize:'12px', color:'#999', marginTop:'6px'}}>* 需配合環境，如有圓潤秀水或路口，方為真城門。</div>
-                </div>
-
-                <div style={cardStyle}>
-                    <div style={{...sectionTitle, color:'#722ed1'}}>⛰️ 山水龍翻卦</div>
-                    <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-                        <div style={{background:'#fff0f6', padding:'10px', borderRadius:'8px', borderLeft:'4px solid #c41d7f'}}>
-                            <div style={{fontSize:'13px', color:'#999', marginBottom:'4px'}}>宜廉貞見山 (人丁)</div>
-                            <div style={{fontSize:'15px', fontWeight:'bold', color:'#c41d7f'}}>
-                                {data.advanced.mountainDragon.gua}卦：
-                                {data.advanced.mountainDragon.mountains.map(m => <span key={m} style={{marginLeft:6}}>{m}</span>)}
-                            </div>
-                        </div>
-                        <div style={{background:'#f0f5ff', padding:'10px', borderRadius:'8px', borderLeft:'4px solid #096dd9'}}>
-                             <div style={{fontSize:'13px', color:'#999', marginBottom:'4px'}}>宜巨門見水 (財祿)</div>
-                             <div style={{fontSize:'15px', fontWeight:'bold', color:'#096dd9'}}>
-                                {data.advanced.waterDragon.gua}卦：
-                                {data.advanced.waterDragon.mountains.map(m => <span key={m} style={{marginLeft:6}}>{m}</span>)}
-                             </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <DetailModal 
-                isOpen={!!selectedSector} 
-                onClose={() => setSelectedSector(null)} 
-                data={selectedSector}
-                facingDaGua={data.advanced.daGua.face}
-            />
-
-            <CommercialView 
-                isOpen={showCommercial}
-                onClose={() => setShowCommercial(false)}
-                sittingMt={data.sitting}
-                facingMt={data.facing}
-            />
-        </div>
-    );
-};
-
-export default function FengShuiApp() {
-    useProtection(['mrkcompass.vercel.app', 'mrkfengshui.com']);
-    const [mode, setMode] = useState('compass'); 
-    const [heading, setHeading] = useState(180); 
-    const [isFrozen, setIsFrozen] = useState(false);
-    const [period, setPeriod] = useState(9);
-    const [year, setYear] = useState(new Date().getFullYear()); 
-    const [month, setMonth] = useState(new Date().getMonth() + 1);
-
-    return (
-        <div style={COMMON_STYLES.fullScreen}> {/* 1. 改用共用的全螢幕容器 */}
-            
-            {/* 2. 強制加入 Header (即使是羅庚模式) */}
-            <AppHeader 
-                title="元星風水" 
-                isPro={true} 
-                logoChar={{ main: '羅', sub: '庚' }} 
-            />
-
-            {/* 3. 內容區域 */}
-            <div style={{
-                ...COMMON_STYLES.contentArea, 
-                background: mode === 'compass' ? '#222' : THEME.bg // 羅庚模式保持深底色
-            }}>
-                {mode === 'compass' ? (
-                    <CompassView 
-                        heading={heading} 
-                        setHeading={setHeading} 
-                        isFrozen={isFrozen} 
-                        setIsFrozen={setIsFrozen} 
-                        onAnalyze={() => setMode('chart')}
-                    />
-                ) : (
-                    <ChartView
-                    heading={heading} 
-                    setHeading={setHeading} 
-                    period={period} 
-                    setPeriod={setPeriod} 
-                    year={year} 
-                    setYear={setYear}
-                    month={month} 
-                    setMonth={setMonth}
-                    onBack={() => setMode('compass')}
-                    />
-                )}
-            </div>
-        </div>
-    )}
+      <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
+          <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
+              <button onClick={() => setView('calendar')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: view==='calendar' ? THEME.blue : THEME.gray, cursor: 'pointer' }}><CalendarIcon size={22} /><span style={{ fontSize: '10px' }}>萬年曆</span></button>
+              <button onClick={() => setView('bookmarks')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: view==='bookmarks' ? THEME.blue : THEME.gray, cursor: 'pointer' }}><Bookmark size={22} /><span style={{ fontSize: '10px' }}>書籤</span></button>
+              <button onClick={() => setView('booking')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: view==='booking' ? THEME.blue : THEME.gray, cursor: 'pointer' }}><CalendarCheck size={22} /><span style={{ fontSize: '10px' }}>網上預約</span></button>
+              <button onClick={() => setView('settings')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: view==='settings' ? THEME.blue : THEME.gray, cursor: 'pointer' }}><Settings size={22} /><span style={{ fontSize: '10px' }}>設定</span></button>
+          </div>
+      </div>
+    </div>
+  );
+}

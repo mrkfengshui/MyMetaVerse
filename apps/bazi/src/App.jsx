@@ -20,8 +20,7 @@ import {
 
 // 全域設定
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const CURRENT_APP_NAME = "八字 by 許甯博"; 
-const APP_VERSION = "v1.0";
+const APP_VERSION = "元星八字 v1.0";
 
 const COLORS = {
   jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
@@ -288,8 +287,8 @@ const SettingsView = ({
     colorTheme, setColorTheme,
 }) => {
   // 定義這個 App 獨有的資訊
-const APP_INFO = {
-    appName: CURRENT_APP_NAME,
+  const APP_INFO = {
+    appName: "元星八字",
     version: APP_VERSION,
     about: "本程式旨在提供專業八字排盤服務，結合子平命理與現代演算法，輔助使用者進行命理分析。",
   };
@@ -890,7 +889,6 @@ return (
 
 // --- 7. 主程式 (BaziApp) ---
 export default function BaziApp() {
-  useProtection(['mrkfengshui.com', 'localhost']);
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
   const [baziData, setBaziData] = useState(null);
@@ -981,7 +979,7 @@ export default function BaziApp() {
       `}</style>
       
       {/* 1. Header (無 Pro 標籤) */}
-      <AppHeader title="八字" logoChar={{ main: '八', sub: '字' }} sub=" by 許甯博" />
+      <AppHeader title="元星八字" logoChar={{ main: '八', sub: '字' }} />
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%' }}>
           {view === 'input' && (
