@@ -1,13 +1,16 @@
-// apps/fengshui/src/App.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
-// 1. 引入共用 UI (加入 AppInfoCard, BuyMeCoffee)
-import { AppHeader, useProtection, THEME, COMMON_STYLES, AdBanner, AppInfoCard, BuyMeCoffee } from '@my-meta/ui';
-// 2. 引入 Icon (加入 Settings, Grid)
+// 1. 引入所有共用 UI (包含備份、書籤、預約、廣告)
+import { 
+  AppHeader, useProtection, THEME, COMMON_STYLES, AdBanner, 
+  AppInfoCard, BuyMeCoffee, BookingSystem, 
+  BookmarkList, WebBackupManager, SettingLink
+} from '@my-meta/ui';
+
+// 2. 引入 Icon
 import { 
   Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, 
   DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase, 
-  Settings, Grid // <--- 新增這兩個
+  Settings, Grid, Save, CalendarCheck, FileText, Share2
 } from 'lucide-react';
 
 // --- 核心數據定義 (保持不變) ---
@@ -861,12 +864,30 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     );
 };
 
-// --- 設定頁面 ---
-const SettingsView = () => {
+const RecordsView = ({ savedRecords, onLoadRecord, onDeleteRecord }) => {
+    return (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: THEME.bg }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
+                <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的紀錄</h2>
+            </div>
+            <BookmarkList 
+                bookmarks={savedRecords} 
+                onSelect={onLoadRecord} 
+                onDelete={onDeleteRecord} 
+            />
+            <div style={{ marginTop: '20px' }}>
+                <AdBanner />
+            </div>
+        </div>
+    );
+};
+
+// --- 2. 設定 (Settings) 頁面 (整合雲端備份) ---
+const SettingsView = ({ savedRecords, onRestoreRecords }) => {
     const APP_INFO = {
-        appName: "元星風水",
-        version: "v1.0",
-        about: "本程式結合三元九運、玄空飛星與常用水法，提供專業的風水羅盤與排盤分析功能。",
+        appName: "風水 by 許甯博",
+        version: "v2.0 Pro",
+        about: "本程式結合三元九運、玄空飛星與商戰佈局，提供專業的電子羅庚與排盤分析。",
     };
 
     return (
@@ -875,70 +896,164 @@ const SettingsView = () => {
                 <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
             </div>
 
+            {/* 雲端備份與還原 */}
+            <WebBackupManager 
+                data={savedRecords} 
+                onRestore={onRestoreRecords} 
+                prefix="FENGSHUI_BACKUP" 
+            />
+
             {/* 關於與支援 */}
             <AppInfoCard info={APP_INFO} />
 
             {/* 贊助按鈕 */}
             <BuyMeCoffee />
+            
+            <div style={{ marginTop: '20px' }}>
+                <AdBanner />
+            </div>
         </div>
     );
 };
 
-// --- 主程式 ---
+// --- 3. 主程式 (整合所有功能) ---
 export default function FengShuiApp() {
     useProtection(['mrkcompass.vercel.app', 'mrkfengshui.com']);
     
-    // 將 mode 改為 view，新增 'settings' 狀態
+    // 視圖狀態: 'compass'(羅庚) | 'chart'(排盤) | 'booking'(預約) | 'records'(紀錄) | 'settings'(設定)
     const [view, setView] = useState('compass'); 
     
-    // 羅盤相關狀態
+    // 羅庚與排盤狀態
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
-    
-    // 排盤相關狀態
     const [period, setPeriod] = useState(9);
     const [year, setYear] = useState(new Date().getFullYear()); 
     const [month, setMonth] = useState(new Date().getMonth() + 1);
 
+    // 儲存紀錄狀態 (使用 localStorage)
+    const [savedRecords, setSavedRecords] = useState(() => {
+        const saved = localStorage.getItem('mrk_fengshui_records');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // 當紀錄改變時，存回 LocalStorage
+    useEffect(() => {
+        localStorage.setItem('mrk_fengshui_records', JSON.stringify(savedRecords));
+    }, [savedRecords]);
+
+    // 動作：儲存目前盤面
+    const handleSaveCurrent = () => {
+        const name = prompt("請為此風水局命名：", `${year}年 ${month}月`);
+        if (!name) return;
+        
+        // 計算坐向名稱 (這裡簡化，實際可用 calculateEverything 的結果)
+        // 為了簡單，我們存 heading，讀取時會自動算出坐向
+        const newRecord = {
+            id: Date.now(),
+            name: name,
+            type: 'fengshui',
+            heading: heading,
+            period: period,
+            year: year,
+            month: month,
+            genderText: `${period}運`, // 借用欄位顯示運
+            solarDate: new Date().toISOString().split('T')[0] // 記錄建立日期
+        };
+        
+        setSavedRecords([newRecord, ...savedRecords]);
+        alert("✅ 紀錄已儲存！");
+    };
+
+    // 動作：讀取紀錄
+    const handleLoadRecord = (record) => {
+        setHeading(record.heading);
+        setPeriod(record.period);
+        setYear(record.year);
+        setMonth(record.month);
+        setIsFrozen(true); // 讀取後自動定格
+        setView('chart'); // 直接看盤
+    };
+
+    // 動作：刪除紀錄
+    const handleDeleteRecord = (id) => {
+        if(window.confirm("確定要刪除這筆紀錄嗎？")) {
+            setSavedRecords(savedRecords.filter(r => r.id !== id));
+        }
+    };
+
+    // 動作：還原備份
+    const handleRestoreRecords = (data) => {
+        setSavedRecords(data);
+        alert(`成功還原 ${data.length} 筆紀錄！`);
+    };
+
+    // Google Sheet API (請換成你自己部署的 Apps Script URL)
+    const BOOKING_API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; 
+
     return (
         <div style={COMMON_STYLES.fullScreen}> 
-            <style>{`
-                    * { box-sizing: border-box; } 
-                    body { margin: 0; }
-                `}</style>
+            <style>{` * { box-sizing: border-box; } body { margin: 0; } `}</style>
+            
             {/* Header */}
             <AppHeader title="元星風水" logoChar={{ main: '風', sub: '水' }} />
 
             {/* 內容區域 */}
             <div style={{ 
                 ...COMMON_STYLES.contentArea, 
-                // 只有在羅盤模式下才用深色背景
                 background: view === 'compass' ? '#222' : THEME.bg 
             }}>
                 {view === 'compass' && (
-                    <CompassView 
+                    <CompassView // ⚠️ 請確保 CompassView 組件還在上面的代碼中
                         heading={heading} setHeading={setHeading} 
                         isFrozen={isFrozen} setIsFrozen={setIsFrozen} 
-                        onAnalyze={() => setView('chart')} // 點擊排盤跳轉
+                        onAnalyze={() => setView('chart')} 
                     />
                 )}
 
                 {view === 'chart' && (
-                    <ChartView
-                        heading={heading} setHeading={setHeading} 
-                        period={period} setPeriod={setPeriod} 
-                        year={year} setYear={setYear}
-                        month={month} setMonth={setMonth}
-                        onBack={() => setView('compass')} // 返回跳轉
+                    <>
+                        <ChartView // ⚠️ 請確保 ChartView 組件還在上面的代碼中
+                            heading={heading} setHeading={setHeading} 
+                            period={period} setPeriod={setPeriod} 
+                            year={year} setYear={setYear}
+                            month={month} setMonth={setMonth}
+                            onBack={() => setView('compass')} 
+                        />
+                        {/* 在排盤頁面加入儲存按鈕 */}
+                        <div style={{position: 'fixed', bottom: '100px', right: '20px', zIndex: 50}}>
+                            <button onClick={handleSaveCurrent} style={{
+                                width: '50px', height: '50px', borderRadius: '50%', 
+                                background: THEME.blue, color: 'white', border: 'none',
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.3)', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Save size={24} />
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {view === 'booking' && (
+                    <BookingSystem apiUrl={BOOKING_API_URL} onNavigate={() => setView('compass')} />
+                )}
+
+                {view === 'records' && (
+                    <RecordsView 
+                        savedRecords={savedRecords} 
+                        onLoadRecord={handleLoadRecord} 
+                        onDeleteRecord={handleDeleteRecord} 
                     />
                 )}
 
                 {view === 'settings' && (
-                    <SettingsView />
+                    <SettingsView 
+                        savedRecords={savedRecords} 
+                        onRestoreRecords={handleRestoreRecords} 
+                    />
                 )}
             </div>
 
-            {/* 👇 新增：底部導航欄 (Footer) */}
+            {/* 底部導航欄 (Footer) */}
             <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
                 <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
                     
@@ -947,9 +1062,14 @@ export default function FengShuiApp() {
                         <span style={{ fontSize: '10px' }}>羅庚</span>
                     </button>
 
-                    <button onClick={() => setView('chart')} style={{ background: 'none', border: 'none', color: view==='chart' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                        <Grid size={22} />
-                        <span style={{ fontSize: '10px' }}>排盤</span>
+                    <button onClick={() => setView('records')} style={{ background: 'none', border: 'none', color: view==='records' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <FileText size={22} />
+                        <span style={{ fontSize: '10px' }}>紀錄</span>
+                    </button>
+
+                    <button onClick={() => setView('booking')} style={{ background: 'none', border: 'none', color: view==='booking' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <CalendarCheck size={22} />
+                        <span style={{ fontSize: '10px' }}>預約</span>
                     </button>
 
                     <button onClick={() => setView('settings')} style={{ background: 'none', border: 'none', color: view==='settings' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
