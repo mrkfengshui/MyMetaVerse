@@ -524,16 +524,16 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     return (
         <div style={{
             flex: 1, 
+            minHeight: '100vh',
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            // background: '#222', // 移除這裡的背景，改由外層容器控制，避免重複渲染
+            background: '#222', // 移除這裡的背景，改由外層容器控制，避免重複渲染
             color: '#fff', 
             position: 'relative', 
             overflow: 'hidden', 
             width: '100%',     // 確保寬度佔滿
-            height: '100%'     // 確保高度佔滿
         }}>
              {/* 修正重點：
                 原本 top: 20 會被 Header (高度約 60px) 擋住。
@@ -778,7 +778,7 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
 
 export default function FengShuiApp() {
     // 1. 安全與狀態
-    useProtection(['mrkfengshui.com', 'mrkcompass.vercel.app', 'localhost']);
+//    useProtection(['mrkfengshui.com', 'mrkcompass.vercel.app', 'localhost']);
     const [view, setView] = useState('input'); // input(compass), result(chart), bookmarks, booking, settings
     const [bookmarks, setBookmarks] = useState([]);
     
