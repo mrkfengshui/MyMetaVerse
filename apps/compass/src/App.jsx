@@ -3,36 +3,27 @@ import { Preferences } from '@capacitor/preferences';
 
 // 1. 引入共用 UI 和 工具
 import { 
-  AppHeader, 
-  BottomTabBar, 
-  AdBanner, 
-  AppInfoCard, 
-  WebBackupManager, 
-  BuyMeCoffee, 
-  InstallGuide,
-  BookingSystem,
-  BookmarkList,
-  useProtection, 
-  THEME, 
-  COMMON_STYLES 
+  AppHeader, BottomTabBar, AdBanner, AppInfoCard, 
+  WebBackupManager, BuyMeCoffee, InstallGuide,
+  BookingSystem, BookmarkList, useProtection, 
+  THEME, COMMON_STYLES 
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
-  Compass, RefreshCw, ArrowLeft, Lock, Unlock, X, MapPin, 
-  DoorOpen, Eye, EyeOff, AlertTriangle, Briefcase, 
-  Grid, Bookmark, CalendarCheck, Settings, Save
+  Compass, RefreshCw, ArrowLeft, Lock, Unlock, X,
+  DoorOpen, Eye, EyeOff, Briefcase, 
+  Bookmark, CalendarCheck, Settings, Save
 } from 'lucide-react';
 
 // =========================================================================
-// 👇 PART A: 核心數據與邏輯 (保留原有的風水運算)
+// PART A: 核心數據與邏輯
 // =========================================================================
-
-const APP_NAME = "元星風水";
-const APP_VERSION = "v2.0 Pro";
+const APP_NAME = "風水";
+const APP_VERSION = "風水 v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; // 範例 API
 
-// --- 核心數據定義 (保持不變) ---
+// --- 核心數據定義 ---
 const MOUNTAINS = [
     { name: '子', angle: 0, gua: '坎', yuan: '天' }, { name: '癸', angle: 15, gua: '坎', yuan: '人' },
     { name: '丑', angle: 30, gua: '艮', yuan: '地' }, { name: '艮', angle: 45, gua: '艮', yuan: '天' }, { name: '寅', angle: 60, gua: '艮', yuan: '人' },
@@ -56,7 +47,6 @@ const YIN_YANG_MAP = {
 const LUOSHU_PATH = [4, 8, 5, 6, 1, 7, 2, 3, 0]; 
 const DIRECTION_MAP = { '巽': 0, '離': 1, '坤': 2, '震': 3, '中': 4, '兌': 5, '艮': 6, '坎': 7, '乾': 8 };
 
-// --- 進階風水數據 (保持不變) ---
 const EIGHT_KILLINGS = { '坎': '辰', '坤': '卯', '震': '申', '巽': '酉', '乾': '午', '兌': '巳', '艮': '寅', '離': '亥' };
 const YELLOW_SPRING = { '庚': '坤', '丁': '坤', '坤': ['庚', '丁'], '丙': '巽', '乙': '巽', '巽': ['丙', '乙'], '甲': '艮', '癸': '艮', '艮': ['甲', '癸'], '壬': '乾', '辛': '乾', '乾': ['辛', '壬'] };
 const EAR_LATE_WATER = { '乾': { early: '離', late: '艮' }, '坎': { early: '兌', late: '坤' }, '艮': { early: '乾', late: '震' }, '震': { early: '艮', late: '離' }, '巽': { early: '坤', late: '兌' }, '離': { early: '震', late: '乾' }, '坤': { early: '坎', late: '巽' }, '兌': { early: '巽', late: '坎' } };
@@ -96,7 +86,13 @@ const KUN_REN_YI = {
     '子': { star: '左輔', type: '吉', color: '#595959' }, '戌': { star: '左輔', type: '吉', color: '#595959' }, '巳': { star: '左輔', type: '吉', color: '#595959' }
 };
 
-const SHOU_SHAN_CHU_SHA = { '子': '出煞', '午': '出煞', '卯': '收山', '酉': '收山', '乾': '收山', '坤': '出煞', '艮': '出煞', '巽': '收山', '壬': '收山', '丙': '收山', '寅': '出煞', '申': '出煞', '巳': '收山', '亥': '收山', '辰': '出煞', '戌': '出煞', '丑': '出煞', '未': '出煞', '甲': '收山', '庚': '收山', '乙': '出煞', '辛': '出煞', '丁': '出煞', '癸': '出煞' };
+const SHOU_SHAN_CHU_SHA = { '辰': '出煞', '戌': '出煞', '丑': '出煞', '未': '出煞', 
+                            '乙': '出煞', '辛': '出煞', '丁': '出煞', '癸': '出煞', 
+                            '寅': '出煞', '申': '出煞', '子': '出煞', '午': '出煞', 
+                            '艮': '出煞', '坤': '出煞', 
+                            '卯': '收山', '酉': '收山', '乾': '收山', '巽': '收山', 
+                            '壬': '收山', '丙': '收山', '巳': '收山', '亥': '收山', 
+                            '甲': '收山', '庚': '收山' };
 
 const DA_GUA_64 = [
     {n:'復',q:1,y:8},{n:'頤',q:1,y:3},{n:'屯',q:3,y:4},{n:'益',q:8,y:9},{n:'震',q:8,y:8},{n:'噬嗑',q:8,y:3},{n:'隨',q:4,y:7},{n:'無妄',q:2,y:2},
@@ -110,9 +106,104 @@ const DA_GUA_64 = [
 ];
 
 const STAR_COMBINATIONS = {
-    '1-1': { title: '坎宮重疊', text: '雙一雙水，主漂泊、桃花、文書往來。吉則利文貴，凶則淫蕩漂流。', source: '玄空秘旨' },
-    // ... (為了節省篇幅，保留原有的星組數據，此處省略中間部分，但實際代碼中請保留完整) ...
-    '9-9': { title: '火曜連珠', text: '目疾、火災，吉則大發文名。', source: '玄機賦' },
+// 1白水
+    '1-1': { title: '坎宮重疊', text: '雙一雙水，主漂泊、桃花、文書往來。吉則利文貴，凶則淫蕩漂流。', source: '玄空秘旨：坎宮重疊，身飄蕩而無依。' },
+    '1-2': { title: '土水相剋', text: '土剋水，主婦女掌權，需防腎病、腸胃病。', source: '紫白訣：一二，土水相剋，中男被中女之欺。' },
+    '1-3': { title: '水木相生', text: '水生木，利長子，發科名，但防是非口舌。', source: '玄機賦：水生木而聲名狼藉？非也，主顯貴。' },
+    '1-4': { title: '文昌大旺', text: '一四同宮，準發科名。利讀書、考試、學術研究，亦主桃花。', source: '紫白訣：四一同宮，準發科名之顯。' },
+    '1-5': { title: '子癸生瘍', text: '土剋水，主性病、腎病、耳疾，防波折。', source: '飛星賦：子癸生瘍，在一五之位。' },
+    '1-6': { title: '金水相生', text: '一六共宗，主武職騰達，技術成名，大吉。', source: '紫白訣：虛聯奎壁，啟八代之文章。' },
+    '1-7': { title: '金水多情', text: '金水相生，主桃花、貪花戀酒，亦利口才。', source: '玄空秘旨：金水多情，貪花戀酒。' },
+    '1-8': { title: '耳腎之疾', text: '土剋水，八白艮土剋一白水，防耳病、腎病、小兒災。', source: '玄機賦：一八剋傷，中男受辱。' },
+    '1-9': { title: '水火既濟', text: '水火交戰，調和則成既濟，主婚喜；不調則主眼疾、心病。', source: '玄空秘旨：南離北坎，位極中央。' },
+
+    // 2黑土
+    '2-1': { title: '土剋水', text: '婦人當家，需防腹疾、腎病、流產。', source: '紫白訣：土水相剋，中男被中女之欺。' },
+    '2-2': { title: '二黑重疊', text: '純陰，主病符、寡婦，醫院常客，大凶。', source: '玄空秘旨：風行地而硬直難當。' },
+    '2-3': { title: '鬥牛煞', text: '木剋土，主口舌是非、官非刑獄、腹痛。', source: '紫白訣：鬥牛煞起惹官刑。' },
+    '2-4': { title: '婆媳不和', text: '木剋土，主婆媳不和、腹疾、風疾。', source: '飛星賦：風行地而硬直難當。' },
+    '2-5': { title: '二五交加', text: '二黑病符會五黃廉貞，主重病、死亡、破財，大凶之最。', source: '飛星賦：二五交加，罹死亡並生疾病。' },
+    '2-6': { title: '富比陶朱', text: '土生金，利財源，主富，但略損健康(腸胃)。', source: '玄機賦：二六富比陶朱。' },
+    '2-7': { title: '先天火數', text: '二七同道化火，主火災、熱病，因女色破財。', source: '玄空秘旨：庶妾難投寡母之歡心。' },
+    '2-8': { title: '比和旺財', text: '二八合十，利田宅、地產，吉。', source: '紫白訣：二八同宮，少男逢老母。' },
+    '2-9': { title: '火炎土燥', text: '火生土，主生愚鈍之子，或眼疾、腸胃病。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
+
+    // 3碧木
+    '3-1': { title: '水木相生', text: '利長子，發科名，稍防四肢受傷。', source: '紫白訣：一三生子，長男得貴。' },
+    '3-2': { title: '鬥牛煞', text: '木剋土，主官非、爭鬥、腸胃病。', source: '紫白訣：鬥牛煞起惹官刑。' },
+    '3-3': { title: '蚩尤煞', text: '雙木成林，主爭鬥、盜賊、官災、神經痛。', source: '玄空秘旨：蚩尤碧色，好勇鬥狠。' },
+    '3-4': { title: '碧綠風魔', text: '桃花劫，主瘋癲、哮喘、中風、盜賊。', source: '紫白訣：三四碧綠風魔，他處廉貞莫見。' },
+    '3-5': { title: '寒戶遭瘟', text: '木剋土，主怪病、中毒、破財、官司。', source: '紫白訣：寒戶遭瘟，緣自三廉夾綠。' },
+    '3-6': { title: '金木相戰', text: '金剋木，主手足受傷、肝膽病、車禍。', source: '飛星賦：三六，長男被老父之剋。' },
+    '3-7': { title: '穿心煞', text: '金剋木，主盜賊、官災、手足傷、肝病。', source: '紫白訣：三七疊至，被劫盜更見官災。' },
+    '3-8': { title: '傷小口', text: '木剋土，不利少男，筋骨損，或絕嗣。', source: '玄空秘旨：八逢三四，損小口而絕嗣。' },
+    '3-9': { title: '木火通明', text: '木生火，主聰明、富貴、生貴子。', source: '玄機賦：木見火而生聰明奇士。' },
+
+    // 4綠木
+    '4-1': { title: '文昌大旺', text: '水生木，大利科名、考試、桃花、聲望。', source: '玄機賦：名揚科第，貪狼星入巽宮。' },
+    '4-2': { title: '腹疾風疾', text: '木剋土，主婆媳不和，脾胃病。', source: '玄空秘旨：風行地而硬直難當。' },
+    '4-3': { title: '碧綠風魔', text: '桃花、竊盜、乞丐、風病。', source: '飛星賦：同來震巽，昧事無常。' },
+    '4-4': { title: '雙木成林', text: '文昌旺，亦主漂泊、桃花、繩索(自縊)。', source: '玄空秘旨：巽宮重疊，懸樑之厄。' },
+    '4-5': { title: '乳癰博奕', text: '木剋土，主皮膚病、乳疾、賭博破財。', source: '飛星賦：乳癰兮，四五。' },
+    '4-6': { title: '金木相剋', text: '主懸樑、刀傷、家中婦女不和。', source: '飛星賦：風逢天，巽宮水木傷。' },
+    '4-7': { title: '刀傷桃花', text: '金剋木，主桃花劫、刀傷、嘔血。', source: '玄機賦：破軍居巽，雷風擊而金勝木，有傷。' },
+    '4-8': { title: '傷小口', text: '木剋土，主精神病、結石、不利幼童。', source: '玄空秘旨：山風值而泉石膏肓。' },
+    '4-9': { title: '木火通明', text: '木火相生，利文職、專業人才、喜慶。', source: '玄機賦：木見火而生聰明奇士。' },
+
+    // 5黃土
+    '5-1': { title: '子癸生瘍', text: '土剋水，主性病、腎病、泌尿系統疾病。', source: '飛星賦：子癸生瘍。' },
+    '5-2': { title: '二五交加', text: '主死亡、重病、破產，大凶。', source: '紫白訣：二五交加，罹死亡並生疾病。' },
+    '5-3': { title: '災瘟劫掠', text: '木剋土，主破財、官非、怪病。', source: '玄空秘旨：我生之子，反遭其辱。' },
+    '5-4': { title: '乳癰博奕', text: '木剋土，主毒瘡、賭博傾家。', source: '飛星賦：乳癰兮，四五。' },
+    '5-5': { title: '二五重疊', text: '大凶，主災禍連連，難以救治。', source: '一般論斷：五黃重疊，兇性最烈。' },
+    '5-6': { title: '土金相生', text: '土生金，主頭痛、骨病，化解五黃之氣。', source: '玄空秘旨：土制水復生金，定主田莊之富。' },
+    '5-7': { title: '紫黃毒藥', text: '土生金，主口舌、性病、中毒、喉疾。', source: '飛星賦：青樓染疾，只因七九之合(誤?應為五七)。' },
+    '5-8': { title: '小口損傷', text: '土多金埋，主筋骨痛、胃病。', source: '玄機賦：五八，小口損傷。' },
+    '5-9': { title: '毒藥入口', text: '火生土，晦火，主眼疾、心病、腦病、中毒。', source: '紫白訣：九七合轍，常招回祿之災(此為95)。' },
+
+    // 6白金
+    '6-1': { title: '金水相生', text: '利武職、技術、財運，大吉。', source: '玄機賦：職掌兵權，武曲入坎宮。' },
+    '6-2': { title: '富比陶朱', text: '土生金，巨富，利地產、金融。', source: '玄機賦：堅金遇土，富比陶朱。' },
+    '6-3': { title: '金木相戰', text: '金剋木，主足疾、刀傷、車禍。', source: '玄空秘旨：足以金而蹣跚。' },
+    '6-4': { title: '金木相剋', text: '主婦女不和、刀傷、自縊。', source: '飛星賦：雷風金伐，定被刀傷。' },
+    '6-5': { title: '骨痛頭痛', text: '五黃煞氣，主頭疾、骨折。', source: '玄空秘旨：庭無耆老，多因寡母遭傷。' },
+    '6-6': { title: '比和旺財', text: '官運亨通，利機械、交通。', source: '一般論斷：乾宮重疊，主要領導地位。' },
+    '6-7': { title: '交劍煞', text: '兩金相擊，主刀傷、搶劫、車禍、爭鬥。', source: '紫白訣：交劍煞興多劫掠。' },
+    '6-8': { title: '武科發跡', text: '土生金，大吉，利軍警、地產、財富。', source: '玄機賦：富比陶朱，堅金遇土。' },
+    '6-9': { title: '火燒天門', text: '火剋金，主老父不利、頭病、肺病、逆子。', source: '玄空秘旨：火燒天門張牙舞爪。' },
+
+    // 7赤金
+    '7-1': { title: '金水多情', text: '主桃花、才藝，亦主漂泊。', source: '玄空秘旨：金水多情，貪花戀酒。' },
+    '7-2': { title: '先天火數', text: '火災、熱病、桃花破財。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
+    '7-3': { title: '穿心煞', text: '金剋木，主盜賊、官災、肝病。', source: '紫白訣：三七疊至，被劫盜更見官災。' },
+    '7-4': { title: '桃花刀傷', text: '金剋木，主婦女淫亂、刀傷。', source: '飛星賦：破軍居巽，雷風擊而金勝木。' },
+    '7-5': { title: '紫黃毒藥', text: '主吸毒、中毒、性病、口舌。', source: '飛星賦：青樓染疾。' },
+    '7-6': { title: '交劍煞', text: '主爭鬥、刀傷、車禍。', source: '紫白訣：交劍煞興多劫掠。' },
+    '7-7': { title: '雙星到會', text: '主醫卜星相、口舌、桃花。', source: '玄空秘旨：兌宮重疊，口舌是非。' },
+    '7-8': { title: '少男少女', text: '土生金，主戀愛、富貴。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
+    '7-9': { title: '回祿之災', text: '火剋金，主火災、心肺病、少女受損。', source: '玄機賦：午酉逢而江湖花酒。' },
+
+    // 8白土
+    '8-1': { title: '中男受辱', text: '土剋水，主耳病、腎病、不孕。', source: '玄機賦：一八剋傷，中男受辱。' },
+    '8-2': { title: '比和旺財', text: '土多金埋，利地產，稍損小口。', source: '紫白訣：二八同宮，少男逢老母。' },
+    '8-3': { title: '傷小口', text: '木剋土，不利兒童、手足傷。', source: '玄空秘旨：八逢三四，損小口而絕嗣。' },
+    '8-4': { title: '山風蠱', text: '木剋土，主精神衰弱、結石。', source: '玄空秘旨：山風值而泉石膏肓。' },
+    '8-5': { title: '小口損傷', text: '土煞重，主筋骨痛、運滯。', source: '玄機賦：五八，小口損傷。' },
+    '8-6': { title: '文武全才', text: '土生金，利功名、財富、健康。', source: '玄機賦：堅金遇土，富比陶朱。' },
+    '8-7': { title: '富足風流', text: '土生金，主財旺，但利偏財、娛樂。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
+    '8-8': { title: '雙星旺財', text: '利置業、地產、財富。', source: '一般論斷：八八雙星，大旺田宅。' },
+    '8-9': { title: '喜慶重來', text: '火生土，主婚喜、置業、大發。', source: '紫白訣：八九和諧，婚喜重來。' },
+
+    // 9紫火
+    '9-1': { title: '水火既濟', text: '吉則婚喜，凶則眼疾、心臟病。', source: '玄空秘旨：南離北坎，位極中央。' },
+    '9-2': { title: '火炎土燥', text: '生愚子，眼疾，血光。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
+    '9-3': { title: '木火通明', text: '聰明、顯貴、生貴子。', source: '玄機賦：木見火而生聰明奇士。' },
+    '9-4': { title: '木火通明', text: '利文昌、桃花、喜慶。', source: '玄機賦：木見火而生聰明奇士。' },
+    '9-5': { title: '毒藥入口', text: '主眼疾、心病、重症、火災。', source: '紫白訣：九七合轍，常招回祿(95同論)。' },
+    '9-6': { title: '火燒天門', text: '主逆子、肺病、腦溢血。', source: '玄空秘旨：火燒天門張牙舞爪。' },
+    '9-7': { title: '回祿之災', text: '主火災、心病、桃花劫。', source: '玄機賦：午酉逢而江湖花酒。' },
+    '9-8': { title: '婚喜重來', text: '火生土，主喜事、進財。', source: '紫白訣：八九和諧，婚喜重來。' },
+    '9-9': { title: '火曜連珠', text: '目疾、火災，吉則大發文名。', source: '玄機賦：火曜連珠，青雲路上。' },
 };
 
 // --- 工具函數 ---
@@ -356,10 +447,9 @@ const calculateEverything = (degree, period, year, month = 1) => {
 };
 
 // =========================================================================
-// 👇 PART B: 視圖組件 (UI Views)
+// PART B: 視圖組件 (UI Views)
 // =========================================================================
-
-// 1. 商戰彈窗 (CommercialView)
+// 商戰彈窗
 const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
     const [shopSector, setShopSector] = useState(null); 
     const [shopTotal, setShopTotal] = useState(10); 
@@ -437,11 +527,13 @@ const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
     );
 };
 
-// 2. 詳情彈窗 (DetailModal)
+// 詳情彈窗
 const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     if (!isOpen || !data) return null;
+
     const { mt, face, base, annual, monthly, guaName, combination, baZhaiStar } = data;
     const baZhaiDetail = baZhaiStar ? BA_ZHAI_INFO[baZhaiStar] : null;
+
     const palaceMountains = MOUNTAINS.filter(m => m.gua === guaName);
 
     const getDaGuaRelations = (targetGua, refGua) => {
@@ -454,51 +546,144 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     };
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={onClose}>
-            <div style={{ background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px', padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}><X size={24} color="#666"/></button>
-                <h3 style={{marginTop: 0, fontSize: '20px', textAlign: 'center', borderBottom: '1px solid #eee', paddingBottom: '12px'}}>{guaName}宮詳解</h3>
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.6)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }} onClick={onClose}>
+            <div style={{
+                background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
+                padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                maxHeight: '90vh', overflowY: 'auto'
+            }} onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
+                    <X size={24} color="#666"/>
+                </button>
+
+                <h3 style={{marginTop: 0, fontSize: '20px', textAlign: 'center', borderBottom: '1px solid #eee', paddingBottom: '12px'}}>
+                    {guaName}宮詳解
+                </h3>
+
                 <div style={{display: 'flex', justifyContent: 'center', gap: '20px', margin: '20px 0', alignItems:'center'}}>
-                    <div style={{textAlign: 'center'}}><div style={{fontSize: '32px', fontWeight: 'bold', color: '#333'}}>{mt}</div><div style={{fontSize: '14px', fontWeight: 'bold', color: '#722ed1'}}>(年{annual})</div></div>
-                    <div style={{textAlign: 'center'}}><div style={{fontSize: '24px', fontWeight: 'bold', color: '#999'}}>{base}</div></div>
-                    <div style={{textAlign: 'center'}}><div style={{fontSize: '32px', fontWeight: 'bold', color: '#d32f2f'}}>{face}</div><div style={{fontSize: '14px', fontWeight: 'bold', color: '#fa8c16'}}>(月{monthly})</div></div>
+                    <div style={{textAlign: 'center', position:'relative'}}>
+                        <div style={{fontSize: '12px', color: '#666'}}>山星</div>
+                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#333'}}>{mt}</div>
+                         <div style={{fontSize: '14px', fontWeight: 'bold', color: '#722ed1', marginTop: '-4px'}}>
+                           (年{annual})
+                        </div>
+                    </div>
+                    <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '12px', color: '#666'}}>運星</div>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '6px'}}>{base}</div>
+                    </div>
+                    <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '12px', color: '#666'}}>向星</div>
+                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#d32f2f'}}>{face}</div>
+                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#fa8c16', marginTop: '-4px'}}>
+                           (月{monthly})
+                        </div>
+                    </div>
                 </div>
+
                 <div style={{background: '#f9f9f9', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
-                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#096dd9', marginBottom: '4px'}}>🚀 {combination.title}</div>
-                    <div style={{fontSize: '14px', color: '#333', marginBottom: '10px'}}>{combination.text}</div>
-                    <div style={{fontSize: '12px', color: '#888', fontStyle: 'italic'}}>📖 {combination.source}</div>
+                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#096dd9', marginBottom: '4px'}}>
+                        🚀 玄空飛星：{combination.title}
+                    </div>
+                    <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333', marginBottom: '10px'}}>
+                        {combination.text}
+                    </div>
+                    <div style={{fontSize: '12px', color: '#888', fontStyle: 'italic', borderTop: '1px dashed #ddd', paddingTop: '8px'}}>
+                        📖 {combination.source}
+                    </div>
                 </div>
+
                 {baZhaiDetail && (
                     <div style={{background: '#fff0f6', padding: '16px', borderRadius: '8px', border: `1px solid ${baZhaiDetail.color}`, marginBottom: '16px'}}>
-                        <div style={{fontSize: '16px', fontWeight: 'bold', color: baZhaiDetail.color}}>🏠 {baZhaiStar} <span style={{fontSize: '12px', background: baZhaiDetail.color, color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{baZhaiDetail.star}</span></div>
-                        <div style={{fontSize: '14px', color: '#333'}}>{baZhaiDetail.desc}</div>
+                        <div style={{fontSize: '16px', fontWeight: 'bold', color: baZhaiDetail.color, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                            🏠 八宅法：{baZhaiStar} <span style={{fontSize: '12px', background: baZhaiDetail.color, color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{baZhaiDetail.star}</span>
+                        </div>
+                        <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333'}}>
+                            {baZhaiDetail.desc}
+                        </div>
                     </div>
                 )}
-                {/* 簡單顯示玄空大卦 */}
+
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px'}}>
+                     <div style={{background: '#fff7e6', padding: '12px', borderRadius: '8px', border: '1px solid #ffd591'}}>
+                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#d46b08', marginBottom: '8px'}}>
+                            ⛰️ 收山出煞
+                        </div>
+                        <div style={{display: 'flex', flexDirection:'column', gap: '4px'}}>
+                            {palaceMountains.map(pm => {
+                                const type = SHOU_SHAN_CHU_SHA[pm.name];
+                                const isShou = type === '收山';
+                                return (
+                                    <div key={pm.name} style={{fontSize:'12px', display:'flex', justifyContent:'space-between'}}>
+                                        <span>{pm.name}山</span>
+                                        <span style={{fontWeight:'bold', color: isShou ? '#874d00' : '#096dd9'}}>
+                                            {type} ({isShou ? '宜收藏' : '宜張揚'})
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div style={{background: '#f0f5ff', padding: '12px', borderRadius: '8px', border: '1px solid #adc6ff'}}>
+                        <div style={{fontSize: '14px', fontWeight: 'bold', color: '#1d39c4', marginBottom: '8px'}}>
+                            🌊 坤壬乙訣
+                        </div>
+                        <div style={{display: 'flex', flexDirection:'column', gap: '4px'}}>
+                            {palaceMountains.map(pm => {
+                                const kry = KUN_REN_YI[pm.name];
+                                return (
+                                    <div key={pm.name} style={{fontSize:'12px', display:'flex', justifyContent:'space-between'}}>
+                                        <span>{pm.name}山</span>
+                                        <span style={{fontWeight:'bold', color: kry.color}}>{kry.star}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
                 <div style={{background: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f'}}>
-                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#389e0d', marginBottom: '8px'}}>☯️ 玄空大卦</div>
+                    <div style={{fontSize: '16px', fontWeight: 'bold', color: '#389e0d', marginBottom: '8px'}}>
+                        ☯️ 玄空大卦：坐向剋應
+                    </div>
+                    <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
+                         向首({facingDaGua.n})：氣{facingDaGua.q} / 運{facingDaGua.y}
+                    </div>
                     <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
                         {palaceMountains.map(pm => {
                             const mountainGua = getDaGua(pm.angle);
                             const relations = getDaGuaRelations(mountainGua, facingDaGua);
                             return (
                                 <div key={pm.name} style={{display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px dashed #d9d9d9', paddingBottom:'4px'}}>
-                                    <div style={{fontWeight:'bold', color:'#333'}}>{pm.name}山</div>
-                                    <div style={{fontSize:'12px', color:'#555'}}>{mountainGua.n}</div>
-                                    <div style={{display:'flex', gap:'2px'}}>{relations.length > 0 ? relations.map((r, idx) => <span key={idx} style={{fontSize:'10px', background:r.c, color:'white', padding:'1px 3px', borderRadius:'3px'}}>{r.t}</span>) : <span style={{fontSize:'10px', color:'#999'}}>無</span>}</div>
+                                    <div style={{fontWeight:'bold', color:'#333', fontSize:'14px', minWidth:'50px'}}>{pm.name}山</div>
+                                    <div style={{fontSize:'12px', color:'#555'}}>{mountainGua.n}(氣{mountainGua.q}/運{mountainGua.y})</div>
+                                    <div style={{display:'flex', gap:'2px'}}>
+                                        {relations.length > 0 ? relations.map((r, idx) => (
+                                            <span key={idx} style={{fontSize:'10px', background:r.c, color:'white', padding:'1px 3px', borderRadius:'3px'}}>{r.t}</span>
+                                        )) : <span style={{fontSize:'10px', color:'#999'}}>無</span>}
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
+                </div>
+
+                <div style={{fontSize: '12px', color: '#aaa', textAlign: 'center', marginTop: '16px'}}>
+                    * 點擊遮罩層即可關閉
                 </div>
             </div>
         </div>
     );
 };
 
-// 3. 羅庚視圖 (CompassView)
+// 羅庚
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
-    const requestAccess = () => {
+const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
@@ -515,74 +700,41 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     };
 
     useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);    
-    
-    // 防呆：確保 MOUNTAINS 有資料，否則避免報錯
-    const safeHeading = heading || 0;
-    const facingMt = getMountain(safeHeading);
-    const sittingMt = getMountain(safeHeading + 180);
+const facingMt = getMountain(heading);
+    const sittingMt = getMountain(heading + 180);
 
     return (
-        <div style={{
-            flex: 1, 
-            minHeight: '100vh',
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            background: '#222', // 移除這裡的背景，改由外層容器控制，避免重複渲染
-            color: '#fff', 
-            position: 'relative', 
-            overflow: 'hidden', 
-            width: '100%',     // 確保寬度佔滿
-        }}>
-             {/* 修正重點：
-                原本 top: 20 會被 Header (高度約 60px) 擋住。
-                改為 top: 100，確保按鈕出現在 Header 下方。
-             */}
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow:'hidden', minHeight:'100vh'}}>
+             {/* 這裡可以選擇性加入 AppHeader，或是保持全黑沈浸式體驗 */}
+             
              {!isFrozen && (
-                <button onClick={requestAccess} style={{
-                    position:'absolute', 
-                    top: 100, // <--- 改這裡 (原本是 20)
-                    padding:'8px 16px', 
-                    background:'rgba(255,255,255,0.2)', 
-                    color:'#fff', 
-                    border:'none', 
-                    borderRadius:'20px', 
-                    zIndex: 10,
-                    cursor: 'pointer'
-                }}>
+                <button onClick={requestAccess} style={{position:'absolute', top: 20, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
                 </button>
             )}
-
-            {/* 十字線 (確保有 zIndex 避免被背景吃掉) */}
-            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.6, pointerEvents: 'none'}}></div>
-            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.6, pointerEvents: 'none'}}></div>
-
-            {/* 羅盤本體 */}
-            <div style={{ 
-                width: '80vw', height: '80vw', maxWidth:'320px', maxHeight:'320px', 
-                borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', 
-                transform: `rotate(${-safeHeading}deg)`, 
-                transition: isFrozen ? 'none' : 'transform 0.1s linear', 
-                display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', 
-                position: 'relative',
-                zIndex: 1 // 確保羅盤層級正確
+            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.6}}></div>
+            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.6}}></div>
+            <div style={{
+                width: '85vw', height: '85vw', maxWidth:'350px', maxHeight:'350px',
+                borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c',
+                transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative'
             }}>
                  {MOUNTAINS.map((m, i) => (
-                    <div key={i} style={{ position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px', transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)` }}>
+                    <div key={i} style={{
+                        position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
+                        transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
+                    }}>
                         <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)'}}>{m.name}</span>
                     </div>
                  ))}
                  <div style={{width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red'}}></div>
             </div>
-
-            {/* 下方資訊區 */}
-            <div style={{marginTop: '30px', textAlign:'center', zIndex: 10, paddingBottom: '20px'}}>
-                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{safeHeading.toFixed(1)}°</div>
+            <div style={{marginTop: '30px', textAlign:'center', zIndex: 10}}>
+                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
+                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
                 <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
-                
                 <div style={{display:'flex', gap:'20px', justifyContent:'center', marginTop:'20px'}}>
                     <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
                         {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
@@ -593,18 +745,13 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                         </button>
                     )}
                 </div>
-                
-                {!isFrozen && (
-                    <div style={{marginTop:'20px'}}>
-                        <input type="range" min="0" max="360" value={safeHeading} onChange={e=>setHeading(Number(e.target.value))} style={{width:'200px', opacity: 0.5}}/>
-                    </div>
-                )}
+                {!isFrozen && <input type="range" min="0" max="360" value={heading} onChange={e=>setHeading(Number(e.target.value))} style={{marginTop:'20px', width:'200px', opacity: 0.5}}/>}
             </div>
         </div>
     );
 };
 
-// 4. 排盤視圖 (ChartView)
+// 排盤視圖
 const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth, onSave }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
@@ -632,12 +779,37 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
         if (dirGua === '中') return []; 
         const tags = [];
         const { advanced } = data;
-        if (dirGua === advanced.waterMethod.early) tags.push({ text: '先天', color: '#096dd9' }); 
-        if (dirGua === advanced.waterMethod.late) tags.push({ text: '後天', color: '#389e0d' }); 
-        if (dirGua === advanced.chengMen.main) tags.push({ text: '正城', color: '#fa8c16' }); 
-        if (advanced.sha8 && getGuaFromStr(advanced.sha8) === dirGua) tags.push({ text: '曜煞', color: '#cf1322' }); 
-        return tags;
-    };
+        if (dirGua === advanced.waterMethod.early) tags.push({ text: '先天水', color: '#096dd9' }); 
+        if (dirGua === advanced.waterMethod.late) tags.push({ text: '後天水', color: '#389e0d' }); 
+        if (dirGua === advanced.chengMen.main) tags.push({ text: '正城門', color: '#fa8c16' }); 
+        if (dirGua === advanced.chengMen.sub) tags.push({ text: '副城門', color: '#fa8c16' }); 
+        const mtDragons = advanced.mountainDragon.mountains;
+                const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
+                if (mtMatches.length > 0) {
+                    tags.push({ text: `山龍:${mtMatches.join('')}`, color: '#c41d7f' });
+                }
+
+                const waterDragons = advanced.waterDragon.mountains;
+                const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
+                if (waterMatches.length > 0) {
+                    tags.push({ text: `水龍:${waterMatches.join('')}`, color: '#096dd9' });
+                }
+
+                if (advanced.sha8 && advanced.sha8 !== '無') {
+                    const shaGua = getGuaFromStr(advanced.sha8);
+                    if (shaGua === dirGua) tags.push({ text: `曜煞:${advanced.sha8}`, color: '#cf1322' }); 
+                }
+
+                if (advanced.huangQuan) {
+                    const hqArr = advanced.huangQuan.split('/');
+                    hqArr.forEach(hq => {
+                        const hqGua = getGuaFromStr(hq);
+                        if (hqGua === dirGua) tags.push({ text: `黃泉:${hq}`, color: '#cf1322' });
+                    });
+                }
+                
+                return tags;
+            };
 
     const handleSectorClick = (idx) => {
         const guaName = dirNames[idx];
@@ -664,17 +836,53 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
         if (yearlyAfflictions.wuHuang === guaName) badges.push('五黃');
         if (yearlyAfflictions.sanSha === guaName) badges.push('三煞');
         if (yearlyAfflictions.liShi === guaName) badges.push('力士');
+        if (yearlyAfflictions.taiSui === guaName) badges.push('太歲');
+        if (yearlyAfflictions.suiPo === guaName) badges.push('歲破');
         return badges;
     };
 
     const naQiResult = naQiDoor ? calculateNaQi(period, naQiDoor) : null;
+    const btnStyle = { 
+        padding: '6px 12px', 
+        backgroundColor: THEME.bgGray,
+        borderRadius: '20px', 
+        border: `1px solid ${THEME.border}`, 
+        color: THEME.black, 
+        fontSize: '12px', 
+        fontWeight: 'bold', 
+        cursor: 'pointer', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '4px', 
+        whiteSpace: 'nowrap' 
+    };
+
+    const handleSaveClick = () => {
+        const locationName = window.prompt("請輸入地點名稱 (例如: 台北家、公司):", "");
+                if (locationName === null) return; 
+
+        onSave({
+            id: Date.now(), 
+            sitting: data.sitting, 
+            facing: data.facing, 
+            period: period, 
+            year: year,
+            location: locationName || '未命名地點'
+        });
+    };
 
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                    <div style={{fontWeight:'bold', fontSize:'18px'}}>{data.sitting.name}山{data.facing.name}向 <span style={{fontSize:'14px', color:'#666', fontWeight:'normal'}}>({data.sitting.gua}/{data.facing.gua})</span></div>
-                    <button onClick={() => onSave({id: Date.now(), sitting: data.sitting, facing: data.facing, period: period, year: year})} style={{border:'none', background:'none', color:THEME.blue, display:'flex', alignItems:'center', cursor:'pointer'}}><Save size={18}/> 儲存</button>
+                    <div style={{fontWeight:'bold', fontSize:'18px'}}>
+                        {data.sitting.name}山{data.facing.name}向 
+                        <span style={{fontSize:'14px', color:'#666', fontWeight:'normal'}}> ({data.sitting.gua}/{data.facing.gua})</span>
+                    </div>
+                    
+                    <button onClick={handleSaveClick} style={btnStyle}>
+                        <Save size={14}/> 保存
+                    </button>
                 </div>
                 
                 <div style={{display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px'}}>
@@ -707,14 +915,37 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                 </div>
                                 <div style={{fontSize:'36px', fontWeight:'bold', color:'#e0e0e0', marginTop:'-10px'}}>{data.baseGrid[idx]}</div>
                                 {idx !== 4 && (
-                                    <>
-                                        {yearlyBadges.length > 0 && <div style={{position:'absolute', top:'40%', right:'2px', display:'flex', flexDirection:'column', gap:'1px'}}>{yearlyBadges.map(b => <span key={b} style={{fontSize:'9px', background: b==='五黃'||b==='三煞'?'#cf1322':'#d48806', color:'white', borderRadius:'2px', padding:'0 2px'}}>{b}</span>)}</div>}
-                                        <div style={{position:'absolute', bottom:'2px', width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                            <div style={{display:'flex', gap:'1px', flexWrap:'wrap', justifyContent:'center', width:'95%'}}>{tags.map((t, i) => <span key={i} style={{...tagStyle, background: t.color}}>{t.text}</span>)}</div>
-                                            <div style={{fontSize:'12px', color:'#888', fontWeight:'bold'}}>{dirNames[idx]}</div>
+                                        <>
+                                            {/* 流年凶煞標籤 (右上偏下或分散佈置) */}
+                                            {yearlyBadges.length > 0 && (
+                                                 <div style={{position:'absolute', top:'40%', right:'2px', display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end'}}>
+                                                    {yearlyBadges.map(b => (
+                                                        <span key={b} style={{fontSize:'9px', background: b==='五黃'||b==='三煞'||b==='歲破' ? '#cf1322':'#d48806', color:'white', padding:'0px 2px', borderRadius:'2px'}}>
+                                                            {b}
+                                                        </span>
+                                                    ))}
+                                                 </div>
+                                            )}
+
+                                            <div style={{position:'absolute', bottom:'2px', width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}>
+                                                <div style={{display:'flex', gap:'2px', flexWrap:'wrap', justifyContent:'center', width:'95%', marginBottom:'2px'}}>
+                                                    {tags.map((t, i) => (
+                                                        <span key={i} style={{...tagStyle, background: t.color}}>{t.text}</span>
+                                                    ))}
+                                                </div>
+                                                <div style={{fontSize:'12px', color:'#888', fontWeight:'bold'}}>{dirNames[idx]}</div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {idx === 4 && (
+                                        <div style={{
+                                            position:'absolute', bottom: '18px', fontSize:'10px', fontWeight:'bold', 
+                                            background:'rgba(83, 29, 171, 0.1)', padding:'2px 6px', borderRadius:'4px', color: '#531dab', whiteSpace: 'nowrap'
+                                        }}>
+                                            {data.chartType}
                                         </div>
-                                    </>
-                                )}
+                                    )}
                                 {baZhai && <div style={{position: 'absolute', bottom: '4px', right: '4px', fontSize: '11px', fontWeight: 'bold', color: baZhai.color, background: 'rgba(255,255,255,0.8)', padding: '1px 3px', borderRadius: '4px'}}>{baZhai.name}</div>}
                             </div>
                         );
@@ -816,17 +1047,21 @@ export default function FengShuiApp() {
     };
 
     const saveBookmark = async (data) => {
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
+
+        const subTitle = `${data.period}運${data.sitting.name}山${data.facing.name}向 (${data.year}年) | ${dateStr}`;
         const newItem = {
             id: data.id,
-            title: `${data.sitting.name}山${data.facing.name}向`,
-            sub: `${data.period}運 / ${data.year}年`,
-            timestamp: new Date().toISOString(),
-            raw: data // 儲存原始設定
+            title: data.location || `${data.sitting.name}山${data.facing.name}向`, // 如果沒輸入地點，預設用坐向當標題
+            sub: subTitle,
+            timestamp: now.toISOString(),
+            raw: data
         };
+
         const newBk = [newItem, ...bookmarks];
         setBookmarks(newBk);
         await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(newBk) });
-        alert('已儲存紀錄');
     };
 
     const deleteBookmark = async (id) => {

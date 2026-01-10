@@ -1,39 +1,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  ChevronRight, Bookmark, Settings, 
-  CalendarCheck, Sparkles, Grid, 
-  Trash2, Edit3, Eye, EyeOff, RefreshCw, Check, X
-} from 'lucide-react';
-
 import { Preferences } from '@capacitor/preferences';
 
+// 1. 引入共用 UI 和 工具
 import { 
-  AppHeader, 
-  BookingSystem, 
-  AppInfoCard, 
-  WebBackupManager, 
-  BuyMeCoffee, 
-  AdBanner, 
-  InstallGuide,
-  BottomTabBar
+  AppHeader, BottomTabBar, AdBanner, AppInfoCard, 
+  WebBackupManager, BuyMeCoffee, InstallGuide,
+  BookingSystem, BookmarkList, useProtection, 
+  THEME, COMMON_STYLES 
 } from '@my-meta/ui';
 
-// 全域設定
-const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "元星八字 v1.0";
+// 2. 引入 Icon
+import { 
+  Bookmark, Settings, 
+  CalendarCheck, Sparkles, Grid, 
+  Trash2, Edit3, Eye, EyeOff, RefreshCw, X
+} from 'lucide-react';
 
-const COLORS = {
-  jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
-  ji: '#D2B48C', geng: '#FFA500', xin: '#FFD700', ren: '#00008B', gui: '#87CEEB',
-};
+// =========================================================================
+// PART A: 核心數據與邏輯
+// =========================================================================
+const APP_NAME = "八字";
+const APP_VERSION = "八字 v1.0";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; // 範例 API
 
-const THEME = {
-  red: '#ff4d4f', blue: '#1890ff', teal: '#13c2c2', orange: '#fa8c16',
-  purple: '#722ed1', black: '#262626', gray: '#8c8c8c', lightGray: '#d1d5db',
-  bg: '#f0f2f5', white: '#ffffff', bgGray: '#f9fafb', border: '#e8e8e8',
-  bgRed: '#fff1f0', bgBlue: '#e6f7ff', bgOrange: '#fff7e6', vermillion: '#ce0000'
-};
-
+// --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
