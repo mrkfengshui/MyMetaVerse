@@ -3,6 +3,7 @@ import {
   Compass, Grid, Calendar, Sparkles, Mail, ChevronRight, X, 
   BookOpen, ArrowRight, Facebook, Instagram, Youtube, PlayCircle, List 
 } from 'lucide-react';
+import { AdBanner } from './SharedComponents';
 
 // --- 0. 社群媒體連結 ---
 const SOCIAL_LINKS = [
@@ -31,12 +32,12 @@ const SOCIAL_LINKS = [
 
 // --- 1. YouTube 影片列表 ---
 const VIDEOS = [
-  { id: 'https://youtu.be/fwawNW1_FVc?si=oqmR5hHBP9oACr_k', title: '【點算自己支命系列】我係咪二奶命？' },
-  { id: 'https://youtu.be/2WX5VFLQEck?si=6iuZQNcXkv6EWhq3', title: '【風水睇樓團@許甯博】煥然懿居坐西向東風水好唔好?' },
-  { id: 'https://youtu.be/BJXqWMmS7Pw?si=CoNOKkeDw_8jXwAU', title: 'Ep1 骰子都可以做手信?' },
-  { id: 'https://youtu.be/lwl8Mz_0bL0?si=J1IxolLyODSv9UFw', title: 'Ep2 獅、獅子!? 琉球有獅子?' },
-  { id: 'https://youtu.be/XyKd83FreAQ?si=lsbdyXp2e4trDbQ-', title: '【點算家居風水系列】屋企風水自己睇(上)' },
-  { id: 'https://youtu.be/R8J1Jqee4yo?si=wks5FmTC8ogRky4x', title: '【點算家居風水系列】屋企風水自己睇(下)' }
+  { id: 'fwawNW1_FVc', title: '【點算自己支命系列】我係咪二奶命？' },
+  { id: '2WX5VFLQEck', title: '【風水睇樓團@許甯博】煥然懿居坐西向東風水好唔好?' },
+  { id: 'BJXqWMmS7Pw', title: 'Ep1 骰子都可以做手信?' },
+  { id: 'lwl8Mz_0bL0', title: 'Ep2 獅、獅子!? 琉球有獅子?' },
+  { id: 'XyKd83FreAQ', title: '【點算家居風水系列】屋企風水自己睇(上)' },
+  { id: 'R8J1Jqee4yo', title: '【點算家居風水系列】屋企風水自己睇(下)' }
 ];
 
 // --- 2. 文章資料庫 ---
@@ -396,7 +397,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. Footer */}
+      {/* 6. 廣告條 */}
+      <div style={containerStyle}>
+         <AdBanner />
+      </div>
+
+      {/* 7. Footer */}
       <footer style={{ borderTop: '1px solid #eaeaea', padding: '40px 0', marginTop: '40px', background: 'white' }}>
         <div style={{ ...containerStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
           
