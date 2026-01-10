@@ -106,7 +106,7 @@ const ARTICLES = [
 const APPS = [
   {
     id: 'bazi',
-    name: '甯博八字',
+    name: '八字',
     desc: '精準計算大運流年流月',
     url: 'https://bazi.mrkfengshui.com',
     icon: <Grid size={40} color="#1890ff" />,
@@ -114,7 +114,7 @@ const APPS = [
   },
   {
     id: 'compass',
-    name: '甯博風水',
+    name: '風水',
     desc: '結合羅庚與各式風水砂法水法理論。',
     url: 'https://compass.mrkfengshui.com',
     icon: <Compass size={40} color="#fa8c16" />,
@@ -122,7 +122,7 @@ const APPS = [
   },
   {
     id: 'zhiwei',
-    name: '甯博紫微斗數',
+    name: '紫微斗數',
     desc: '紫微斗數命盤解析，依據明朝全書。',
     url: 'https://zhiwei.mrkfengshui.com',
     icon: <Sparkles size={40} color="#722ed1" />,
@@ -363,7 +363,7 @@ export default function LandingPage() {
       {/* 5. App Grid */}
       <section style={{ padding: '40px 0', ...containerStyle }}>
         <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={20} color="#fa8c16" /> 線上工具
+            <Sparkles size={20} color="#fa8c16" /> 工具開發
         </h3>
         <div style={{ 
             display: 'grid', 
