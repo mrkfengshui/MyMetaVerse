@@ -3,7 +3,7 @@ import {
   Compass, Grid, Calendar, Sparkles, Mail, ChevronRight, X, 
   BookOpen, ArrowRight, Facebook, Instagram, Youtube, PlayCircle, List 
 } from 'lucide-react';
-import { AdBanner } from './SharedComponents';
+import { AdBanner } from '@my-meta/ui';
 
 // --- 0. 社群媒體連結 ---
 const SOCIAL_LINKS = [
