@@ -691,23 +691,45 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
 
 // 羅庚 (羅盤) - 修正版
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
+    // 1. 使用 Ref 即時追蹤鎖定狀態 (解決閉包變數過期問題)
+    const isFrozenRef = React.useRef(isFrozen);
+    
+    // 當外部 isFrozen 改變時，同步更新 Ref
+    useEffect(() => {
+        isFrozenRef.current = isFrozen;
+    }, [isFrozen]);
+
+    // 2. 定義穩定的事件處理函數 (使用 useCallback 確保參照不變)
+    const handleOrientation = React.useCallback((e) => {
+        // 直接讀取 Ref 的當前值，確保永遠拿到最新狀態
+        if (isFrozenRef.current) return;
+
+        let compass = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
+        // 加入簡單的防抖動 (選用)
+        setHeading(prev => Math.abs(compass - prev) > 0.2 ? compass : prev);
+    }, [setHeading]);
+
+    // 3. 請求權限與綁定監聽
     const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
-                .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
+                .then(response => {
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
+                })
                 .catch(console.error);
         } else {
             window.addEventListener('deviceorientation', handleOrientation);
         }
     };
 
-    const handleOrientation = (e) => {
-        if (isFrozen) return;
-        let compass = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
-        setHeading(compass);
-    };
-
-    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);    
+    // 4. 組件卸載時移除監聽 (避免記憶體洩漏)
+    useEffect(() => {
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation);
+        };
+    }, [handleOrientation]);
     
     const facingMt = getMountain(heading);
     const sittingMt = getMountain(heading + 180);
@@ -718,7 +740,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center', 
-            justifyContent: 'center', // 確保垂直置中
+            justifyContent: 'center', 
             background: '#222', 
             color: '#fff', 
             position: 'relative', 
@@ -730,8 +752,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 <button onClick={requestAccess} style={{position:'absolute', top: 60, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
                 </button>
-            )}
-            
+            )}            
             {/* ★ 核心修改：羅庚與十字星的共用容器 */}
             <div style={{
                 position: 'relative',
