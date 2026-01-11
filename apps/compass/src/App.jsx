@@ -749,7 +749,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
             width: '100%'
         }}>
              {!isFrozen && (
-                <button onClick={requestAccess} style={{position:'absolute', bottom: 320, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
+                <button onClick={requestAccess} style={{position:'absolute', bottom: 350, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
                 </button>
             )}            

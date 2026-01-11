@@ -813,7 +813,7 @@ const PalaceGrid = ({
                 </div>
             </div>
             
-            <div style={{ position: 'absolute', bottom: 3, left: 2, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', maxWidth: '30px', zIndex: 2 }}>
+            <div style={{ position: 'absolute', bottom: 6, left: 2, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', maxWidth: '30px', zIndex: 2 }}>
                 <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', gap: '2px' }}>
                     <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px' }}>{palace.name}</div>
                     {showDa && daXianName && <div style={{ fontSize: '11px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
@@ -823,7 +823,7 @@ const PalaceGrid = ({
                 {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: '10px', borderRadius: '4px', padding: '1px 1px', lineHeight: 1, marginBottom: '2px', marginLeft: '1px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
             </div>
 
-            <div style={{ position: 'absolute', bottom: 3, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', zIndex: 2 }}>
+            <div style={{ position: 'absolute', bottom: 6, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', zIndex: 2 }}>
                 {palace.changSheng12 && <span style={{ fontSize: '12px', color: COLORS.geng, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1, fontWeight: 'normal' }}>{palace.changSheng12}</span>}
                 {palace.doctor12 && <span style={{ fontSize: '12px', color: COLORS.jia, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1 }}>{palace.doctor12}</span>}
             </div>
