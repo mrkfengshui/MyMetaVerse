@@ -11,16 +11,20 @@ import {
 
 // 2. 引入 Icon
 import { 
-  Compass, RefreshCw, ArrowLeft, Lock, Unlock, X,
-  DoorOpen, Eye, EyeOff, Briefcase, 
-  Bookmark, CalendarCheck, Settings, Save
+  Bookmark, BookOpen, Briefcase,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Compass, CloudUpload,
+  DoorOpen, Download,
+  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
+  RefreshCw, Save, Settings, Sparkles,
+  Trash2, Unlock, User, X
 } from 'lucide-react';
+
 
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = "風水";
-const APP_VERSION = "風水 v1.0";
+const APP_NAME = "甯博風水";
+const APP_VERSION = "甯博風水 v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; // 範例 API
 
 // --- 核心數據定義 ---
@@ -43,6 +47,10 @@ const YIN_YANG_MAP = {
     7: { '地': 1, '天': -1, '人': -1 }, 8: { '地': -1, '天': 1, '人': 1 },
     9: { '地': 1, '天': -1, '人': -1 },
 };
+
+// 數字轉中文對照表 (可以定義在組件外或內)
+const PERIOD_MAP_CHART = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
+
 
 const LUOSHU_PATH = [4, 8, 5, 6, 1, 7, 2, 3, 0]; 
 const DIRECTION_MAP = { '巽': 0, '離': 1, '坤': 2, '震': 3, '中': 4, '兌': 5, '艮': 6, '坎': 7, '乾': 8 };
@@ -574,7 +582,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: '#666'}}>運星</div>
-                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '6px'}}>{base}</div>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '6px'}}>{PERIOD_MAP_CHART[base]}</div>
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: '#666'}}>向星</div>
@@ -681,9 +689,9 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     );
 };
 
-// 羅庚
+// 羅庚 (羅盤) - 修正版
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
-const requestAccess = () => {
+    const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
@@ -700,38 +708,110 @@ const requestAccess = () => {
     };
 
     useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [isFrozen]);    
-const facingMt = getMountain(heading);
+    
+    const facingMt = getMountain(heading);
     const sittingMt = getMountain(heading + 180);
 
     return (
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow:'hidden', minHeight:'100vh'}}>
-             {/* 這裡可以選擇性加入 AppHeader，或是保持全黑沈浸式體驗 */}
-             
+        <div style={{
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', // 確保垂直置中
+            background: '#222', 
+            color: '#fff', 
+            position: 'relative', 
+            overflow: 'hidden', 
+            height: '100%',
+            width: '100%'
+        }}>
              {!isFrozen && (
-                <button onClick={requestAccess} style={{position:'absolute', top: 20, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
+                <button onClick={requestAccess} style={{position:'absolute', top: 60, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
                    <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
                 </button>
             )}
-            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.6}}></div>
-            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.6}}></div>
+            
+            {/* 輔助紅線 (全螢幕長線 - 僅作參考，若不需要可移除) */}
+            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.3, pointerEvents:'none'}}></div>
+            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.3, pointerEvents:'none'}}></div>
+
+            {/* ★ 核心修改：羅庚與十字星的共用容器 */}
             <div style={{
-                width: '85vw', height: '85vw', maxWidth:'350px', maxHeight:'350px',
-                borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c',
-                transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear',
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative'
+                position: 'relative',
+                width: '85vw',
+                maxWidth: '350px',
+                aspectRatio: '1 / 1', // ★ 強制正方形 (解決變橢圓問題)
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                margin: '20px 0'
             }}>
-                 {MOUNTAINS.map((m, i) => (
-                    <div key={i} style={{
-                        position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
-                        transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
-                    }}>
-                        <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)'}}>{m.name}</span>
-                    </div>
-                 ))}
-                 <div style={{width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red'}}></div>
+                
+                {/* 十字星 - 限制在天池 (20%) 範圍內 */}
+                {/* 垂直線 */}
+                <div style={{
+                    position:'absolute', 
+                    top: '50%', left: '50%', 
+                    transform: 'translate(-50%, -50%)',
+                    height: '20%', // ★ 長度 = 天池直徑
+                    width: '2px',  // 加粗方便對齊
+                    background:'red', 
+                    zIndex: 20, 
+                    boxShadow: '0 0 2px rgba(255,0,0,0.8)'
+                }}></div>
+                {/* 水平線 */}
+                <div style={{
+                    position:'absolute', 
+                    top: '50%', left: '50%', 
+                    transform: 'translate(-50%, -50%)',
+                    width: '20%',  // ★ 長度 = 天池直徑
+                    height: '2px', 
+                    background:'red', 
+                    zIndex: 20,
+                    boxShadow: '0 0 2px rgba(255,0,0,0.8)'
+                }}></div>
+
+                {/* 旋轉羅庚盤 */}
+                <div style={{
+                    width: '100%', 
+                    height: '100%', 
+                    borderRadius: '50%', 
+                    border: '6px solid #8B4513', 
+                    background: '#e0c38c',
+                    transform: `rotate(${-heading}deg)`, 
+                    transition: isFrozen ? 'none' : 'transform 0.1s linear',
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)', 
+                    position: 'relative',
+                    boxSizing: 'border-box'
+                }}>
+                     {/* 二十四山刻度 */}
+                     {MOUNTAINS.map((m, i) => (
+                        <div key={i} style={{
+                            position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
+                            transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
+                        }}>
+                            <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)', whiteSpace:'nowrap'}}>{m.name}</span>
+                        </div>
+                     ))}
+                     
+                     {/* 天池 (中間白圓) - 設定為 20% */}
+                     <div style={{
+                         width:'20%', 
+                         height:'20%', 
+                         background:'white', 
+                         borderRadius:'50%', 
+                         border:'2px solid red',
+                         boxSizing: 'border-box'
+                     }}></div>
+                </div>
             </div>
-            <div style={{marginTop: '30px', textAlign:'center', zIndex: 10}}>
+
+            {/* 底部數據顯示 */}
+            <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
                 <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
                 <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
                 <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
@@ -755,8 +835,8 @@ const facingMt = getMountain(heading);
 const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth, onSave }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
-    const [showAnnual, setShowAnnual] = useState(true);
-    const [showMonthly, setShowMonthly] = useState(true);
+    const [showAnnual, setShowAnnual] = useState(false);
+    const [showMonthly, setShowMonthly] = useState(false);
     const [showCommercial, setShowCommercial] = useState(false);
     
     const data = useMemo(() => {
@@ -786,25 +866,25 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
         const mtDragons = advanced.mountainDragon.mountains;
                 const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
                 if (mtMatches.length > 0) {
-                    tags.push({ text: `山龍:${mtMatches.join('')}`, color: '#c41d7f' });
+                    tags.push({ text: `山龍 ${mtMatches.join('')}`, color: '#c41d7f' });
                 }
 
                 const waterDragons = advanced.waterDragon.mountains;
                 const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
                 if (waterMatches.length > 0) {
-                    tags.push({ text: `水龍:${waterMatches.join('')}`, color: '#096dd9' });
+                    tags.push({ text: `水龍 ${waterMatches.join('')}`, color: '#096dd9' });
                 }
 
                 if (advanced.sha8 && advanced.sha8 !== '無') {
                     const shaGua = getGuaFromStr(advanced.sha8);
-                    if (shaGua === dirGua) tags.push({ text: `曜煞:${advanced.sha8}`, color: '#cf1322' }); 
+                    if (shaGua === dirGua) tags.push({ text: `曜煞 ${advanced.sha8}`, color: '#cf1322' }); 
                 }
 
                 if (advanced.huangQuan) {
                     const hqArr = advanced.huangQuan.split('/');
                     hqArr.forEach(hq => {
                         const hqGua = getGuaFromStr(hq);
-                        if (hqGua === dirGua) tags.push({ text: `黃泉:${hq}`, color: '#cf1322' });
+                        if (hqGua === dirGua) tags.push({ text: `黃泉 ${hq}`, color: '#cf1322' });
                     });
                 }
                 
@@ -858,7 +938,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     };
 
     const handleSaveClick = () => {
-        const locationName = window.prompt("請輸入地點名稱 (例如: 台北家、公司):", "");
+        const locationName = window.prompt("請輸入地點名稱:", "");
                 if (locationName === null) return; 
 
         onSave({
@@ -867,7 +947,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
             facing: data.facing, 
             period: period, 
             year: year,
-            location: locationName || '未命名地點'
+            location: locationName || '地點未命名'
         });
     };
 
@@ -886,7 +966,18 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                 </div>
                 
                 <div style={{display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px'}}>
-                    <label style={{fontSize:'14px'}}>運: <select value={period} onChange={e => setPeriod(Number(e.target.value))} style={{border:'1px solid #ddd'}}>{[1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
+                        <label style={{fontSize:'14px'}}>
+                        運: 
+                        <select 
+                            value={period} 
+                            onChange={e => setPeriod(Number(e.target.value))} 
+                            style={{border:'1px solid #ddd', marginLeft:'4px'}}
+                        >
+                            {[1,2,3,4,5,6,7,8,9].map(n => (
+                                <option key={n} value={n}>{PERIOD_MAP_CHART[n]}運</option>
+                            ))}
+                        </select>
+                    </label>
                     <label style={{fontSize:'14px'}}>年: <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} style={{width:'55px', border:'1px solid #ddd'}}/></label>
                     <label style={{fontSize:'14px'}}>月: <select value={month} onChange={e => setMonth(Number(e.target.value))} style={{border:'1px solid #ddd'}}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
                 </div>
@@ -913,7 +1004,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                     <div style={{fontSize:'20px', fontWeight:'900', color:'#1500ffff', lineHeight:'1'}}>{data.faceGrid[idx]}</div>
                                     {showMonthly && <div style={{fontSize:'14px', fontWeight:'bold', color:'#fa8c16'}}>{data.monthlyGrid[idx]}</div>}
                                 </div>
-                                <div style={{fontSize:'36px', fontWeight:'bold', color:'#e0e0e0', marginTop:'-10px'}}>{data.baseGrid[idx]}</div>
+                                <div style={{fontSize:'36px', fontWeight:'bold', color:'#e0e0e0', marginTop:'-10px'}}>{PERIOD_MAP_CHART[data.baseGrid[idx]]}</div>
                                 {idx !== 4 && (
                                         <>
                                             {/* 流年凶煞標籤 (右上偏下或分散佈置) */}
@@ -983,33 +1074,35 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     );
 };
 
-// 5. 設定頁 (SettingsView)
+// 5. 設定頁 (SettingsView - 使用共用組件重構)
 const SettingsView = ({ bookmarks, setBookmarks }) => {
-    const APP_INFO = { appName: APP_NAME, version: APP_VERSION, about: "專業玄空飛星排盤，結合商戰與三元納氣。" };
+    const APP_INFO = { 
+        appName: APP_NAME, 
+        version: APP_VERSION, 
+        about: "本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地堪察。" 
+    };
+    
     return (
         <div style={{ padding: '16px', paddingBottom: '100px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                 <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
             </div>
+            
             <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="FENGSHUI_BACKUP" />
             <AppInfoCard info={APP_INFO} />
             <BuyMeCoffee />
-            <div style={{ marginTop: '24px' }}>
-                <button onClick={() => { if(window.confirm('確定清除所有紀錄?')) setBookmarks([]); }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                    <RefreshCw size={16} /> 清除所有紀錄
-                </button>
-            </div>
         </div>
     );
 };
 
 // =========================================================================
-// 👇 PART C: 主程式 Shell
+// PART C: 主程式 Shell
 // =========================================================================
 
 export default function FengShuiApp() {
-    // 1. 安全與狀態
-//    useProtection(['mrkfengshui.com', 'mrkcompass.vercel.app', 'localhost']);
+    // 1. 安全保護 & 載入檢查
+    // useProtection(['mrkfengshui.com', 'mrkcompass.vercel.app', 'localhost']); // 視需求開啟
+    
     const [view, setView] = useState('input'); // input(compass), result(chart), bookmarks, booking, settings
     const [bookmarks, setBookmarks] = useState([]);
     
@@ -1039,7 +1132,6 @@ export default function FengShuiApp() {
 
     // 4. 動作處理
     const handleAnalyze = () => {
-        // 從羅庚進入分析，預設運、年、月
         setPeriod(9);
         setYear(new Date().getFullYear());
         setMonth(new Date().getMonth() + 1);
@@ -1047,53 +1139,81 @@ export default function FengShuiApp() {
     };
 
     const saveBookmark = async (data) => {
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
-
-        const subTitle = `${data.period}運${data.sitting.name}山${data.facing.name}向 (${data.year}年) | ${dateStr}`;
-        const newItem = {
+        // data 來自 ChartView: { id, sitting, facing, period, year, location }
+        
+        const dataToSave = {
             id: data.id,
-            title: data.location || `${data.sitting.name}山${data.facing.name}向`, // 如果沒輸入地點，預設用坐向當標題
-            sub: subTitle,
-            timestamp: now.toISOString(),
-            raw: data
+            // 標題：使用者輸入的地點，若無則用坐向代替
+            name: data.location || `${data.sitting.name}山${data.facing.name}向`,
+            solarDate: new Date().toISOString().split('T')[0],
+
+            // ★ 關鍵：為了符合 DataComponents.jsx 的風水格式顯示
+            // 需要: period, mountain, facing, gwaType, address
+            period: data.period,
+            mountain: data.sitting.name,
+            facing: data.facing.name,
+            gwaType: '下卦',
+            address: data.location, // 地址顯示
+
+            // 保留原始設定以便還原
+            rawConfig: { 
+                period: data.period, 
+                year: data.year,
+                sitting: data.sitting, // 包含 angle 等詳細資料
+                facing: data.facing 
+            }
         };
 
-        const newBk = [newItem, ...bookmarks];
+        const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
+        let newBk;
+        
+        if (existingIndex >= 0) {
+            newBk = [...bookmarks];
+            newBk[existingIndex] = dataToSave;
+            alert('紀錄已更新');
+        } else {
+            newBk = [dataToSave, ...bookmarks];
+            alert('已保存至紀錄');
+        }
+
         setBookmarks(newBk);
         await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(newBk) });
     };
 
     const deleteBookmark = async (id) => {
-        const newBk = bookmarks.filter(b => b.id !== id);
-        setBookmarks(newBk);
-        await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(newBk) });
+        if(window.confirm('確定要刪除這條紀錄嗎？')) {
+            const newBk = bookmarks.filter(b => b.id !== id);
+            setBookmarks(newBk);
+            await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(newBk) });
+        }
     };
 
     const openBookmark = (item) => {
-        const raw = item.raw;
-        // 恢復數據
-        const m = MOUNTAINS.find(mt => mt.name === raw.sitting.name);
-        if (m) {
-            // 恢復羅庚角度 (坐山 - 180 = 向首)
-            let h = m.angle - 180;
+        const raw = item.rawConfig;
+        if (raw && raw.sitting) {
+            // 恢復羅庚角度 (坐山角度 - 180 = 向首角度 = 羅庚 heading)
+            let h = raw.sitting.angle - 180;
             if (h < 0) h += 360;
+            
             setHeading(h); 
             setPeriod(raw.period);
             setYear(raw.year);
+            // 切換到結果頁
             setView('result');
+        } else {
+            alert('無法讀取舊格式資料');
         }
     };
 
     return (
         <div style={COMMON_STYLES.fullScreen}>
-            {/* Header: 羅庚模式下浮動在上方，其他模式固定 */}
+            {/* Header: 羅庚模式下浮動在上方(透明背景)，其他模式固定 */}
             {view === 'input' ? (
                 <div style={{position:'absolute', top:0, left:0, width:'100%', zIndex:20}}>
-                     <AppHeader title="元星風水" isPro={true} logoChar={{ main: '羅', sub: '庚' }} />
+                     <AppHeader title={APP_NAME} logoChar={{ main: '風', sub: '水' }} />
                 </div>
             ) : (
-                 <AppHeader title="元星風水" isPro={true} logoChar={{ main: '羅', sub: '庚' }} />
+                 <AppHeader title={APP_NAME} logoChar={{ main: '風', sub: '水' }} />
             )}
 
             <div style={{...COMMON_STYLES.contentArea, background: view === 'input' ? '#222' : THEME.bg}}>
@@ -1108,11 +1228,40 @@ export default function FengShuiApp() {
                 )}
 
                 {view === 'result' && (
-                    <>
-                        {/* 簡易導航列 */}
-                        <div style={{padding:'10px 16px', background: THEME.white, borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', gap:'8px'}}>
-                            <button onClick={() => setView('input')} style={{background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer'}}><ArrowLeft size={20}/> 返回</button>
-                            <span style={{fontWeight:'bold'}}>排盤分析</span>
+    <>
+        {/* 簡易返回導航列 (Chart 專用) - 已修改為標題置中 */}
+        <div style={{
+            position: 'relative',       // 1. 設定相對定位基準
+            padding:'10px 16px', 
+            background: THEME.white, 
+            borderBottom:`1px solid ${THEME.border}`, 
+            display:'flex', 
+            alignItems:'center', 
+            justifyContent: 'center',   // 2. 讓內容(標題)水平置中
+            height: '44px'              // 3. 設定固定高度，確保排版穩定
+        }}>
+            <button 
+                onClick={() => setView('input')} 
+                style={{
+                    position: 'absolute',   // 4. 按鈕使用絕對定位
+                    left: '16px',           // 5. 固定在左側，不影響標題置中
+                    top: '50%',
+                    transform: 'translateY(-50%)', // 垂直置中
+                    background:'none', 
+                    border:'none', 
+                    display:'flex', 
+                    alignItems:'center', 
+                    gap:'4px', 
+                    cursor:'pointer', 
+                    color: THEME.blue,
+                    zIndex: 1
+                }}
+            >
+                <ChevronLeft size={20}/> 返回
+            </button>
+            
+            <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>
+                排盤分析</span>
                         </div>
                         <ChartView 
                             heading={heading} setHeading={setHeading}
@@ -1125,10 +1274,11 @@ export default function FengShuiApp() {
                 )}
 
                 {view === 'bookmarks' && (
-                    <div style={{ padding: '16px' }}>
+                    <div style={{ padding: '16px', paddingBottom: '100px' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                             <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的風水紀錄</h2>
                         </div>
+                        {/* 使用共用 BookmarkList */}
                         <BookmarkList 
                             bookmarks={bookmarks}
                             onSelect={openBookmark}

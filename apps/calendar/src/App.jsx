@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Preferences } from '@capacitor/preferences';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 
 // 1. 引入共用 UI 和 工具
 import { 
@@ -12,10 +10,13 @@ import {
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
-  import { 
-  ChevronLeft, ChevronRight, Bookmark, Settings, 
-  Calendar as CalendarIcon, X, Sparkles, Grid, 
-  Check, CalendarCheck, Zap, Search, House, LampDesk
+import { 
+  Bookmark, BookOpen, Briefcase,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Compass, CloudUpload,
+  DoorOpen, Download,
+  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
+  RefreshCw, Save, Settings, Sparkles,
+  Trash2, Unlock, User, X
 } from 'lucide-react';
 
 // =========================================================================

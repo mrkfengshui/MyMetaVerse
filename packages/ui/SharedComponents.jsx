@@ -322,10 +322,6 @@ const handleContactClick = () => {
             <ChevronRight size={20} color={THEME.gray} />
         </div>
       </div>
-      
-      <div style={{ marginTop: '10px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px', paddingBottom: '10px' }}>
-          System Build: {finalInfo.version}
-      </div>
     </div>
   );
 };

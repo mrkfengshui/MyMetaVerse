@@ -13,19 +13,20 @@ import {
 
 // 2. 引入 Icon
 import { 
-  ChevronLeft, ChevronRight, Bookmark, Settings, 
-  Sparkles, Grid, CalendarCheck,
-  Eye, EyeOff, RefreshCw, X,
-  Trash2, Edit3, CloudUpload, Download, User,
-  Calendar, MapPin, Compass, BookOpen
+  Bookmark, BookOpen, Briefcase,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Compass, CloudUpload,
+  DoorOpen, Download,
+  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
+  RefreshCw, Save, Settings, Sparkles,
+  Trash2, Unlock, User, X
 } from 'lucide-react';
 
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const CURRENT_APP_NAME = "甯博紫微斗數";
-const APP_VERSION = "甯博紫微斗數 v1.0";
+const APP_NAME = "甯博紫微斗數";
+const APP_VERSION = "v1.0";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -541,7 +542,7 @@ const SettingsView = ({
     const toggleSection = (sec) => setOpenSection(openSection === sec ? null : sec);
 
   const APP_INFO = {
-    appName: CURRENT_APP_NAME,
+    appName: APP_NAME,
     version: APP_VERSION,
     about: "本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
     };
@@ -1153,7 +1154,7 @@ export default function ZwdsApp() {
       `}</style>
       
       {/* ✅ 共用 Header */}
-      <AppHeader title={CURRENT_APP_NAME} logoChar={{ main: '紫', sub: '微' }} />
+      <AppHeader title={APP_NAME} logoChar={{ main: '紫', sub: '微' }} />
 
       {/* ✅ 內容滾動區 */}
       <div style={COMMON_STYLES.contentArea}>
