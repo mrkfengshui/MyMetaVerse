@@ -17,7 +17,7 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             
             {bookmarks.map((b, i) => (
                 <div key={b.id || i} onClick={() => onSelect(b)} style={{ 
-                    margin: '0 16px 10px 16px', padding: '16px', backgroundColor: THEME.white, 
+                    marginBottom: '10px', padding: '16px', backgroundColor: THEME.white, 
                     borderRadius: '12px', border: `1px solid ${THEME.border}`, 
                     cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'

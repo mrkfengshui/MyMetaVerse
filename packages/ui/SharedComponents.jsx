@@ -1,7 +1,7 @@
 // packages/ui/SharedComponents.jsx
 import React, { useEffect, useState } from 'react';
 import { THEME } from './theme';
-import { ChevronRight, Coffee, Share, X, PlusSquare, Share2, Download, UploadCloud, FileText } from 'lucide-react';
+import { ChevronRight, Coffee, Share, X, PlusSquare, Share2, UploadCloud } from 'lucide-react';
 
 // --- 1. AppHeader ---
 export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
@@ -39,10 +39,14 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
         body {
           margin: 0;
           padding: 0;
-          background-color: #f5f5f5; /* 你的背景色 */
+          background-color: #f5f5f5;
           width: 100vw;
           height: 100vh;
+          height: -webkit-fill-available;
           overflow-x: hidden; 
+          position: fixed;
+          top: 0;
+          left: 0; 
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           
           /* 強制文字顏色，防止系統反轉 */
@@ -53,6 +57,13 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           -ms-user-select: none;     /* IE */
           user-select: none;         /* 標準屬性 */
           -webkit-touch-callout: none; /* 關鍵！禁止 iOS 長按彈出放大鏡/選單 */
+        }
+        #root {
+          width: 100%;
+          height: 100%;
+          overflow: hidden; /* 防止 root 本身出現捲軸 */
+          display: flex;
+          flex-direction: column;
         }
 
         /* 1.1 強制表單元件顏色 (解決輸入框變黑、文字變白問題) */
@@ -223,9 +234,24 @@ export const SettingLink = ({ label, subLabel, icon: Icon, onClick }) => (
 
 // 請我飲杯咖啡
 export const BuyMeCoffee = () => (
-    <a href="https://buymeacoffee.com/kanekyosan" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px', backgroundColor: '#FFDD00', color: '#000000', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px', marginTop: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-        <Coffee size={20} />
-        <span>請我飲杯咖啡</span>
+    <a href="https://buymeacoffee.com/kanekyosan" target="_blank" rel="noreferrer" 
+    style={{ display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      gap: '8px', 
+      width: 'auto',      // 讓寬度自動填滿 left 和 right 之間的空間        
+      boxSizing: 'border-box', 
+      padding: '12px',
+      backgroundColor: '#FFDD00', 
+      color: '#000000', 
+      borderRadius: '12px', 
+      textDecoration: 'none', 
+      fontWeight: 'bold', 
+      fontSize: '14px', 
+      marginTop: '20px', 
+      boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+      <Coffee size={20} />
+      <span>請我飲杯咖啡</span>
     </a>
 );
 

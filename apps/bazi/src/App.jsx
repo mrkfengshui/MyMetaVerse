@@ -394,7 +394,26 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
   const now = new Date();
   const [inputType, setInputType] = useState('solar');
   const [formData, setFormData] = useState(initialData || { name: '', gender: '1', year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate(), hour: now.getHours(), minute: now.getMinutes() });
-  const [lunarData, setLunarData] = useState({ year: now.getFullYear(), month: 1, day: 1, hour: 0, minute: 0, isLeap: false });
+  const [lunarData, setLunarData] = useState(() => {
+    // 嘗試從 window.Solar 獲取當前農曆 (如果 library 已載入)
+    if (typeof window !== 'undefined' && window.Solar) {
+       try {
+           const solar = window.Solar.fromDate(now);
+           const lunar = solar.getLunar();
+           return {
+               year: lunar.getYear(),
+               month: Math.abs(lunar.getMonth()),
+               day: lunar.getDay(),
+               hour: now.getHours(),
+               minute: now.getMinutes(),
+               isLeap: lunar.getMonth() < 0
+           };
+       } catch (e) { console.error("Lunar init failed", e); }
+    }
+    // 如果 library 還沒好，就用西曆年做備案，或維持原有的 1月1日
+    return { year: now.getFullYear(), month: 1, day: 1, hour: 0, minute: 0, isLeap: false };
+  });
+
   const [manualPillars, setManualPillars] = useState({ year: { gan: '甲', zhi: '子' }, month: { gan: '丙', zhi: '寅' }, day: { gan: '戊', zhi: '辰' }, time: { gan: '庚', zhi: '申' } });
   const [modalConfig, setModalConfig] = useState({ isOpen: false, pillar: null }); 
 
@@ -841,7 +860,7 @@ return (
 };
 
 // =========================================================================
-// PART B: 主程式結構 (使用共用 UI 殼)
+// 主程式結構 (使用共用 UI 殼)
 // =========================================================================
 
 export default function BaziApp() {
