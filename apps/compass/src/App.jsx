@@ -732,10 +732,6 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 </button>
             )}
             
-            {/* 輔助紅線 (全螢幕長線 - 僅作參考，若不需要可移除) */}
-            <div style={{position:'absolute', width:'100%', height:'1px', background:'red', zIndex:5, opacity:0.3, pointerEvents:'none'}}></div>
-            <div style={{position:'absolute', width:'1px', height:'100%', background:'red', zIndex:5, opacity:0.3, pointerEvents:'none'}}></div>
-
             {/* ★ 核心修改：羅庚與十字星的共用容器 */}
             <div style={{
                 position: 'relative',

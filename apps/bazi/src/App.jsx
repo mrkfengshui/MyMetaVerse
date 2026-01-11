@@ -652,7 +652,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                    const jieQi = lunar.getPrevJieQi(true); 
                    if (jieQi && toTraditional(jieQi.getName()) === JIE_QI_NAMES[i]) {
                        const solarJie = jieQi.getSolar(); 
-                       jieQiDateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
+                       jieQiDateStr = `${solarJie.getDay()}/${solarJie.getMonth()}`;
                    }
                }
            } catch (e) { 
