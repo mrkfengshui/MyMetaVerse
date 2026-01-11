@@ -9,25 +9,20 @@ import {
 import { Preferences } from '@capacitor/preferences';
 
 import { 
-  AppHeader, 
-  BookingSystem, 
-  BookmarkList,
-  AppInfoCard, 
-  WebBackupManager, 
-  BuyMeCoffee, 
-  AdBanner, 
-  InstallGuide,
-  BottomTabBar,
-  THEME, 
-  COLORS,
-  COMMON_STYLES
+  AdBanner, AppHeader, AppInfoCard, 
+  BookingSystem, BookmarkList, BottomTabBar, BuyMeCoffee, 
+  InstallGuide, WebBackupManager, 
+  COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
-// 全域設定
+// =========================================================================
+// PART A: 核心數據與邏輯
+// =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const CURRENT_APP_NAME = "甯博八字";
 const APP_VERSION = "甯博八字 v1.0";
 
+// --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
@@ -499,7 +494,6 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
               <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{label}</div>
               <div style={{ fontSize: '26px', fontWeight: 'bold', color: ganColor, lineHeight: 1.2 }}>{pData.gan}</div>
               <div style={{ fontSize: '26px', fontWeight: 'bold', color: zhiColor, lineHeight: 1.2 }}>{pData.zhi}</div>
-              <div style={{ marginTop: '8px', fontSize: '10px', color: THEME.blue, backgroundColor: THEME.bgBlue, padding: '2px 6px', borderRadius: '4px' }}>點擊修改</div>
           </div>
       );
   };
@@ -860,9 +854,8 @@ return (
 };
 
 // =========================================================================
-// 主程式結構 (使用共用 UI 殼)
+// PART B: 主程式結構 (使用共用 UI 殼)
 // =========================================================================
-
 export default function BaziApp() {
   // 1. 安全保護 & 載入檢查
   // useProtection(['mrkfengshui.com', 'mrkbazi.vercel.app', 'localhost']);
@@ -945,6 +938,7 @@ export default function BaziApp() {
   };
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入命理數據庫...</div>;
+  if (libStatus === 'error') return <div style={{ padding: 20, textAlign: 'center' }}>載入失敗，請檢查網路連線後重新整理。</div>;
 
   return (
     // ✅ 1. 使用全螢幕容器

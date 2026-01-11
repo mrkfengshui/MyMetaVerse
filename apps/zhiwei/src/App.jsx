@@ -1,32 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Preferences } from '@capacitor/preferences';
-import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 
 // 1. 引入共用 UI 和 工具
 import { 
-  AppHeader, BottomTabBar, AdBanner, AppInfoCard, 
-  WebBackupManager, BuyMeCoffee, InstallGuide,
-  BookingSystem, BookmarkList, useProtection, 
-  THEME, COMMON_STYLES 
+  AdBanner, AppHeader, AppInfoCard, 
+  BookingSystem, BookmarkList, BottomTabBar, BuyMeCoffee, 
+  InstallGuide, WebBackupManager, 
+  COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
   ChevronLeft, ChevronRight, Bookmark, Settings, 
-  Calendar as CalendarIcon, Sparkles, Grid, 
-  Check, CalendarCheck, 
-  Trash2, Edit3, RefreshCw, Search,
-  House, LampDesk,
+  Sparkles, Grid, CalendarCheck,
+  Eye, EyeOff, RefreshCw, X,
+  Trash2, Edit3, CloudUpload, Download, User
 } from 'lucide-react';
 
 // =========================================================================
-// 👇 PART A: 核心數據與邏輯
+// PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = "紫微斗數";
-const APP_VERSION = "紫微斗數 v1.0";
-const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; // 範例 API
+const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+const CURRENT_APP_NAME = "甯博紫微斗數";
+const APP_VERSION = "甯博紫微斗數 v1.0";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -528,363 +526,42 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     };
 };
 
-// --- Header ---
-const Header = ({ isPro }) => (
-  <div style={{ backgroundColor: THEME.white, padding: '10px 16px', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> 
-        <div style={{ width: '36px', height: '36px', backgroundColor: THEME.vermillion, borderRadius: '50%', position: 'relative', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <span style={{ fontFamily: "'青柳隷書SIMO2_T', serif", position: 'absolute', color: 'white', fontSize: '12px', lineHeight: 1, bottom: '26%', right: '8%', pointerEvents: 'none', fontWeight: 'normal' }}>微</span>
-            <span style={{ fontFamily: "'青柳隷書SIMO2_T', serif", position: 'absolute', color: 'black', fontSize: '30px', lineHeight: 1, top: '12%', left: '2%', pointerEvents: 'none', fontWeight: 'normal' }}>紫</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <span style={{ fontSize: '17px', fontWeight: 'normal', color: '#262626', marginLeft: '4px' }}>元星紫微</span>
-          {isPro && ( <span style={{ fontSize: '10px', color: THEME.orange, border: `1px solid ${THEME.orange}`, borderRadius: '4px', padding: '1px 4px', marginLeft: '6px', fontWeight: 'bold', transform: 'translateY(-2px)' }}>專業版</span> )}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// --- AdBanner ---
-const AdBanner = ({ onRemoveAds }) => (
-  <div style={{ height: '60px', backgroundColor: '#f0f0f0', borderTop: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', flexShrink: 0, position: 'relative', zIndex: 5 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.7 }}>
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '1px 3px', fontSize: '9px', color: '#999' }}>Ad</div>
-      <div style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}><span style={{ fontWeight: 'bold' }}>贊助商廣告</span><span style={{ fontSize: '10px' }}>點擊此處查看更多優惠資訊...</span></div>
-   </div>
-    <button onClick={(e) => { e.stopPropagation(); onRemoveAds(); }} style={{ fontSize: '11px', color: THEME.white, backgroundColor: THEME.black, border: 'none', borderRadius: '12px', padding: '4px 10px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>移除廣告</button>
-  </div>
-);
-
-// --- BookingView ---
-const generateBookingId = () => {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 排除易混淆字元如 O, 0, I, 1
-      let result = '';
-      for (let i = 0; i < 6; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
-  };
-
-const BookingView = ({ onNavigate }) => {
-  const [viewMode, setViewMode] = useState('book'); 
-  const [step, setStep] = useState(1);
-  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '', email: '', notes: '' });
-  const [searchPhone, setSearchPhone] = useState('');
-  const [myBookings, setMyBookings] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [onlineServices, setOnlineServices] = useState([]);
-  const [scheduleData, setScheduleData] = useState({ fs: {}, general: {} }); 
-  const [availableTimesForSelectedDate, setAvailableTimesForSelectedDate] = useState([]); 
-  const [loadingData, setLoadingData] = useState(true);
-  
-  const { minDate, maxDate } = useMemo(() => {
-     const now = new Date();
-     const min = new Date(); min.setDate(now.getDate() + 3);
-     const max = new Date(); max.setMonth(now.getMonth() + 2); 
-     max.setDate(new Date(max.getFullYear(), max.getMonth() + 1, 0).getDate()); 
-     return { minDate: min, maxDate: max };
-  }, []);
-
-  const fetchLatestData = useCallback(async () => {
-    setLoadingData(true);
-    try {
-      const response = await fetch(`${API_URL}?action=getServices`);
-      const data = await response.json();
-      
-      if (data.services) {
-         const mappedServices = data.services.map(s => ({
-             ...s,
-             icon: s.id === 'fs_home' ? <House size={24} color={COLORS.yi} /> : 
-                   s.id === 'fs_biz' ? <LampDesk size={24} color={THEME.red} /> : 
-                   s.id === 'bz' ? <Sparkles size={24} color={COLORS.wu} /> :
-                   s.id === 'qm' ? <Grid size={24} color={COLORS.geng} /> :
-                   <CalendarIcon size={24} color={THEME.blue} />
-         }));
-         setOnlineServices(mappedServices);
-      }
-      if (data.schedule) {
-        setScheduleData(data.schedule);
-        if (bookingData.date) {
-            const dateStr = getLocalDateString(bookingData.date);
-            let currentType = bookingData.service?.type || 'general';
-            if (bookingData.service?.id?.includes('fs')) currentType = 'fs';
-            const typeSchedule = (currentType === 'fs') ? data.schedule.fs : data.schedule.general;
-            const newTimes = typeSchedule?.[dateStr] || [];
-            setAvailableTimesForSelectedDate(newTimes);
-        }
-      }
-    } catch (error) {
-      console.error("讀取 Google Sheet 失敗:", error);
-    } finally {
-      setLoadingData(false);
-    }
-  }, [bookingData.date, bookingData.service]);
-
-  useEffect(() => { fetchLatestData(); }, []); 
-  
-  const handleServiceSelect = (srv) => { setBookingData({ ...bookingData, service: srv }); setStep(2); };
-  
-  const getRelevantSchedule = useCallback(() => {
-     if (bookingData.service?.type === 'fs') return scheduleData.fs || {};
-     return scheduleData.general || {};
-  }, [bookingData.service, scheduleData]);
-  
-  const handleDateChange = (dateObj) => {
-      const dateStr = getLocalDateString(dateObj);
-      const currentSchedule = getRelevantSchedule();
-      const times = currentSchedule[dateStr] || []; 
-      setAvailableTimesForSelectedDate(times);
-      setBookingData({ ...bookingData, date: dateObj, time: null }); 
-  };
-  
-  const handleTimeSelect = (t) => { setBookingData({ ...bookingData, time: t }); setStep(3); };
-  
-  const isDateDisabled = ({ date, view }) => {
-     if (view === 'month') {
-        const dateStr = getLocalDateString(date);
-        const currentSchedule = getRelevantSchedule();
-        return !currentSchedule[dateStr] || currentSchedule[dateStr].length === 0;
-     }
-     return false;
-  };
-  
-  const validateAndSubmit = () => {
-      const { name, phone, email } = bookingData;
-      if (!name) return alert('請填寫聯絡姓名');
-      const phoneRegex = /^852\d{8}$/;
-      if (!phoneRegex.test(phone)) return alert('電話格式錯誤！\n請輸入 852 開頭的 11 位數字');
-      if (email && !/\S+@\S+\.\S+/.test(email)) return alert('Email 格式不正確');
-      const isConfirmed = window.confirm("【預約須知】\n\n1. 按金一經收取，恕不退還。\n2. 按金將全數扣除於您的服務總額中。\n\n請問您確認以上條款並前往支付嗎？");
-      if (isConfirmed) handlePayment();
-  };
-
-    const [searchId, setSearchId] = useState(''); // 新增：搜尋用的 ID 狀態
-
-    const handlePayment = async () => {
-        setStep(4);
-        try {
-        const bId = generateBookingId(); // 生成隨機 ID
-        const payload = {
-        bookingId: bId, // 新增：傳送 ID 給後端
-        name: bookingData.name,
-        phone: bookingData.phone,
-        email: bookingData.email,
-        service: bookingData.service.name, 
-        date: getLocalDateString(bookingData.date), 
-        time: bookingData.time, 
-        notes: bookingData.notes
-      };
-        const response = await fetch(API_URL, { 
-            method: "POST", 
-            headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-            body: JSON.stringify(payload) 
-        });
-        
-        const resultData = await response.json();
-        if (resultData.result === 'success') {
-            // 將生成的 ID 存入狀態，以便在成功頁面顯示
-            setBookingData(prev => ({ ...prev, currentBookingId: bId }));
-            setTimeout(() => { setStep(5); }, 500);
-        }
-      else if (resultData.message === 'occupied') { alert("❌ 預約失敗\n\n哎呀！該時段剛剛被其他客人預約走了。"); setBookingData(prev => ({ ...prev, time: null })); await fetchLatestData(); setStep(2); } 
-      else { throw new Error(resultData.message || "Unknown error"); }
-    } catch (error) { console.error("預約請求錯誤:", error); alert("⚠️ 連線異常或時段已滿，正在更新最新資料..."); await fetchLatestData(); setStep(2); }
-  };
-
-    const handleCheckBooking = async () => {
-        if (!searchPhone || !searchId) return alert("請輸入電話號碼及預約代碼");
-        setIsSearching(true);
-        try {
-            const response = await fetch(`${API_URL}?action=getMyBookings&phone=${searchPhone}&id=${searchId}`);
-            const data = await response.json();
-            setMyBookings(data.bookings || []);
-        } catch (e) { 
-            alert("查詢失敗"); 
-        } finally { 
-            setIsSearching(false); 
-        }
-    };
-
-  const handlePhoneChange = (text) => {
-      const numericText = text.replace(/\D/g, '');
-      if (numericText.length <= 11) setBookingData({ ...bookingData, phone: numericText });
-  };
-
-  const renderCheckBookingView = () => (
-    <div style={{ animation: 'fadeIn 0.3s ease' }}>
-        <div style={{ backgroundColor: THEME.white, padding: '20px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: THEME.black }}>身份驗證查詢</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <input type="tel" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} placeholder="登記電話 (如: 85291234567)" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
-                <input type="text" value={searchId} onChange={(e) => setSearchId(e.target.value.toUpperCase())} placeholder="預約代碼 (6位英文數字)" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
-                <button onClick={handleCheckBooking} disabled={isSearching} style={{ width: '100%', padding: '12px', backgroundColor: THEME.black, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                    {isSearching ? '查詢中...' : <><Search size={20} /> 驗證並查詢</>}
-                </button>
-            </div>
-        </div>
-        <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: THEME.gray }}>您的預約紀錄</h4>
-        {myBookings.length === 0 ? ( <div style={{ textAlign: 'center', color: THEME.gray, padding: '40px' }}>{isSearching ? '正在搜尋...' : '尚無紀錄'}</div> ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {myBookings.map((bk, idx) => (
-                    <div key={idx} style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, borderLeft: `4px solid ${THEME.blue}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 'bold', fontSize: '16px', color: THEME.black }}>{bk.service}</span>
-                            <span style={{ fontSize: '12px', color: THEME.blue, backgroundColor: THEME.bgBlue, padding: '2px 8px', borderRadius: '10px' }}>{bk.status}</span>
-                        </div>
-                        <div style={{ fontSize: '14px', color: THEME.black, marginBottom: '2px' }}>{bk.date} {bk.time}</div>
-                        <div style={{ fontSize: '12px', color: THEME.gray }}>預約人: {bk.name}</div>
-                    </div>
-                ))}
-            </div>
-        )}
-    </div>
-  );
-
-  const renderBookingProcess = () => ( <>{step === 1 && renderServiceStep()} {step === 2 && renderDateStep()} {step === 3 && renderInfoStep()} {step === 4 && renderPaymentLoading()} {step === 5 && renderSuccess()}</> );
-  
-  const renderServiceStep = () => (
-    <div>
-      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: THEME.black }}>請選擇預約項目</h3>
-      {loadingData ? ( <div style={{ textAlign: 'center', padding: '20px', color: THEME.gray }}>載入中...</div> ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {onlineServices.map(srv => (
-            <div key={srv.id} onClick={() => handleServiceSelect(srv)} style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
-              <div style={{ padding: '10px', backgroundColor: THEME.bgGray, borderRadius: '50%' }}>{srv.icon}</div>
-              <div style={{ flex: 1 }}> <div style={{ fontWeight: 'bold', fontSize: '16px', color: THEME.black }}>{srv.name}</div><div style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>{srv.desc}</div></div>
-              <div style={{ textAlign: 'right' }}><div style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.blue }}>HK${srv.price}</div><div style={{ fontSize: '10px', color: THEME.red, marginTop: '2px' }}>按金 ${srv.deposit}</div></div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-  
-  const renderDateStep = () => (
-    <div>
-      <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', border: 'none', background: 'none', color: THEME.gray, marginBottom: '10px', padding: 0 }}><ChevronLeft size={16}/> 返回服務</button>
-      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: THEME.black }}>選擇日期與時間</h3>
-      <div style={{ marginBottom: '20px', border: `1px solid ${THEME.border}`, borderRadius: '12px', overflow: 'hidden', padding: '10px', backgroundColor: 'white' }}>
-          <style>{` .react-calendar { width: 100%; border: none; font-family: inherit; } .react-calendar__tile--active { background: ${THEME.blue} !important; color: white !important; } .react-calendar__tile--now { background: ${THEME.bgBlue}; color: ${THEME.black}; } .react-calendar__tile:disabled { background-color: #f5f5f5; color: #ccc; cursor: not-allowed; } `}</style>
-          <Calendar onChange={handleDateChange} value={bookingData.date} minDate={minDate} maxDate={maxDate} tileDisabled={isDateDisabled} locale="zh-TW" />
-      </div>
-      {bookingData.date && ( <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: THEME.gray }}>{bookingData.date.getMonth()+1}月{bookingData.date.getDate()}日 可用時段</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-              {availableTimesForSelectedDate.length > 0 ? ( availableTimesForSelectedDate.map(t => ( <button key={t} onClick={() => handleTimeSelect(t)} style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.blue}`, backgroundColor: THEME.bgBlue, color: THEME.blue, fontWeight: 'bold', cursor: 'pointer' }}>{t}</button> )) ) : ( <div style={{gridColumn: '1 / -1', color: THEME.red, fontSize: '13px', textAlign: 'center', padding: '10px', backgroundColor: THEME.bgRed, borderRadius: '8px' }}>本日已無可預約時段 (或已額滿)</div> )}
-            </div> 
-            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-         </div> )}
-    </div>
-  );
-
-  const renderInfoStep = () => (
-    <div>
-      <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', border: 'none', background: 'none', color: THEME.gray, marginBottom: '10px', padding: 0 }}><ChevronLeft size={16}/> 返回日期</button>
-      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: THEME.black }}>填寫預約資料</h3>
-      <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
-        <div style={{ marginBottom: '16px' }}><label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>聯絡姓名</label><input type="text" placeholder="請輸入您的稱呼" value={bookingData.name} onChange={e => setBookingData({...bookingData, name: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} /></div>
-        <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>WhatsApp 電話 <span style={{fontSize:'12px', fontWeight:'normal'}}>(852 + 8位數字)</span></label>
-            <input type="tel" placeholder="例如: 85291234567" value={bookingData.phone} onChange={e => handlePhoneChange(e.target.value)} maxLength={11} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>Email <span style={{fontSize:'12px', fontWeight:'normal'}}>(接收確認信用)</span></label>
-            <input type="email" placeholder="example@email.com" value={bookingData.email} onChange={e => setBookingData({...bookingData, email: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} />
-        </div>
-        <div><label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', color: THEME.gray }}>備註事項 (選填)</label><textarea placeholder="例如：想問的問題、準確出生時間等..." rows={3} value={bookingData.notes} onChange={e => setBookingData({...bookingData, notes: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px', resize: 'none' }} /></div>
-      </div>
-      <button onClick={validateAndSubmit} style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: THEME.white, borderRadius: '30px', border: 'none', fontSize: '16px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>前往支付 HK${bookingData.service?.deposit}</button>
-    </div>
-  );
-
-  const renderPaymentLoading = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}><div style={{ width: '40px', height: '40px', border: `4px solid ${THEME.bgBlue}`, borderTop: `4px solid ${THEME.blue}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div><style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style><div style={{ marginTop: '20px', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>正在傳送預約資料...</div></div>
-  );
-
-  const renderSuccess = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '20px' }}>
-      <div style={{ width: '80px', height: '80px', backgroundColor: '#f6ffed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}><Check size={40} color="#52c41a" /></div>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>預約成功！</h2>
-      <p style={{ color: THEME.gray, marginBottom: '30px' }}>我們已收到您的預約，將會盡快聯絡您。</p>
-      <div style={{ width: '100%', backgroundColor: THEME.white, padding: '20px', borderRadius: '12px', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <div style={{ borderBottom: `1px solid ${THEME.bg}`, paddingBottom: '12px', marginBottom: '12px', fontWeight: 'bold', fontSize: '16px' }}>預約明細</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>服務項目</span><span>{bookingData.service?.name}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>日期時間</span><span>{bookingData.date?.getMonth()+1}月{bookingData.date?.getDate()}日 {bookingData.time}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: THEME.gray }}>預約人</span><span>{bookingData.name}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '8px', backgroundColor: THEME.bgOrange, borderRadius: '4px' }}>
-            <span style={{ color: THEME.gray, fontWeight: 'bold' }}>預約代碼 (請截圖保存)</span>
-            <span style={{ fontWeight: 'bold', color: THEME.vermillion, fontSize: '18px' }}>{bookingData.currentBookingId}</span>
-        </div>
-      </div>
-      <button onClick={onNavigate} style={{ marginTop: '30px', padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', borderRadius: '24px', border: 'none', fontWeight: 'bold' }}>返回首頁</button>
-    </div>
-  );
-
-  return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '8px 16px', backgroundColor: THEME.white, borderRadius: '8px' }}>
-        <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0, fontSize: '20px' }}>
-            {viewMode === 'book' ? '線上預約' : '我的預約'}
-        </h2>
-        <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
-            <button onClick={() => setViewMode('book')} style={{ padding: '6px 12px', border: 'none', borderRadius: '18px', backgroundColor: viewMode === 'book' ? THEME.blue : 'transparent', color: viewMode === 'book' ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>預約</button>
-            <button onClick={() => setViewMode('check')} style={{ padding: '6px 12px', border: 'none', borderRadius: '18px', backgroundColor: viewMode === 'check' ? THEME.blue : 'transparent', color: viewMode === 'check' ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>查詢</button>
-        </div>
-      </div>
-      {viewMode === 'book' ? renderBookingProcess() : renderCheckBookingView()}
-    </div>
-  );
-};
-
-// 輔助組件：摺疊區塊
-const CollapsibleSection = ({ title, isOpen, onToggle, children }) => (
-  <div style={{ marginBottom: '12px', border: `1px solid ${THEME.border}`, borderRadius: '8px', backgroundColor: THEME.white, overflow: 'hidden' }}>
-    <div 
-      onClick={onToggle} 
-      style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: isOpen ? THEME.bgGray : THEME.white }}
-    >
-      <span style={{ fontWeight: 'bold', fontSize: '15px', color: THEME.black }}>{title}</span>
-      {isOpen ? <ChevronLeft size={20} style={{ transform: 'rotate(-90deg)', transition: '0.2s' }} /> : <ChevronLeft size={20} style={{ transform: 'rotate(0deg)', transition: '0.2s' }} />}
-    </div>
-    {isOpen && <div style={{ padding: '16px', borderTop: `1px solid ${THEME.border}` }}>{children}</div>}
-  </div>
-);
-
-// 輔助組件：選擇器
-const StarSelector = ({ label, value, onChange, options }) => (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ width: '40px', fontSize: '14px', color: THEME.gray }}>{label}</span>
-        <select value={value} onChange={e => onChange(e.target.value)} style={{ flex: 1, padding: '6px', borderRadius: '4px', border: `1px solid ${THEME.border}`, fontSize: '14px' }}>
-            {options.map((opt, i) => <option key={i} value={opt.val}>{opt.label}</option>)}
-        </select>
-    </div>
-);
-
+// --- SettingsView ---
 const SettingsView = ({ 
-    isPro, onPurchase, 
-    siHuaRules, setSiHuaRules,
-    kuiYueRules, setKuiYueRules,
-    huoLingRules, setHuoLingRules,
-    tianMaRules, setTianMaRules,
-    tianMaType, setTianMaType,
-    mingHasDaXian, setMingHasDaXian 
-}) => {
-  const [openSection, setOpenSection] = useState(null);
-  const toggleSection = (sec) => setOpenSection(openSection === sec ? null : sec);
+        siHuaRules, setSiHuaRules,
+        kuiYueRules, setKuiYueRules,
+        huoLingRules, setHuoLingRules,
+        tianMaRules, setTianMaRules,
+        tianMaType, setTianMaType,
+        mingHasDaXian, setMingHasDaXian,
+        bookmarks, setBookmarks
+    }) => {
+    const [openSection, setOpenSection] = useState(null);
+    const toggleSection = (sec) => setOpenSection(openSection === sec ? null : sec);
 
   const APP_INFO = {
-    version: isPro ? "Pro (專業版)" : "Free (廣告版)",
+    appName: CURRENT_APP_NAME,
+    version: APP_VERSION,
     about: "本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
-    agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。開發者不對因使用本程式而產生的任何直接或間接後果負責。",
-    contactEmail: "email@mrkfengshui.com", 
-    emailSubject: "關於元星紫微的建議"
-  };
+    };
 
-  const handleContactClick = () => { 
-    window.location.href = `mailto:${APP_INFO.contactEmail}?subject=${encodeURIComponent(APP_INFO.emailSubject)}`; 
-  };
+const ToggleSelector = ({ options, currentValue, onChange }) => (
+    <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
+      {options.map((opt) => (
+        <button key={opt.val} onClick={(e) => { e.stopPropagation(); onChange(opt.val); }} style={{ padding: '6px 14px', border: 'none', borderRadius: '18px', backgroundColor: currentValue === opt.val ? THEME.blue : 'transparent', color: currentValue === opt.val ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>{opt.label}</button>
+      ))}
+    </div>
+  );
+
+  const CollapsibleSection = ({ title, isOpen, onToggle, children }) => (
+    <div style={{ marginBottom: '12px', border: `1px solid ${THEME.border}`, borderRadius: '12px', backgroundColor: THEME.white, overflow: 'hidden' }}>
+      <div onClick={onToggle} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: isOpen ? THEME.bgGray : THEME.white }}>
+        <span style={{ fontWeight: 'bold', fontSize: '15px', color: THEME.black }}>{title}</span>
+        {isOpen ? <ChevronLeft size={20} style={{ transform: 'rotate(-90deg)', transition: '0.2s', color: THEME.gray }} /> : <ChevronLeft size={20} style={{ transform: 'rotate(0deg)', transition: '0.2s', color: THEME.gray }} />}
+      </div>
+      {isOpen && <div style={{ padding: '16px', borderTop: `1px solid ${THEME.border}` }}>{children}</div>}
+    </div>
+  );
 
   const handleReset = () => {
       if(window.confirm('確定要還原所有設定至「紫微斗數全書」預設值嗎？')) {
@@ -898,72 +575,20 @@ const SettingsView = ({
       }
   };
 
-  const renderInfoRow = (label, content, isLast = false) => (
-    <div style={{ padding: '16px', borderBottom: isLast ? 'none' : `1px solid ${THEME.bg}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>{label}</div>
-      <div style={{ fontSize: '14px', color: THEME.gray, lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{content}</div>
-    </div>
-  );
-
-  // 通用「丸型切換」組件 (Pill Toggle)
-  const ToggleSelector = ({ options, currentValue, onChange }) => (
-    <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
-      {options.map((opt) => {
-        const isActive = currentValue === opt.val;
-        return (
-          <button 
-            key={opt.val} 
-            onClick={() => onChange(opt.val)} 
-            style={{ 
-              padding: '6px 14px', border: 'none', borderRadius: '18px', 
-              backgroundColor: isActive ? THEME.blue : 'transparent', 
-              color: isActive ? 'white' : THEME.gray, 
-              fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s'
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%', paddingBottom: '100px' }}>
+    <div style={{ padding: '16px', paddingBottom: '100px' }}>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
         <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
       </div>
 
-      {/* 會員狀態區塊 */}
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>會員狀態</h3>
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', overflow: 'hidden', border: `1px solid ${THEME.border}`, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: isPro ? THEME.orange : THEME.black }}>{isPro ? '專業版' : '免費廣告版'}</div>
-              <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>{isPro ? '您已享有永久無廣告專業體驗' : '升級以移除所有廣告及無限命盤紀錄空間'}</div>
-            </div>
-            {!isPro ? ( 
-              <button onClick={onPurchase} style={{ backgroundColor: THEME.blue, color: 'white', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>US$35</button> 
-            ) : ( 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.orange, fontWeight: 'bold', fontSize: '13px' }}><Check size={16} /> 已啟用</div> 
-            )}
-        </div>
-      </div>
-
-      {/* 顯示與安星規則 */}
+      {/* 安星規則 */}
       <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>自定義安星法</h3>
       
-      {/* 大限設定 */}
-      <div style={{ backgroundColor: THEME.white, borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限起限宮位</div>
-          <ToggleSelector 
-            options={[{val: false, label: '命宮無大限'}, {val: true, label: '命宮有大限'}]} 
-            currentValue={mingHasDaXian} 
-            onChange={setMingHasDaXian} 
-          />
+          <ToggleSelector options={[{val: false, label: '命宮無大限'}, {val: true, label: '命宮有大限'}]} currentValue={mingHasDaXian} onChange={setMingHasDaXian} />
       </div>
 
-      {/* 四化設定 */}
       <CollapsibleSection title="四化星曜" isOpen={openSection === 'sihua'} onToggle={() => toggleSection('sihua')}>
           {[
             { label: '甲干化科', stem: '甲', key: 'ke', opts: [{val:'武曲', label:'武曲'}, {val:'文曲', label:'文曲'}] },
@@ -973,7 +598,6 @@ const SettingsView = ({
             { label: '辛干化科', stem: '辛', key: 'ke', opts: [{val:'文曲', label:'文曲'}, {val:'武曲', label:'武曲'}] },
             { label: '壬干化科', stem: '壬', key: 'ke', opts: [{val:'左輔', label:'左輔'}, {val:'天府', label:'天府'}] },
             { label: '癸干化科', stem: '癸', key: 'ke', opts: [{val:'太陰', label:'太陰'}, {val:'太陽', label:'太陽'}] },
-
         ].map((item, idx) => (
             <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{item.label}</div>
@@ -982,7 +606,6 @@ const SettingsView = ({
           ))}
       </CollapsibleSection>
 
-      {/* 魁鉞設定 (A/B Toggle) */}
       <CollapsibleSection title="天魁天鉞" isOpen={openSection === 'kuiyue'} onToggle={() => toggleSection('kuiyue')}>
           {[
             { gan: '甲', opts: [{k:1, y:7, lab:'丑未'}, {k:7, y:1, lab:'未丑'}] },
@@ -998,65 +621,31 @@ const SettingsView = ({
           ].map((item) => (
             <div key={item.gan} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.blue }}>{item.gan}干</div>
-                <ToggleSelector 
-                  options={item.opts.map(o => ({ val: `${o.k}-${o.y}`, label: o.lab }))} 
-                  currentValue={`${kuiYueRules[item.gan]?.k}-${kuiYueRules[item.gan]?.y}`} 
-                  onChange={(v) => {
-                    const [k, y] = v.split('-').map(Number);
-                    setKuiYueRules({ ...kuiYueRules, [item.gan]: { k, y } });
-                  }} 
-                />
+                <ToggleSelector options={item.opts.map(o => ({ val: `${o.k}-${o.y}`, label: o.lab }))} currentValue={`${kuiYueRules[item.gan]?.k}-${kuiYueRules[item.gan]?.y}`} onChange={(v) => { const [k, y] = v.split('-').map(Number); setKuiYueRules({ ...kuiYueRules, [item.gan]: { k, y } }); }} />
             </div>
           ))}
       </CollapsibleSection>
 
-      {/* 火鈴設定 */}
-      <div style={{ backgroundColor: THEME.white, borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>火星鈴星</div>
-          <ToggleSelector 
-          options={[{val: 'default', label: '全書'}, {val: 'market', label: '全集'}]} 
-          currentValue={JSON.stringify(huoLingRules) === JSON.stringify(MARKET_HUO_LING) ? 'market' : 'default'}
-          onChange={(v) => setHuoLingRules(v === 'market' ? MARKET_HUO_LING : DEFAULT_HUO_LING)}
-          />
+          <ToggleSelector options={[{val: 'default', label: '全書'}, {val: 'market', label: '全集'}]} currentValue={JSON.stringify(huoLingRules) === JSON.stringify(MARKET_HUO_LING) ? 'market' : 'default'} onChange={(v) => setHuoLingRules(v === 'market' ? MARKET_HUO_LING : DEFAULT_HUO_LING)} />
       </div>
 
-      {/* 天馬設定 */}
-      <div style={{ backgroundColor: THEME.white, borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>天馬</div>
-          <ToggleSelector 
-            options={[{val: 'year', label: '年馬'}, {val: 'month', label: '月馬'}]} 
-            currentValue={tianMaType} 
-            onChange={setTianMaType} 
-          />
+          <ToggleSelector options={[{val: 'year', label: '年馬'}, {val: 'month', label: '月馬'}]} currentValue={tianMaType} onChange={setTianMaType} />
       </div>
 
-      {/* 關於本程式區塊 */}
-      <div>
-        <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>關於與支援</h3>
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', overflow: 'hidden', border: `1px solid ${THEME.border}` }}>
-          {renderInfoRow("關於", APP_INFO.about)}
-          {renderInfoRow("服務協議", APP_INFO.agreement)}
-          <div style={{ padding: '16px', borderBottom: `1px solid ${THEME.bg}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>版本資訊</span>
-            <span style={{ fontSize: '14px', color: THEME.gray }}>{APP_VERSION}</span>
-          </div>
-          <div onClick={handleContactClick} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: THEME.white }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.blue }}>聯絡我們</span>
-              <span style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>回報問題或提供建議</span>
-            </div>
-            <ChevronRight size={20} color={THEME.gray} />
-          </div>
-        </div>
-      </div>
+      {/* 共用功能區塊 */}
+      <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="ZWDS_BACKUP" />
+      <AppInfoCard info={APP_INFO} />
+      <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
           <button onClick={handleReset} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
-      
-      <div style={{ marginTop: '30px', textAlign: 'center', color: THEME.lightGray, fontSize: '11px' }}>System Build: {APP_VERSION}</div>
     </div>
   );
 };
@@ -1064,16 +653,9 @@ const SettingsView = ({
 // --- ZwdsInput ---
 const ZwdsInput = ({ onCalculate, initialData }) => {
   const now = new Date();
-  const [formData, setFormData] = useState(initialData || {
-    name: '', gender: '1', year: now.getFullYear(), month: now.getMonth() + 1, 
-    day: now.getDate(), hour: now.getHours(), minute: now.getMinutes()
-  });
+  const [formData, setFormData] = useState(initialData || { name: '', gender: '1', year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate(), hour: now.getHours(), minute: now.getMinutes() });
   
-  useEffect(() => {
-      if (initialData) {
-          setFormData(initialData);
-      }
-  }, [initialData]);
+  useEffect(() => { if (initialData) setFormData(initialData); }, [initialData]);
   
   const years = useMemo(() => { const arr = []; for (let i = 1900; i <= 2100; i++) arr.push(i); return arr; }, []);
   const hours = useMemo(() => Array.from({length: 24}, (_, i) => i), []);
@@ -1082,7 +664,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   return (
-    <div style={{ padding: '20px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg }}>
+    <div style={{ padding: '20px', paddingBottom: '100px', backgroundColor: THEME.bg }}>
        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: `1px solid ${THEME.border}` }}>
           <h3 style={{ margin: '0 0 20px 0', textAlign: 'center', color: THEME.black, fontSize: '18px', fontWeight: 'bold' }}>{initialData ? '修改資料' : '輸入出生資料'}</h3>
           
@@ -1100,29 +682,16 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label>
-                  <select value={formData.year} onChange={e => handleChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
-              </div>
-              <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', color: THEME.gray }}>月</label>
-                  <select value={formData.month} onChange={e => handleChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}</option>)}</select>
-              </div>
-              <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', color: THEME.gray }}>日</label>
-                  <select value={formData.day} onChange={e => handleChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}</option>)}</select>
-              </div>
+              <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> <select value={formData.year} onChange={e => handleChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={formData.month} onChange={e => handleChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={formData.day} onChange={e => handleChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}</option>)}</select> </div>
           </div>
           <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                  <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select>
-              </div>
+              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select> </div>
               <span>:</span>
-              <div style={{ flex: 1 }}>
-                  <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select>
-              </div>
+              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select> </div>
               </div>
           </div>
 
@@ -1135,7 +704,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
   );
 };
 
-// --- [修改] PalaceGrid 組件 ---
+// --- PalaceGrid & ZwdsResult ---
 const PalaceGrid = ({ 
     palace, onClick, highlightMode, siHuaMap, 
     layerMode, isDaXian, isXiaoXian, currentAge,
@@ -1149,13 +718,10 @@ const PalaceGrid = ({
     const showXiao = layerMode >= 2;
     const showLiuYue = layerMode >= 3;
 
-    // 定義強行置頂的星曜 (通常是祿存、六吉六煞等重要輔星)
     const FORCE_TOP_STARS = ['祿存', '左輔', '右弼', '文昌', '文曲', '天魁', '天鉞', '擎羊', '陀羅', '火星', '鈴星', '地劫', '天空'];
-    
     const topStars = [];
     const bottomStars = [];
 
-    // 分類星曜
     palace.stars.forEach(s => topStars.push({ ...s, type: 'major' }));
     palace.minorStars.forEach(s => {
         if (FORCE_TOP_STARS.includes(s.name)) topStars.push(s);
@@ -1166,55 +732,34 @@ const PalaceGrid = ({
     const palaceIdx = palace.zhiIdx;
     const fs = flowingStars || { da: {}, liu: {}, yue: {} };
 
-    // 渲染流曜的小標籤 (如: 祿、羊、陀)
     const renderFlowStarTag = (name, color, prefix) => (
         <span style={{ writingMode: 'vertical-rl', fontSize: '9px', color, fontWeight: 'bold', lineHeight: 1, margin: '1px 0' }}>{prefix}{name}</span>
     );
 
-    // [修改] renderStar 
-    // isTop: true 代表是主星或重要輔星，false 代表是雜曜
-    // 我們透過這個參數來控制顏色和預設字體大小
     const renderStar = (s, idx, isTop, customFontSize = null) => {
         const isMajor = s.type === 'major';
         let color = THEME.black;
         
-        // 顏色邏輯
         if (['紫微', '天府'].includes(s.name)) color = THEME.purple;
         else if (isMajor) color = THEME.red;
-        else if (!isTop) color = '#555'; // 雜曜使用深灰色，避免喧賓奪主
+        else if (!isTop) color = '#555'; 
 
         const brightnessIndex = (layerMode <= 1) ? palace.zhiIdx : (liuNianZhiIdx || 0);
         const starBrightness = STAR_BRIGHTNESS[s.name] ? STAR_BRIGHTNESS[s.name][brightnessIndex] : '';
         const huaYear = year[s.name], huaDa = daXian[s.name], huaXiao = xiaoXian[s.name], huaYue = liuYue[s.name];
         
-        // 字體大小邏輯：主星大一點，雜曜小一點
-        // 如果外部有傳入 customFontSize 則優先使用 (例如雜曜過多時強制縮小)
         const defaultSize = isTop ? '13px' : '11px'; 
         const fontSize = customFontSize ? customFontSize : defaultSize;
-
-        // 雜曜是否顯示亮度的判斷 (雜曜通常不顯示廟旺利陷，除非是特定幾顆)
         const showBrightness = (isMajor || FORCE_TOP_STARS.includes(s.name));
 
         return (
-            <div key={`${isTop?'t':'b'}-${idx}`} style={{ 
-                writingMode: 'vertical-rl', 
-                textOrientation: 'upright', 
-                display: 'flex', 
-                alignItems: 'right', 
-                margin: '0 0.5px',
-            }}>
-
-                {/* 亮度 (廟旺) */}
+            <div key={`${isTop?'t':'b'}-${idx}`} style={{ writingMode: 'vertical-rl', textOrientation: 'upright', display: 'flex', alignItems: 'right', margin: '0 0.5px' }}>
                 <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px' }}>
                     {starBrightness || ' '}
                 </span>
-                
-                {/* 星曜名稱 */}
                 <span style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize }}>
                     {s.name}
                 </span>
-
-                {/* 四化標記 */}
                 <div style={{ display: 'flex', flexDirection: 'row', marginTop: '3px', gap: '2px' }}>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.red, lineHeight: 1, display: huaYear ? 'block' : 'none' }}>{huaYear}</span>
                     {showDa && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.blue, lineHeight: 1, display: huaDa ? 'block' : 'none' }}>{huaDa}</span>}
@@ -1228,7 +773,6 @@ const PalaceGrid = ({
     const renderXiaoXianAges = () => {
         if (!palace.xiaoXian) return null;
         const rows = [];
-        // 每行顯示多一點，因為空間變大了
         for (let i = 0; i < Math.min(palace.xiaoXian.length, 8); i += 4) { rows.push(palace.xiaoXian.slice(i, i + 4)); }
         return rows.map((row, ridx) => (
             <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '1px', marginBottom: '1px' }}>
@@ -1239,74 +783,34 @@ const PalaceGrid = ({
         ));
     };
 
-    // 計算雜曜的字體大小：如果數量太多，自動縮小
     let bottomStarsFontSize = '12px';
     if (bottomStars.length > 6) bottomStarsFontSize = '10px';
     if (bottomStars.length > 8) bottomStarsFontSize = '9px';
 
     const getBackgroundColor = () => {
             if (highlightMode === 'target') {
-                if (layerMode === 1) return '#e6f7ff'; // 大限: 藍
-                if (layerMode === 2) return '#e2fdcaff'; // 流年: 綠
-                if (layerMode === 3) return '#f9f0ff'; // 流月: 紫
-                return '#fff1f0'; // 本命: 紅
+                if (layerMode === 1) return '#e6f7ff'; 
+                if (layerMode === 2) return '#e2fdcaff'; 
+                if (layerMode === 3) return '#f9f0ff'; 
+                return '#fff1f0'; 
             }
-            if (highlightMode === 'related') return '#feffe6'; // 三方四正: 黃
+            if (highlightMode === 'related') return '#feffe6'; 
             return THEME.white;
         };
 
     const currentBgColor = getBackgroundColor();
 
     return (
-        <div onClick={onClick} style={{ 
-            border: `1px solid ${THEME.border}`, 
-            position: 'relative', 
-            backgroundColor: currentBgColor, // 動態背景
-            height: '100%', 
-            minHeight: '140px', 
-            overflow: 'hidden', 
-            padding: '2px', 
-            cursor: 'pointer',
-        }}>
-
-            {/* 1. 左上：干支與流星標籤區 (維持原樣) */}
+        <div onClick={onClick} style={{ border: `1px solid ${THEME.border}`, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', top: 2, left: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', zIndex: 2 }}>
                 <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px', marginBottom: '4px' }}>{palace.gan}{palace.zhi}</div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '0px' }}>
-                    {showDa && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')}
-                            {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')}
-                            {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')}
-                            {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')}
-                            {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')}
-                            {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')}
-                        </div>
-                    )}
-                    {showXiao && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', 'green', '歲')}
-                            {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')}
-                            {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')}
-                            {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')}
-                            {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')}
-                            {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')}
-                        </div>
-                    )}
-                    {showLiuYue && fs.yue && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')}
-                            {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')}
-                            {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')}
-                            {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')}
-                            {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')}
-                            {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')}
-                        </div>
-                    )}
+                    {showDa && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')} {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')} {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')} {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')} {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')} {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')} </div> )}
+                    {showXiao && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', 'green', '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
+                    {showLiuYue && fs.yue && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')} {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')} {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')} {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')} {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')} {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')} </div> )}
                 </div>
             </div>
             
-            {/* 2. 左下：宮位標籤 (維持原樣) */}
             <div style={{ position: 'absolute', bottom: 2, left: 2, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', maxWidth: '30px', zIndex: 2 }}>
                 <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', gap: '2px' }}>
                     <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px' }}>{palace.name}</div>
@@ -1314,48 +818,19 @@ const PalaceGrid = ({
                     {showXiao && xiaoXianName && <div style={{ fontSize: '11px', color: 'green', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
                     {showLiuYue && liuYueName && <div style={{ fontSize: '11px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
                 </div>
-                {palace.isShen && <span style={{ backgroundColor: THEME.red, 
-                        color: 'white', 
-                        fontSize: '10px', 
-                        borderRadius: '4px', // 圓角
-                        padding: '1px 1px',  // 內距
-                        writingMode: 'horizontal-tb', // 轉回水平顯示，或者維持直書看您喜好，這裡建議水平比較像印章
-                        lineHeight: 1,
-                        marginBottom: '2px',
-                        marginLeft: '1px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: '10px', borderRadius: '4px', padding: '1px 1px', lineHeight: 1, marginBottom: '2px', marginLeft: '1px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
             </div>
 
-            {/* 3. 右下角：博士十二神與長生十二神 (維持原樣) */}
             <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', zIndex: 2 }}>
                 {palace.changSheng12 && <span style={{ fontSize: '12px', color: COLORS.geng, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1, fontWeight: 'normal' }}>{palace.changSheng12}</span>}
                 {palace.doctor12 && <span style={{ fontSize: '12px', color: COLORS.jia, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1 }}>{palace.doctor12}</span>}
             </div>
 
-            {/* 4. 中央星曜區 (重要修改：合併了 topStars 和 bottomStars) */}
-            {/* 使用 row-reverse 確保主星(topStars)在最右邊，雜曜(bottomStars)往左排 */}
-            <div style={{ 
-                position: 'absolute', 
-                top: 2,           // 稍微讓點空間
-                bottom: '36px',       // 底部留空給小限和宮位名
-                left: '24px',         // 左邊避開干支
-                right: 2,        // 右邊避開博士十二神
-                display: 'flex', 
-                flexDirection: 'row-reverse', // 關鍵：從右向左排列
-                flexWrap: 'wrap', 
-                alignContent: 'flex-start',
-                alignItems: 'flex-start',
-                gap: '0px'
-            }}>
-                {/* 顯示主星與重要吉煞 */}
+            <div style={{ position: 'absolute', top: 2, bottom: '36px', left: '24px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
                 {topStars.map((s, i) => renderStar(s, i, true))}
-                
-                {/* 顯示雜曜 (原本的 bottomStars) */}
-                {/* 如果有主星，它們會排在主星左側；如果是空宮，它們會自動填補右側位置 */}
                 {bottomStars.map((s, i) => renderStar(s, i, false, bottomStarsFontSize))}
             </div>
             
-            {/* 5. 底部區域：只保留小限與大限範圍 */}
             <div style={{ position: 'absolute', bottom: 2, left: '25px', right: '25px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
                 <div style={{ fontSize: '12px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px' }}>{palace.daXian || '\u00A0'}</div>
@@ -1364,51 +839,26 @@ const PalaceGrid = ({
     );
 };
 
-// --- [修改] ZwdsResult 組件 ---
-// 新增功能：
-// 1. 內部 chartData 狀態，支援即時重算
-// 2. 八字時辰按鈕 (對盤用)
 const ZwdsResult = ({ data, onBack, onSave }) => {
-    // 1. 將傳入的 data 轉為內部 state，以便支援修改時辰重算
     const [chartData, setChartData] = useState(data);
-
-    // 當外部 data 改變時 (例如讀取書籤)，同步更新內部 state
-    useEffect(() => {
-        setChartData(data);
-    }, [data]);
+    useEffect(() => { setChartData(data); }, [data]);
 
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
-    const [targetDate, setTargetDate] = useState({ 
-        year: new Date().getFullYear(), 
-        month: new Date().getMonth() + 1, 
-        day: new Date().getDate() 
-    });
+    const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
     const [layerMode, setLayerMode] = useState(0); 
 
-    // --- 調整時辰函式 (對盤核心) ---
     const handleHourAdjust = (delta) => {
         const current = chartData.rawDate;
-        // 使用 Date 物件處理跨日/跨月邏輯
         const dt = new Date(current.year, current.month - 1, current.day, parseInt(current.hour), current.minute);
         dt.setHours(dt.getHours() + delta);
-
-        const newFormData = {
-            ...current,
-            year: dt.getFullYear(),
-            month: dt.getMonth() + 1,
-            day: dt.getDate(),
-            hour: dt.getHours(),
-            minute: dt.getMinutes() // 分鐘保持不變
+        const newFormData = { ...current, year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate(), hour: dt.getHours(), minute: dt.getMinutes() };
+        
+        // 為了確保重算正確，暫時讀取 localStorage 設定 (與 SettingsView 同步)
+        const getRule = (key, def) => { 
+            const s = localStorage.getItem(key); 
+            try { return s ? JSON.parse(s) : def; } catch(e) { return def; } 
         };
-
-        // 為了確保重算時保留使用者的設定，這裡直接讀取 localStorage
-        // 這是為了避免修改 ZwdsApp 父層結構的權宜之計，確保功能獨立運作
-        const getRule = (key, def) => {
-            const s = localStorage.getItem(key);
-            try { return s ? JSON.parse(s) : def; } catch(e) { return def; }
-        };
-
         const rulesConfig = {
             siHua: getRule('zwds_rule_sihua', DEFAULT_SI_HUA),
             kuiYue: getRule('zwds_rule_kuiyue', DEFAULT_KUI_YUE),
@@ -1421,45 +871,21 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
         try {
             const newResult = calculateZwdsResult(newFormData, rulesConfig, { mingHasDaXian });
             setChartData(newResult);
-        } catch (e) {
-            console.error("調整時辰失敗", e);
-        }
+        } catch (e) { console.error("調整時辰失敗", e); }
     };
 
-    const handleDateChange = (field, value) => {
-        setTargetDate(prev => ({ ...prev, [field]: parseInt(value) }));
-    };
+    const handleDateChange = (field, value) => { setTargetDate(prev => ({ ...prev, [field]: parseInt(value) })); };
+    const getLayerTitle = () => ["本命盤", "大限盤", "歲限盤", "流月盤"][layerMode] || "本命盤";
 
-    const getLayerTitle = () => {
-        const titles = ["本命盤", "大限盤", "歲限盤", "流月盤"];
-        return titles[layerMode] || "本命盤";
-    };
-
-    // 使用 chartData.rawDate 計算八字顯示
     const birthDetails = useMemo(() => {
             try {
-                const solar = window.Solar.fromYmdHms(
-                    parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day),
-                    parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0
-                );
+                const solar = window.Solar.fromYmdHms(parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day), parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0);
                 const lunar = solar.getLunar();
-
-                // [修正點] 在這裡處理月份名稱轉換
-                let monthName = lunar.getMonthInChinese();
-                monthName = monthName.replace('闰', '閏').replace('冬', '十一').replace('腊', '十二');
-
-                return {
-                    bazi: `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}時`,
-                    solarStr: `${chartData.rawDate.year}/${chartData.rawDate.month}/${chartData.rawDate.day}`,
-                    // [修正點] 這裡改用處理過的 monthName
-                    lunarStr: `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}` 
-                };
-            } catch (e) {
-                return { bazi: '', solarStr: '', lunarStr: '' };
-            }
+                let monthName = lunar.getMonthInChinese().replace('闰', '閏').replace('冬', '十一').replace('腊', '十二');
+                return { bazi: `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}時`, solarStr: `${chartData.rawDate.year}/${chartData.rawDate.month}/${chartData.rawDate.day}`, lunarStr: `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}` };
+            } catch (e) { return { bazi: '', solarStr: '', lunarStr: '' }; }
         }, [chartData.rawDate]);
         
-    // 使用 chartData 計算流運
     const resultParams = useMemo(() => {
         try {
             const birthSolar = window.Solar.fromYmdHms(parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day), parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0);
@@ -1474,11 +900,8 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
 
             let dIdx = -1; let xIdx = -1;
             g.forEach((p, i) => {
-                if(p.daXian) {
-                    const [start, end] = p.daXian.split('-').map(Number);
-                    if(finalAge >= start && finalAge <= end) { dIdx = i; }
-                }
-                if(p.xiaoXian?.includes(finalAge)) { xIdx = i; }
+                if(p.daXian) { const [start, end] = p.daXian.split('-').map(Number); if(finalAge >= start && finalAge <= end) dIdx = i; }
+                if(p.xiaoXian?.includes(finalAge)) xIdx = i;
             });
 
             let daXianGan = null;
@@ -1501,47 +924,19 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
             const douJunIdx = (liuNianZhiIdx - (Math.abs(birthLunar.getMonth()) - 1) + Math.floor((parseInt(chartData.rawDate.hour)+1)%24/2) + 12) % 12;
             const currentLiuYueIdx = (douJunIdx + monthOffset) % 12;
             const currentLiuYueGan = TIANGAN[(((TIANGAN.indexOf(tYearGan) % 5) * 2 + 2) + monthOffset) % 10];
-
             const getLuPos = (gan) => ({'甲':2,'乙':3,'丙':5,'丁':6,'戊':5,'己':6,'庚':8,'辛':9,'壬':11,'癸':0}[gan]);
             const stars = { da: {}, liu: {}, yue: {} };
-            
             const lLu = getLuPos(tYearGan);
             stars.liu = { lu: lLu, yang:(lLu+1)%12, tuo:(lLu+11)%12, ma:({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[tYearZhi]), kui: DEFAULT_KUI_YUE[tYearGan]?.k, yue: DEFAULT_KUI_YUE[tYearGan]?.y };
-            
-            if (daXianGan) {
-                const dLu = getLuPos(daXianGan);
-                stars.da = { lu: dLu, yang:(dLu+1)%12, tuo:(dLu+11)%12, kui: DEFAULT_KUI_YUE[daXianGan]?.k, yue: DEFAULT_KUI_YUE[daXianGan]?.y };
-            }
-
-            if (currentLiuYueGan) {
-                const yLu = getLuPos(currentLiuYueGan);
-                const curMonthZhi = targetLunar.getMonthZhi(); 
-                stars.yue = {
-                    lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12,
-                    ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]),
-                    kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y
-                };
-            }
-
-            return { 
-                currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, 
-                currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, 
-                currentLiuNianGan: tYearGan 
-            };
-        } catch (e) {
-            console.error("Calc Error:", e);
-            return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} };
-        }
+            if (daXianGan) { const dLu = getLuPos(daXianGan); stars.da = { lu: dLu, yang:(dLu+1)%12, tuo:(dLu+11)%12, kui: DEFAULT_KUI_YUE[daXianGan]?.k, yue: DEFAULT_KUI_YUE[daXianGan]?.y }; }
+            if (currentLiuYueGan) { const yLu = getLuPos(currentLiuYueGan); const curMonthZhi = targetLunar.getMonthZhi(); stars.yue = { lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12, ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]), kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y }; }
+            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan };
+        } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText]);
 
     const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;
-
     const activeSiHua = useMemo(() => {
-        const getMap = (gan) => {
-            if (!gan) return {};
-            const r = DEFAULT_SI_HUA[gan];
-            return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' };
-        };
+        const getMap = (gan) => { if (!gan) return {}; const r = DEFAULT_SI_HUA[gan]; return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' }; };
         const bGan = window.Solar.fromYmdHms(chartData.rawDate.year, chartData.rawDate.month, chartData.rawDate.day, chartData.rawDate.hour, chartData.rawDate.minute, 0).getLunar().getYearGan();
         return { year: getMap(bGan), daXian: getMap(daXianGan), xiaoXian: getMap(currentLiuNianGan), liuYue: getMap(currentLiuYueGan) };
     }, [chartData.rawDate, daXianGan, currentLiuNianGan, currentLiuYueGan]);
@@ -1559,8 +954,7 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
         const getDN = (base, cur, pre) => (base === -1 || base === undefined || isNaN(base)) ? null : pre + PALACE_NAMES[(base - cur + 12) % 12].charAt(0);
         return (
             <PalaceGrid 
-                palace={g[idx]} 
-                onClick={() => setFocusedIndex(idx)}
+                palace={g[idx]} onClick={() => setFocusedIndex(idx)}
                 highlightMode={focusedIndex === idx ? 'target' : ([(focusedIndex+4)%12, (focusedIndex+8)%12, (focusedIndex+6)%12].includes(idx) ? 'related' : null)}
                 siHuaMap={activeSiHua} layerMode={layerMode} isDaXian={idx === daXianIdx} isXiaoXian={idx === xiaoXianIdx} currentAge={currentAge} liuNianZhiIdx={liuNianZhiIdx}
                 daXianName={getDN(daXianIdx, idx, '大')} xiaoXianName={getDN(xiaoXianIdx, idx, '歲')} liuYueName={getDN(currentLiuYueIdx, idx, '月')} flowingStars={flowingStars}
@@ -1569,338 +963,242 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
     };
 
     const yearOptions = useMemo(() => { const arr = []; for(let i=1940; i<=2060; i++) arr.push(i); return arr; }, []);
-    const daysInMonth = useMemo(() => {
-        const lastDay = new Date(targetDate.year, targetDate.month, 0).getDate();
-        return Array.from({ length: lastDay }, (_, i) => i + 1);
-    }, [targetDate.year, targetDate.month]);
-
-    const targetLunarDisplay = useMemo(() => {
-        try {
-            const solar = window.Solar.fromYmd(parseInt(targetDate.year), parseInt(targetDate.month), parseInt(targetDate.day));
-            const lunar = solar.getLunar();
-            let monthName = lunar.getMonthInChinese();
-            monthName = monthName.replace('闰', '閏').replace('冬', '十一').replace('腊', '十二');
-            return `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}`;
-        } catch (e) { return ""; }
-    }, [targetDate]);
+    const daysInMonth = useMemo(() => { const lastDay = new Date(targetDate.year, targetDate.month, 0).getDate(); return Array.from({ length: lastDay }, (_, i) => i + 1); }, [targetDate.year, targetDate.month]);
+    const targetLunarDisplay = useMemo(() => { try { const solar = window.Solar.fromYmd(parseInt(targetDate.year), parseInt(targetDate.month), parseInt(targetDate.day)); const lunar = solar.getLunar(); let monthName = lunar.getMonthInChinese().replace('闰', '閏').replace('冬', '十一').replace('腊', '十二'); return `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}`; } catch (e) { return ""; } }, [targetDate]);
 
     return (
-        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '8px', flex: 1, display: 'flex', flexDirection: 'column', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', gap: '0px', border: `1px solid ${THEME.border}`, flex: 1 }}>
-                    {renderCell(5)} {renderCell(6)} {renderCell(7)} {renderCell(8)}
-                    {renderCell(4)}
-                    
-                    {/* 中央資訊區 */}
-                    <div style={{ gridColumn: '2 / span 2', gridRow: '2 / span 2', backgroundColor: THEME.white, border: `1px solid ${THEME.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
-                        <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
-                        
-                        <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
-                            {/* 八字調整按鈕區塊 */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
-                            {/* 1. 八字文字 */}
-                            <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>
-                                {birthDetails.bazi}
-                            </div>
-
-                            {/* 2. 垂直按鈕容器 (Flex Column) */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                {/* 上按鈕 (加時辰) - 使用 ChevronLeft 轉 90度變成向上箭頭 */}
-                                <button 
-                                    onClick={() => handleHourAdjust(2)} 
-                                    style={{ 
-                                        background: 'white', 
-                                        border: `1px solid ${THEME.border}`, 
-                                        borderRadius:'3px', 
-                                        padding:'0px 4px', 
-                                        cursor: 'pointer', 
-                                        color: THEME.gray,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        height: '14px', // 固定高度確保整齊
-                                        lineHeight: 0
-                                    }}
-                                    title="下個時辰"
-                                >
-                                    <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} />
-                                </button>
-
-                                {/* 下按鈕 (減時辰) - 使用 ChevronRight 轉 90度變成向下箭頭 */}
-                                <button 
-                                    onClick={() => handleHourAdjust(-2)} 
-                                    style={{ 
-                                        background: 'white', 
-                                        border: `1px solid ${THEME.border}`, 
-                                        borderRadius:'3px', 
-                                        padding:'0px 4px', 
-                                        cursor: 'pointer', 
-                                        color: THEME.gray,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        height: '14px',
-                                        lineHeight: 0
-                                    }}
-                                    title="上個時辰"
-                                >
-                                    <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} />
-                                </button>
-                            </div>
-                        </div>
-                            
-                            <div>西曆 {birthDetails.solarStr}</div>
-                            <div>農曆 {birthDetails.lunarStr}</div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 48px', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
-                            <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
-                            <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
-                            <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                            <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>
-                                {yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}
-                            </select>
-                            <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>
-                                {Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}
-                            </select>
-                            <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>
-                                {daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}
-                            </select>
-                        </div>
-
-                        <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
-                             <div>命主 : {chartData.mingZhu}</div>
-                             <div>身主 : {chartData.shenZhu}</div>
-                             <div>五行 : {chartData.bureau}</div>
-                             <div>性別 : {chartData.genderText}</div>
-                             <div>子斗 : {chartData.douJun}</div>
-                             <div>虛歲 : {currentAge}歲</div>
-                        </div>
-
-                        {(layerMode === 1 && !daXianGan) && (
-                            <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>
-                                未入大限並無四化
-                            </div>
-                        )}
-                        
-                        <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                            <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', border: `1px solid ${THEME.blue}`, color: THEME.blue }}>返回</button>
-                            {/* onSave 時回傳 chartData，確保儲存的是調整後的時辰 */}
-                            <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
+        <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', gap: '0px', border: `1px solid ${THEME.border}`, flex: 1 }}>
+                {renderCell(5)} {renderCell(6)} {renderCell(7)} {renderCell(8)}
+                {renderCell(4)}
+                <div style={{ gridColumn: '2 / span 2', gridRow: '2 / span 2', backgroundColor: THEME.white, border: `1px solid ${THEME.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
+                    <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
                         </div>
                     </div>
-                    
-                    {renderCell(9)} {renderCell(3)} {renderCell(10)}
-                    {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
+                        <div>西曆 {birthDetails.solarStr}</div>
+                        <div>農曆 {birthDetails.lunarStr}</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 48px', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
+                        <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
+                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                        <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+                        <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
+                        <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                    </div>
+                    <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
+                            <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
+                            <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
+                            <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
+                    </div>
+                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                        <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
+                        <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
+                    </div>
                 </div>
-                <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '10px', color: THEME.gray }}>排盤依據明朝紫微斗數全書</div>
+                {renderCell(9)} {renderCell(3)} {renderCell(10)}
+                {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
             </div>
+            <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '10px', color: THEME.gray, paddingBottom: '100px' }}>排盤依據明朝紫微斗數全書</div>
         </div>
     );
 };
 
-// --- 主程式 ---
+// =========================================================================
+// PART B: 主程式結構 (使用共用 UI 殼)
+// =========================================================================
+
 export default function ZwdsApp() {
+  // 1. 安全保護 & 載入檢查
+  // useProtection(['mrkfengshui.com', 'localhost']);
   const libStatus = useLunarScript();
+  
+  // 2. 狀態管理
   const [view, setView] = useState('input');
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
-  const [isPro, setIsPro] = useState(false);
+  
+  // App 專屬狀態
   const [siHuaRules, setSiHuaRules] = useState(DEFAULT_SI_HUA);
   const [kuiYueRules, setKuiYueRules] = useState(DEFAULT_KUI_YUE);
   const [huoLingRules, setHuoLingRules] = useState(DEFAULT_HUO_LING);
   const [tianMaRules, setTianMaRules] = useState(DEFAULT_TIAN_MA);
   const [tianMaType, setTianMaType] = useState('year'); 
-  
   const [mingHasDaXian, setMingHasDaXian] = useState(false);
 
+  // 3. 底部導航設定
+  const tabs = [
+    { id: 'input', label: '排盤', icon: Grid },
+    { id: 'bookmarks', label: '紀錄', icon: Bookmark },
+    { id: 'booking', label: '預約', icon: CalendarCheck },
+    { id: 'settings', label: '設定', icon: Settings },
+  ];
+
+  // 4. 資料讀取 Effect
   useEffect(() => {
-    const savedBk = localStorage.getItem('zwds_bookmarks');
-    if (savedBk) { try { setBookmarks(JSON.parse(savedBk)); } catch(e) {} }
-    const savedPro = localStorage.getItem('zwds_is_pro');
-    if (savedPro === 'true') setIsPro(true);
-    const savedMingDaXian = localStorage.getItem('zwds_ming_daxian');
-    if (savedMingDaXian !== null) setMingHasDaXian(savedMingDaXian === 'true');
-    const savedSiHua = localStorage.getItem('zwds_rule_sihua');
-    if (savedSiHua) setSiHuaRules(JSON.parse(savedSiHua));
-    const savedkuiYue = localStorage.getItem('zwds_rule_kuiYue');
-    if (savedkuiYue) setKuiYueRules(JSON.parse(savedkuiYue));
-    const savedhuoLing = localStorage.getItem('zwds_rule_huoLing');
-    if (savedhuoLing) setHuoLingRules(JSON.parse(savedhuoLing));
-    const savedtianMa = localStorage.getItem('zwds_rule_tianMa'); 
-    if (savedtianMa) {
-        try { setTianMaRules(JSON.parse(savedtianMa)); } catch(e) { setTianMaRules(DEFAULT_TIAN_MA); }
-    }
-    const savedTmType = localStorage.getItem('zwds_rule_tm_type');
-    if (savedTmType) setTianMaType(savedTmType);
+    const loadData = async () => {
+        try {
+            const { value: savedBk } = await Preferences.get({ key: 'zwds_bookmarks' });
+            if (savedBk) setBookmarks(JSON.parse(savedBk));
+            
+            // 讀取設定
+            const { value: r1 } = await Preferences.get({ key: 'zwds_rule_sihua' }); if(r1) setSiHuaRules(JSON.parse(r1));
+            const { value: r2 } = await Preferences.get({ key: 'zwds_rule_kuiyue' }); if(r2) setKuiYueRules(JSON.parse(r2));
+            const { value: r3 } = await Preferences.get({ key: 'zwds_rule_huoling' }); if(r3) setHuoLingRules(JSON.parse(r3));
+            const { value: r4 } = await Preferences.get({ key: 'zwds_rule_tianMa' }); if(r4) setTianMaRules(JSON.parse(r4));
+            const { value: r5 } = await Preferences.get({ key: 'zwds_rule_tm_type' }); if(r5) setTianMaType(r5);
+            const { value: r6 } = await Preferences.get({ key: 'zwds_ming_daxian' }); if(r6 !== null) setMingHasDaXian(r6 === 'true');
+
+        } catch (e) { console.error("Data load error:", e); }
+    };
+    loadData();
   }, []);
 
-useEffect(() => {
-      localStorage.setItem('zwds_ming_daxian', mingHasDaXian);
-      localStorage.setItem('zwds_rule_sihua', JSON.stringify(siHuaRules));
-      localStorage.setItem('zwds_rule_kuiyue', JSON.stringify(kuiYueRules));
-      localStorage.setItem('zwds_rule_huoling', JSON.stringify(huoLingRules));
-      localStorage.setItem('zwds_rule_tianMa', JSON.stringify(tianMaRules)); // 修正為大寫 M
-      localStorage.setItem('zwds_rule_tm_type', tianMaType);
+  // 儲存設定 Effect
+  useEffect(() => {
+    const saveData = async () => {
+       await Preferences.set({ key: 'zwds_ming_daxian', value: String(mingHasDaXian) });
+       await Preferences.set({ key: 'zwds_rule_sihua', value: JSON.stringify(siHuaRules) });
+       await Preferences.set({ key: 'zwds_rule_kuiyue', value: JSON.stringify(kuiYueRules) });
+       await Preferences.set({ key: 'zwds_rule_huoling', value: JSON.stringify(huoLingRules) });
+       await Preferences.set({ key: 'zwds_rule_tianMa', value: JSON.stringify(tianMaRules) });
+       await Preferences.set({ key: 'zwds_rule_tm_type', value: tianMaType });
+       
+       // 為確保 ZwdsResult 能即時讀取 (它使用 localStorage)，這裡進行同步寫入
+       localStorage.setItem('zwds_rule_sihua', JSON.stringify(siHuaRules));
+       localStorage.setItem('zwds_rule_kuiyue', JSON.stringify(kuiYueRules));
+       localStorage.setItem('zwds_rule_huoling', JSON.stringify(huoLingRules));
+       localStorage.setItem('zwds_rule_tianMa', JSON.stringify(tianMaRules));
+       localStorage.setItem('zwds_rule_tm_type', tianMaType);
+       localStorage.setItem('zwds_ming_daxian', mingHasDaXian);
+    };
+    saveData();
   }, [mingHasDaXian, siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType]);
 
-const handleCalculate = (formData) => {
+  // 5. 動作處理
+  const handleCalculate = (formData) => {
      if (libStatus !== 'ready') return;
      try {
-        const rulesConfig = {
-            siHua: siHuaRules,
-            kuiYue: kuiYueRules,
-            huoLing: huoLingRules,
-            tianMa: tianMaRules, // 補上這一行
-            tianMaType: tianMaType
-        };
+        const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
         const result = calculateZwdsResult(formData, rulesConfig, { mingHasDaXian });
         setResultData(result); setEditingData(null); setView('result');
      } catch(e) { console.error(e); alert('計算異常: ' + e.message); }
   };
   
-  const saveBookmark = (data) => {
+  const saveBookmark = async (data) => {
       const existingIndex = bookmarks.findIndex(b => b.id === data.id);
-      
-      // [新增] 檢查免費版限制：如果是新紀錄 (existingIndex < 0) 且不是 Pro 且數量已達 5 筆
-      if (existingIndex < 0 && !isPro && bookmarks.length >= 5) {
-          alert("免費版最多只能儲存 5 筆紀錄。\n請升級專業版以解除限制，或刪除舊紀錄。");
-          return; // 終止儲存
-      }
-
       let newBk;
-      if (existingIndex >= 0) { 
-          newBk = [...bookmarks]; 
-          newBk[existingIndex] = data; 
-          alert('紀錄已更新'); 
-      } 
-      else { 
-          newBk = [data, ...bookmarks]; 
-          alert('已保存至紀錄'); 
-      }
+      if (existingIndex >= 0) { newBk = [...bookmarks]; newBk[existingIndex] = data; alert('紀錄已更新'); } 
+      else { newBk = [data, ...bookmarks]; alert('已保存至紀錄'); }
       setBookmarks(newBk); 
-      localStorage.setItem('zwds_bookmarks', JSON.stringify(newBk));
+      await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
   };
 
-  const deleteBookmark = (id, e) => {
-      e.stopPropagation();
+  const deleteBookmark = async (id) => {
       if (window.confirm('確定要刪除這條紀錄嗎？')) {
           const newBk = bookmarks.filter(b => b.id !== id);
-          setBookmarks(newBk); localStorage.setItem('zwds_bookmarks', JSON.stringify(newBk));
+          setBookmarks(newBk); 
+          await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
       }
   };
 
-const openBookmark = (savedItem) => {
+  const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('舊資料無法開啟'); return; }
       try {
-          // [修正] 必須將所有規則打包成 rulesConfig 物件傳入
-          // 這樣 calculateZwdsResult 才能正確讀取四化、魁鉞、火鈴等設定
-          const rulesConfig = {
-              siHua: siHuaRules,
-              kuiYue: kuiYueRules,
-              huoLing: huoLingRules,
-              tianMa: tianMaRules,     
-              tianMaType: tianMaType
-          };
-          
+          const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
           const freshResult = calculateZwdsResult(savedItem.rawDate, rulesConfig, { mingHasDaXian });
           freshResult.id = savedItem.id; 
           setResultData(freshResult); 
           setView('result');
-      } catch (e) { 
-          console.error("Open Bookmark Error:", e);
-          alert('讀取失敗：' + (e.message || '未知錯誤')); 
-      }
-  };
-    const handlePurchase = () => {
-    if (window.confirm("是否支付 US$35 升級為專業版 (移除所有廣告及無限命盤紀錄空間)？")) {
-       setIsPro(true); localStorage.setItem('zwds_is_pro', 'true'); alert("感謝您的購買！");
-    }
+      } catch (e) { alert('讀取失敗：' + (e.message || '未知錯誤')); }
   };
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入斗數星曆...</div>;
+  if (libStatus === 'error') return <div style={{ padding: 20, textAlign: 'center' }}>載入失敗，請檢查網路連線後重新整理。</div>;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: THEME.white, fontFamily: '-apple-system, sans-serif', paddingTop: 'max(env(safe-area-inset-top), 25px)', width: '100vw', overflow: 'hidden' }}>
+    <div style={COMMON_STYLES.fullScreen}>
       <style>{`
         @font-face { font-family: '青柳隷書SIMO2_T'; src: url('/fonts/AoyagiReishoSIMO2_T.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
-        * { box-sizing: border-box; } body { margin: 0; }
       `}</style>
+      
+      {/* ✅ 共用 Header */}
+      <AppHeader title={CURRENT_APP_NAME} logoChar={{ main: '紫', sub: '微' }} />
 
-      <Header isPro={isPro} />
-
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%' }}>
-          {view === 'input' && <><ZwdsInput onCalculate={handleCalculate} initialData={editingData} />{!isPro && <AdBanner onRemoveAds={handlePurchase} />}</>}
-          {view === 'result' && <><ZwdsResult data={resultData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} />{!isPro && <AdBanner onRemoveAds={handlePurchase} />}</>}
-            {view === 'bookmarks' && (
-              <div style={{ padding: '16px', backgroundColor: THEME.bg, flex: 1 }}>
+      {/* ✅ 內容滾動區 */}
+      <div style={COMMON_STYLES.contentArea}>
+          {view === 'input' && (
+            <>
+                <ZwdsInput onCalculate={handleCalculate} initialData={editingData} />
+                <AdBanner />
+            </>
+          )}
+          
+          {view === 'result' && (
+            <>
+                <ZwdsResult data={resultData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} />
+                <AdBanner />
+            </>
+          )}
+            
+          {view === 'bookmarks' && (
+              <div style={{ padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
-                    {/* [修改] 標題加入計數器 */}
-                    <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        我的命盤紀錄
-                        <span style={{ 
-                            fontSize: '16px', 
-                            fontWeight: 'normal', 
-                            // 如果是非 Pro 且已滿 5 個，顯示紅色，否則顯示灰色
-                            color: (!isPro && bookmarks.length >= 5) ? THEME.red : THEME.gray 
-                        }}>
-                            ({bookmarks.length}{!isPro && '/5'})
-                        </span>
-                    </h2>
+                    <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的命盤紀錄</h2>
                   </div>
-
-                  {bookmarks.length === 0 ? <p style={{ color: THEME.gray, textAlign: 'center', marginTop: '40px' }}>暫無紀錄</p> : bookmarks.map((b, i) => (
-                    <div key={b.id || i} onClick={() => openBookmark(b)} style={{ padding: '16px', backgroundColor: THEME.white, marginBottom: '10px', borderRadius: '12px', border: `1px solid ${THEME.border}`, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{b.name}</div>
-                                <div style={{ fontSize: '12px', color: THEME.gray }}>({b.genderText})</div>
-                            </div>
-                            
-                            {/* 新增：格局資訊顯示 */}
-                            <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: '500' }}>
-                                {b.mingGongStars || '未定義'} 
-                            </div>
-
-                            <div style={{ fontSize: '11px', color: THEME.gray, marginTop: '2px' }}>
-                                {b.solarDateStr}
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={(e) => {e.stopPropagation(); setEditingData({...b.rawDate, id: b.id}); setView('input');}} style={{ padding: '8px', backgroundColor: THEME.bgBlue, border: 'none', borderRadius: '50%', color: THEME.blue, cursor: 'pointer' }}><Edit3 size={16} /></button>
-                            <button onClick={(e) => deleteBookmark(b.id, e)} style={{ padding: '8px', backgroundColor: THEME.bgRed, border: 'none', borderRadius: '50%', color: THEME.red, cursor: 'pointer' }}><Trash2 size={16} /></button>
-                        </div>
-                    </div>
-                ))}
+                  
+                  {/* ✅ 共用 BookmarkList */}
+                  <BookmarkList 
+                    bookmarks={bookmarks}
+                    onSelect={openBookmark}
+                    onDelete={deleteBookmark}
+                    onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
+                  />
+                  
+                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
               </div>
           )}
-          {view === 'booking' && <BookingView onNavigate={() => setView('input')} />}
+
+          {/* ✅ 共用預約系統 */}
+          {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
+          
+          {/* ✅ 共用架構設定頁 */}
           {view === 'settings' && 
             <SettingsView 
-                isPro={isPro} 
-                onPurchase={handlePurchase} 
                 siHuaRules={siHuaRules} setSiHuaRules={setSiHuaRules}
                 kuiYueRules={kuiYueRules} setKuiYueRules={setKuiYueRules}
                 huoLingRules={huoLingRules} setHuoLingRules={setHuoLingRules}
-                tianMaRules={tianMaRules} setTianMaRules={setTianMaRules} // 補上 setTianMaRules
+                tianMaRules={tianMaRules} setTianMaRules={setTianMaRules}
                 tianMaType={tianMaType} setTianMaType={setTianMaType}
                 mingHasDaXian={mingHasDaXian} setMingHasDaXian={setMingHasDaXian}
+                bookmarks={bookmarks} setBookmarks={setBookmarks}
             />
-            }
+          }
       </div>
 
-      <div style={{ position: 'relative', width: '100%', zIndex: 50, flexShrink: 0 }}>
-        <div style={{ backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 24px 0' }}>
-              <button onClick={() => { setEditingData(null); setView('input'); }} style={{ background: 'none', border: 'none', color: (view==='input'||view==='result') ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Grid size={22} /><span style={{ fontSize: '10px' }}>排盤</span></button>
-              <button onClick={() => setView('bookmarks')} style={{ background: 'none', border: 'none', color: view==='bookmarks' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Bookmark size={22} /><span style={{ fontSize: '10px' }}>紀錄</span></button>
-              <button onClick={() => setView('booking')} style={{ background: 'none', border: 'none', color: view==='booking' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><CalendarCheck size={22} /><span style={{ fontSize: '10px' }}>預約</span></button>
-              <button onClick={() => setView('settings')} style={{ background: 'none', border: 'none', color: view==='settings' ? THEME.blue : THEME.gray, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Settings size={22} /><span style={{ fontSize: '10px' }}>設定</span></button>
-          </div>
-      </div>
+      {/* ✅ 安裝引導提示 */}
+      <InstallGuide />
+
+      {/* ✅ 共用底部導航 */}
+      <BottomTabBar 
+        tabs={tabs} 
+        currentTab={view === 'result' ? 'input' : view} 
+        onTabChange={(id) => {
+          if (id === 'input') setEditingData(null);
+          setView(id);
+        }} 
+      />
     </div>
   );
 }
