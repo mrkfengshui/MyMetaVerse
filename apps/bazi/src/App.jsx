@@ -3,7 +3,8 @@ import {
   Bookmark, Settings, 
   CalendarCheck, Sparkles, Grid, 
   Eye, EyeOff, RefreshCw, X,
-  Trash2, Edit3, CloudUpload, Download, User, Calendar
+  Trash2, Edit3, CloudUpload, Download, User,
+  Calendar, MapPin, Compass, BookOpen
 } from 'lucide-react';
 
 import { Preferences } from '@capacitor/preferences';
@@ -911,10 +912,33 @@ export default function BaziApp() {
   };
 
   const saveBookmark = async (data) => {
-      const existingIndex = bookmarks.findIndex(b => b.id === data.id);
+      const baziSource = data.bazi || {};
+      const dm = baziSource.dayGan || '';
+      const dmElement = WUXING_MAP[dm] || '';
+
+      const dataToSave = {
+          id: data.id || Date.now(),
+          name: data.name,
+          genderText: data.genderText || (data.gender === '1' ? '男' : '女'),
+          solarDate: data.solarDate || `${data.year}-${data.month}-${data.day}`,
+          lunarDate: data.lunarDate || `${data.year}-${data.month}-${data.day}`,
+          dayMaster: dm + dmElement,
+          monthBranch: baziSource.monthZhi || '', 
+          rawDate: data.rawDate || data 
+      };
+
+      const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
       let newBk;
-      if (existingIndex >= 0) { newBk = [...bookmarks]; newBk[existingIndex] = data; alert('紀錄已更新'); } 
-      else { newBk = [data, ...bookmarks]; alert('已保存至紀錄'); }
+      
+      if (existingIndex >= 0) { 
+          newBk = [...bookmarks]; 
+          newBk[existingIndex] = dataToSave; 
+          alert('紀錄已更新'); 
+      } else { 
+          newBk = [dataToSave, ...bookmarks]; 
+          alert('已保存至紀錄'); 
+      }
+      
       setBookmarks(newBk); 
       await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(newBk) });
   };

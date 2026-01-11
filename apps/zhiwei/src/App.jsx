@@ -16,7 +16,8 @@ import {
   ChevronLeft, ChevronRight, Bookmark, Settings, 
   Sparkles, Grid, CalendarCheck,
   Eye, EyeOff, RefreshCw, X,
-  Trash2, Edit3, CloudUpload, Download, User
+  Trash2, Edit3, CloudUpload, Download, User,
+  Calendar, MapPin, Compass, BookOpen
 } from 'lucide-react';
 
 // =========================================================================
@@ -689,9 +690,9 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select> </div>
               <span>:</span>
-              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select> </div>
               </div>
           </div>
 
@@ -1097,13 +1098,31 @@ export default function ZwdsApp() {
   };
   
   const saveBookmark = async (data) => {
-      const existingIndex = bookmarks.findIndex(b => b.id === data.id);
-      let newBk;
-      if (existingIndex >= 0) { newBk = [...bookmarks]; newBk[existingIndex] = data; alert('紀錄已更新'); } 
-      else { newBk = [data, ...bookmarks]; alert('已保存至紀錄'); }
-      setBookmarks(newBk); 
-      await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
-  };
+        const dataToSave = {
+            id: data.id || Date.now(),
+            name: data.name,
+            genderText: data.genderText,
+            solarDate: data.solarDateStr,
+            lunarDate: data.lunarDateStr,
+            mingGongStars: data.mingGongStars, 
+            rawDate: data.rawDate 
+        };
+
+        const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
+        let newBk;
+
+        if (existingIndex >= 0) { 
+            newBk = [...bookmarks]; 
+            newBk[existingIndex] = dataToSave; 
+            alert('紀錄已更新'); 
+        } else { 
+            newBk = [dataToSave, ...bookmarks]; 
+            alert('已保存至紀錄'); 
+        }
+
+        setBookmarks(newBk); 
+        await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
+    };
 
   const deleteBookmark = async (id) => {
       if (window.confirm('確定要刪除這條紀錄嗎？')) {
