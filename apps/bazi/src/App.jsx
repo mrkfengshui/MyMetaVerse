@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  ChevronRight, Bookmark, Settings, 
+  Bookmark, Settings, 
   CalendarCheck, Sparkles, Grid, 
-  Trash2, Edit3, Eye, EyeOff, RefreshCw, Check, X
+  Eye, EyeOff, RefreshCw, X,
+  Trash2, Edit3, CloudUpload, Download, User, Calendar
 } from 'lucide-react';
 
 import { Preferences } from '@capacitor/preferences';
@@ -10,29 +11,22 @@ import { Preferences } from '@capacitor/preferences';
 import { 
   AppHeader, 
   BookingSystem, 
+  BookmarkList,
   AppInfoCard, 
   WebBackupManager, 
   BuyMeCoffee, 
   AdBanner, 
   InstallGuide,
-  BottomTabBar
+  BottomTabBar,
+  THEME, 
+  COLORS,
+  COMMON_STYLES
 } from '@my-meta/ui';
 
 // 全域設定
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "元星八字 v1.0";
-
-const COLORS = {
-  jia: '#006400', yi: '#90EE90', bing: '#ff0000ff', ding: '#FF6347', wu: '#8B4513',
-  ji: '#D2B48C', geng: '#FFA500', xin: '#FFD700', ren: '#00008B', gui: '#87CEEB',
-};
-
-const THEME = {
-  red: '#ff4d4f', blue: '#1890ff', teal: '#13c2c2', orange: '#fa8c16',
-  purple: '#722ed1', black: '#262626', gray: '#8c8c8c', lightGray: '#d1d5db',
-  bg: '#f0f2f5', white: '#ffffff', bgGray: '#f9fafb', border: '#e8e8e8',
-  bgRed: '#fff1f0', bgBlue: '#e6f7ff', bgOrange: '#fff7e6', vermillion: '#ce0000'
-};
+const CURRENT_APP_NAME = "甯博八字";
+const APP_VERSION = "甯博八字 v1.0";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -280,95 +274,54 @@ const calculateBaziResult = (formData, ziHourRule) => {
     };
 };
 
-// --- SettingsView (大幅簡化版) ---
+// --- SettingsView ---
 const SettingsView = ({ 
-    ziHourRule, setZiHourRule,
-    bookmarks, setBookmarks,
-    colorTheme, setColorTheme,
+    ziHourRule, setZiHourRule,   // App 專屬設定
+    colorTheme, setColorTheme,   // App 專屬設定
+    bookmarks, setBookmarks      // 共用資料
 }) => {
   // 定義這個 App 獨有的資訊
   const APP_INFO = {
-    appName: "元星八字",
+    appName: CURRENT_APP_NAME,
     version: APP_VERSION,
     about: "本程式旨在提供專業八字排盤服務，結合子平命理與現代演算法，輔助使用者進行命理分析。",
   };
 
-  const handleReset = () => {
-      if(window.confirm('確定要還原所有設定至預設值嗎？')) {
-          setZiHourRule('ziShi');
-          alert('已還原預設值');
-      }
-  };
-  
-  // 通用「丸型切換」組件
   const ToggleSelector = ({ options, currentValue, onChange }) => (
     <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
-      {options.map((opt) => {
-        const isActive = currentValue === opt.val;
-        return (
-          <button 
-            key={opt.val} 
-            onClick={() => onChange(opt.val)} 
-            style={{ 
-              padding: '6px 14px', border: 'none', borderRadius: '18px', 
-              backgroundColor: isActive ? THEME.blue : 'transparent', 
-              color: isActive ? 'white' : THEME.gray, 
-              fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s'
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
+      {options.map((opt) => (
+        <button key={opt.val} onClick={() => onChange(opt.val)} style={{ padding: '6px 14px', border: 'none', borderRadius: '18px', backgroundColor: currentValue === opt.val ? THEME.blue : 'transparent', color: currentValue === opt.val ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>{opt.label}</button>
+      ))}
     </div>
   );
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg, width: '100%', paddingBottom: '100px' }}>
+    <div style={{ padding: '16px', paddingBottom: '100px' }}>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
         <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
       </div>
 
-      {/* 偏好設定 */}
+      {/* 1. App 專屬設定區塊 */}
       <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>偏好設定</h3>
-      
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden', marginBottom: '12px' }}>
-          {/* 子時設定 */}
           <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
-              <ToggleSelector 
-                options={[{val: 'ziZheng', label: '子正換日'}, {val: 'ziShi', label: '子時換日'}]} 
-                currentValue={ziHourRule} 
-                onChange={setZiHourRule} 
-              />
+              <ToggleSelector options={[{val: 'ziZheng', label: '子正換日'}, {val: 'ziShi', label: '子時換日'}]} currentValue={ziHourRule} onChange={setZiHourRule} />
           </div>
           <span style={{ display: 'block', height: '1px', backgroundColor: THEME.bg, margin: '0 16px' }} />
-          {/* 顯示配色 */}
           <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>顯示配色</div>
-              <ToggleSelector 
-                options={[{val: 'elemental', label: '五行五色'}, {val: 'dark', label: '純深色'}]} 
-                currentValue={colorTheme} 
-                onChange={setColorTheme} 
-              />
+              <ToggleSelector options={[{val: 'elemental', label: '五行五色'}, {val: 'dark', label: '純深色'}]} currentValue={colorTheme} onChange={setColorTheme} />
           </div>
       </div>
 
-      {/* 資料備份與匯出 (使用共用組件) */}
-      <WebBackupManager 
-        data={bookmarks} 
-        onRestore={setBookmarks} 
-        prefix="BAZI_BACKUP" 
-      />
-
-      {/* 關於與支援 (使用共用組件) */}
+      {/* 2. 共用功能區塊 (直接使用 UI Library) */}
+      <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="BAZI_BACKUP" />
       <AppInfoCard info={APP_INFO} />
-
-      {/* 贊助按鈕 (使用共用組件) */}
       <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
-          <button onClick={handleReset} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+          <button onClick={() => { if(window.confirm('還原預設?')) { setZiHourRule('ziShi'); setColorTheme('elemental'); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
@@ -376,7 +329,7 @@ const SettingsView = ({
   );
 };
 
-// --- [保留] 陰陽屬性判斷與彈窗選擇器 ---
+// --- 陰陽屬性判斷與彈窗選擇器 ---
 const isYang = (index) => index % 2 === 0;
 
 const GanZhiModalPicker = ({ title, isOpen, onClose, initialGan, initialZhi, onConfirm, colorTheme }) => {
@@ -436,7 +389,7 @@ const GanZhiModalPicker = ({ title, isOpen, onClose, initialGan, initialZhi, onC
   );
 };
 
-// --- [保留] BaziInput (八字輸入表單) ---
+// --- BaziInput (八字輸入表單) ---
 const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
   const now = new Date();
   const [inputType, setInputType] = useState('solar');
@@ -623,7 +576,7 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
     );
 };
 
-// --- [保留] PillarCard (四柱卡片) ---
+// --- PillarCard (四柱卡片) ---
 const PillarCard = ({ title, gan, zhi, naYin, dayMaster, showHiddenStems, colorTheme }) => {
    const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
@@ -650,7 +603,7 @@ return (
    );
 };
 
-// --- [保留] BaziResult (八字結果) ---
+// --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
@@ -849,7 +802,7 @@ return (
        </div>
        {renderLiuNianGrid()}
        {renderLiuYueGrid()}
-        {/* 五行強弱 (修改後：5等分, 單行, 不換行) */}
+        {/* 五行強弱 */}
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
             {(() => { 
@@ -858,12 +811,12 @@ return (
                 return ( 
                     <div style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: 'repeat(5, 1fr)', // 關鍵：5等分
-                        gap: '4px' // 間距縮小一點，避免手機版太擠
+                        gridTemplateColumns: 'repeat(5, 1fr)',
+                        gap: '4px'
                     }}> 
                         {order.map(elm => ( 
                             <div key={elm} style={{ 
-                                padding: '8px 2px', // 上下8px, 左右2px (節省空間)
+                                padding: '8px 2px',
                                 backgroundColor: THEME.bgGray, 
                                 borderRadius: '8px', 
                                 fontSize: '13px', 
@@ -871,7 +824,7 @@ return (
                                 flexDirection: 'row',
                                 alignItems: 'center', 
                                 justifyContent: 'center',
-                                whiteSpace: 'nowrap' // 強制不換行
+                                whiteSpace: 'nowrap'
                             }}> 
                                 <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}: </span>
                                 <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
@@ -887,18 +840,26 @@ return (
    );
 };
 
-// --- 7. 主程式 (BaziApp) ---
+// =========================================================================
+// PART B: 主程式結構 (使用共用 UI 殼)
+// =========================================================================
+
 export default function BaziApp() {
+  // 1. 安全保護 & 載入檢查
+  // useProtection(['mrkfengshui.com', 'mrkbazi.vercel.app', 'localhost']);
   const libStatus = useLunarScript();
+  
+  // 2. 狀態管理
   const [view, setView] = useState('input');
   const [baziData, setBaziData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
+
+  // App 專屬狀態
   const [ziHourRule, setZiHourRule] = useState('ziShi');
-  
-  // 顯示主題 (預設: 五行配色)
   const [colorTheme, setColorTheme] = useState('elemental');
-  // 統一底部導航
+
+  // 3. 底部導航設定
   const tabs = [
     { id: 'input', label: '排盤', icon: Grid },
     { id: 'bookmarks', label: '紀錄', icon: Bookmark },
@@ -906,7 +867,7 @@ export default function BaziApp() {
     { id: 'settings', label: '設定', icon: Settings },
   ];
 
-  // 讀取設定
+  // 4. 資料讀取 Effect
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -926,6 +887,7 @@ export default function BaziApp() {
   useEffect(() => { const saveRule = async () => { await Preferences.set({ key: 'bazi_zi_rule', value: ziHourRule }); }; saveRule(); }, [ziHourRule]);
   useEffect(() => { const saveTheme = async () => { await Preferences.set({ key: 'bazi_color_theme', value: colorTheme }); }; saveTheme(); }, [colorTheme]);
 
+  // 5. 動作處理
   const handleCalculate = (formData) => {
      if (libStatus !== 'ready') return;
      try {
@@ -937,7 +899,6 @@ export default function BaziApp() {
   };
 
   const saveBookmark = async (data) => {
-      // 移除了數量限制
       const existingIndex = bookmarks.findIndex(b => b.id === data.id);
       let newBk;
       if (existingIndex >= 0) { newBk = [...bookmarks]; newBk[existingIndex] = data; alert('紀錄已更新'); } 
@@ -946,8 +907,7 @@ export default function BaziApp() {
       await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(newBk) });
   };
   
-  const deleteBookmark = async (id, e) => {
-      e.stopPropagation();
+  const deleteBookmark = async (id) => {
       if (window.confirm('確定要刪除這條紀錄嗎？')) {
           const newBk = bookmarks.filter(b => b.id !== id);
           setBookmarks(newBk); 
@@ -955,10 +915,6 @@ export default function BaziApp() {
       }
   };
   
-  const editBookmark = (data, e) => {
-      e.stopPropagation(); setEditingData({ ...data.rawDate, id: data.id }); setView('input');
-  };
-
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('此書籤資料版本過舊，無法重新排盤'); return; }
       try {
@@ -972,20 +928,20 @@ export default function BaziApp() {
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入命理數據庫...</div>;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: THEME.white, fontFamily: '-apple-system, sans-serif', paddingTop: 'max(env(safe-area-inset-top), 25px)', width: '100vw', overflow: 'hidden' }}>
+    // ✅ 1. 使用全螢幕容器
+    <div style={COMMON_STYLES.fullScreen}>
       <style>{`
         @font-face { font-family: '青柳隷書SIMO2_T'; src: url('/fonts/AoyagiReishoSIMO2_T.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
-        * { box-sizing: border-box; } body { margin: 0; }
       `}</style>
       
-      {/* 1. Header (無 Pro 標籤) */}
-      <AppHeader title="元星八字" logoChar={{ main: '八', sub: '字' }} />
+      {/* ✅ 2. 共用 Header */}
+      <AppHeader title={CURRENT_APP_NAME} logoChar={{ main: '八', sub: '字' }} />
 
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {/* ✅ 3. 內容滾動區 */}
+      <div style={COMMON_STYLES.contentArea}>
           {view === 'input' && (
             <>
               <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
-              {/* 2. 廣告永遠顯示 */}
               <AdBanner />
             </>
           )}
@@ -993,37 +949,32 @@ export default function BaziApp() {
           {view === 'result' && (
             <>
               <BaziResult data={baziData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} colorTheme={colorTheme} />
-              {/* 2. 廣告永遠顯示 */}
               <AdBanner />
             </>
           )}
             
           {view === 'bookmarks' && (
-              <div style={{ padding: '16px', backgroundColor: THEME.bg, flex: 1 }}>
+              <div style={{ padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
-                    <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        我的命盤紀錄 ({bookmarks.length})
-                    </h2>
+                    <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的命盤紀錄</h2>
                   </div>
-                  {bookmarks.length === 0 ? <p style={{ color: THEME.gray, textAlign: 'center', marginTop: '40px' }}>暫無紀錄</p> : bookmarks.map((b, i) => (
-                        <div key={b.id || i} onClick={() => openBookmark(b)} style={{ padding: '16px', backgroundColor: THEME.white, marginBottom: '10px', borderRadius: '12px', border: `1px solid ${THEME.border}`, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                           <div>
-                               <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{b.name} <span style={{ fontSize: '12px', color: THEME.gray, fontWeight: 'normal' }}>({b.genderText})</span></div>
-                               <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '4px' }}>{b.solarDate}</div>
-                           </div>
-                           <div style={{ display: 'flex', gap: '8px' }}>
-                               <button onClick={(e) => editBookmark(b, e)} style={{ padding: '8px', backgroundColor: THEME.bgBlue, border: 'none', borderRadius: '50%', color: THEME.blue, cursor: 'pointer' }}><Edit3 size={16} /></button>
-                               <button onClick={(e) => deleteBookmark(b.id, e)} style={{ padding: '8px', backgroundColor: THEME.bgRed, border: 'none', borderRadius: '50%', color: THEME.red, cursor: 'pointer' }}><Trash2 size={16} /></button>
-                           </div>
-                        </div>
-                  ))}
+                  
+                  {/* ✅ 4. 使用共用 BookmarkList */}
+                  <BookmarkList 
+                    bookmarks={bookmarks}
+                    onSelect={openBookmark}
+                    onDelete={deleteBookmark}
+                    onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
+                  />
+                  
+                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
               </div>
           )}
 
-          {/* 3. 使用共用預約系統 */}
+          {/* ✅ 5. 共用預約系統 */}
           {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
           
-          {/* 4. 使用簡化後的設定頁 */}
+          {/* ✅ 6. 設定頁 (包含共用與專屬) */}
           {view === 'settings' && <SettingsView 
             ziHourRule={ziHourRule} setZiHourRule={setZiHourRule} 
             colorTheme={colorTheme} setColorTheme={setColorTheme}
@@ -1031,16 +982,15 @@ export default function BaziApp() {
           />}
       </div>
 
+      {/* ✅ 7. 安裝引導提示 */}
       <InstallGuide />
 
-      {/* 底部導航欄 */}
+      {/* ✅ 8. 共用底部導航 */}
       <BottomTabBar 
         tabs={tabs} 
-        currentTab={view === 'result' ? 'input' : view} // 讓 'result' 頁面也亮起 'input' (排盤) 的燈
+        currentTab={view === 'result' ? 'input' : view} 
         onTabChange={(id) => {
-          if (id === 'input') {
-            setEditingData(null); // 排盤按鈕的特殊邏輯
-          }
+          if (id === 'input') setEditingData(null);
           setView(id);
         }} 
       />

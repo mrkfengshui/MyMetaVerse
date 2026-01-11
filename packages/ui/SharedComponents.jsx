@@ -481,7 +481,7 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
             style={{ 
               flex: 1, 
               padding: '14px 16px',
-              borderRadius: '8px', 
+              borderRadius: '30px', 
               border: 'none', 
               // 改用 THEME.blue
               backgroundColor: THEME.blue, 
@@ -492,6 +492,7 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
               justifyContent: 'center', 
               gap: '8px', 
               cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
             }}
           >
             <Share2 size={18} />

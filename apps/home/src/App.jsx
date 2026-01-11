@@ -115,7 +115,7 @@ const APPS = [
   {
     id: 'compass',
     name: '風水',
-    desc: '結合羅庚與各式風水砂法水法理論。',
+    desc: '結合羅庚與各式風水砂法水法理論',
     url: 'https://compass.mrkfengshui.com',
     icon: <Compass size={40} color="#fa8c16" />,
     color: '#fff7e6'
@@ -123,7 +123,7 @@ const APPS = [
   {
     id: 'zhiwei',
     name: '紫微斗數',
-    desc: '紫微斗數命盤解析，依據明朝全書。',
+    desc: '紫微斗數命盤解析，依據明朝全書',
     url: 'https://zhiwei.mrkfengshui.com',
     icon: <Sparkles size={40} color="#722ed1" />,
     color: '#f9f0ff'
@@ -131,7 +131,7 @@ const APPS = [
   {
     id: 'calendar',
     name: '進氣萬年曆',
-    desc: '非一般的萬年曆。',
+    desc: '非一般的萬年曆',
     url: 'https://calendar.mrkfengshui.com',
     icon: <Calendar size={40} color="#52c41a" />,
     color: '#f6ffed'
