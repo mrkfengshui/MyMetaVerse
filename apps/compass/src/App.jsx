@@ -1087,7 +1087,8 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                                  <div style={{
                                                      position:'absolute', 
                                                      top: '10%', 
-                                                     right: isRound ? '-10px' : '2px', 
+                                                     left: '50%',
+                                                     right: isRound ? '-10px' : '50%', 
                                                      display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end',
                                                      zIndex: 10
                                                  }}>
