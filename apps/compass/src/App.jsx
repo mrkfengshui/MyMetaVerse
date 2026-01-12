@@ -20,8 +20,8 @@ import {
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = "元星風水";
-const APP_VERSION = "風水 v1.0";
+const APP_NAME = ="甯博風水";
+const APP_VERSION = "v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // 數字轉中文對照表 (全域使用)
@@ -1221,10 +1221,10 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode }) => {
             <BuyMeCoffee />
             
             <div style={{ marginTop: '24px' }}>
-                <button onClick={() => { if(window.confirm('確定清除所有紀錄?')) { setBookmarks([]); Preferences.remove({key: 'fengshui_bookmarks'}); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                    <RefreshCw size={16} /> 清除所有紀錄
-                </button>
-            </div>
+                      <button onClick={() => { if(window.confirm('還原預設?')) { setChartMode('traditional'); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                          <RefreshCw size={16} /> 還原預設值
+                      </button>
+                  </div>
         </div>
     );
 };
