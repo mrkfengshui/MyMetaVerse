@@ -20,7 +20,7 @@ import {
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = ="甯博風水";
+const APP_NAME = "甯博風水";
 const APP_VERSION = "v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
