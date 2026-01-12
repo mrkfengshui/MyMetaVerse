@@ -784,7 +784,15 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
     const getDirDisplayName = (name) => {
         const dir = GUA_TO_DIR[name];
-        return dir ? `${name} (${dir})` : name;
+        
+        if (!dir) return name;
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.1' }}>
+                <span>{name}</span>
+                <span style={{ fontSize: '10px', fontWeight: 'normal' }}>({dir})</span>
+            </div>
+        );
     };
     const naQiGuas = ["坎", "坤", "震", "巽", "乾", "兌", "艮", "離"];
     const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
@@ -1187,7 +1195,7 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode }) => {
             </div>
 
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
-                <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '12px' }}>排盤方位模式</div>
+                <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '12px' }}>排盤模式</div>
                 <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
                     <button 
                         onClick={() => handleModeChange('traditional')} 
