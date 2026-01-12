@@ -574,7 +574,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: '#666'}}>運星</div>
-                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '6px'}}>{PERIOD_MAP_CHART[base]}</div>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '-4px'}}>{PERIOD_MAP_CHART[base]}</div>
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: '#666'}}>向星</div>
@@ -1071,7 +1071,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                     bottom: isRound ? '0px' : '4px',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
-                                    fontSize: isRound ? '24px' : '36px',
+                                    fontSize: isRound ? '24px' : '24px',
                                     fontWeight: 'bold',
                                     color: isRound ? '#555' : '#e0e0e0',
                                     lineHeight: 1,
