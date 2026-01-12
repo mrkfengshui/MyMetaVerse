@@ -376,11 +376,11 @@ export const InstallGuide = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📲 獲得最佳體驗</span>
+          <span>📲 為獲得最佳體驗，在智能電話上使用此應用程式</span>
         </div>
         
         <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: '#ddd' }}>
-          將此應用程式加入主畫面，即可<strong>全螢幕使用</strong>並隱藏網址列。
+          並加入主畫面，即可<strong>全螢幕使用</strong>並隱藏網址列。
         </p>
 
         {isIOS ? (
@@ -400,7 +400,7 @@ export const InstallGuide = () => {
         ) : (
           // Android / 其他 教學
           <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
-            點擊瀏覽器選單 (通常在右上角)，選擇 <strong>加入主畫面</strong> 或 <strong>安裝應用程式</strong>。
+            點擊瀏覽器選單右上角的三個點圖示 (⋮)，選擇 <strong>加至主畫面</strong> 或 <strong>安裝應用程式</strong>。
           </div>
         )}
       </div>

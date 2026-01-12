@@ -3,29 +3,34 @@ import { Preferences } from '@capacitor/preferences';
 
 // 1. 引入共用 UI 和 工具
 import { 
-  AppHeader, BottomTabBar, AdBanner, AppInfoCard, 
-  WebBackupManager, BuyMeCoffee, InstallGuide,
-  BookingSystem, BookmarkList, useProtection, 
-  THEME, COMMON_STYLES 
+  AdBanner, AppHeader, AppInfoCard, 
+  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
+  InstallGuide, WebBackupManager, 
+  COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
-  Bookmark, BookOpen, Briefcase,
-  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Compass, CloudUpload,
-  DoorOpen, Download,
-  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
-  RefreshCw, Save, Settings, Sparkles,
-  Trash2, Unlock, User, X
+  Compass, RefreshCw, Lock, Unlock, X,
+  DoorOpen, Eye, EyeOff, Briefcase, 
+  Bookmark, CalendarCheck, Settings, Save, MapPin,
+  ChevronLeft, Circle, Grid
 } from 'lucide-react';
-
 
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = "甯博風水";
-const APP_VERSION = "甯博風水 v1.0";
-const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec"; // 範例 API
+const APP_NAME = "元星風水";
+const APP_VERSION = "風水 v1.0";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+
+// 數字轉中文對照表 (全域使用)
+const PERIOD_MAP_CHART = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
+
+const GUA_TO_DIR = {
+    '坎': '北', '離': '南', '震': '東', '兌': '西',
+    '巽': '東南', '坤': '西南', '艮': '東北', '乾': '西北'
+};
 
 // --- 核心數據定義 ---
 const MOUNTAINS = [
@@ -47,10 +52,6 @@ const YIN_YANG_MAP = {
     7: { '地': 1, '天': -1, '人': -1 }, 8: { '地': -1, '天': 1, '人': 1 },
     9: { '地': 1, '天': -1, '人': -1 },
 };
-
-// 數字轉中文對照表 (可以定義在組件外或內)
-const PERIOD_MAP_CHART = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
-
 
 const LUOSHU_PATH = [4, 8, 5, 6, 1, 7, 2, 3, 0]; 
 const DIRECTION_MAP = { '巽': 0, '離': 1, '坤': 2, '震': 3, '中': 4, '兌': 5, '艮': 6, '坎': 7, '乾': 8 };
@@ -124,7 +125,6 @@ const STAR_COMBINATIONS = {
     '1-7': { title: '金水多情', text: '金水相生，主桃花、貪花戀酒，亦利口才。', source: '玄空秘旨：金水多情，貪花戀酒。' },
     '1-8': { title: '耳腎之疾', text: '土剋水，八白艮土剋一白水，防耳病、腎病、小兒災。', source: '玄機賦：一八剋傷，中男受辱。' },
     '1-9': { title: '水火既濟', text: '水火交戰，調和則成既濟，主婚喜；不調則主眼疾、心病。', source: '玄空秘旨：南離北坎，位極中央。' },
-
     // 2黑土
     '2-1': { title: '土剋水', text: '婦人當家，需防腹疾、腎病、流產。', source: '紫白訣：土水相剋，中男被中女之欺。' },
     '2-2': { title: '二黑重疊', text: '純陰，主病符、寡婦，醫院常客，大凶。', source: '玄空秘旨：風行地而硬直難當。' },
@@ -135,7 +135,6 @@ const STAR_COMBINATIONS = {
     '2-7': { title: '先天火數', text: '二七同道化火，主火災、熱病，因女色破財。', source: '玄空秘旨：庶妾難投寡母之歡心。' },
     '2-8': { title: '比和旺財', text: '二八合十，利田宅、地產，吉。', source: '紫白訣：二八同宮，少男逢老母。' },
     '2-9': { title: '火炎土燥', text: '火生土，主生愚鈍之子，或眼疾、腸胃病。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
-
     // 3碧木
     '3-1': { title: '水木相生', text: '利長子，發科名，稍防四肢受傷。', source: '紫白訣：一三生子，長男得貴。' },
     '3-2': { title: '鬥牛煞', text: '木剋土，主官非、爭鬥、腸胃病。', source: '紫白訣：鬥牛煞起惹官刑。' },
@@ -146,7 +145,6 @@ const STAR_COMBINATIONS = {
     '3-7': { title: '穿心煞', text: '金剋木，主盜賊、官災、手足傷、肝病。', source: '紫白訣：三七疊至，被劫盜更見官災。' },
     '3-8': { title: '傷小口', text: '木剋土，不利少男，筋骨損，或絕嗣。', source: '玄空秘旨：八逢三四，損小口而絕嗣。' },
     '3-9': { title: '木火通明', text: '木生火，主聰明、富貴、生貴子。', source: '玄機賦：木見火而生聰明奇士。' },
-
     // 4綠木
     '4-1': { title: '文昌大旺', text: '水生木，大利科名、考試、桃花、聲望。', source: '玄機賦：名揚科第，貪狼星入巽宮。' },
     '4-2': { title: '腹疾風疾', text: '木剋土，主婆媳不和，脾胃病。', source: '玄空秘旨：風行地而硬直難當。' },
@@ -157,7 +155,6 @@ const STAR_COMBINATIONS = {
     '4-7': { title: '刀傷桃花', text: '金剋木，主桃花劫、刀傷、嘔血。', source: '玄機賦：破軍居巽，雷風擊而金勝木，有傷。' },
     '4-8': { title: '傷小口', text: '木剋土，主精神病、結石、不利幼童。', source: '玄空秘旨：山風值而泉石膏肓。' },
     '4-9': { title: '木火通明', text: '木火相生，利文職、專業人才、喜慶。', source: '玄機賦：木見火而生聰明奇士。' },
-
     // 5黃土
     '5-1': { title: '子癸生瘍', text: '土剋水，主性病、腎病、泌尿系統疾病。', source: '飛星賦：子癸生瘍。' },
     '5-2': { title: '二五交加', text: '主死亡、重病、破產，大凶。', source: '紫白訣：二五交加，罹死亡並生疾病。' },
@@ -168,7 +165,6 @@ const STAR_COMBINATIONS = {
     '5-7': { title: '紫黃毒藥', text: '土生金，主口舌、性病、中毒、喉疾。', source: '飛星賦：青樓染疾，只因七九之合(誤?應為五七)。' },
     '5-8': { title: '小口損傷', text: '土多金埋，主筋骨痛、胃病。', source: '玄機賦：五八，小口損傷。' },
     '5-9': { title: '毒藥入口', text: '火生土，晦火，主眼疾、心病、腦病、中毒。', source: '紫白訣：九七合轍，常招回祿之災(此為95)。' },
-
     // 6白金
     '6-1': { title: '金水相生', text: '利武職、技術、財運，大吉。', source: '玄機賦：職掌兵權，武曲入坎宮。' },
     '6-2': { title: '富比陶朱', text: '土生金，巨富，利地產、金融。', source: '玄機賦：堅金遇土，富比陶朱。' },
@@ -179,7 +175,6 @@ const STAR_COMBINATIONS = {
     '6-7': { title: '交劍煞', text: '兩金相擊，主刀傷、搶劫、車禍、爭鬥。', source: '紫白訣：交劍煞興多劫掠。' },
     '6-8': { title: '武科發跡', text: '土生金，大吉，利軍警、地產、財富。', source: '玄機賦：富比陶朱，堅金遇土。' },
     '6-9': { title: '火燒天門', text: '火剋金，主老父不利、頭病、肺病、逆子。', source: '玄空秘旨：火燒天門張牙舞爪。' },
-
     // 7赤金
     '7-1': { title: '金水多情', text: '主桃花、才藝，亦主漂泊。', source: '玄空秘旨：金水多情，貪花戀酒。' },
     '7-2': { title: '先天火數', text: '火災、熱病、桃花破財。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
@@ -190,7 +185,6 @@ const STAR_COMBINATIONS = {
     '7-7': { title: '雙星到會', text: '主醫卜星相、口舌、桃花。', source: '玄空秘旨：兌宮重疊，口舌是非。' },
     '7-8': { title: '少男少女', text: '土生金，主戀愛、富貴。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
     '7-9': { title: '回祿之災', text: '火剋金，主火災、心肺病、少女受損。', source: '玄機賦：午酉逢而江湖花酒。' },
-
     // 8白土
     '8-1': { title: '中男受辱', text: '土剋水，主耳病、腎病、不孕。', source: '玄機賦：一八剋傷，中男受辱。' },
     '8-2': { title: '比和旺財', text: '土多金埋，利地產，稍損小口。', source: '紫白訣：二八同宮，少男逢老母。' },
@@ -201,7 +195,6 @@ const STAR_COMBINATIONS = {
     '8-7': { title: '富足風流', text: '土生金，主財旺，但利偏財、娛樂。', source: '玄機賦：胃入斗牛，積千箱之玉帛。' },
     '8-8': { title: '雙星旺財', text: '利置業、地產、財富。', source: '一般論斷：八八雙星，大旺田宅。' },
     '8-9': { title: '喜慶重來', text: '火生土，主婚喜、置業、大發。', source: '紫白訣：八九和諧，婚喜重來。' },
-
     // 9紫火
     '9-1': { title: '水火既濟', text: '吉則婚喜，凶則眼疾、心臟病。', source: '玄空秘旨：南離北坎，位極中央。' },
     '9-2': { title: '火炎土燥', text: '生愚子，眼疾，血光。', source: '玄機賦：火炎土燥，南離何益乎艮坤。' },
@@ -279,28 +272,27 @@ const findAuspsiciousDirections = (facingGua) => {
 // --- 三元納氣法邏輯 ---
 const calculateNaQi = (period, guaName) => {
     const p = Number(period);
+    // 納氣：1坎, 2坤, 3震, 4巽, 6乾, 7兌, 8艮, 9離
     const guaMap = { '坎': 1, '坤': 2, '震': 3, '巽': 4, '乾': 6, '兌': 7, '艮': 8, '離': 9 };
     const doorNum = guaMap[guaName];
+    
     if (p === 5) return { type: '平', text: '五運寄宮', color: '#fa8c16' };
-    const isUpperEra = p >= 1 && p <= 4;
+
+    // 定義元運：上元(1,2,3,4) 下元(6,7,8,9)
+    const isPeriodUpper = p >= 1 && p <= 4;
     const isDoorUpper = doorNum >= 1 && doorNum <= 4;
-    const resultProsperous = { type: '大吉', text: '當運大發', color: '#389e0d', sub: '同元同運' };
-    const resultFuture = { type: '吉', text: '未來大發', color: '#13c2c2', sub: '同元未運' };
-    const resultDeclining = { type: '凶', text: '運過衰退', color: '#cf1322', sub: '同元失運/異元' };
-    if (isUpperEra) {
-        if (!isDoorUpper) return resultDeclining;
-        else {
-            if (doorNum === p) return resultProsperous;
-            if (doorNum > p) return resultFuture;
-            return resultDeclining;
+    const isSameYuan = isPeriodUpper === isDoorUpper;
+
+    if (isSameYuan) {
+        if (doorNum === p) {
+            return { type: '大吉', text: '當運大發', color: '#389e0d', sub: '同元同運' };
+        } else if (doorNum > p) {
+            return { type: '吉', text: '未來大發', color: '#13c2c2', sub: '同元未運' };
+        } else {
+            return { type: '平', text: '運過平安', color: '#fa8c16', sub: '同元失運' };
         }
     } else {
-        if (isDoorUpper) return resultDeclining;
-        else {
-            if (doorNum === p) return resultProsperous;
-            if (doorNum > p) return resultFuture;
-            return resultDeclining;
-        }
+        return { type: '凶', text: '運過衰退', color: '#cf1322', sub: '異元失運' };
     }
 };
 
@@ -457,7 +449,7 @@ const calculateEverything = (degree, period, year, month = 1) => {
 // =========================================================================
 // PART B: 視圖組件 (UI Views)
 // =========================================================================
-// 商戰彈窗
+// 商戰彈窗 (保持不變)
 const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
     const [shopSector, setShopSector] = useState(null); 
     const [shopTotal, setShopTotal] = useState(10); 
@@ -691,151 +683,66 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
 
 // 羅庚 (羅盤) - 修正版
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
-    // 1. 使用 Ref 即時追蹤鎖定狀態 (解決閉包變數過期問題)
     const isFrozenRef = React.useRef(isFrozen);
-    
-    // 當外部 isFrozen 改變時，同步更新 Ref
-    useEffect(() => {
-        isFrozenRef.current = isFrozen;
-    }, [isFrozen]);
+    useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
 
-    // 2. 定義穩定的事件處理函數 (使用 useCallback 確保參照不變)
     const handleOrientation = React.useCallback((e) => {
-        // 直接讀取 Ref 的當前值，確保永遠拿到最新狀態
         if (isFrozenRef.current) return;
-
         let compass = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
-        // 加入簡單的防抖動 (選用)
         setHeading(prev => Math.abs(compass - prev) > 0.2 ? compass : prev);
     }, [setHeading]);
 
-    // 3. 請求權限與綁定監聽
     const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                    }
-                })
+                .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
                 .catch(console.error);
         } else {
             window.addEventListener('deviceorientation', handleOrientation);
         }
     };
 
-    // 4. 組件卸載時移除監聽 (避免記憶體洩漏)
-    useEffect(() => {
-        return () => {
-            window.removeEventListener('deviceorientation', handleOrientation);
-        };
-    }, [handleOrientation]);
+    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [handleOrientation]);
     
     const facingMt = getMountain(heading);
     const sittingMt = getMountain(heading + 180);
 
     return (
-        <div style={{
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            background: '#222', 
-            color: '#fff', 
-            position: 'relative', 
-            overflow: 'hidden', 
-            height: '100%',
-            width: '100%'
-        }}>
-             {!isFrozen && (
-                <button onClick={requestAccess} style={{position:'absolute', bottom: 350, padding:'8px 16px', background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:'20px', zIndex:10}}>
-                   <Compass size={14} style={{display:'inline', marginRight:5}}/> 啟用羅庚
-                </button>
-            )}            
-            {/* ★ 核心修改：羅庚與十字星的共用容器 */}
-            <div style={{
-                position: 'relative',
-                width: '85vw',
-                maxWidth: '350px',
-                aspectRatio: '1 / 1', // ★ 強制正方形 (解決變橢圓問題)
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                margin: '20px 0'
-            }}>
-                
-                {/* 十字星 - 限制在天池 (20%) 範圍內 */}
-                {/* 垂直線 */}
-                <div style={{
-                    position:'absolute', 
-                    top: '50%', left: '50%', 
-                    transform: 'translate(-50%, -50%)',
-                    height: '20%', // ★ 長度 = 天池直徑
-                    width: '2px',  // 加粗方便對齊
-                    background:'red', 
-                    zIndex: 20, 
-                    boxShadow: '0 0 2px rgba(255,0,0,0.8)'
-                }}></div>
-                {/* 水平線 */}
-                <div style={{
-                    position:'absolute', 
-                    top: '50%', left: '50%', 
-                    transform: 'translate(-50%, -50%)',
-                    width: '20%',  // ★ 長度 = 天池直徑
-                    height: '2px', 
-                    background:'red', 
-                    zIndex: 20,
-                    boxShadow: '0 0 2px rgba(255,0,0,0.8)'
-                }}></div>
-
-                {/* 旋轉羅庚盤 */}
-                <div style={{
-                    width: '100%', 
-                    height: '100%', 
-                    borderRadius: '50%', 
-                    border: '6px solid #8B4513', 
-                    background: '#e0c38c',
-                    transform: `rotate(${-heading}deg)`, 
-                    transition: isFrozen ? 'none' : 'transform 0.1s linear',
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)', 
-                    position: 'relative',
-                    boxSizing: 'border-box'
-                }}>
-                     {/* 二十四山刻度 */}
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow: 'hidden', height: '100%', width: '100%'}}>
+            
+            {/* 羅庚與十字星 */}
+            <div style={{ position: 'relative', width: '85vw', maxWidth: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '20px 0' }}>
+                <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', height: '20%', width: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
+                <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20%', height: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
+                <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', boxSizing: 'border-box' }}>
                      {MOUNTAINS.map((m, i) => (
-                        <div key={i} style={{
-                            position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px',
-                            transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)`
-                        }}>
+                        <div key={i} style={{ position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px', transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)` }}>
                             <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)', whiteSpace:'nowrap'}}>{m.name}</span>
                         </div>
                      ))}
-                     
-                     {/* 天池 (中間白圓) - 設定為 20% */}
-                     <div style={{
-                         width:'20%', 
-                         height:'20%', 
-                         background:'white', 
-                         borderRadius:'50%', 
-                         border:'2px solid red',
-                         boxSizing: 'border-box'
-                     }}></div>
+                     <div style={{ width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red', boxSizing: 'border-box' }}></div>
                 </div>
             </div>
 
-            {/* 底部數據顯示 */}
+            {/* 底部數據與控制 */}
             <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
                 <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
                 <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
                 <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
-                <div style={{display:'flex', gap:'20px', justifyContent:'center', marginTop:'20px'}}>
+                
+                {/* 按鈕區 */}
+                <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
                     <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
                         {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
                     </button>
+                    
+                    {/* ★ 修改 1: 啟用羅庚按鈕移至此處 */}
+                    {!isFrozen && (
+                        <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
+                            <Compass size={18}/> 啟用羅庚
+                        </button>
+                    )}
+
                     {isFrozen && (
                         <button onClick={onAnalyze} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
                             <RefreshCw size={18}/> 排盤
@@ -849,12 +756,15 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 };
 
 // 排盤視圖
-const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth, onSave }) => {
+const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth, onSave, chartMode = 'traditional' }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
-    const [showAnnual, setShowAnnual] = useState(false);
-    const [showMonthly, setShowMonthly] = useState(false);
+    const [showAnnual, setShowAnnual] = useState(true);
+    const [showMonthly, setShowMonthly] = useState(true);
     const [showCommercial, setShowCommercial] = useState(false);
+    const [isRound, setIsRound] = useState(false);
+    const naQiRow1 = ['坎', '坤', '震', '巽'];
+    const naQiRow2 = ['乾', '兌', '艮', '離'];
     
     const data = useMemo(() => {
         try { return calculateEverything(heading, period, year, month); } catch (e) { return null; }
@@ -864,8 +774,18 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 
     if (!data) return <div style={{padding:20, color:'red'}}>資料計算異常。</div>;
 
-    const gridOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8]; 
+    // ★ 修改 3: 現代模式下，方盤需要完全倒轉 (上北下南，左西右東)
+    // 傳統 (左東): 巽(0), 離(1), 坤(2) ... (南在上)
+    const gridOrderTraditional = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    // 現代 (北在上): 乾(8), 坎(7), 艮(6) ... (完全 180 度反轉傳統盤)
+    const gridOrderModern = [8, 7, 6, 5, 4, 3, 2, 1, 0];
+    
+    const gridOrder = chartMode === 'modern' ? gridOrderModern : gridOrderTraditional;
     const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
+    const getDirDisplayName = (name) => {
+        const dir = GUA_TO_DIR[name];
+        return dir ? `${name} (${dir})` : name;
+    };
     const naQiGuas = ["坎", "坤", "震", "巽", "乾", "兌", "艮", "離"];
     const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
     const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#333', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
@@ -880,33 +800,33 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
         if (dirGua === advanced.waterMethod.late) tags.push({ text: '後天水', color: '#389e0d' }); 
         if (dirGua === advanced.chengMen.main) tags.push({ text: '正城門', color: '#fa8c16' }); 
         if (dirGua === advanced.chengMen.sub) tags.push({ text: '副城門', color: '#fa8c16' }); 
+        
         const mtDragons = advanced.mountainDragon.mountains;
-                const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
-                if (mtMatches.length > 0) {
-                    tags.push({ text: `山龍 ${mtMatches.join('')}`, color: '#c41d7f' });
-                }
+        const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
+        if (mtMatches.length > 0) {
+            tags.push({ text: `山龍: ${mtMatches.join('')}`, color: '#c41d7f' });
+        }
 
-                const waterDragons = advanced.waterDragon.mountains;
-                const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
-                if (waterMatches.length > 0) {
-                    tags.push({ text: `水龍 ${waterMatches.join('')}`, color: '#096dd9' });
-                }
+        const waterDragons = advanced.waterDragon.mountains;
+        const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
+        if (waterMatches.length > 0) {
+            tags.push({ text: `水龍: ${waterMatches.join('')}`, color: '#096dd9' });
+        }
 
-                if (advanced.sha8 && advanced.sha8 !== '無') {
-                    const shaGua = getGuaFromStr(advanced.sha8);
-                    if (shaGua === dirGua) tags.push({ text: `曜煞 ${advanced.sha8}`, color: '#cf1322' }); 
-                }
+        if (advanced.sha8 && advanced.sha8 !== '無') {
+            const shaGua = getGuaFromStr(advanced.sha8);
+            if (shaGua === dirGua) tags.push({ text: `曜煞: ${advanced.sha8}`, color: '#cf1322' }); 
+        }
 
-                if (advanced.huangQuan) {
-                    const hqArr = advanced.huangQuan.split('/');
-                    hqArr.forEach(hq => {
-                        const hqGua = getGuaFromStr(hq);
-                        if (hqGua === dirGua) tags.push({ text: `黃泉 ${hq}`, color: '#cf1322' });
-                    });
-                }
-                
-                return tags;
-            };
+        if (advanced.huangQuan) {
+            const hqArr = advanced.huangQuan.split('/');
+            hqArr.forEach(hq => {
+                const hqGua = getGuaFromStr(hq);
+                if (hqGua === dirGua) tags.push({ text: `黃泉: ${hq}`, color: '#cf1322' });
+            });
+        }
+        return tags;
+    };
 
     const handleSectorClick = (idx) => {
         const guaName = dirNames[idx];
@@ -955,8 +875,8 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     };
 
     const handleSaveClick = () => {
-        const locationName = window.prompt("請輸入地點名稱:", "");
-                if (locationName === null) return; 
+        const locationName = window.prompt("請輸入地點", "");
+        if (locationName === null) return; 
 
         onSave({
             id: Date.now(), 
@@ -964,17 +884,55 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
             facing: data.facing, 
             period: period, 
             year: year,
-            location: locationName || '地點未命名'
+            location: locationName || '' 
         });
     };
+
+    // ★ 修改 3: 圓盤佈局更新 (現代模式需正確對應八方)
+    const isModern = chartMode === 'modern';
+    // 現代地圖方位: 北在上, 南在下, 東在右, 西在左
+    const roundPositionMap = {
+        4: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }, // 中
+        
+        // 南 (離-1): 傳統在頂, 現代在底
+        1: isModern ? { bottom: '2%', left: '50%', transform: 'translateX(-50%)' } 
+                    : { top: '2%', left: '50%', transform: 'translateX(-50%)' },
+        
+        // 北 (坎-7): 傳統在底, 現代在頂
+        7: isModern ? { top: '2%', left: '50%', transform: 'translateX(-50%)' } 
+                    : { bottom: '2%', left: '50%', transform: 'translateX(-50%)' },
+        
+        // 東 (震-3): 傳統在左, 現代在右
+        3: isModern ? { top: '50%', right: '2%', transform: 'translateY(-50%)' } 
+                    : { top: '50%', left: '2%', transform: 'translateY(-50%)' },
+                    
+        // 西 (兌-5): 傳統在右, 現代在左
+        5: isModern ? { top: '50%', left: '2%', transform: 'translateY(-50%)' } 
+                    : { top: '50%', right: '2%', transform: 'translateY(-50%)' },
+        
+        // 東南 (巽-0): 傳統左上, 現代右下
+        0: isModern ? { bottom: '15%', right: '15%' } : { top: '15%', left: '15%' },
+        
+        // 西南 (坤-2): 傳統右上, 現代左下
+        2: isModern ? { bottom: '15%', left: '15%' } : { top: '15%', right: '15%' },
+        
+        // 東北 (艮-6): 傳統左下, 現代右上
+        6: isModern ? { top: '15%', right: '15%' } : { bottom: '15%', left: '15%' },
+        
+        // 西北 (乾-8): 傳統右下, 現代左上
+        8: isModern ? { top: '15%', left: '15%' } : { bottom: '15%', right: '15%' }
+    };
+
+    const sitDir = GUA_TO_DIR ? GUA_TO_DIR[data.sitting.gua] : '';
+    const faceDir = GUA_TO_DIR ? GUA_TO_DIR[data.facing.gua] : '';
 
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
                     <div style={{fontWeight:'bold', fontSize:'18px'}}>
-                        {data.sitting.name}山{data.facing.name}向 
-                        <span style={{fontSize:'14px', color:'#666', fontWeight:'normal'}}> ({data.sitting.gua}/{data.facing.gua})</span>
+                        {data.sitting.name}山{data.facing.name}向下卦
+                        <span style={{fontSize:'14px', color:'#666', fontWeight:'normal'}}> (坐{sitDir}向{faceDir})</span>
                     </div>
                     
                     <button onClick={handleSaveClick} style={btnStyle}>
@@ -983,7 +941,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                 </div>
                 
                 <div style={{display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px'}}>
-                        <label style={{fontSize:'14px'}}>
+                    <label style={{fontSize:'14px'}}>
                         運: 
                         <select 
                             value={period} 
@@ -995,38 +953,136 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                             ))}
                         </select>
                     </label>
-                    <label style={{fontSize:'14px'}}>年: <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} style={{width:'55px', border:'1px solid #ddd'}}/></label>
+
+                    {/* ★ 修改 2: 輸入框清空處理 */}
+                    <label style={{fontSize:'14px'}}>
+                        年: <input 
+                            type="number" 
+                            value={year} 
+                            onChange={e => setYear(e.target.value === '' ? '' : Number(e.target.value))} 
+                            style={{width:'55px', border:'1px solid #ddd'}}
+                        />
+                    </label>
                     <label style={{fontSize:'14px'}}>月: <select value={month} onChange={e => setMonth(Number(e.target.value))} style={{border:'1px solid #ddd'}}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
                 </div>
                 <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
                      <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
                      <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: '#fa8c16'}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
+                     
+                     {/* ★ 新增：方盤/圓盤切換按鈕 */}
+{/*}                     <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #333', background: 'white', color: '#333', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                        {isRound ? <Grid size={12}/> : <Circle size={12}/>} 
+                        {isRound ? '方盤' : '圓盤'}
+                     </button>
+*/}
                      <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto'}}><Briefcase size={12}/> 商戰</button>
                 </div>
             </div>
 
-            <div style={{...cardStyle, padding:'4px', background:'#8B4513'}}>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px', aspectRatio:'1/1'}}>
+            {/* ★ 排盤顯示區域 (支援方盤與圓盤) */}
+            <div style={{
+                ...cardStyle, 
+                padding:'4px', 
+                background: isRound ? 'transparent' : '#8B4513', 
+                display: 'flex',
+                justifyContent: 'center'
+            }}>
+                <div style={{
+                    // 根據 isRound 決定佈局
+                    display: isRound ? 'block' : 'grid', 
+                    gridTemplateColumns: isRound ? 'none' : 'repeat(3, 1fr)', 
+                    gap: isRound ? '0' : '2px', 
+                    aspectRatio: '1/1',
+                    width: '100%',
+                    maxWidth: isRound ? '350px' : '100%', // 圓盤限制最大寬度以保持美觀
+                    position: isRound ? 'relative' : 'static',
+                    borderRadius: isRound ? '50%' : '0',
+                    backgroundColor: isRound ? '#e0c38c' : 'transparent', // 圓盤背景色 (羅庚土黃)
+                    border: isRound ? '4px solid #8B4513' : 'none',
+                    boxShadow: isRound ? '0 4px 12px rgba(0,0,0,0.3)' : 'none'
+                }}>
+                    {/* ★ 使用 gridOrder 渲染格子 */}
                     {gridOrder.map((idx) => {
                         const tags = getGridTags(idx);
                         const baZhai = getBaZhaiDisplay(idx); 
                         const yearlyBadges = getYearlyBadges(idx);
+                        
+                        // 圓盤模式下的定位樣式
+                        const posStyle = isRound ? {
+                            position: 'absolute',
+                            width: '30%', // 每個宮位的大小
+                            height: '30%',
+                            ...roundPositionMap[idx] // 套用方位坐標
+                        } : {
+                            position: 'relative' // 方盤模式
+                        };
+
                         return (
-                            <div key={idx} onClick={() => handleSectorClick(idx)} style={{ background: '#fffcf5', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow:'hidden', cursor: 'pointer', transition: 'background 0.2s' }}>
-                                <div style={{position:'absolute', top:'4px', left:'6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                    <div style={{fontSize:'20px', fontWeight:'900', color:'#ff0000ff', lineHeight:'1'}}>{data.mtGrid[idx]}</div>
-                                    {showAnnual && <div style={{fontSize:'14px', fontWeight:'bold', color:'#722ed1'}}>{data.annualGrid[idx]}</div>}
+                            <div key={idx} onClick={() => handleSectorClick(idx)} style={{ 
+                                background: isRound ? 'transparent' : '#fffcf5', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                justifyContent: 'center', 
+                                alignItems: 'center', 
+                                overflow: isRound ? 'visible' : 'hidden', 
+                                cursor: 'pointer', 
+                                transition: 'background 0.2s',
+                                ...posStyle // 合併定位樣式
+                            }}>
+                                {/* Tags 移到上方 */}
+                                {!isRound && tags.length > 0 && (
+                                    <div style={{
+                                        position:'absolute',
+                                        bottom: '40px', // 置於運星上方
+                                        width:'100%',
+                                        display:'flex', gap:'2px', flexWrap:'wrap', justifyContent:'center',
+                                        zIndex: 2
+                                    }}>
+                                        {tags.map((t, i) => (
+                                            <span key={i} style={{...tagStyle, background: t.color}}>{t.text}</span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div style={{position:'absolute', top: isRound ? '-5px' : '4px', left: isRound ? '0' : '6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
+                                    {/* 山星 (阿拉伯) */}
+                                    <div style={{fontSize: isRound ? '16px' : '20px', fontWeight:'900', color:'#ff0000ff', lineHeight:'1'}}>{data.mtGrid[idx]}</div>
+                                    {/* 流年 (阿拉伯) */}
+                                    {showAnnual && <div style={{fontSize: isRound ? '11px' : '14px', fontWeight:'bold', color:'#722ed1'}}>{data.annualGrid[idx]}</div>}
                                 </div>
-                                <div style={{position:'absolute', top:'4px', right:'6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                    <div style={{fontSize:'20px', fontWeight:'900', color:'#1500ffff', lineHeight:'1'}}>{data.faceGrid[idx]}</div>
-                                    {showMonthly && <div style={{fontSize:'14px', fontWeight:'bold', color:'#fa8c16'}}>{data.monthlyGrid[idx]}</div>}
+                                <div style={{position:'absolute', top: isRound ? '-5px' : '4px', right: isRound ? '0' : '6px', display:'flex', flexDirection:'column', alignItems:'center'}}>
+                                    {/* 向星 (阿拉伯) */}
+                                    <div style={{fontSize: isRound ? '16px' : '20px', fontWeight:'900', color:'#1500ffff', lineHeight:'1'}}>{data.faceGrid[idx]}</div>
+                                    {/* 流月 (阿拉伯) */}
+                                    {showMonthly && <div style={{fontSize: isRound ? '11px' : '14px', fontWeight:'bold', color:'#fa8c16'}}>{data.monthlyGrid[idx]}</div>}
                                 </div>
-                                <div style={{fontSize:'36px', fontWeight:'bold', color:'#e0e0e0', marginTop:'-10px'}}>{PERIOD_MAP_CHART[data.baseGrid[idx]]}</div>
+                                
+                                {/* ★ 運星 (中文，底部置中) */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: isRound ? '0px' : '4px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    fontSize: isRound ? '24px' : '36px',
+                                    fontWeight: 'bold',
+                                    color: isRound ? '#555' : '#e0e0e0',
+                                    lineHeight: 1,
+                                    zIndex: 1
+                                }}>
+                                    {PERIOD_MAP_CHART[data.baseGrid[idx]]}
+                                </div>
+
                                 {idx !== 4 && (
                                         <>
-                                            {/* 流年凶煞標籤 (右上偏下或分散佈置) */}
+                                            {/* 流年凶煞標籤 */}
                                             {yearlyBadges.length > 0 && (
-                                                 <div style={{position:'absolute', top:'40%', right:'2px', display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end'}}>
+                                                 <div style={{
+                                                     position:'absolute', 
+                                                     top: '40%', 
+                                                     right: isRound ? '-10px' : '2px', 
+                                                     display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end',
+                                                     zIndex: 10
+                                                 }}>
                                                     {yearlyBadges.map(b => (
                                                         <span key={b} style={{fontSize:'9px', background: b==='五黃'||b==='三煞'||b==='歲破' ? '#cf1322':'#d48806', color:'white', padding:'0px 2px', borderRadius:'2px'}}>
                                                             {b}
@@ -1035,26 +1091,30 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                                  </div>
                                             )}
 
-                                            <div style={{position:'absolute', bottom:'2px', width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}>
-                                                <div style={{display:'flex', gap:'2px', flexWrap:'wrap', justifyContent:'center', width:'95%', marginBottom:'2px'}}>
-                                                    {tags.map((t, i) => (
-                                                        <span key={i} style={{...tagStyle, background: t.color}}>{t.text}</span>
-                                                    ))}
-                                                </div>
-                                                <div style={{fontSize:'12px', color:'#888', fontWeight:'bold'}}>{dirNames[idx]}</div>
+                                            {/* ★ 宮位名稱 (底部靠左) */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                bottom: isRound ? '-15px' : '4px',
+                                                left: isRound ? '-5px' : '4px',
+                                                fontSize: '12px',
+                                                color: isRound ? '#333' : '#888',
+                                                fontWeight: 'bold',
+                                                zIndex: 5
+                                            }}>
+                                                {getDirDisplayName(dirNames[idx])}
                                             </div>
                                         </>
                                     )}
 
                                     {idx === 4 && (
                                         <div style={{
-                                            position:'absolute', bottom: '18px', fontSize:'10px', fontWeight:'bold', 
+                                            position:'absolute', bottom: isRound ? '35px' : '40px', fontSize:'10px', fontWeight:'bold', 
                                             background:'rgba(83, 29, 171, 0.1)', padding:'2px 6px', borderRadius:'4px', color: '#531dab', whiteSpace: 'nowrap'
                                         }}>
                                             {data.chartType}
                                         </div>
                                     )}
-                                {baZhai && <div style={{position: 'absolute', bottom: '4px', right: '4px', fontSize: '11px', fontWeight: 'bold', color: baZhai.color, background: 'rgba(255,255,255,0.8)', padding: '1px 3px', borderRadius: '4px'}}>{baZhai.name}</div>}
+                                {baZhai && <div style={{position: 'absolute', bottom: isRound ? '-15px' : '4px', right: isRound ? '-10px' : '4px', fontSize: '11px', fontWeight: 'bold', color: baZhai.color, background: 'rgba(255,255,255,0.8)', padding: '1px 3px', borderRadius: '4px'}}>{baZhai.name}</div>}
                             </div>
                         );
                     })}
@@ -1072,12 +1132,28 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 
             <div style={cardStyle}>
                 <div style={{...sectionTitle, color:'#096dd9'}}>💨 三元納氣 (門/窗)</div>
-                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'12px'}}>
-                    {naQiGuas.map(gua => <button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? '#1890ff' : 'white', color: naQiDoor === gua ? 'white' : '#333' }}>{gua}</button>)}
+                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'4px'}}>
+                    {naQiRow1.map(gua => (
+                        <button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? '#1890ff' : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer' }}>{gua}</button>
+                    ))}
                 </div>
+                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'12px'}}>
+                    {naQiRow2.map(gua => (
+                        <button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? '#1890ff' : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer' }}>{gua}</button>
+                    ))}
+                </div>
+
+                {/* 結果顯示框 */}
                 {naQiResult && (
-                    <div style={{ background: naQiResult.type.includes('吉') ? '#f6ffed' : '#fff1f0', border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                        <div><div style={{fontSize:'12px', color:'#666'}}>納氣：<span style={{fontWeight:'bold'}}>{naQiDoor}方</span></div><div style={{fontSize:'18px', fontWeight:'bold', color: naQiResult.color}}>{naQiResult.text}</div></div>
+                    <div style={{ background: naQiResult.type === '凶' ? '#fff1f0' : (naQiResult.type === '平' ? '#fff7e6' : '#f6ffed'), border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <div>
+                            <div style={{fontSize:'12px', color:'#666'}}>
+                                納氣：<span style={{fontWeight:'bold'}}>{naQiDoor}</span> ({naQiResult.sub})
+                            </div>
+                            <div style={{fontSize:'18px', fontWeight:'bold', color: naQiResult.color}}>
+                                {naQiResult.text}
+                            </div>
+                        </div>
                         <DoorOpen size={24} color={naQiResult.color}/>
                     </div>
                 )}
@@ -1091,12 +1167,17 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     );
 };
 
-// 5. 設定頁 (SettingsView - 使用共用組件重構)
-const SettingsView = ({ bookmarks, setBookmarks }) => {
+// 5. 設定頁 (SettingsView) - 更新版
+const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode }) => {
     const APP_INFO = { 
         appName: APP_NAME, 
         version: APP_VERSION, 
         about: "本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地堪察。" 
+    };
+
+    const handleModeChange = (mode) => {
+        setChartMode(mode);
+        Preferences.set({ key: 'fengshui_chart_mode', value: mode });
     };
     
     return (
@@ -1104,10 +1185,38 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                 <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
             </div>
+
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+                <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '12px' }}>排盤方位模式</div>
+                <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
+                    <button 
+                        onClick={() => handleModeChange('traditional')} 
+                        style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '18px', backgroundColor: chartMode === 'traditional' ? THEME.blue : 'transparent', color: chartMode === 'traditional' ? 'white' : THEME.gray, fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
+                    >
+                        風水羅庚盤
+                    </button>
+                    <button 
+                        onClick={() => handleModeChange('modern')} 
+                        style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '18px', backgroundColor: chartMode === 'modern' ? THEME.blue : 'transparent', color: chartMode === 'modern' ? 'white' : THEME.gray, fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
+                    >
+                        現代指南針
+                    </button>
+                </div>
+                <div style={{ fontSize: '11px', color: THEME.gray, marginTop: '8px', paddingLeft: '4px' }}>
+                    * 風水羅庚盤為天南地北，左東右西。<br/>
+                    * 現代指南針為上北下南，左西右東。
+                </div>
+            </div>
             
             <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="FENGSHUI_BACKUP" />
             <AppInfoCard info={APP_INFO} />
             <BuyMeCoffee />
+            
+            <div style={{ marginTop: '24px' }}>
+                <button onClick={() => { if(window.confirm('確定清除所有紀錄?')) { setBookmarks([]); Preferences.remove({key: 'fengshui_bookmarks'}); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                    <RefreshCw size={16} /> 清除所有紀錄
+                </button>
+            </div>
         </div>
     );
 };
@@ -1117,10 +1226,7 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
 // =========================================================================
 
 export default function FengShuiApp() {
-    // 1. 安全保護 & 載入檢查
-    // useProtection(['mrkfengshui.com', 'mrkcompass.vercel.app', 'localhost']); // 視需求開啟
-    
-    const [view, setView] = useState('input'); // input(compass), result(chart), bookmarks, booking, settings
+    const [view, setView] = useState('input'); 
     const [bookmarks, setBookmarks] = useState([]);
     
     // 風水狀態
@@ -1130,7 +1236,9 @@ export default function FengShuiApp() {
     const [year, setYear] = useState(new Date().getFullYear()); 
     const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-    // 2. 底部導航
+    // ★ 新增：排盤方位模式狀態 ('traditional' 或 'modern')
+    const [chartMode, setChartMode] = useState('traditional');
+
     const tabs = [
         { id: 'input', label: '羅庚', icon: Compass },
         { id: 'bookmarks', label: '紀錄', icon: Bookmark },
@@ -1138,11 +1246,15 @@ export default function FengShuiApp() {
         { id: 'settings', label: '設定', icon: Settings },
     ];
 
-    // 3. 資料讀取
     useEffect(() => {
         const loadData = async () => {
             const { value: savedBk } = await Preferences.get({ key: 'fengshui_bookmarks' });
             if (savedBk) setBookmarks(JSON.parse(savedBk));
+            
+            // ★ 讀取方位設定 (若無則預設 'traditional')
+            const { value: savedMode } = await Preferences.get({ key: 'fengshui_chart_mode' });
+            if (savedMode) setChartMode(savedMode);
+            else setChartMode('traditional');
         };
         loadData();
     }, []);
@@ -1156,27 +1268,19 @@ export default function FengShuiApp() {
     };
 
     const saveBookmark = async (data) => {
-        // data 來自 ChartView: { id, sitting, facing, period, year, location }
-        
         const dataToSave = {
             id: data.id,
-            // 標題：使用者輸入的地點，若無則用坐向代替
             name: data.location || `${data.sitting.name}山${data.facing.name}向`,
             solarDate: new Date().toISOString().split('T')[0],
-
-            // ★ 關鍵：為了符合 DataComponents.jsx 的風水格式顯示
-            // 需要: period, mountain, facing, gwaType, address
             period: data.period,
             mountain: data.sitting.name,
             facing: data.facing.name,
             gwaType: '下卦',
-            address: data.location, // 地址顯示
-
-            // 保留原始設定以便還原
+            address: data.location,
             rawConfig: { 
                 period: data.period, 
                 year: data.year,
-                sitting: data.sitting, // 包含 angle 等詳細資料
+                sitting: data.sitting, 
                 facing: data.facing 
             }
         };
@@ -1208,14 +1312,12 @@ export default function FengShuiApp() {
     const openBookmark = (item) => {
         const raw = item.rawConfig;
         if (raw && raw.sitting) {
-            // 恢復羅庚角度 (坐山角度 - 180 = 向首角度 = 羅庚 heading)
             let h = raw.sitting.angle - 180;
             if (h < 0) h += 360;
             
             setHeading(h); 
             setPeriod(raw.period);
             setYear(raw.year);
-            // 切換到結果頁
             setView('result');
         } else {
             alert('無法讀取舊格式資料');
@@ -1224,7 +1326,7 @@ export default function FengShuiApp() {
 
     return (
         <div style={COMMON_STYLES.fullScreen}>
-            {/* Header: 羅庚模式下浮動在上方(透明背景)，其他模式固定 */}
+            {/* Header */}
             {view === 'input' ? (
                 <div style={{position:'absolute', top:0, left:0, width:'100%', zIndex:20}}>
                      <AppHeader title={APP_NAME} logoChar={{ main: '風', sub: '水' }} />
@@ -1245,47 +1347,27 @@ export default function FengShuiApp() {
                 )}
 
                 {view === 'result' && (
-    <>
-        {/* 簡易返回導航列 (Chart 專用) - 已修改為標題置中 */}
-        <div style={{
-            position: 'relative',       // 1. 設定相對定位基準
-            padding:'10px 16px', 
-            background: THEME.white, 
-            borderBottom:`1px solid ${THEME.border}`, 
-            display:'flex', 
-            alignItems:'center', 
-            justifyContent: 'center',   // 2. 讓內容(標題)水平置中
-            height: '44px'              // 3. 設定固定高度，確保排版穩定
-        }}>
-            <button 
-                onClick={() => setView('input')} 
-                style={{
-                    position: 'absolute',   // 4. 按鈕使用絕對定位
-                    left: '16px',           // 5. 固定在左側，不影響標題置中
-                    top: '50%',
-                    transform: 'translateY(-50%)', // 垂直置中
-                    background:'none', 
-                    border:'none', 
-                    display:'flex', 
-                    alignItems:'center', 
-                    gap:'4px', 
-                    cursor:'pointer', 
-                    color: THEME.blue,
-                    zIndex: 1
-                }}
-            >
-                <ChevronLeft size={20}/> 返回
-            </button>
-            
-            <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>
-                排盤分析</span>
+                    <>
+                        <div style={{
+                            position: 'relative', padding:'10px 16px', background: THEME.white, 
+                            borderBottom:`1px solid ${THEME.border}`, display:'flex', alignItems:'center', justifyContent: 'center', height: '44px'
+                        }}>
+                            <button onClick={() => setView('input')} style={{
+                                position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
+                                background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer', color: THEME.blue, zIndex: 1
+                            }}>
+                                <ChevronLeft size={20}/> 返回
+                            </button>
+                            <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>排盤分析</span>
                         </div>
+
                         <ChartView 
                             heading={heading} setHeading={setHeading}
                             period={period} setPeriod={setPeriod}
                             year={year} setYear={setYear}
                             month={month} setMonth={setMonth}
                             onSave={saveBookmark}
+                            chartMode={chartMode} 
                         />
                     </>
                 )}
@@ -1295,19 +1377,21 @@ export default function FengShuiApp() {
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                             <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的風水紀錄</h2>
                         </div>
-                        {/* 使用共用 BookmarkList */}
-                        <BookmarkList 
-                            bookmarks={bookmarks}
-                            onSelect={openBookmark}
-                            onDelete={deleteBookmark}
-                        />
+                        <BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} />
                         <div style={{ marginTop: '20px' }}><AdBanner /></div>
                     </div>
                 )}
 
                 {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
 
-                {view === 'settings' && <SettingsView bookmarks={bookmarks} setBookmarks={setBookmarks} />}
+                {view === 'settings' && (
+                    <SettingsView 
+                        bookmarks={bookmarks} 
+                        setBookmarks={setBookmarks}
+                        chartMode={chartMode} 
+                        setChartMode={setChartMode} 
+                    />
+                )}
             </div>
 
             <InstallGuide />
