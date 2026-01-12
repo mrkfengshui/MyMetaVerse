@@ -1084,35 +1084,20 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                         <>
                                             {/* 流年凶煞標籤 */}
                                             {yearlyBadges.length > 0 && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: isRound ? '20%' : '2px', // 方盤緊貼頂部，圓盤稍微往下以免切邊
-                                                    left: '50%',
-                                                    transform: 'translateX(-50%)', // 水平居中
-                                                    display: 'flex',
-                                                    flexDirection: 'row', // 改為橫向排列
-                                                    gap: '2px',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexWrap: 'wrap', // 如果標籤太多則換行
-                                                    zIndex: 10,
-                                                    maxWidth: '70%' // 限制寬度，避免蓋到左右的山星與向星
-                                                }}>
-                                                {yearlyBadges.map(b => (
-                                                    <span key={b} style={{
-                                                        fontSize: '9px', 
-                                                        background: b === '五黃' || b === '三煞' || b === '歲破' ? '#cf1322' : '#d48806', 
-                                                        color: 'white', 
-                                                        padding: '1px 3px', 
-                                                        borderRadius: '2px',
-                                                        lineHeight: '1.1',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-                                                        {b}
-                                                    </span>
-                                                ))}
-                                                </div>
-                                        )}
+                                                 <div style={{
+                                                     position:'absolute', 
+                                                     top: '10%', 
+                                                     right: isRound ? '-10px' : '2px', 
+                                                     display:'flex', flexDirection:'column', gap:'1px', alignItems:'flex-end',
+                                                     zIndex: 10
+                                                 }}>
+                                                    {yearlyBadges.map(b => (
+                                                        <span key={b} style={{fontSize:'9px', background: b==='五黃'||b==='三煞'||b==='歲破' ? '#cf1322':'#d48806', color:'white', padding:'0px 2px', borderRadius:'2px'}}>
+                                                            {b}
+                                                        </span>
+                                                    ))}
+                                                 </div>
+                                            )}
 
                                             {/* ★ 宮位名稱 (底部靠左) */}
                                             <div style={{
