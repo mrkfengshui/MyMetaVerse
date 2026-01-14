@@ -803,7 +803,7 @@ const PalaceGrid = ({
     const currentBgColor = getBackgroundColor();
 
     return (
-        <div onClick={onClick} style={{ border: `1px solid ${THEME.border}`, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
+        <div onClick={onClick} style={{ position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', top: 2, left: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', zIndex: 2 }}>
                 <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px', marginBottom: '4px' }}>{palace.gan}{palace.zhi}</div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '0px' }}>
@@ -970,10 +970,39 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
 
     return (
         <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', gap: '0px', border: `1px solid ${THEME.border}`, flex: 1 }}>
+            <div style={{ 
+                display: 'grid', 
+                // 4欄均分
+                gridTemplateColumns: '1fr 1fr 1fr 1fr', 
+                // 4列均分
+                gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', 
+                // 1. 設定 gap 為 1px，這會強制分開每個格子
+                gap: '1px', 
+                // 2. 設定容器背景色為深灰/邊框色，這就是露出來的線條顏色
+                backgroundColor: THEME.border, 
+                // 3. 設定外框
+                border: `1px solid ${THEME.border}`, 
+                flex: 1 
+                }}>
+
+                {/* 第一列 (巳 午 未 申) */}
                 {renderCell(5)} {renderCell(6)} {renderCell(7)} {renderCell(8)}
+                {/* 第二列左 (辰) */}
                 {renderCell(4)}
-                <div style={{ gridColumn: '2 / span 2', gridRow: '2 / span 2', backgroundColor: THEME.white, border: `1px solid ${THEME.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+                
+                {/* 中宮 (跨越 2列 x 2欄) */}
+                <div style={{ 
+                    gridColumn: '2 / span 2', 
+                    gridRow: '2 / span 2', 
+                    backgroundColor: THEME.white, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: '10px',
+                    // ★ 確保中宮不會遮住任何格線
+                    zIndex: 1 
+                }}>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -1008,7 +1037,14 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                         <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
                     </div>
                 </div>
-                {renderCell(9)} {renderCell(3)} {renderCell(10)}
+
+                {/* 第二列右 (酉) */}
+                {renderCell(9)} 
+                {/* 第三列左 (卯) */}
+                {renderCell(3)} 
+                {/* 第三列右 (戌) */}
+                {renderCell(10)}
+                {/* 第四列 (寅 丑 子 亥) */}
                 {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
             </div>
             <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '10px', color: THEME.gray, paddingBottom: '100px' }}>排盤依據明朝紫微斗數全書</div>
