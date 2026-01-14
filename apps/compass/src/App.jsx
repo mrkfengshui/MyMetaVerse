@@ -1041,7 +1041,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                                 {!isRound && tags.length > 0 && (
                                     <div style={{
                                         position:'absolute',
-                                        bottom: '40px', // 置於運星上方
+                                        bottom: '30px', // 置於運星上方
                                         width:'100%',
                                         display:'flex', gap:'2px', flexWrap:'wrap', justifyContent:'center',
                                         zIndex: 2
@@ -1135,7 +1135,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
 
                                     {idx === 4 && (
                                         <div style={{
-                                            position:'absolute', bottom: isRound ? '35px' : '40px', fontSize:'10px', fontWeight:'bold', 
+                                            position:'absolute', bottom: isRound ? '35px' : '30px', fontSize:'10px', fontWeight:'bold', 
                                             background:'rgba(83, 29, 171, 0.1)', padding:'2px 6px', borderRadius:'4px', color: '#531dab', whiteSpace: 'nowrap'
                                         }}>
                                             {data.chartType}
