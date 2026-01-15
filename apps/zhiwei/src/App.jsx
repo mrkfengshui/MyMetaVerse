@@ -711,7 +711,7 @@ const PalaceGrid = ({
     palace, onClick, highlightMode, siHuaMap, 
     layerMode, isDaXian, isXiaoXian, currentAge,
     daXianName, xiaoXianName, liuYueName, isLiuYue,
-    liuNianZhiIdx, flowingStars
+    liuNianZhiIdx, flowingStars, customStyle
 }) => {
     if (!palace) return <div style={{flex:1}}></div>;
 
@@ -803,7 +803,7 @@ const PalaceGrid = ({
     const currentBgColor = getBackgroundColor();
 
     return (
-        <div onClick={onClick} style={{ position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
+        <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', top: 2, left: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', zIndex: 2 }}>
                 <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px', marginBottom: '4px' }}>{palace.gan}{palace.zhi}</div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '0px' }}>
@@ -954,13 +954,19 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
 
     const renderCell = (idx) => {
         const getDN = (base, cur, pre) => (base === -1 || base === undefined || isNaN(base)) ? null : pre + PALACE_NAMES[(base - cur + 12) % 12].charAt(0);
+        
+        const cellStyle = {
+            boxSizing: 'border-box'
+        };
+
         return (
             <PalaceGrid 
                 palace={g[idx]} onClick={() => setFocusedIndex(idx)}
                 highlightMode={focusedIndex === idx ? 'target' : ([(focusedIndex+4)%12, (focusedIndex+8)%12, (focusedIndex+6)%12].includes(idx) ? 'related' : null)}
                 siHuaMap={activeSiHua} layerMode={layerMode} isDaXian={idx === daXianIdx} isXiaoXian={idx === xiaoXianIdx} currentAge={currentAge} liuNianZhiIdx={liuNianZhiIdx}
                 daXianName={getDN(daXianIdx, idx, '大')} xiaoXianName={getDN(xiaoXianIdx, idx, '歲')} liuYueName={getDN(currentLiuYueIdx, idx, '月')} flowingStars={flowingStars}
-            />
+                customStyle={cellStyle}
+                />
         );
     };
 
