@@ -355,10 +355,10 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
 
 return (
     <div onClick={() => onClick(date)} style={{ height: '75px', backgroundColor: bg, borderRight: `1px solid ${THEME.border}`, borderBottom: `1px solid ${THEME.border}`, position: 'relative', cursor: 'pointer', boxSizing: 'border-box', overflow: 'hidden' }}>
-      {activeColors[0] && <div style={{ position: 'absolute', left: 0, right: 0, top: '0%', height: '25%', backgroundColor: activeColors[0], opacity: 0.4, zIndex: 1 }} />}
-      {activeColors[1] && <div style={{ position: 'absolute', left: 0, right: 0, top: '25%', height: '25%', backgroundColor: activeColors[1], opacity: 0.4, zIndex: 1 }} />}
-      {activeColors[2] && <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: '25%', backgroundColor: activeColors[2], opacity: 0.4, zIndex: 1 }} />}
-      {activeColors[3] && <div style={{ position: 'absolute', left: 0, right: 0, top: '75%', height: '25%', backgroundColor: activeColors[3], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[0] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '1%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[0], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[1] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '26%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[1], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[2] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '51%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[2], opacity: 0.4, zIndex: 1 }} />}
+      {activeColors[3] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '76%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[3], opacity: 0.4, zIndex: 1 }} />}
       <div style={{ opacity: textOpacity, position: 'relative', height: '100%', zIndex: 2, textShadow: qiMode ? '0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff' : 'none', fontWeight: qiMode ? 'bold' : 'normal' }}>
           <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
           <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.teal, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
