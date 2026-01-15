@@ -762,7 +762,7 @@ const PalaceGrid = ({
                 <span style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize }}>
                     {s.name}
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'row', marginTop: '3px', gap: '2px' }}>
+                <div style={{ display: 'flex', flexDirection: 'row', marginTop: '1px', gap: '1px' }}>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.red, lineHeight: 1, display: huaYear ? 'block' : 'none' }}>{huaYear}</span>
                     {showDa && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.blue, lineHeight: 1, display: huaDa ? 'block' : 'none' }}>{huaDa}</span>}
                     {showXiao && <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'green', lineHeight: 1, display: huaXiao ? 'block' : 'none' }}>{huaXiao}</span>}
