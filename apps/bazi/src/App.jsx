@@ -284,7 +284,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本程式旨在提供專業八字排盤服務，結合子平命理與現代演算法，輔助使用者進行命理分析。",
+    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合董公擇日、建除十二神、二十八星宿、三娘煞等民間簡易神煞，輔助使用者進行擇日與命理分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
@@ -307,11 +307,6 @@ const SettingsView = ({
           <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
               <ToggleSelector options={[{val: 'ziZheng', label: '子正換日'}, {val: 'ziShi', label: '子時換日'}]} currentValue={ziHourRule} onChange={setZiHourRule} />
-          </div>
-          <span style={{ display: 'block', height: '1px', backgroundColor: THEME.bg, margin: '0 16px' }} />
-          <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>顯示配色</div>
-              <ToggleSelector options={[{val: 'elemental', label: '五行五色'}, {val: 'dark', label: '純深色'}]} currentValue={colorTheme} onChange={setColorTheme} />
           </div>
       </div>
 

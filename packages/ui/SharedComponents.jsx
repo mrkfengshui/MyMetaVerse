@@ -265,7 +265,7 @@ export const AppInfoCard = ({ info }) => {
   const finalInfo = { 
     ...COMMON_INFO, 
     ...info,
-    emailSubject: info.emailSubject || `關於 ${info.appName || '元星應用程式'} 的建議`
+    emailSubject: info.emailSubject || `關於 ${info.appName || '應用程式'} 的建議`
   };  
 
 const handleContactClick = () => { 
