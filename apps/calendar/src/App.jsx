@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Preferences } from '@capacitor/preferences';
+import 'react-calendar/dist/Calendar.css';
 
 // 1. 引入共用 UI 和 工具
 import { 
-  AppHeader, BottomTabBar, AdBanner, AppInfoCard, 
-  WebBackupManager, BuyMeCoffee, InstallGuide,
-  BookingSystem, BookmarkList, useProtection, 
-  THEME, COMMON_STYLES 
+  AdBanner, AppHeader, AppInfoCard, 
+  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
+  InstallGuide, WebBackupManager, 
+  COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
-  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Compass, CloudUpload,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Circle, Compass, CloudUpload,
   DoorOpen, Download,
   Edit3, Eye, EyeOff, Grid, Lock, MapPin,
   RefreshCw, Save, Settings, Sparkles,
