@@ -37,6 +37,36 @@ const QI_RULES = {
   branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
 };
 
+const YI_JI_MAP = {
+  '开': '開', '满': '滿', '执': '執', '闭': '閉', '壮': '壯', '冲': '沖', '节': '節',
+  '纳': '納', '采': '採', '动': '動', '土': '土', '竖': '豎', '画': '畫', '斋': '齋',
+  '盖': '蓋', '齐': '齊', '发': '發', '财': '財', '钻': '鑽', '缝': '縫', '针': '針',
+  '经': '經', '络': '絡', '酝': '醞', '酿': '釀', '市': '市', '扫': '掃', '舍': '舍',
+  '宇': '宇', '饰': '飾', '垣': '垣', '墙': '牆', '涂': '塗', '伐': '伐', '帐': '帳',
+  '畜': '畜', '稠': '稠', '教': '教', '马': '馬', '医': '醫', '灵': '靈', '堕': '墮',
+  '订': '訂', '盟': '盟', '归': '歸', '宁': '寧', '阳': '陽', '阴': '陰', '戏': '戲',
+  '击': '擊', '鼓': '鼓', '乐': '樂', '词': '詞', '讼': '訟', '猎': '獵', '网': '網',
+  '罗': '羅', '掘': '掘', '种': '種', '鱼': '魚', '乘': '乘', '船': '船', '渡': '渡',
+  '补': '補', '塞': '塞', '穴': '穴', '寿': '壽', '会': '會', '亲': '親', '友': '友', 
+  '进': '進', '剃': '剃', '头': '頭', '粮': '糧', '仓': '倉', '库': '庫', '窑': '窯',
+  '酝': '醞', '酿': '釀', '除': '除', '服': '服', '移': '移', '徙': '徙', '牧': '牧',
+  '养': '養', '整': '整', '手': '手', '足': '足', '求': '求', '嗣': '嗣', '冠': '冠',
+  '带': '帶', '裁': '裁', '衣': '衣', '安': '安', '门': '門', '床': '床', '作': '作',
+  '灶': '灶', '修': '修', '厨': '廚', '平': '平', '治': '治', '道': '道', '涂': '塗',
+  '厕': '廁', '立': '立', '券': '券', '交': '交', '易': '易', '上': '上', '官': '官',
+  '赴': '赴', '任': '任', '临': '臨', '政': '政', '竖': '豎', '柱': '柱', '上': '上',
+  '梁': '梁', '启': '啟', '殡': '殯', '葬': '葬', '移': '移', '柩': '柩', '入': '入',
+  '殓': '殮', '成': '成', '除': '除', '服': '服', '祭': '祭', '祀': '祀', '祈': '祈',
+  '福': '福', '酬': '酬', '谢': '謝', '设': '設', '醮': '醮', '出': '出', '行': '行',
+  '驾': '駕', '拆': '拆', '卸': '卸', '起': '起', '基': '基', '定': '定', '磉': '磉',
+  '筑': '築', '堤': '堤', '防': '防', '放': '放', '水': '水', '开': '開', '池': '池'
+};
+
+const toTraditionalYiJi = (str) => {
+  if (!str) return '';
+  return str.split('').map(char => YI_JI_MAP[char] || char).join('');
+};
+
 const JIAN_FIX_MAP = { '满': '滿', '执': '執', '开': '開', '闭': '閉', '建': '建', '除': '除', '平': '平', '定': '定', '破': '破', '危': '危', '成': '成', '收': '收' };
 const XIU_FIX_MAP = { '虚': '虛', '娄': '婁', '毕': '畢', '参': '參', '张': '張', '轸': '軫', '角': '角', '亢': '亢', '氐': '氐', '房': '房', '心': '心', '尾': '尾', '箕': '箕', '斗': '斗', '牛': '牛', '女': '女', '虛': '虛', '危': '危', '室': '室', '壁': '壁', '奎': '奎', '婁': '婁', '胃': '胃', '昴': '昴', '畢': '畢', '觜': '觜', '參': '參', '井': '井', '鬼': '鬼', '柳': '柳', '星': '星', '張': '張', '翼': '翼', '軫': '軫' };
 const JIAN_CHU_COLOR_MAP = { '建': THEME.red, '除': THEME.blue, '滿': THEME.red, '平': THEME.red, '定': THEME.blue, '執': THEME.blue, '破': THEME.red, '危': THEME.red, '成': THEME.blue, '收': THEME.red, '開': THEME.blue, '閉': THEME.red };
@@ -165,11 +195,49 @@ const AccordionSection = ({ title, children, defaultOpen = false, color = '#333'
 };
 
 // B-3: 底部摘要面板 (點擊可展開詳細資訊，點擊時柱可換時辰)
-const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
+const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 當日期改變時，自動收合 (可選)
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [info?.dateStr]);
+
   if (!info) return null;
 
   const dgColor = info.dongGongRating.includes('吉') ? THEME.blue : (info.dongGongRating.includes('凶') ? THEME.red : THEME.gray);
 
+  // --- 1. 摺疊狀態 (只顯示簡單資訊) ---
+  if (!isExpanded) {
+    return (
+      <div 
+        onClick={() => setIsExpanded(true)}
+        style={{ 
+          backgroundColor: THEME.white, 
+          borderTop: `1px solid ${THEME.border}`, 
+          boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
+          zIndex: 100,
+          cursor: 'pointer',
+          padding: '12px 16px',
+          paddingBottom: '32px', // iPhone Home Bar space
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center'
+        }}
+      >
+         <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
+            <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
+            <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
+         </div>
+         <div style={{ color: THEME.blue }}>
+            <ChevronUp size={16} />
+         </div>
+      </div>
+    );
+  }
+
+  // --- 2. 展開狀態 ---
   return (
     <div 
       style={{ 
@@ -181,7 +249,7 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
         padding: '12px 16px',
         paddingBottom: '24px' // iPhone Home Bar space
       }}
-      onClick={onClick}
+      onClick={onDetailClick} 
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
@@ -189,9 +257,13 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
          </div>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.blue, fontSize: '12px' }}>
-            <span>查看詳情</span>
-            <ChevronUp size={16} />
+         
+         {/* 這裡改為收合按鈕，阻止冒泡以免觸發 onDetailClick */}
+         <div 
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.blue, fontSize: '12px', padding: '4px' }}
+         >
+            <ChevronDown size={16} />
          </div>
       </div>
 
@@ -261,10 +333,10 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
                 <div style={{ fontSize: '24px', fontWeight: '800', color: THEME.black }}>
-                  {date.getDate()}日 <span style={{fontSize:'16px', color:'#666'}}>週{info.weekDay}</span>
+                  {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#666'}}>週{info.weekDay}</span>
                 </div>
                 <div style={{ fontSize: '13px', color: '#666' }}>
-                    {info.ganZhiYear} · {info.lunarStr}
+                    {info.ganZhiYear}年 {info.lunarStr}
                 </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -295,16 +367,16 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
             {/* 擇日神煞 */}
             <AccordionSection title="擇日神煞" defaultOpen={true} color="#722ed1">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <InfoItem label="建除十二神" value={info.jian} desc="建除十二神是傳統擇日學的重要依據，每日輪值不同神煞。" />
-                    <InfoItem label="二十八宿" value={info.xiuFull} desc="二十八星宿為中國古代天文學的恆星區分系統。" />
+                    <InfoItem label="建除十二神" value={info.jian} desc="傳統擇日學的重要依據，每日輪值不同神煞。" />
+                    <InfoItem label="二十八宿" value={info.xiuFull} desc="中國古代天文學的恆星區分系統。" />
                 </div>
             </AccordionSection>
 
             {/* 董公 */}
-            <AccordionSection title="董公擇日要覽" defaultOpen={true} color="#fa8c16">
+            <AccordionSection title="董公擇日便覽" defaultOpen={true} color="#fa8c16">
                 <div style={{ marginBottom: '8px' }}>
                   <span style={{ fontWeight: 'bold', color: info.dongGongRating.includes('吉') ? THEME.blue : THEME.red }}>
-                    評級：{info.dongGongRating}
+                    {info.dongGongRating}
                   </span>
                 </div>
                 <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#444', whiteSpace: 'pre-line' }}>
@@ -428,6 +500,7 @@ const CalendarToolbar = ({
 
     return (
       <div style={{ padding: '10px 16px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* 上排按鈕區 (維持不變) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button 
@@ -458,13 +531,19 @@ const CalendarToolbar = ({
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* 下排標題區 (修改處) */}
+          {/* 1. 加入 justifyContent: 'space-between' 讓左右區塊分開 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            
+            {/* 左側：跳轉日期標題 (維持在最左) */}
             <div onClick={onTitleClick} style={{ position: 'relative', display: 'flex', alignItems: 'baseline', cursor: 'pointer', userSelect: 'none' }}>
                 <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black }}>{currentDate.getFullYear()}年</span>
                 <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black, marginLeft: '6px' }}>{currentDate.getMonth()+1}月</span>
                 <ChevronRight size={20} color={THEME.lightGray} style={{ marginLeft: '4px', transform: 'translateY(2px)' }} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
+
+            {/* 右側：農曆與節氣 (2. 加入 alignItems: 'flex-end' 讓文字靠右對齊) */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px', alignItems: 'flex-end' }}>
                 {headerGanZhi && (<span style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', lineHeight: '1.2' }}>{headerGanZhi.year} {headerGanZhi.month}</span>)}
                 <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', lineHeight: '1.2' }}>
                     {solarTerms.map((term, idx) => (<span key={idx} style={{ color: THEME.purple, fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap' }}>{term.name}{term.day}日</span>))}
@@ -614,11 +693,11 @@ const YearMonthPicker = ({ visible, onClose, onConfirm, initialDate }) => {
         <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>年份</label>
-            <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{years.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>月份</label>
-            <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{months.map(m => <option key={m} value={m}>{m}月</option>)}</select>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px', backgroundColor: THEME.white }}>{months.map(m => <option key={m} value={m}>{m}</option>)}</select>
           </div>
         </div>
         <button onClick={() => { onConfirm(selectedYear, selectedMonth); onClose(); }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>確認跳轉</button>
@@ -805,8 +884,8 @@ export default function CalendarApp() {
         if (lunarMonthName === '腊' || lunarMonthName === '臘') lunarMonthName = '十二';
 
         // --- 新增：動態獲取真實宜忌 ---
-        const yiList = lunar.getDayYi();
-        const jiList = lunar.getDayJi();
+        const yiList = lunar.getDayYi().map(toTraditionalYiJi); // 加入轉換函數
+        const jiList = lunar.getDayJi().map(toTraditionalYiJi); // 加入轉換函數
 
         return {
             dateStr: `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日`,
@@ -923,12 +1002,18 @@ export default function CalendarApp() {
                     />
                   ))}
                 </div>
+                {/* 在月曆網格下方加入廣告 */}
+                <div style={{ padding: '20px 0' }}>
+                    <AdBanner />
+                </div>
                 <div style={{ height: '120px' }}></div>
             </div>
 
             <BottomSummaryPanel 
                 info={selectedInfo} 
-                onClick={() => setIsDetailModalOpen(true)}
+                // 當面板展開並被點擊時，開啟詳情 Modal
+                onDetailClick={() => setIsDetailModalOpen(true)}
+                // 當點擊時柱時，開啟時辰選擇器
                 onTimeClick={() => setShowTimeModal(true)}
             />
           </>
@@ -938,7 +1023,7 @@ export default function CalendarApp() {
           <div style={COMMON_STYLES.contentArea}>
              <div style={{ padding: '16px', backgroundColor: THEME.bg }}>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
-                  <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的書籤</h2>
+                  <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的書籤紀錄</h2>
                 </div>
                 <div style={{ marginTop: '20px' }}>
                     <BookmarkList 
@@ -951,6 +1036,9 @@ export default function CalendarApp() {
                         }}
                         onDelete={(id) => { if(window.confirm('確定刪除此書籤？')) toggleBookmark(new Date(id)); }}
                     />
+                    <div style={{ marginTop: '20px' }}>
+                        <AdBanner />
+                    </div>
                 </div>
              </div>
           </div>
