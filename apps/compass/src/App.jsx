@@ -557,7 +557,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
             <div style={{
                 background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
                 padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                maxHeight: '90vh', overflowY: 'auto'
+                maxHeight: '60vh', overflowY: 'auto', overscrollBehavior: 'contain' // 修改 3: 防止滑動時帶動到底層頁面
             }} onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
                     <X size={24} color="#666"/>
@@ -937,6 +937,12 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
     const sitDir = GUA_TO_DIR ? GUA_TO_DIR[data.sitting.gua] : '';
     const faceDir = GUA_TO_DIR ? GUA_TO_DIR[data.facing.gua] : '';
 
+    const years = []; 
+    for (let y = 1900; y <= 2100; y++) {
+        years.push(y);
+    }
+    const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
@@ -957,7 +963,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                         <select 
                             value={period} 
                             onChange={e => setPeriod(Number(e.target.value))} 
-                            style={{border:'1px solid #ddd', marginLeft:'4px'}}
+                            style={{border:'1px solid #ddd', marginLeft:'4px', padding: '2px'}}
                         >
                             {[1,2,3,4,5,6,7,8,9].map(n => (
                                 <option key={n} value={n}>{PERIOD_MAP_CHART[n]}運</option>
@@ -965,16 +971,33 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                         </select>
                     </label>
 
-                    {/* ★ 修改 2: 輸入框清空處理 */}
+                    {/* ★ 流年：下拉式選單 (1900-2100) */}
                     <label style={{fontSize:'14px'}}>
-                        年: <input 
-                            type="number" 
+                        年: 
+                        <select 
                             value={year} 
-                            onChange={e => setYear(e.target.value === '' ? '' : Number(e.target.value))} 
-                            style={{width:'55px', border:'1px solid #ddd'}}
-                        />
+                            onChange={e => setYear(Number(e.target.value))} 
+                            style={{border:'1px solid #ddd', padding: '2px'}}
+                        >
+                            {years.map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
                     </label>
-                    <label style={{fontSize:'14px'}}>月: <select value={month} onChange={e => setMonth(Number(e.target.value))} style={{border:'1px solid #ddd'}}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
+
+                    {/* ★ 流月：下拉式選單 (1-12) */}
+                    <label style={{fontSize:'14px'}}>
+                        月: 
+                        <select 
+                            value={month} 
+                            onChange={e => setMonth(Number(e.target.value))} 
+                            style={{border:'1px solid #ddd', padding: '2px'}}
+                        >
+                            {months.map(m => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                    </label>
                 </div>
                 <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
                      <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
