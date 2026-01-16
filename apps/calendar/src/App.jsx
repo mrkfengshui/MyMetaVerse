@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import 'react-calendar/dist/Calendar.css';
 
-// 1. 引入共用 UI 和 工具 (請確保您的環境有這些套件)
+// 1. 引入共用 UI 和 工具
 import { 
   AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 
 // =========================================================================
-// PART A: 核心數據與邏輯 (完整保留，無刪減)
+// PART A: 核心數據與邏輯 (完整保留)
 // =========================================================================
 const APP_NAME = "進氣萬年曆";
-const APP_VERSION = "進氣萬年曆 v1.5";
+const APP_VERSION = "v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -113,7 +113,7 @@ const getShiGan = (dayGan, timeZhiName) => {
 };
 
 // =========================================================================
-// PART B: UI 組件 (BottomPanel, Modal, Toolbar)
+// PART B: UI 組件
 // =========================================================================
 
 // B-1: 可點擊的資訊項目 (用於 Modal 內)
@@ -168,7 +168,6 @@ const AccordionSection = ({ title, children, defaultOpen = false, color = '#333'
 const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
   if (!info) return null;
 
-  // 根據吉凶顯示顏色
   const dgColor = info.dongGongRating.includes('吉') ? THEME.blue : (info.dongGongRating.includes('凶') ? THEME.red : THEME.gray);
 
   return (
@@ -180,11 +179,10 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
         zIndex: 100,
         cursor: 'pointer',
         padding: '12px 16px',
-        paddingBottom: '24px' // 預留底部空間給 iPhone Home Bar
+        paddingBottom: '24px' // iPhone Home Bar space
       }}
-      onClick={onClick} // 點擊整個面板打開 Modal
+      onClick={onClick}
     >
-      {/* 第一行：日期摘要 + 提示圖示 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
@@ -197,10 +195,7 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
          </div>
       </div>
 
-      {/* 第二行：左右佈局 (左邊資訊，右邊八字) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          
-          {/* 左側：建除、星宿、董公 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                   <span style={{ fontSize: '13px', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px', color: THEME.black }}>
@@ -216,9 +211,7 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
               </div>
           </div>
 
-          {/* 右側：八字 (時柱可點擊) */}
           <div style={{ display: 'flex', gap: '4px', textAlign: 'center' }}>
-              {/* 時柱 (點擊觸發換時辰) */}
               <div 
                 onClick={(e) => { e.stopPropagation(); onTimeClick(); }} 
                 style={{ background: '#e6f7ff', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer', border: `1px solid ${THEME.blue}` }}
@@ -227,19 +220,16 @@ const BottomSummaryPanel = ({ info, onClick, onTimeClick }) => {
                   <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.timeGan}</div>
                   <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.timeZhi}</div>
               </div>
-              {/* 日柱 */}
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>日</div>
                   <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.dayGan}</div>
                   <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.dayZhi}</div>
               </div>
-              {/* 月柱 */}
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>月</div>
                   <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.monthGan}</div>
                   <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.monthZhi}</div>
               </div>
-              {/* 年柱 */}
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>年</div>
                   <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.yearGan}</div>
@@ -281,23 +271,24 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
               <button onClick={() => toggleBookmark(date)} style={{ border: 'none', background: 'none', padding: '8px', cursor: 'pointer' }}>
                  <Bookmark size={24} fill={isBookmarked ? THEME.red : 'none'} color={isBookmarked ? THEME.red : '#ccc'} />
               </button>
-              <button onClick={onClose} style={{ background: '#f0f0f0', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor:'pointer' }}>
-                  <X size={20} color="#666"/>
+              {/* --- 修改：右上角關閉按鈕樣式 (無背景圓形) --- */}
+              <button onClick={onClose} style={{ background: 'transparent', border: 'none', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor:'pointer' }}>
+                  <X size={26} color="#666"/>
               </button>
             </div>
         </div>
 
         {/* Modal Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-            {/* 宜忌速覽 */}
+            {/* 宜忌速覽 (動態讀取) */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                 <div style={{ flex: 1, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '12px', padding: '12px' }}>
                     <div style={{ color: '#389e0d', fontWeight: 'bold', fontSize: '14px', marginBottom: '6px' }}>宜</div>
-                    <div style={{ fontSize: '13px', lineHeight: '1.4' }}>祭祀, 祈福, 求嗣</div>
+                    <div style={{ fontSize: '13px', lineHeight: '1.4' }}>{info.yi}</div>
                 </div>
                 <div style={{ flex: 1, background: '#fff1f0', border: '1px solid #ffa39e', borderRadius: '12px', padding: '12px' }}>
                     <div style={{ color: '#cf1322', fontWeight: 'bold', fontSize: '14px', marginBottom: '6px' }}>忌</div>
-                    <div style={{ fontSize: '13px', lineHeight: '1.4' }}>嫁娶, 移徙, 安葬</div>
+                    <div style={{ fontSize: '13px', lineHeight: '1.4' }}>{info.ji}</div>
                 </div>
             </div>
 
@@ -320,22 +311,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                     {info.dongGongText}
                 </div>
             </AccordionSection>
-            
-            {/* 八字展示 */}
-            <AccordionSection title="當日八字" color="#1890ff">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', textAlign: 'center' }}>
-                 <div style={{ fontWeight: 'bold', color: '#888' }}>時</div>
-                 <div style={{ fontWeight: 'bold', color: '#888' }}>日</div>
-                 <div style={{ fontWeight: 'bold', color: '#888' }}>月</div>
-                 <div style={{ fontWeight: 'bold', color: '#888' }}>年</div>
-                 
-                 <div style={{ color: THEME.black, fontSize: '16px' }}>{info.bazi.timeGan}{info.bazi.timeZhi}</div>
-                 <div style={{ color: THEME.black, fontSize: '16px' }}>{info.bazi.dayGan}{info.bazi.dayZhi}</div>
-                 <div style={{ color: THEME.black, fontSize: '16px' }}>{info.bazi.monthGan}{info.bazi.monthZhi}</div>
-                 <div style={{ color: THEME.black, fontSize: '16px' }}>{info.bazi.yearGan}{info.bazi.yearZhi}</div>
-              </div>
-            </AccordionSection>
-        </div>
+          </div>
       </div>
     </div>
   );
@@ -381,10 +357,10 @@ const TimePickerModal = ({ visible, onClose, onSelect, currentRule, currentIndex
 };
 
 // =========================================================================
-// PART C: 主要視圖組件 (Settings, Toolbar, DayCell)
+// PART C: 主要視圖組件
 // =========================================================================
 
-// C-1: SettingsView (已修復滾動問題)
+// C-1: SettingsView
 const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
   const APP_INFO = {
     appName: APP_NAME,
@@ -427,7 +403,7 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
   );
 };
 
-// C-2: CalendarToolbar (羅庚風格按鈕)
+// C-2: CalendarToolbar
 const CalendarToolbar = ({ 
     currentDate, onToday, solarTerms, headerGanZhi, 
     onTitleClick, 
@@ -435,7 +411,6 @@ const CalendarToolbar = ({
     showTuiQi, setShowTuiQi 
 }) => {
     
-    // 定義按鈕樣式
     const getBtnStyle = (isActive, color, bgActive) => ({
       fontSize: '12px',
       padding: '4px 10px',
@@ -453,23 +428,19 @@ const CalendarToolbar = ({
 
     return (
       <div style={{ padding: '10px 16px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* 第一行：標題與返回今天 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                {/* 羅庚風格進氣按鈕 */}
                 <button 
                     onClick={() => setShowJinQi(!showJinQi)} 
                     style={getBtnStyle(showJinQi, '#722ed1', '#f9f0ff')}
                 >
-                    {showJinQi ? <Eye size={14}/> : <EyeOff size={14}/>} 進氣
+                    {showJinQi ? <Eye size={14}/> : <EyeOff size={14}/>} 流年進退氣
                 </button>
-
-                {/* 羅庚風格退氣按鈕 */}
                 <button 
                     onClick={() => setShowTuiQi(!showTuiQi)} 
                     style={getBtnStyle(showTuiQi, '#fa8c16', '#fff7e6')}
                 >
-                    {showTuiQi ? <Eye size={14}/> : <EyeOff size={14}/>} 退氣
+                    {showTuiQi ? <Eye size={14}/> : <EyeOff size={14}/>} 流月進退氣
                 </button>
             </div>
 
@@ -487,11 +458,10 @@ const CalendarToolbar = ({
             </button>
           </div>
 
-          {/* 第二行：日期顯示 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div onClick={onTitleClick} style={{ position: 'relative', display: 'flex', alignItems: 'baseline', cursor: 'pointer', userSelect: 'none' }}>
-                <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black }}>{currentDate.getFullYear()}</span>
-                <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black, marginLeft: '6px' }}>{currentDate.getMonth()+1}</span>
+                <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black }}>{currentDate.getFullYear()}年</span>
+                <span style={{ fontSize: '28px', fontWeight: '800', color: THEME.black, marginLeft: '6px' }}>{currentDate.getMonth()+1}月</span>
                 <ChevronRight size={20} color={THEME.lightGray} style={{ marginLeft: '4px', transform: 'translateY(2px)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
@@ -505,7 +475,7 @@ const CalendarToolbar = ({
     );
 };
 
-// C-3: DayCell (圓頭進氣條)
+// C-3: DayCell
 const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender, bookmarks, qiMode }) => {
   if (!canRender || !date || isNaN(date.getTime())) return <div style={{ height: '75px', background: '#fff' }}></div>;
   
@@ -604,7 +574,6 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
   return (
     <div onClick={() => onClick(date)} style={{ height: '75px', backgroundColor: bg, borderRight: `1px solid ${THEME.border}`, borderBottom: `1px solid ${THEME.border}`, position: 'relative', cursor: 'pointer', boxSizing: 'border-box', overflow: 'hidden' }}>
       
-      {/* 修改後的進氣條：圓頭 + 間隙 (Pill Shape) */}
       {activeColors[0] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '1%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[0], opacity: 0.4, zIndex: 1 }} />}
       {activeColors[1] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '26%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[1], opacity: 0.4, zIndex: 1 }} />}
       {activeColors[2] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '51%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[2], opacity: 0.4, zIndex: 1 }} />}
@@ -677,21 +646,16 @@ export default function CalendarApp() {
   const [ziHourRule, setZiHourRule] = useState('ziShi'); 
   const [timeIndex, setTimeIndex] = useState(6);
   
-  // 顯示控制 State (羅庚風格開關)
   const [showJinQi, setShowJinQi] = useState(false);
   const [showTuiQi, setShowTuiQi] = useState(false);
-  const [qiMode, setQiMode] = useState(null); // 'nian' or 'yue' or null
+  const [qiMode, setQiMode] = useState(null); 
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   
-  // 滾動 Ref
   const scrollRef = useRef(null);
-
-  // 觸控滑動 State
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
-  // 初始化
   useEffect(() => {
     const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
     lockOrientation();
@@ -708,10 +672,9 @@ export default function CalendarApp() {
   useEffect(() => { localStorage.setItem('zi_hour_rule', ziHourRule); }, [ziHourRule]);
   useEffect(() => { if (!isNaN(selectedDate.getTime())) localStorage.setItem('selected_date', getLocalDateString(selectedDate)); }, [selectedDate]);
   
-  // 連動控制：當 showJinQi/TuiQi 改變時，設定 qiMode
   useEffect(() => {
     if (showJinQi || showTuiQi) {
-        if (!qiMode) setQiMode('nian'); // 預設開啟流年
+        if (!qiMode) setQiMode('nian');
     } else {
         setQiMode(null);
     }
@@ -746,27 +709,18 @@ export default function CalendarApp() {
     setSelectedDate(newDate);
   };
 
-  // -------------------------
-  // 核心功能：返回今天並捲動到第一行
-  // -------------------------
   const handleBackToToday = () => {
     const now = new Date();
     setCurrentDate(now);
     setSelectedDate(now);
-
-    // 計算今天在 Grid 中的行數
     const year = now.getFullYear();
     const month = now.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
-    const startDayOfWeek = firstDayOfMonth.getDay(); // 0-6
+    const startDayOfWeek = firstDayOfMonth.getDay(); 
     const day = now.getDate();
-
-    // Index = 空白格 + (今天-1)
     const gridIndex = startDayOfWeek + (day - 1);
     const row = Math.floor(gridIndex / 7);
-    const ROW_HEIGHT = 75; // 與 DayCell height 一致
-
-    // 延遲滾動以確保 Render 完成
+    const ROW_HEIGHT = 75; 
     setTimeout(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTo({
@@ -810,7 +764,7 @@ export default function CalendarApp() {
   }, [selectedDate, libStatus]);
 
   // ==========================================
-  // 計算當前選中日期的詳細資訊 (給下方面板使用)
+  // 計算當前選中日期的詳細資訊 (含動態宜忌)
   // ==========================================
   const selectedInfo = useMemo(() => {
     if (libStatus !== 'ready' || !selectedDate) return null;
@@ -840,7 +794,6 @@ export default function CalendarApp() {
             if (dgRule.s && dgRule.s[dayGanZhi]) { dgRating = dgRule.s[dayGanZhi]; dgText += ` (本日${dayGanZhi}為${dgRating})`; } 
             else { dgRating = dgRule.r; }
         }
-        // 董公簡短描述 (用於下方小面板)
         const dgSummary = dgText.split('：')[1]?.split('。')[0] || dgRating;
 
         const rawJian = lunar.getZhiXing();
@@ -850,6 +803,10 @@ export default function CalendarApp() {
         let lunarMonthName = lunar.getMonthInChinese();
         if (lunarMonthName === '冬') lunarMonthName = '十一';
         if (lunarMonthName === '腊' || lunarMonthName === '臘') lunarMonthName = '十二';
+
+        // --- 新增：動態獲取真實宜忌 ---
+        const yiList = lunar.getDayYi();
+        const jiList = lunar.getDayJi();
 
         return {
             dateStr: `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日`,
@@ -865,6 +822,8 @@ export default function CalendarApp() {
             jian: fixJian, xiu: fixXiu, xiuFull: XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿'),
             dongGongRating: dgRating, dongGongText: dgText, dongGongSummary: dgSummary,
             isSanNiang: isSanNiang,
+            yi: yiList.join(', '), // 轉為字串
+            ji: jiList.join(', ')  // 轉為字串
         };
     } catch(e) { return null; }
   }, [selectedDate, libStatus, timeIndex, ziHourRule]);
@@ -956,7 +915,6 @@ export default function CalendarApp() {
                         onClick={(d) => {
                              if (!isNaN(d.getTime())) {
                                  setSelectedDate(d);
-                                 // 注意：這裡只切換選中狀態，不直接開 Modal，讓下方 Panel 顯示
                              }
                         }} 
                         canRender={libStatus === 'ready'} 
@@ -965,15 +923,13 @@ export default function CalendarApp() {
                     />
                   ))}
                 </div>
-                {/* 預留空間給底部面板 */}
                 <div style={{ height: '120px' }}></div>
             </div>
 
-            {/* 底部摘要面板 */}
             <BottomSummaryPanel 
                 info={selectedInfo} 
-                onClick={() => setIsDetailModalOpen(true)} // 點擊面板 -> 開詳細 Modal
-                onTimeClick={() => setShowTimeModal(true)} // 點擊時柱 -> 開時間選擇
+                onClick={() => setIsDetailModalOpen(true)}
+                onTimeClick={() => setShowTimeModal(true)}
             />
           </>
         )}
@@ -1001,7 +957,6 @@ export default function CalendarApp() {
         )}
         
         {view === 'settings' && (
-            // 設定頁的滾動修復 wrapper
             <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', backgroundColor: THEME.bg }}>
                 <SettingsView 
                     ziHourRule={ziHourRule} 
@@ -1017,7 +972,6 @@ export default function CalendarApp() {
         )}
       </div>
       
-      {/* 詳細資訊 Modal */}
       <DayDetailModal 
          isOpen={isDetailModalOpen}
          onClose={() => setIsDetailModalOpen(false)}
@@ -1027,7 +981,6 @@ export default function CalendarApp() {
          isBookmarked={selectedDate ? bookmarks.includes(getLocalDateString(selectedDate)) : false}
       />
 
-      {/* 時間選擇 Modal */}
       <TimePickerModal 
         visible={showTimeModal} 
         onClose={() => setShowTimeModal(false)} 
@@ -1037,7 +990,6 @@ export default function CalendarApp() {
         onSelect={(idx) => { setTimeIndex(idx); setShowTimeModal(false); }} 
       />
 
-      {/* 年月跳轉 Modal */}
       <YearMonthPicker 
         visible={showDatePicker} 
         initialDate={currentDate}
