@@ -858,9 +858,9 @@ export default function CalendarApp() {
   }, [currentDate, libStatus]);
 
   const headerGanZhi = useMemo(() => {
-      if (libStatus !== 'ready' || !selectedDate) return null;
+      if (libStatus !== 'ready' || !currentDate) return null;
       try {
-          const solar = window.Solar.fromYmd(selectedDate.getFullYear(), selectedDate.getMonth() + 1, selectedDate.getDate());
+          const solar = window.Solar.fromYmd(currentDate.getFullYear(), currentDate.getMonth() + 1, 15);
           const lunar = solar.getLunar();
           // [修改] 使用 getEightChar() 獲取立春換年的干支
           const baziObj = lunar.getEightChar();
@@ -869,7 +869,7 @@ export default function CalendarApp() {
               month: baziObj.getMonthGan() + baziObj.getMonthZhi() + '月' 
           };
       } catch(e) { return null; }
-  }, [selectedDate, libStatus]);
+  }, [currentDate, libStatus]);
 
   // ==========================================
   // 計算當前選中日期的詳細資訊 (含動態宜忌)
@@ -1046,7 +1046,6 @@ export default function CalendarApp() {
                 <div style={{ padding: '20px 0' }}>
                     <AdBanner />
                 </div>
-                <div style={{ height: '120px' }}></div>
             </div>
 
             <BottomSummaryPanel 

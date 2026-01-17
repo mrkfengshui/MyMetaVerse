@@ -590,7 +590,7 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
 };
 
 // --- PillarCard (四柱卡片) ---
-const PillarCard = ({ title, gan, zhi, naYin, dayMaster, showHiddenStems, colorTheme }) => {
+const PillarCard = ({ title, gan, zhi, naYin, dayMaster, showHiddenStems, colorTheme, genderText }) => { // [修改] 新增 genderText
    const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
    const zhiColor = safeTheme === 'elemental' ? (BRANCH_COLORS[zhi] || '#555555') : '#555555';
@@ -600,29 +600,73 @@ const PillarCard = ({ title, gan, zhi, naYin, dayMaster, showHiddenStems, colorT
    const displayTopRight = showHiddenStems ? null : ganGod;
    const displayBottomRight = showHiddenStems ? hiddenStems : hiddenGods;
 
-return (
-     <div style={{ flex: 1, backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', minHeight: '175px', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{title}</div>
-        <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1.2 }}>{gan}</span>
-            {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -14, fontSize: '14px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+    return (
+        <div style={{ 
+            flex: 1, 
+            backgroundColor: THEME.white, 
+            borderRadius: '12px', 
+            border: `1px solid ${THEME.border}`, 
+            padding: '12px 4px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)', 
+            minHeight: '175px', 
+            justifyContent: 'space-between'
+        }}>
+            <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{title}</div>
+            
+            {/* 天干區塊 */}
+            <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1.2 }}>{gan}</span>
+                
+                {/* 1. 一般變通星 (十神) */}
+                {displayTopRight && (
+                    <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>
+                        {displayTopRight}
+                    </div>
+                )}
+
+                {/* 2. [修改] 元男/元女：移入此處，並使用相同的 right: -12 */}
+                {genderText && (
+                    <div style={{
+                        position: 'absolute',
+                        top: -4,                // 微調頂部對齊，使其與天干平齊
+                        right: -15,
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'upright',
+                        fontSize: '14px',
+                        color: THEME.gray,
+                        opacity: 0.8,
+                        letterSpacing: '2px',   
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {genderText}
+                    </div>
+                )}
+            </div>
+            
+            {/* 地支區塊 */}
+            <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
+                <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
+                <div style={{ position: 'absolute', top: 6, right: -12, display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1', transform: 'scale(1)', color: THEME.gray }}>{item}</span>))}</div>
+            </div>
+            
+            <div style={{ fontSize: '10px', color: THEME.gray, marginTop: '8px', backgroundColor: THEME.bgGray, padding: '2px 6px', borderRadius: '4px' }}>{naYin}</div>
         </div>
-        <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
-            <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
-            <div style={{ position: 'absolute', top: 6, right: -14, display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1', transform: 'scale(1)', color: '#888' }}>{item}</span>))}</div>
-        </div>
-        <div style={{ fontSize: '10px', color: THEME.gray, marginTop: '8px', backgroundColor: THEME.bgGray, padding: '2px 6px', borderRadius: '4px' }}>{naYin}</div>
-     </div>
-   );
-};
+    );
+    };
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
+   const [selectedLiuYue, setSelectedLiuYue] = useState(null); 
    const [showHiddenStems, setShowHiddenStems] = useState(false);
    const safeTheme = colorTheme || 'elemental';
+
    useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
+   useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
    if (!data) return null;
 
    const getColor = (char, type) => {
@@ -636,31 +680,58 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        const startGanIdx = (yearGanIdx % 5) * 2 + 2; 
        const months = [];
        const JIE_QI_NAMES = ["立春", "驚蟄", "清明", "立夏", "芒種", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
+       
+       // 輔助函式：格式化日期時間 (例如: 2/4 16:20)
+       const formatTime = (solarObj) => {
+           const M = solarObj.getMonth();
+           const D = solarObj.getDay();
+           const h = String(solarObj.getHour()).padStart(2, '0');
+           const m = String(solarObj.getMinute()).padStart(2, '0');
+           return `${M}/${D} ${h}:${m}`;
+       };
+
        for(let i=0; i<12; i++) {
            const ganIdx = (startGanIdx + i) % 10;
            const zhiIdx = (2 + i) % 12; 
            let searchYear = parseInt(year), searchMonth = i + 2; 
            if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
            
-           let jieQiDateStr = `${searchMonth}月`; // 預設值
+           let dateStr = `${searchMonth}月`; 
+           let jieInfo = '';
+           let qiInfo = '';
+
            try {
                if (window.Solar) {
+                   // 鎖定每月15號，確保位於節與氣之間
                    const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
                    const lunar = solarCheck.getLunar();
-                   const jieQi = lunar.getPrevJieQi(true); 
-                   if (jieQi && toTraditional(jieQi.getName()) === JIE_QI_NAMES[i]) {
-                       const solarJie = jieQi.getSolar(); 
-                       jieQiDateStr = `${solarJie.getDay()}/${solarJie.getMonth()}`;
+                   
+                   // 1. 抓取「節」(月頭)
+                   const prevJie = lunar.getPrevJieQi(true); 
+                   // 2. 抓取「氣」(月中) - 15號的下一個節氣通常就是中氣
+                   const nextQi = lunar.getNextJieQi(true);
+
+                   if (prevJie && toTraditional(prevJie.getName()) === JIE_QI_NAMES[i]) {
+                       const solarJie = prevJie.getSolar();
+                       // 格式
+                       dateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
+                       // 詳細資訊
+                       jieInfo = `${prevJie.getName()} ${formatTime(solarJie)}`;
+                   }
+                   
+                   if (nextQi) {
+                       qiInfo = `${nextQi.getName()} ${formatTime(nextQi.getSolar())}`;
                    }
                }
-           } catch (e) { 
-               console.warn("節氣計算錯誤", e); 
+           } catch (e) { console.warn("節氣計算錯誤", e);
            }
            
            months.push({ 
                seq: i + 1, 
-               name: JIE_QI_NAMES[i], 
-               dateStr: jieQiDateStr, 
+               name: JIE_QI_NAMES[i], // 節氣名 (如: 立春)
+               dateStr: dateStr,      // 列表顯示用 (如: 4/2)
+               jieInfo: jieInfo,      // 詳細節資訊 (如: 立春 2/4 16:20)
+               qiInfo: qiInfo,        // 詳細氣資訊 (如: 雨水 2/19 12:00)
                gan: TIANGAN[ganIdx] || '', 
                zhi: DIZHI[zhiIdx] || '', 
                ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), 
@@ -679,14 +750,15 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     const displayBottomRight = showHiddenStems ? dy.zhiHidden : dy.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
                     const gColor = getColor(dy.gan, 'stem'); const zColor = getColor(dy.zhi, 'branch');
                 return (
-                       <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', minHeight: '110px', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `1px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
+                       <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', 
+                                boxSizing: 'border-box', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
                             <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
-                                {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -12, fontSize: '14px', color: '#888' }}>{displayTopRight}</div>}
+                                {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -12, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
                             </div>
                             <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
-                                <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
+                                <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
                             </div>
                             {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}歲</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
                         </div>
@@ -714,14 +786,15 @@ const renderLiuNianGrid = () => {
                          const displayBottomRight = showHiddenStems ? ln.zhiHidden : ln.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
                          const gColor = getColor(ln.gan, 'stem'); const zColor = getColor(ln.zhi, 'branch');
                          return (
-                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.red}` : `1px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
+                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', height: '120px', 
+                                      boxSizing: 'border-box', border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
                                   <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                       <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
-                                      {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                      {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                   </div>
                                   <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                       <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
-                                      <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
+                                      <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
                                   </div>
                                   <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                       <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}歲</div>
@@ -740,29 +813,82 @@ const renderLiuNianGrid = () => {
        const targetDaYun = data.daYuns[selectedDaYunIndex];
        const lnData = targetDaYun.liuNians.find(l => l.year === selectedLiuNianYear);
        if(!lnData) return null;
+       
        const liuYues = getLiuYueData(lnData.gan, lnData.zhi, lnData.year);
+       
+       // 決定標題顯示內容
+       const renderTitle = () => {
+           if (selectedLiuYue) {
+               // 點選時顯示：節與氣的時間
+               return (
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                       <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>
+                           {lnData.gan}{lnData.zhi}流年 {selectedLiuYue.gan}{selectedLiuYue.zhi}月
+                       </span>
+                       <span style={{ fontSize: '13px', color: THEME.blue }}>
+                           <span style={{ marginRight: '12px' }}>{selectedLiuYue.jieInfo}</span>
+                           <span>{selectedLiuYue.qiInfo}</span>
+                       </span>
+                   </div>
+               );
+           } else {
+               // 預設標題
+               return (
+                   <h4 style={{ margin: '0', fontSize: '15px' }}>
+                       {lnData.gan}{lnData.zhi}流年 - 流月
+                   </h4>
+               );
+           }
+       };
+
        return (
            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>{lnData.gan}{lnData.zhi}流年 ({lnData.year}年) - 流月</h4>
-                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px' }}><X size={16} /></button>
+                {/* 標題列區塊 */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', height: '44px',           // 固定高度
+                    boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
+                   {renderTitle()}
+                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px' }}>
+                       <X size={18} />
+                   </button>
                 </div>
+
+                {/* 流月網格 */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', direction: 'rtl' }}>
                     {liuYues.map((ly) => {
+                        // 判斷是否被選中
+                        const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
+                        
                         const displayTopRight = showHiddenStems ? null : ly.ganGod;
                         const displayBottomRight = showHiddenStems ? ly.zhiHidden : ly.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
-                        const gColor = getColor(ly.gan, 'stem'); const zColor = getColor(ly.zhi, 'branch');
+                        const gColor = getColor(ly.gan, 'stem'); 
+                        const zColor = getColor(ly.zhi, 'branch');
+                        
                         return (
-                            <div key={ly.seq} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: THEME.bgOrange, borderRadius: '8px', border: `1px solid ${THEME.border}`, position: 'relative', minHeight: '110px', direction: 'ltr' }}>
+                            <div 
+                                key={ly.seq} 
+                                // [互動] 點擊設定選中狀態
+                                onClick={() => setSelectedLiuYue(ly)}
+                                style={{ 
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                                    padding: '8px 4px', 
+                                    // 選中時變色
+                                    backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, 
+                                    borderRadius: '8px', 
+                                    border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
+                                    position: 'relative', Height: '110px', boxSizing: 'border-box', direction: 'ltr',
+                                    cursor: 'pointer', transition: 'all 0.2s'
+                                }}
+                            >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -9, fontSize: '12px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
-                                    <div style={{ position: 'absolute', top: 8, right: -9, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>))}</div>
+                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
+                                    {/* 顯示 日/月 */}
                                     <div style={{ fontSize: '12px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
                                     <div style={{ fontSize: '10px', color: THEME.gray }}>{ly.name}</div>
                                 </div>
@@ -805,7 +931,7 @@ return (
        </div>
        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           <PillarCard title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} naYin={data.naYin.time} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
-          <PillarCard title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} naYin={data.naYin.day} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
+          <PillarCard title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} naYin={data.naYin.day} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} genderText={data.genderText} />
           <PillarCard title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} naYin={data.naYin.month} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
           <PillarCard title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} naYin={data.naYin.year} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
        </div>
