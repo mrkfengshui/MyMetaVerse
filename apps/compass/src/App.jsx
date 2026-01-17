@@ -288,14 +288,14 @@ const calculateNaQi = (period, guaName) => {
 
     if (isSameYuan) {
         if (doorNum === p) {
-            return { type: '大吉', text: '當運大發', color: '#389e0d', sub: '同元同運' };
+            return { type: '大吉', text: '當運大發', color: '#389e0d' };
         } else if (doorNum > p) {
-            return { type: '吉', text: '未來大發', color: '#13c2c2', sub: '同元未運' };
+            return { type: '吉', text: '未來大發', color: '#13c2c2' };
         } else {
-            return { type: '平', text: '運過平安', color: '#fa8c16', sub: '同元失運' };
+            return { type: '平', text: '運過平安', color: '#fa8c16' };
         }
     } else {
-        return { type: '凶', text: '運過衰退', color: '#cf1322', sub: '異元失運' };
+        return { type: '凶', text: '運過衰退', color: '#cf1322' };
     }
 };
 
@@ -557,7 +557,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
             <div style={{
                 background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
                 padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                maxHeight: '60vh', overflowY: 'auto', overscrollBehavior: 'contain' // 修改 3: 防止滑動時帶動到底層頁面
+                maxHeight: '70vh', overflowY: 'auto', overscrollBehavior: 'contain' // 修改 3: 防止滑動時帶動到底層頁面
             }} onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
                     <X size={24} color="#666"/>
@@ -1184,7 +1184,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
             </div>
 
             <div style={cardStyle}>
-                <div style={{...sectionTitle, color:'#096dd9'}}>💨 三元納氣 (門/窗)</div>
+                <div style={{...sectionTitle, color:'#096dd9'}}>💨 三元納氣</div>
                 <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'4px'}}>
                     {naQiRow1.map(gua => (
                         <button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? '#1890ff' : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer' }}>{gua}</button>
@@ -1409,7 +1409,7 @@ export default function FengShuiApp() {
                                 position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
                                 background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer', color: THEME.blue, zIndex: 1
                             }}>
-                                <ChevronLeft size={20}/> 返回
+                                <ChevronLeft size={20}/>
                             </button>
                             <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>排盤分析</span>
                         </div>

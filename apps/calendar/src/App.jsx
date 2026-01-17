@@ -38,29 +38,19 @@ const QI_RULES = {
 };
 
 const YI_JI_MAP = {
-  '开': '開', '满': '滿', '执': '執', '闭': '閉', '壮': '壯', '冲': '沖', '节': '節',
-  '纳': '納', '采': '採', '动': '動', '土': '土', '竖': '豎', '画': '畫', '斋': '齋',
-  '盖': '蓋', '齐': '齊', '发': '發', '财': '財', '钻': '鑽', '缝': '縫', '针': '針',
-  '经': '經', '络': '絡', '酝': '醞', '酿': '釀', '市': '市', '扫': '掃', '舍': '舍',
-  '宇': '宇', '饰': '飾', '垣': '垣', '墙': '牆', '涂': '塗', '伐': '伐', '帐': '帳',
-  '畜': '畜', '稠': '稠', '教': '教', '马': '馬', '医': '醫', '灵': '靈', '堕': '墮',
-  '订': '訂', '盟': '盟', '归': '歸', '宁': '寧', '阳': '陽', '阴': '陰', '戏': '戲',
-  '击': '擊', '鼓': '鼓', '乐': '樂', '词': '詞', '讼': '訟', '猎': '獵', '网': '網',
-  '罗': '羅', '掘': '掘', '种': '種', '鱼': '魚', '乘': '乘', '船': '船', '渡': '渡',
-  '补': '補', '塞': '塞', '穴': '穴', '寿': '壽', '会': '會', '亲': '親', '友': '友', 
-  '进': '進', '剃': '剃', '头': '頭', '粮': '糧', '仓': '倉', '库': '庫', '窑': '窯',
-  '酝': '醞', '酿': '釀', '除': '除', '服': '服', '移': '移', '徙': '徙', '牧': '牧',
-  '养': '養', '整': '整', '手': '手', '足': '足', '求': '求', '嗣': '嗣', '冠': '冠',
-  '带': '帶', '裁': '裁', '衣': '衣', '安': '安', '门': '門', '床': '床', '作': '作',
-  '灶': '灶', '修': '修', '厨': '廚', '平': '平', '治': '治', '道': '道', '涂': '塗',
-  '厕': '廁', '立': '立', '券': '券', '交': '交', '易': '易', '上': '上', '官': '官',
-  '赴': '赴', '任': '任', '临': '臨', '政': '政', '竖': '豎', '柱': '柱', '上': '上',
-  '梁': '梁', '启': '啟', '殡': '殯', '葬': '葬', '移': '移', '柩': '柩', '入': '入',
-  '殓': '殮', '成': '成', '除': '除', '服': '服', '祭': '祭', '祀': '祀', '祈': '祈',
-  '福': '福', '酬': '酬', '谢': '謝', '设': '設', '醮': '醮', '出': '出', '行': '行',
-  '驾': '駕', '拆': '拆', '卸': '卸', '起': '起', '基': '基', '定': '定', '磉': '磉',
-  '筑': '築', '堤': '堤', '防': '防', '放': '放', '水': '水', '开': '開', '池': '池',
-  '坟': '墳', '绘': '繪', '产': '產', '馀': '餘'
+  '开': '開', '满': '滿', '执': '執', '闭': '閉', '壮': '壯', '冲': '沖',
+  '节': '節', '纳': '納', '采': '採', '动': '動', '竖': '豎', '画': '畫',
+  '斋': '齋', '盖': '蓋', '齐': '齊', '发': '發', '财': '財', '钻': '鑽',
+  '缝': '縫', '针': '針', '经': '經', '络': '絡', '酝': '醞', '酿': '釀',
+  '扫': '掃', '饰': '飾', '墙': '牆', '帐': '帳', '马': '馬', '医': '醫',
+  '灵': '靈', '堕': '墮', '订': '訂', '归': '歸', '宁': '寧', '阳': '陽',
+  '阴': '陰', '戏': '戲', '击': '擊', '乐': '樂', '词': '詞', '讼': '訟',
+  '猎': '獵', '网': '網', '罗': '羅', '种': '種', '鱼': '魚', '补': '補',
+  '寿': '壽', '会': '會', '亲': '親', '进': '進', '头': '頭', '粮': '糧',
+  '仓': '倉', '库': '庫', '窑': '窯', '养': '養', '门': '門', '厨': '廚',
+  '涂': '塗', '厕': '廁', '临': '臨', '启': '啟', '殡': '殯', '殓': '殮', 
+  '谢': '謝', '设': '設', '驾': '駕', '筑': '築', '坟': '墳', '绘': '繪', 
+  '产': '產', '馀': '餘'
 };
 
 const toTraditionalYiJi = (str) => {
@@ -278,7 +268,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
                     星宿：<b>{info.xiu}</b>
                   </span>
               </div>
-              <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
+              <div style={{ fontSize: '13px', color: THEME.grey, marginTop: '2px' }}>
                  董公：<span style={{ fontWeight: 'bold', color: dgColor }}>{info.dongGongRating}</span>
                  <span style={{ color: '#999', marginLeft: '6px', fontSize: '12px' }}>{info.dongGongSummary}</span>
               </div>
@@ -286,27 +276,28 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
 
           <div style={{ display: 'flex', gap: '4px', textAlign: 'center' }}>
               <div 
+
                 onClick={(e) => { e.stopPropagation(); onTimeClick(); }} 
                 style={{ background: '#e6f7ff', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer', border: `1px solid ${THEME.blue}` }}
               >
-                  <div style={{ fontSize: '10px', color: THEME.blue, marginBottom: '2px' }}>時</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.timeGan}</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.timeZhi}</div>
+                  <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>時</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey}}>{info.bazi.timeGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.timeZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>日</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.dayGan}</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.dayZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.dayGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.dayZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>月</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.monthGan}</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.monthZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.monthGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.monthZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>年</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.yearGan}</div>
-                  <div style={{ fontWeight: 'bold', color: '#666' }}>{info.bazi.yearZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.yearGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.yearZhi}</div>
               </div>
           </div>
       </div>
@@ -334,9 +325,9 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
                 <div style={{ fontSize: '24px', fontWeight: '800', color: THEME.black }}>
-                  {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#666'}}>週{info.weekDay}</span>
+                  {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#6666663f'}}>週{info.weekDay}</span>
                 </div>
-                <div style={{ fontSize: '13px', color: '#666' }}>
+                <div style={{ fontSize: '13px', color: THEME.grey }}>
                     {info.ganZhiYear}年 {info.lunarStr}
                 </div>
             </div>
@@ -490,7 +481,7 @@ const CalendarToolbar = ({
       borderRadius: '16px',
       border: `1px solid ${isActive ? color : '#ddd'}`,
       background: isActive ? bgActive : 'white',
-      color: isActive ? color : '#666',
+      color: isActive ? color : THEME.grey,
       display: 'flex',
       alignItems: 'center',
       gap: '4px',
@@ -543,11 +534,17 @@ const CalendarToolbar = ({
                 <ChevronRight size={20} color={THEME.lightGray} style={{ marginLeft: '4px', transform: 'translateY(2px)' }} />
             </div>
 
-            {/* 右側：農曆與節氣 (2. 加入 alignItems: 'flex-end' 讓文字靠右對齊) */}
+            {/* 右側：農曆與節氣 */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px', alignItems: 'flex-end' }}>
                 {headerGanZhi && (<span style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', lineHeight: '1.2' }}>{headerGanZhi.year} {headerGanZhi.month}</span>)}
-                <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', lineHeight: '1.2' }}>
-                    {solarTerms.map((term, idx) => (<span key={idx} style={{ color: THEME.purple, fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap' }}>{term.name}{term.day}日</span>))}
+                <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', lineHeight: '1.2', maxWidth: '200px', justifyContent: 'flex-end' }}>
+                    {solarTerms.map((term, idx) => (
+                        <span key={idx} style={{ color: THEME.purple, fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap', display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1' }}>
+                           <span>{term.name}{term.day}日</span>
+                           {/* 新增：顯示時間 */}
+                           <span style={{ fontSize: '10px', opacity: 0.8 }}>{term.time}</span>
+                        </span>
+                    ))}
                 </div>
             </div>
           </div>
@@ -565,6 +562,8 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
   try {
       const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
       const lunar = solar.getLunar();
+      const baziObj = lunar.getEightChar(); 
+
       const d = lunar.getDay();
       const m = lunar.getMonthInChinese();
       const term = lunar.getJieQi();
@@ -603,16 +602,19 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       if (qiMode) {
           let baseStemIdx = -1, baseBranchIdx = -1;
           let currStemIdx = -1, currBranchIdx = -1;
+          
           if (qiMode === 'nian') {
-              baseStemIdx = TIANGAN.indexOf(lunar.getYearGan());
-              baseBranchIdx = DIZHI.indexOf(lunar.getYearZhi());
-              currStemIdx = TIANGAN.indexOf(lunar.getMonthGan());
-              currBranchIdx = DIZHI.indexOf(lunar.getMonthZhi());
+              // 修改：從 baziObj 獲取年柱與月柱 (立春換年、節氣換月)
+              baseStemIdx = TIANGAN.indexOf(baziObj.getYearGan());
+              baseBranchIdx = DIZHI.indexOf(baziObj.getYearZhi());
+              currStemIdx = TIANGAN.indexOf(baziObj.getMonthGan());
+              currBranchIdx = DIZHI.indexOf(baziObj.getMonthZhi());
           } else if (qiMode === 'yue') {
-              baseStemIdx = TIANGAN.indexOf(lunar.getMonthGan());
-              baseBranchIdx = DIZHI.indexOf(lunar.getMonthZhi());
-              currStemIdx = TIANGAN.indexOf(lunar.getDayGan());
-              currBranchIdx = DIZHI.indexOf(lunar.getDayZhi());
+              // 修改：從 baziObj 獲取月柱與日柱
+              baseStemIdx = TIANGAN.indexOf(baziObj.getMonthGan());
+              baseBranchIdx = DIZHI.indexOf(baziObj.getMonthZhi());
+              currStemIdx = TIANGAN.indexOf(baziObj.getDayGan());
+              currBranchIdx = DIZHI.indexOf(baziObj.getDayZhi());
           }
           const getRelIdx = (bIdx) => (bIdx - 2 + 12) % 12;
           const currRelIdx = getRelIdx(currBranchIdx); 
@@ -826,12 +828,33 @@ export default function CalendarApp() {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth() + 1;
         const days = [];
-        for (let d = 1; d <= new Date(year, month, 0).getDate(); d++) {
-            const term = window.Solar.fromYmd(year, month, d).getLunar().getJieQi();
-            if (term) days.push({ name: term, day: d });
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const s = window.Solar.fromYmd(year, month, d);
+            const l = s.getLunar();
+            const term = l.getJieQi(); // 獲取節氣名稱 (如: 立春)
+            
+            if (term) {
+                let timeStr = '';
+                // [核心修改]
+                // getJieQiTable() 回傳的是 Object，不是 Map，所以不能用 .get()
+                const table = l.getJieQiTable();
+                const jqSolar = table[term]; 
+                
+                if (jqSolar) {
+                    const h = String(jqSolar.getHour()).padStart(2, '0');
+                    const m = String(jqSolar.getMinute()).padStart(2, '0');
+                    timeStr = `${h}:${m}`;
+                }
+                days.push({ name: term, day: d, time: timeStr });
+            }
         }
         return days;
-    } catch(e) { return []; }
+    } catch(e) { 
+        console.error("Solar Terms Error:", e); // 建議印出錯誤以便除錯
+        return []; 
+    }
   }, [currentDate, libStatus]);
 
   const headerGanZhi = useMemo(() => {
@@ -839,7 +862,12 @@ export default function CalendarApp() {
       try {
           const solar = window.Solar.fromYmd(selectedDate.getFullYear(), selectedDate.getMonth() + 1, selectedDate.getDate());
           const lunar = solar.getLunar();
-          return { year: lunar.getYearInGanZhi() + '年', month: lunar.getMonthInGanZhi() + '月' };
+          // [修改] 使用 getEightChar() 獲取立春換年的干支
+          const baziObj = lunar.getEightChar();
+          return { 
+              year: baziObj.getYearGan() + baziObj.getYearZhi() + '年', 
+              month: baziObj.getMonthGan() + baziObj.getMonthZhi() + '月' 
+          };
       } catch(e) { return null; }
   }, [selectedDate, libStatus]);
 
@@ -852,16 +880,24 @@ export default function CalendarApp() {
         const solar = window.Solar.fromYmd(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate());
         const lunar = solar.getLunar();
         
-        // 八字計算
+        // --- 1. 計算選定時辰的時間對象 (lunarForTime) ---
         const mapping = GET_SHI_CHEN_MAPPING(ziHourRule);
         const safeTimeIndex = (timeIndex >= 0 && timeIndex < mapping.length) ? timeIndex : 0;
         const targetHour = mapping[safeTimeIndex].hour;
         let lunarForTime;
+        
+        // 根據早子/夜子/一般時辰規則建立對象
         if (ziHourRule === 'ziZheng' && targetHour === 23) {
              lunarForTime = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), 23, 30, 0).getLunar();
         } else {
+             // 這裡使用時辰的起始點 (例如巳時用 09:00:00) 進行判斷
+             // 如果節氣在 09:40，用戶選巳時(09:00起)，則依然算上個月；若選午時(11:00起)，則算下個月。這是合理的區間判斷。
              lunarForTime = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), targetHour, 0, 0).getLunar();
         }
+
+        // --- 2. [核心修改] 使用含時辰的對象獲取八字 ---
+        // timeBazi 包含了精確時間點的八字資訊 (自動處理節氣換月、立春換年)
+        const timeBazi = lunarForTime.getEightChar();
 
         const isSanNiang = SAN_NIANG_DAYS.includes(lunar.getDay()); 
         const monthNum = Math.abs(lunar.getMonth());
@@ -891,19 +927,22 @@ export default function CalendarApp() {
         return {
             dateStr: `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日`,
             weekDay: WEEKDAYS[selectedDate.getDay()],
-            ganZhiYear: lunar.getYearInGanZhi(),
+            // 這裡也建議改用 timeBazi，以防立春當天換年
+            ganZhiYear: timeBazi.getYearGan() + timeBazi.getYearZhi(), 
             lunarStr: `${lunarMonthName}月${lunar.getDayInChinese()}`,
+            
+            // [核心修改] 八字全部改用 timeBazi
             bazi: {
-                yearGan: lunar.getYearGan(), yearZhi: lunar.getYearZhi(),
-                monthGan: lunar.getMonthGan(), monthZhi: lunar.getMonthZhi(),
-                dayGan: lunar.getDayGan(), dayZhi: lunar.getDayZhi(),
-                timeGan: lunarForTime.getTimeGan(), timeZhi: lunarForTime.getTimeZhi()
+                yearGan: timeBazi.getYearGan(), yearZhi: timeBazi.getYearZhi(),
+                monthGan: timeBazi.getMonthGan(), monthZhi: timeBazi.getMonthZhi(),
+                dayGan: timeBazi.getDayGan(), dayZhi: timeBazi.getDayZhi(),
+                timeGan: timeBazi.getTimeGan(), timeZhi: timeBazi.getTimeZhi()
             },
             jian: fixJian, xiu: fixXiu, xiuFull: XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿'),
             dongGongRating: dgRating, dongGongText: dgText, dongGongSummary: dgSummary,
             isSanNiang: isSanNiang,
-            yi: yiList.join(', '), // 轉為字串
-            ji: jiList.join(', ')  // 轉為字串
+            yi: yiList.join(', '),
+            ji: jiList.join(', ')
         };
     } catch(e) { return null; }
   }, [selectedDate, libStatus, timeIndex, ziHourRule]);
