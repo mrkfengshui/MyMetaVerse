@@ -865,12 +865,12 @@ const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, ye
         <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1.2 }}>{gan}</span>
             {displayMode === 'shiShen' && displayTopRight && (
-                <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>
+                <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '14px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>
             )}
             
             {/* 元男/元女 (直書) */}
             {genderText && (
-                <div style={{ position: 'absolute', top: -2, right: -12, writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '12px', fontWeight: 'bold', color: THEME.gray, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: -2, right: -11, writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '14px', fontWeight: 'bold', color: THEME.gray, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
                     {genderText}
                 </div>
             )}
@@ -879,7 +879,7 @@ const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, ye
         {/* 地支區塊 */}
         <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
-            <div style={{ position: 'absolute', top: 6, right: -12 }}>
+            <div style={{ position: 'absolute', top: 6, right: -11 }}>
                 
                 {/* [核心修改] 使用共用元件 */}
                 {displayMode === 'shenSha' ? (
@@ -1074,12 +1074,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                 boxSizing: 'border-box', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
                             <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
-                                {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -12, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
+                                {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -11, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
                             </div>
                             <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                             <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
                             
-                            <div style={{ position: 'absolute', top: 5, right: -12 }}>
+                            <div style={{ position: 'absolute', top: 5, right: -11 }}>
                                 {displayMode === 'shenSha' ? (
                                     <ShenShaVerticalList 
                                         items={displayBottomRight} // 這裡是完整神煞列表
@@ -1126,12 +1126,12 @@ const renderLiuNianGrid = () => {
                                       boxSizing: 'border-box', border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
                                     <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                         <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
-                                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                     </div>
                                     <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -12 }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -11 }}>
                                         {displayMode === 'shenSha' ? (
                                             <ShenShaVerticalList 
                                                 items={displayBottomRight}
@@ -1228,12 +1228,12 @@ const renderLiuNianGrid = () => {
                             >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -12 }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -11 }}>
                                         {displayMode === 'shenSha' ? (
                                             <ShenShaVerticalList 
                                                 items={displayBottomRight}
@@ -1274,49 +1274,93 @@ const renderLiuNianGrid = () => {
    const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
 return (
-     <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <div style={{ flex: 1, marginRight: '8px' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black }}>{data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span></div>
-                 {/* 按鈕群組 */}
-                <div style={{ display: 'flex', gap: '4px' }}>
-                    {/* 1. 藏干按鈕 */}
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
+        {/* Header 區塊開始 */}
+        <div style={{ 
+            backgroundColor: THEME.white, 
+            borderRadius: '12px', 
+            padding: '16px', 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', // 垂直置中改為對齊頂部可能會更好，視內容多寡而定，這邊維持 center 
+            border: `1px solid ${THEME.border}`, 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)' 
+        }}>
+            
+            {/* --- 左側：姓名與日期資訊 --- */}
+            <div style={{ flex: 1, marginRight: '8px' }}>
+                {/* 姓名行 */}
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black }}>
+                    {data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span>
+                </div>
+                
+                {/* 日期資訊 */}
+                {data.isManual ? ( 
+                    <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px' }}></div> 
+                ) : ( 
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> 
+                        <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
+                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> 
+                    </div> 
+                )}
+                
+                {/* 起運資訊 */}
+                {data.yunInfo ? ( 
+                    <> 
+                        <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>{data.yunInfo.detail}</div> 
+                        <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>(西元 {data.yunInfo.startDate} 起運)</div> 
+                    </> 
+                ) : null}
+            </div>
+
+
+            {/* --- 右側：控制區 (垂直排列) --- */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                
+                {/* 1. 上方：顯示模式切換 (藏干 / 神煞) */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {/* 藏干按鈕 */}
                     <button 
                         onClick={() => toggleMode('zangGan')} 
                         style={{ 
-                            display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', 
-                            border: `1px solid ${THEME.border}`, 
-                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.white, // Active 樣式
-                            color: displayMode === 'zangGan' ? THEME.white : THEME.black, 
-                            fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s'
+                            ...btnStyle, // [繼承] 基礎按鈕樣式
+                            // [覆寫] 選中時變黑底白字，未選中維持 btnStyle 的灰底灰字
+                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
+                            color: displayMode === 'zangGan' ? 'white' : THEME.gray,
+                            // 微調：讓兩個按鈕寬度一致看起來較整齊 (可選)
+                            justifyContent: 'center'
                         }}>
-                        {displayMode === 'zangGan' ? <Eye size={14}/> : <EyeOff size={14}/>} 藏干
+                        {/* 圖示邏輯：選中(開啟)時顯示 Eye，未選中(關閉)時顯示 EyeOff */}
+                        {displayMode === 'zangGan' ? <Eye size={14}/> : <EyeOff size={14}/>} 
+                        藏干
                     </button>
 
-                    {/* 2. 神煞按鈕 */}
+                    {/* 神煞按鈕 */}
                     <button 
                         onClick={() => toggleMode('shenSha')} 
                         style={{ 
-                            display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', 
-                            border: `1px solid ${THEME.border}`, 
-                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.white, // Active 樣式 (用紫色區分)
-                            color: displayMode === 'shenSha' ? THEME.white : THEME.black, 
-                            fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s'
+                            ...btnStyle, // [繼承] 基礎按鈕樣式
+                            // [覆寫] 選中時變紫底白字
+                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
+                            color: displayMode === 'shenSha' ? 'white' : THEME.gray,
+                            justifyContent: 'center'
                         }}>
-                        {displayMode === 'shenSha' ? <Eye size={14}/> : <EyeOff size={14}/>} 神煞
+                        {displayMode === 'shenSha' ? <Eye size={14}/> : <EyeOff size={14}/>} 
+                        神煞
                     </button>
                 </div>
+
+                {/* 2. 下方：操作按鈕 (保存 / 重排) */}
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
+                    <button onClick={() => onSave(data)} style={btnStyle}> <Bookmark size={14} /> 保存 </button>
+                    <button onClick={onBack} style={btnStyle}> <RefreshCw size={14} /> 重排 </button>
+                </div>
+                
             </div>
-             {data.isManual ? ( <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px' }}></div> ) : ( <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> </div> )}
-             {data.yunInfo ? ( <> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>{data.yunInfo.detail}</div> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>(西元 {data.yunInfo.startDate} 起運)</div> </> ) : null}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexShrink: 0 }}>
-              <button onClick={() => onSave(data)} style={btnStyle}> <Bookmark size={14} /> 保存 </button>
-              <button onClick={onBack} style={btnStyle}> <RefreshCw size={14} /> 重排 </button>
-          </div>
-       </div>
-       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+
+        </div>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
             <PillarCard 
                 title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} naYin={data.naYin.time} 
                 dayMaster={data.bazi.dayGan} displayMode={displayMode}
