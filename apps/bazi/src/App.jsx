@@ -110,6 +110,42 @@ const SHEN_SHA_INFO = {
     '將星': '將星：主有領導能力，掌權，有威望，事業成功，能文能武。',
 };
 
+// 統一處理：垂直文字、最多顯示 N 個、點擊事件、字體大小控制
+const ShenShaVerticalList = ({ items, onClick, maxItems = 2, fontSize = '10px', cursor = 'pointer' }) => {
+    // 1. 截斷邏輯
+    const visibleItems = (items.length > maxItems) ? items.slice(0, maxItems) : items;
+
+    // 2. 處理點擊 (傳回完整列表 items 給外層)
+    const handleClick = (e) => {
+        if (onClick) {
+            e.stopPropagation();
+            onClick(items); // 點擊時，把「完整列表」傳出去，讓 Modal 顯示全部
+        }
+    };
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'center' }}>
+            {visibleItems.map((item, idx) => (
+                <span 
+                    key={idx} 
+                    onClick={handleClick}
+                    style={{ 
+                        writingMode: 'vertical-rl', 
+                        textOrientation: 'upright',
+                        fontSize: fontSize, 
+                        letterSpacing: '1px', 
+                        lineHeight: '1.1', 
+                        color: '#888', 
+                        cursor: cursor
+                    }}
+                >
+                    {item}
+                </span>
+            ))}
+        </div>
+    );
+};
+
 // 神煞詳情 Modal
 const ShenShaModal = ({ config, onClose }) => {
     if (!config.isOpen) return null;
@@ -783,7 +819,8 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
 };
 
 // --- PillarCard (四柱卡片) ---
-const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, yearZhi, monthZhi, colorTheme, genderText, onShenShaClick }) => {   const safeTheme = colorTheme || 'elemental';
+const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, yearZhi, monthZhi, colorTheme, genderText, onShenShaClick }) => {
+   const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
    const zhiColor = safeTheme === 'elemental' ? (BRANCH_COLORS[zhi] || '#555555') : '#555555';
    
@@ -842,29 +879,29 @@ const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, ye
         {/* 地支區塊 */}
         <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
-            <div style={{ position: 'absolute', top: 6, right: -14, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                {visibleItems.length > 0 ? visibleItems.map((item, idx) => ( // [修改] 使用 visibleItems
-                    <span 
-                        key={idx} 
-                        onClick={handleShenShaClick}
-                        style={{ 
-                            writingMode: displayMode === 'shenSha' ? 'vertical-rl' : 'horizontal-tb',
-                            textOrientation: 'upright',
-                            fontSize: displayMode === 'shenSha' ? '11px' : '14px',
-                            letterSpacing: displayMode === 'shenSha' ? '1px' : '0',
-                            lineHeight: '1.1', 
-                            color: '#888', 
-                            whiteSpace: 'nowrap',
-                            marginBottom: displayMode === 'shenSha' ? '4px' : '0',
-                            cursor: displayMode === 'shenSha' ? 'pointer' : 'default'
-                        }}
-                    >
-                        {item}
-                    </span>
-                )) : (displayMode === 'shenSha' ? <span style={{fontSize:'10px', color:'#eee'}}>-</span> : null)}
+            <div style={{ position: 'absolute', top: 6, right: -12 }}>
+                
+                {/* [核心修改] 使用共用元件 */}
+                {displayMode === 'shenSha' ? (
+                    <ShenShaVerticalList 
+                        items={shenShas}
+                        onClick={(fullList) => onShenShaClick && onShenShaClick(`${gan}${zhi} (${title})`, fullList)}
+                        fontSize="11px" // 原局空間大，字可以稍大或維持 11px
+                        maxItems={2}    // 明確指定最多 2 個
+                    />
+                ) : (
+                    // 非神煞模式 (變通星/藏干)
+                    displayBottomRight.length > 0 ? displayBottomRight.map((item, idx) => (
+                        <span key={idx} style={{ writingMode: 'horizontal-tb', fontSize: '14px', lineHeight: '1', color: '#888', display: 'block', marginBottom: '2px' }}>
+                            {item}
+                        </span>
+                    )) : null
+                )}
+
             </div>
         </div>
         
+        {/* 納音 */}
         <div style={{ fontSize: '10px', color: THEME.gray, marginTop: '8px', backgroundColor: THEME.bgGray, padding: '2px 6px', borderRadius: '4px' }}>{naYin}</div>
      </div>
    );
@@ -1042,13 +1079,20 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                             <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                             <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
                             
-                            <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                            <div style={{ position: 'absolute', top: 5, right: -12 }}>
                                 {displayMode === 'shenSha' ? (
-                                    renderShenShaList(displayBottomRight, `${dy.gan}${dy.zhi} (大運)`)
+                                    <ShenShaVerticalList 
+                                        items={displayBottomRight} // 這裡是完整神煞列表
+                                        onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)}
+                                        fontSize="10px" // 大運框較小
+                                    />
                                 ) : (
-                                    displayBottomRight.map((item, idx) => (
-                                        <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                    ))
+                                    // 非神煞模式 (十神/藏干)
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                        {displayBottomRight.map((item, idx) => (
+                                            <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -1087,13 +1131,19 @@ const renderLiuNianGrid = () => {
                                     <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -12 }}>
                                         {displayMode === 'shenSha' ? (
-                                            renderShenShaList(displayBottomRight, `${ln.gan}${ln.zhi} (流年)`)
+                                            <ShenShaVerticalList 
+                                                items={displayBottomRight}
+                                                onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)}
+                                                fontSize="10px"
+                                            />
                                         ) : (
-                                            displayBottomRight.map((item, idx) => (
-                                                <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                            ))
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                                {displayBottomRight.map((item, idx) => (
+                                                    <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -1178,19 +1228,24 @@ const renderLiuNianGrid = () => {
                             >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -12 }}>
                                         {displayMode === 'shenSha' ? (
-                                            // [核心修改]
-                                            renderShenShaList(displayBottomRight, `${ly.gan}${ly.zhi} (流月)`)
+                                            <ShenShaVerticalList 
+                                                items={displayBottomRight}
+                                                onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)}
+                                                fontSize="10px"
+                                            />
                                         ) : (
-                                            displayBottomRight.map((item, idx) => (
-                                                <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                            ))
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                                {displayBottomRight.map((item, idx) => (
+                                                    <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
