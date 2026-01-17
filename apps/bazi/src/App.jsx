@@ -89,6 +89,80 @@ const toTraditional = (str) => {
   return str.split('').map(char => CN_MAP[char] || char).join('');
 };
 
+// 神煞解釋
+const SHEN_SHA_INFO = {
+    '貴人': '天乙貴人：最強吉星，主逢凶化吉，遇難呈祥，有貴人提拔，解災救難。',
+    '驛馬': '驛馬：主奔波走動，出國，搬家，變動，職業變遷，心意不定。',
+    '桃花': '桃花：主人緣佳，異性緣重，情感豐富，也有風流、多情之意。',
+    '祿神': '祿神：主財祿豐足，食祿，福氣，性格剛毅，有爵祿之貴。',
+    '羊刃': '羊刃：主性情剛烈，衝動，易有血光或手術，不利六親，武職可顯。',
+    '文昌': '文昌：主聰明過人，氣質雅秀，利於升學考試，學術研究，才華洋溢。',
+    '天德': '天德貴人：主化解災厄，心地善良，逢凶化吉，祖上有德。',
+    '月德': '月德貴人：主福分深厚，逢凶化吉，女性主賢慧，人緣佳。',
+    '龍德': '龍德：主貴人多助，轉禍為福，能化解凶煞，喜慶之事。',
+    '金輿': '金輿：主財帛豐足，配偶條件佳，出入有車代步，富貴之象。',
+    '華蓋': '華蓋：主孤獨清高，才華出眾，喜好宗教哲學藝術，易有靈性。',
+    '孤辰': '孤辰：主孤獨，性格孤僻，六親無緣，不利男命婚姻。',
+    '寡宿': '寡宿：主孤獨，性格孤僻，六親無緣，不利女命婚姻。',
+    '學士': '學士：主才華，學識渊博，利於求學，聰明好學。',
+    '天喜': '天喜：主喜慶之事，開心，人緣好，利結婚生子，心情愉快。',
+    '紅鸞': '紅鸞：主婚姻喜慶，異性緣佳，早年利婚緣，人見人愛。',
+    '將星': '將星：主有領導能力，掌權，有威望，事業成功，能文能武。',
+};
+
+// 神煞詳情 Modal
+const ShenShaModal = ({ config, onClose }) => {
+    if (!config.isOpen) return null;
+    
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000,
+            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+            backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s'
+        }} onClick={onClose}>
+            <div style={{
+                width: '85%', maxWidth: '340px', backgroundColor: '#fff', borderRadius: '16px',
+                padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
+                maxHeight: '70vh', overflowY: 'auto', position: 'relative'
+            }} onClick={e => e.stopPropagation()}>
+                
+                {/* 標題列 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                    <div>
+                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black, marginRight: '8px' }}>{config.title}</span>
+                        <span style={{ fontSize: '14px', color: THEME.gray }}>神煞詳情</span>
+                    </div>
+                    <button onClick={onClose} style={{ border: 'none', background: 'none', padding: '4px', cursor: 'pointer' }}>
+                        <X size={20} color={THEME.gray} />
+                    </button>
+                </div>
+
+                {/* 列表內容 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {config.items.length > 0 ? config.items.map((item, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: THEME.bgGray, borderRadius: '8px' }}>
+                            <div style={{ fontWeight: 'bold', color: THEME.blue, fontSize: '16px', marginBottom: '4px' }}>
+                                {item}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#555', lineHeight: '1.5', textAlign: 'justify' }}>
+                                {SHEN_SHA_INFO[item] || '暫無詳細說明'}
+                            </div>
+                        </div>
+                    )) : <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>此柱無特殊神煞</div>}
+                </div>
+            </div>
+            <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+        </div>
+    );
+};
+
+// 輔助函式：顯示神煞說明
+const showShenShaInfo = (name, e) => {
+    e.stopPropagation(); // 防止觸發格子的點選事件
+    const info = SHEN_SHA_INFO[name] || `【${name}】`;
+    alert(info); // 簡單使用 alert 顯示，也可換成其他 Modal
+};
+
 const useLunarScript = () => {
   const [status, setStatus] = useState('loading');
   useEffect(() => {
@@ -117,6 +191,125 @@ const getShiShen = (dayGan, targetGan) => {
   if ((dayEl + 2) % 5 === targetEl) return samePol ? '才' : '財'; 
   if ((targetEl + 2) % 5 === dayEl) return samePol ? '殺' : '官'; 
   return '';
+};
+
+const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意] 新增 monthZhi 參數
+    if (!zhi) return [];
+    const list = [];
+    
+    // --- 輔助：地支三合/三會/對沖查詢 ---
+    const isSanHe = (z, group) => group.includes(z);
+    
+    // 1. 天乙貴人 (日干)
+    const tianYiMap = { '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'], '乙': ['子', '申'], '己': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'], '壬': ['巳', '卯'], '癸': ['巳', '卯'], '辛': ['午', '寅'] };
+    if (tianYiMap[dayGan]?.includes(zhi)) list.push('貴人');
+
+    // 2. 驛馬 (年支/日支) - 申子辰馬在寅...
+    const getYiMa = (base) => {
+        if (['申', '子', '辰'].includes(base)) return '寅';
+        if (['寅', '午', '戌'].includes(base)) return '申';
+        if (['巳', '酉', '丑'].includes(base)) return '亥';
+        if (['亥', '卯', '未'].includes(base)) return '巳';
+        return null;
+    };
+    if (zhi === getYiMa(dayZhi) || zhi === getYiMa(yearZhi)) list.push('驛馬');
+
+    // 3. 桃花 (咸池) (年支/日支)
+    const getTaoHua = (base) => {
+        if (['申', '子', '辰'].includes(base)) return '酉';
+        if (['寅', '午', '戌'].includes(base)) return '卯';
+        if (['巳', '酉', '丑'].includes(base)) return '午';
+        if (['亥', '卯', '未'].includes(base)) return '子';
+        return null;
+    };
+    if (zhi === getTaoHua(dayZhi) || zhi === getTaoHua(yearZhi)) list.push('桃花');
+
+    // 4. 祿神 (日干)
+    const luMap = {'甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子'};
+    if (luMap[dayGan] === zhi) list.push('祿神');
+
+    // 5. 羊刃 (日干)
+    const yangRenMap = {'甲':'卯','乙':'辰','丙':'午','丁':'未','戊':'午','己':'未','庚':'酉','辛':'戌','壬':'子','癸':'丑'};
+    if (yangRenMap[dayGan] === zhi) list.push('羊刃');
+
+    // 6. 文昌 (日干)
+    const wenChangMap = {'甲':'巳','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉','庚':'亥','辛':'子','壬':'寅','癸':'卯'};
+    if (wenChangMap[dayGan] === zhi) list.push('文昌');
+
+    // 7. 天德貴人 (月支) 
+    // 正丁二坤(申)中, 三壬四辛同, 五亥六甲上, 七癸八寅逢, 九丙十居乙, 子巳丑庚中
+    const tianDeMap = { 
+        '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛', '午': '亥', '未': '甲', 
+        '申': '癸', '酉': '寅', '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚' 
+    };
+    const tdVal = tianDeMap[monthZhi];
+    if (tdVal === gan || tdVal === zhi) list.push('天德');
+
+    // 8. 月德貴人 (月支) 
+    // 寅午戌月在丙, 申子辰月在壬, 亥卯未月在甲, 巳酉丑月在庚
+    let ydGan = '';
+    if (['寅','午','戌'].includes(monthZhi)) ydGan = '丙';
+    else if (['申','子','辰'].includes(monthZhi)) ydGan = '壬';
+    else if (['亥','卯','未'].includes(monthZhi)) ydGan = '甲';
+    else if (['巳','酉','丑'].includes(monthZhi)) ydGan = '庚';
+    if (gan === ydGan) list.push('月德');
+
+    // 9. 龍德 (年支) 
+    // 龍德在太歲後八位 (對沖前一位)
+    const dzIdx = DIZHI.indexOf(zhi);
+    const yzIdx = DIZHI.indexOf(yearZhi);
+    if ((yzIdx + 8) % 12 === dzIdx) list.push('龍德');
+
+    // 10. 金輿 (日干) 
+    // 甲龍(辰)乙蛇(巳)丙戊馬(未), 丁己猴(申)歌, 庚犬(戌)辛豬(亥), 壬牛(丑)癸虎(寅)
+    const jinYuMap = {'甲':'辰','乙':'巳','丙':'未','戊':'未','丁':'申','己':'申','庚':'戌','辛':'亥','壬':'丑','癸':'寅'};
+    if (jinYuMap[dayGan] === zhi) list.push('金輿');
+
+    // 11. 華蓋 (年支/日支) - 三合墓庫 
+    const getHuaGai = (base) => {
+        if (['寅','午','戌'].includes(base)) return '戌';
+        if (['申','子','辰'].includes(base)) return '辰';
+        if (['亥','卯','未'].includes(base)) return '未';
+        if (['巳','酉','丑'].includes(base)) return '丑';
+        return null;
+    };
+    if (zhi === getHuaGai(dayZhi) || zhi === getHuaGai(yearZhi)) list.push('華蓋');
+
+    // 12. 孤辰、寡宿 (年支) 
+    // 亥子丑(北): 孤寅寡戌; 寅卯辰(東): 孤巳寡丑; 巳午未(南): 孤申寡辰; 申酉戌(西): 孤亥寡未
+    let gu = '', gua = '';
+    if (['亥','子','丑'].includes(yearZhi)) { gu = '寅'; gua = '戌'; }
+    else if (['寅','卯','辰'].includes(yearZhi)) { gu = '巳'; gua = '丑'; }
+    else if (['巳','午','未'].includes(yearZhi)) { gu = '申'; gua = '辰'; }
+    else if (['申','酉','戌'].includes(yearZhi)) { gu = '亥'; gua = '未'; }
+    if (zhi === gu) list.push('孤辰');
+    if (zhi === gua) list.push('寡宿');
+
+    // 13. 學士 (日干) 
+    // 甲子, 乙午, 丙申, 丁酉, 戊申, 己酉, 庚亥, 辛子, 壬寅, 癸卯
+    const xueShiMap = {'甲':'子','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉','庚':'亥','辛':'子','壬':'寅','癸':'卯'};
+    if (xueShiMap[dayGan] === zhi) list.push('學士');
+
+    // 14. 天喜 (年支) 
+    // 紅鸞對沖之支 (酉上起子逆數? No. 紅鸞: 子年見卯... 天喜是對宮)
+    // 簡易算: 天喜 index = (酉(9) - 年支index + 12) % 12
+    if ((9 - yzIdx + 12) % 12 === dzIdx) list.push('天喜');
+
+    // 15. 紅鸞 (年支) 
+    // 卯上起子逆數: 子年見卯, 丑年見寅... => Index = (3 - 年支 + 12) % 12
+    if ((3 - yzIdx + 12) % 12 === dzIdx) list.push('紅鸞');
+
+    // 16. 將星 (年支/日支) - 三合中神 
+    const getJiangXing = (base) => {
+        if (['寅','午','戌'].includes(base)) return '午';
+        if (['申','子','辰'].includes(base)) return '子';
+        if (['亥','卯','未'].includes(base)) return '卯';
+        if (['巳','酉','丑'].includes(base)) return '酉';
+        return null;
+    };
+    if (zhi === getJiangXing(dayZhi) || zhi === getJiangXing(yearZhi)) list.push('將星');
+
+    return [...new Set(list)]; // 去除重複 (例如年日支查到同一個神煞)
 };
 
 // 核心計算函數
@@ -590,84 +783,128 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
 };
 
 // --- PillarCard (四柱卡片) ---
-const PillarCard = ({ title, gan, zhi, naYin, dayMaster, showHiddenStems, colorTheme, genderText }) => { // [修改] 新增 genderText
-   const safeTheme = colorTheme || 'elemental';
+const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, yearZhi, monthZhi, colorTheme, genderText, onShenShaClick }) => {   const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
    const zhiColor = safeTheme === 'elemental' ? (BRANCH_COLORS[zhi] || '#555555') : '#555555';
+   
    const ganGod = (title === '日柱') ? null : getShiShen(dayMaster, gan);
+   const zhiGods = (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(dayMaster, h));
    const hiddenStems = ZHI_HIDDEN[zhi] || [];
-   const hiddenGods = hiddenStems.map(h => getShiShen(dayMaster, h));
-   const displayTopRight = showHiddenStems ? null : ganGod;
-   const displayBottomRight = showHiddenStems ? hiddenStems : hiddenGods;
+   const shenShas = getShenSha(gan, zhi, dayMaster, dayZhi, yearZhi, monthZhi);
 
-    return (
-        <div style={{ 
-            flex: 1, 
-            backgroundColor: THEME.white, 
-            borderRadius: '12px', 
-            border: `1px solid ${THEME.border}`, 
-            padding: '12px 4px', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)', 
-            minHeight: '175px', 
-            justifyContent: 'space-between'
-        }}>
-            <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{title}</div>
-            
-            {/* 天干區塊 */}
-            <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1.2 }}>{gan}</span>
-                
-                {/* 1. 一般變通星 (十神) */}
-                {displayTopRight && (
-                    <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>
-                        {displayTopRight}
-                    </div>
-                )}
+   let displayTopRight = null;
+   let displayBottomRight = [];
 
-                {/* 2. [修改] 元男/元女：移入此處，並使用相同的 right: -12 */}
-                {genderText && (
-                    <div style={{
-                        position: 'absolute',
-                        top: -4,                // 微調頂部對齊，使其與天干平齊
-                        right: -15,
-                        writingMode: 'vertical-rl',
-                        textOrientation: 'upright',
-                        fontSize: '14px',
-                        color: THEME.gray,
-                        opacity: 0.8,
-                        letterSpacing: '2px',   
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {genderText}
-                    </div>
-                )}
-            </div>
+   if (displayMode === 'zangGan') {
+       displayBottomRight = hiddenStems;
+   } else if (displayMode === 'shenSha') {
+       displayTopRight = null; 
+       displayBottomRight = shenShas;
+   } else {
+       displayTopRight = ganGod;
+       displayBottomRight = zhiGods;
+   }
+
+   const handleShenShaClick = (e) => {
+       if (displayMode === 'shenSha' && onShenShaClick) {
+           e.stopPropagation();
+           onShenShaClick(`${gan}${zhi} (${title})`, shenShas);
+       }
+   };
+
+   const visibleItems = (displayMode === 'shenSha' && displayBottomRight.length > 2)
+       ? displayBottomRight.slice(0, 2)
+       : displayBottomRight;
+
+   return (
+     <div style={{ 
+         flex: 1, backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, 
+         padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', 
+         boxShadow: '0 2px 4px rgba(0,0,0,0.05)', minHeight: '175px', justifyContent: 'space-between' 
+     }}>
+        <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{title}</div>
+        
+        {/* 天干區塊 */}
+        <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1.2 }}>{gan}</span>
+            {displayMode === 'shiShen' && displayTopRight && (
+                <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: '#888', padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>
+            )}
             
-            {/* 地支區塊 */}
-            <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
-                <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
-                <div style={{ position: 'absolute', top: 6, right: -12, display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1', transform: 'scale(1)', color: THEME.gray }}>{item}</span>))}</div>
-            </div>
-            
-            <div style={{ fontSize: '10px', color: THEME.gray, marginTop: '8px', backgroundColor: THEME.bgGray, padding: '2px 6px', borderRadius: '4px' }}>{naYin}</div>
+            {/* 元男/元女 (直書) */}
+            {genderText && (
+                <div style={{ position: 'absolute', top: -2, right: -12, writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '12px', fontWeight: 'bold', color: THEME.gray, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
+                    {genderText}
+                </div>
+            )}
         </div>
-    );
-    };
+        
+        {/* 地支區塊 */}
+        <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
+            <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
+            <div style={{ position: 'absolute', top: 6, right: -14, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                {visibleItems.length > 0 ? visibleItems.map((item, idx) => ( // [修改] 使用 visibleItems
+                    <span 
+                        key={idx} 
+                        onClick={handleShenShaClick}
+                        style={{ 
+                            writingMode: displayMode === 'shenSha' ? 'vertical-rl' : 'horizontal-tb',
+                            textOrientation: 'upright',
+                            fontSize: displayMode === 'shenSha' ? '11px' : '14px',
+                            letterSpacing: displayMode === 'shenSha' ? '1px' : '0',
+                            lineHeight: '1.1', 
+                            color: '#888', 
+                            whiteSpace: 'nowrap',
+                            marginBottom: displayMode === 'shenSha' ? '4px' : '0',
+                            cursor: displayMode === 'shenSha' ? 'pointer' : 'default'
+                        }}
+                    >
+                        {item}
+                    </span>
+                )) : (displayMode === 'shenSha' ? <span style={{fontSize:'10px', color:'#eee'}}>-</span> : null)}
+            </div>
+        </div>
+        
+        <div style={{ fontSize: '10px', color: THEME.gray, marginTop: '8px', backgroundColor: THEME.bgGray, padding: '2px 6px', borderRadius: '4px' }}>{naYin}</div>
+     </div>
+   );
+};
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
-   const [selectedLiuYue, setSelectedLiuYue] = useState(null); 
-   const [showHiddenStems, setShowHiddenStems] = useState(false);
+   const [selectedLiuYue, setSelectedLiuYue] = useState(null);
+   
+   // [核心修改] 狀態改為三態字串: 'shiShen'(預設), 'zangGan'(藏干), 'shenSha'(神煞)
+   const [displayMode, setDisplayMode] = useState('shiShen'); 
+   
    const safeTheme = colorTheme || 'elemental';
-
    useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
    useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
    if (!data) return null;
+
+   // 輔助：切換模式邏輯
+   const toggleMode = (mode) => {
+       if (displayMode === mode) {
+           setDisplayMode('shiShen'); // 如果點選當前模式，則關閉(回到預設變通星)
+       } else {
+           setDisplayMode(mode); // 否則切換到該模式
+       }
+   };
+
+   const getDisplayItems = (gan, zhi) => {
+        if (displayMode === 'zangGan') return ZHI_HIDDEN[zhi] || [];
+        if (displayMode === 'shenSha') return getShenSha(gan, zhi, data.bazi.dayGan, data.bazi.dayZhi, data.bazi.yearZhi, data.bazi.monthZhi);
+        
+        return (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(data.bazi.dayGan, h));
+    };
+
+    const getTopRightItem = (gan) => {
+        if (displayMode === 'shenSha') return null; // 神煞模式通常不顯示天干神煞
+        if (displayMode === 'zangGan') return null; // 藏干模式不顯示天干變通星
+        return getShiShen(data.bazi.dayGan, gan); // 預設顯示天干變通星
+    };
 
    const getColor = (char, type) => {
        if (safeTheme !== 'elemental') return '#555555'; 
@@ -741,25 +978,80 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        return months;
    };
 
+    // 1. 新增 State
+    const [shenShaModalConfig, setShenShaModalConfig] = useState({ isOpen: false, title: '', items: [] });
+
+    // 2. 開啟 Modal 的 Handler
+    const openShenShaModal = (title, items) => {
+        setShenShaModalConfig({ isOpen: true, title, items });
+    };
+
+    // 3. 輔助函式：渲染神煞列表 (含截斷邏輯)
+    const renderShenShaList = (fullList, contextTitle, e) => {
+        
+        // 截斷邏輯：最多 2 個
+        const MAX_VISIBLE = 2;
+        const visibleList = (fullList.length > MAX_VISIBLE) 
+                ? fullList.slice(0, MAX_VISIBLE) 
+                : fullList;
+        // 共用的點擊事件：開啟 Modal 顯示「全部」
+        const handleClick = (ev) => {
+        ev.stopPropagation(); 
+        openShenShaModal(contextTitle, fullList); // 這裡傳入的是 fullList (完整列表)
+        };
+
+        return (
+            <>
+                {visibleList.map((item, idx) => (
+                    <span 
+                        key={idx} 
+                        onClick={handleClick}
+                        style={{ 
+                            writingMode: 'vertical-rl', 
+                            textOrientation: 'upright',
+                            fontSize: '11px', // 配合 Grid 空間，字維持小一點
+                            letterSpacing: '1px', 
+                            lineHeight: '1.1', 
+                            color: '#888', 
+                            marginBottom: '2px', 
+                            cursor: 'pointer' // 保持手指游標
+                        }}
+                    >
+                        {item}
+                    </span>
+                ))}
+            </>
+        );
+    };
+
   const renderDaYunRow = (list) => {
         return (
             <div style={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: '8px' }}>
                 {list.map((dy) => {
                     const isSelected = selectedDaYunIndex === (dy.seq - 1);
-                    const displayTopRight = showHiddenStems ? null : dy.ganGod;
-                    const displayBottomRight = showHiddenStems ? dy.zhiHidden : dy.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
+                    const displayTopRight = getTopRightItem(dy.gan);
+                    const displayBottomRight = getDisplayItems(dy.gan, dy.zhi);
                     const gColor = getColor(dy.gan, 'stem'); const zColor = getColor(dy.zhi, 'branch');
                 return (
-                       <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', 
+                    <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', 
                                 boxSizing: 'border-box', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
                             <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
                                 {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -12, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
                             </div>
                             <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
-                                <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
+                            <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
+                            
+                            <div style={{ position: 'absolute', top: 5, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                {displayMode === 'shenSha' ? (
+                                    renderShenShaList(displayBottomRight, `${dy.gan}${dy.zhi} (大運)`)
+                                ) : (
+                                    displayBottomRight.map((item, idx) => (
+                                        <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                    ))
+                                )}
                             </div>
+                        </div>
                             {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}歲</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
                         </div>
                     );
@@ -782,20 +1074,29 @@ const renderLiuNianGrid = () => {
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', direction: 'rtl' }}>
                      {targetDaYun.liuNians.map((ln) => {
                          const isSelected = selectedLiuNianYear === ln.year;
-                         const displayTopRight = showHiddenStems ? null : ln.ganGod;
-                         const displayBottomRight = showHiddenStems ? ln.zhiHidden : ln.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
+                         const displayTopRight = getTopRightItem(ln.gan);
+                         const displayBottomRight = getDisplayItems(ln.gan, ln.zhi);
                          const gColor = getColor(ln.gan, 'stem'); const zColor = getColor(ln.zhi, 'branch');
                          return (
-                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', height: '120px', 
+                            <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', height: '120px', 
                                       boxSizing: 'border-box', border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
-                                  <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
-                                      <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
-                                      {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
-                                  </div>
-                                  <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
-                                      <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
-                                      <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
-                                  </div>
+                                    <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
+                                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    </div>
+                                    <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
+                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
+                                    
+                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                        {displayMode === 'shenSha' ? (
+                                            renderShenShaList(displayBottomRight, `${ln.gan}${ln.zhi} (流年)`)
+                                        ) : (
+                                            displayBottomRight.map((item, idx) => (
+                                                <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
                                   <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                       <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}歲</div>
                                       <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
@@ -857,17 +1158,13 @@ const renderLiuNianGrid = () => {
                     {liuYues.map((ly) => {
                         // 判斷是否被選中
                         const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
-                        
-                        const displayTopRight = showHiddenStems ? null : ly.ganGod;
-                        const displayBottomRight = showHiddenStems ? ly.zhiHidden : ly.zhiHidden.map(h => getShiShen(data.bazi.dayGan, h));
+                        const displayTopRight = getTopRightItem(ly.gan);
+                        const displayBottomRight = getDisplayItems(ly.gan, ly.zhi);
                         const gColor = getColor(ly.gan, 'stem'); 
                         const zColor = getColor(ly.zhi, 'branch');
                         
                         return (
-                            <div 
-                                key={ly.seq} 
-                                // [互動] 點擊設定選中狀態
-                                onClick={() => setSelectedLiuYue(ly)}
+                            <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)}
                                 style={{ 
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', 
                                     padding: '8px 4px', 
@@ -885,7 +1182,17 @@ const renderLiuNianGrid = () => {
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
-                                    <div style={{ position: 'absolute', top: 8, right: -10, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
+                                    
+                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                        {displayMode === 'shenSha' ? (
+                                            // [核心修改]
+                                            renderShenShaList(displayBottomRight, `${ly.gan}${ly.zhi} (流月)`)
+                                        ) : (
+                                            displayBottomRight.map((item, idx) => (
+                                                <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                     {/* 顯示 日/月 */}
@@ -917,10 +1224,35 @@ return (
           <div style={{ flex: 1, marginRight: '8px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black }}>{data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span></div>
-                 <button onClick={() => setShowHiddenStems(!showHiddenStems)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', border: `1px solid ${THEME.border}`, backgroundColor: showHiddenStems ? THEME.black : THEME.white, color: showHiddenStems ? THEME.white : THEME.black, fontSize: '12px', cursor: 'pointer' }}>
-                     {showHiddenStems ? <Eye size={14}/> : <EyeOff size={14}/>} {showHiddenStems ? '藏干' : '十神'}
-                 </button>
-             </div>
+                 {/* 按鈕群組 */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                    {/* 1. 藏干按鈕 */}
+                    <button 
+                        onClick={() => toggleMode('zangGan')} 
+                        style={{ 
+                            display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', 
+                            border: `1px solid ${THEME.border}`, 
+                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.white, // Active 樣式
+                            color: displayMode === 'zangGan' ? THEME.white : THEME.black, 
+                            fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s'
+                        }}>
+                        {displayMode === 'zangGan' ? <Eye size={14}/> : <EyeOff size={14}/>} 藏干
+                    </button>
+
+                    {/* 2. 神煞按鈕 */}
+                    <button 
+                        onClick={() => toggleMode('shenSha')} 
+                        style={{ 
+                            display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', 
+                            border: `1px solid ${THEME.border}`, 
+                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.white, // Active 樣式 (用紫色區分)
+                            color: displayMode === 'shenSha' ? THEME.white : THEME.black, 
+                            fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s'
+                        }}>
+                        {displayMode === 'shenSha' ? <Eye size={14}/> : <EyeOff size={14}/>} 神煞
+                    </button>
+                </div>
+            </div>
              {data.isManual ? ( <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px' }}></div> ) : ( <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> </div> )}
              {data.yunInfo ? ( <> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>{data.yunInfo.detail}</div> <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>(西元 {data.yunInfo.startDate} 起運)</div> </> ) : null}
           </div>
@@ -930,11 +1262,31 @@ return (
           </div>
        </div>
        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          <PillarCard title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} naYin={data.naYin.time} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
-          <PillarCard title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} naYin={data.naYin.day} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} genderText={data.genderText} />
-          <PillarCard title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} naYin={data.naYin.month} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
-          <PillarCard title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} naYin={data.naYin.year} dayMaster={data.bazi.dayGan} showHiddenStems={showHiddenStems} colorTheme={safeTheme} />
-       </div>
+            <PillarCard 
+                title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} naYin={data.naYin.time} 
+                dayMaster={data.bazi.dayGan} displayMode={displayMode}
+                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
+                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+            />
+            <PillarCard 
+                title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} naYin={data.naYin.day} 
+                dayMaster={data.bazi.dayGan} displayMode={displayMode}
+                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
+                colorTheme={safeTheme} genderText={data.genderText} onShenShaClick={openShenShaModal}
+            />
+            <PillarCard 
+                title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} naYin={data.naYin.month} 
+                dayMaster={data.bazi.dayGan} displayMode={displayMode} 
+                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
+                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+            />
+            <PillarCard 
+                title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} naYin={data.naYin.year} 
+                dayMaster={data.bazi.dayGan} displayMode={displayMode} 
+                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
+                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+            />
+        </div>
        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
            <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
            <div>{renderDaYunRow(firstRow)}{renderDaYunRow(secondRow)}</div>
@@ -975,6 +1327,10 @@ return (
                 ); 
             })()}
         </div>
+        <ShenShaModal 
+                config={shenShaModalConfig} 
+                onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
+            />
      </div>
    );
 };
