@@ -81,7 +81,7 @@ const WUXING_MAP = {
 const CN_MAP = {
   '惊': '驚', '蛰': '蟄', '种': '種', '长': '長', '涧': '澗', '蜡': '蠟', '杨': '楊', '雳': '靂', 
   '灯': '燈', '驿': '驛', '钗': '釵', '炉': '爐', '剑': '劍', '钟': '鐘', '岚': '嵐', '构': '構', 
-  '莹': '瑩', '灵': '靈', '叶': '葉', '烂': '爛', '头': '頭'
+  '莹': '瑩', '灵': '靈', '叶': '葉', '烂': '爛', '头': '頭', '满': '滿', '处': '處', '谷': '穀'
 };
 
 const toTraditional = (str) => {
@@ -716,11 +716,11 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                        // 格式
                        dateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
                        // 詳細資訊
-                       jieInfo = `${prevJie.getName()} ${formatTime(solarJie)}`;
+                       jieInfo = `${toTraditional(prevJie.getName())} ${formatTime(solarJie)}`;
                    }
                    
                    if (nextQi) {
-                       qiInfo = `${nextQi.getName()} ${formatTime(nextQi.getSolar())}`;
+                       qiInfo = `${toTraditional(nextQi.getName())} ${formatTime(nextQi.getSolar())}`;
                    }
                }
            } catch (e) { console.warn("節氣計算錯誤", e);
@@ -881,11 +881,11 @@ const renderLiuNianGrid = () => {
                             >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
-                                    <div style={{ position: 'absolute', top: 8, right: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
+                                    <div style={{ position: 'absolute', top: 8, right: -10, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>{displayBottomRight.map((item, idx) => (<span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.gray }}>{item}</span>))}</div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                     {/* 顯示 日/月 */}
