@@ -103,6 +103,157 @@ const getDefaultTimeIndex = (hour, rule) => {
   return 6; 
 };
 
+// ==========================================
+// NEW: 流月進退氣核心邏輯
+// ==========================================
+
+// 天干五行屬性 (0:甲, 1:乙...) -> 木木火火土土金金水水
+const STEM_ELEMENTS = ['wood', 'wood', 'fire', 'fire', 'earth', 'earth', 'metal', 'metal', 'water', 'water'];
+
+// 檢查 A 是否剋 B (例如: 丁火(3) 剋 辛金(7))
+const doesStemControl = (stemIdxA, stemIdxB) => {
+    const elA = STEM_ELEMENTS[stemIdxA];
+    const elB = STEM_ELEMENTS[stemIdxB];
+    if (elA === 'wood' && elB === 'earth') return true;
+    if (elA === 'fire' && elB === 'metal') return true;
+    if (elA === 'earth' && elB === 'water') return true;
+    if (elA === 'metal' && elB === 'wood') return true;
+    if (elA === 'water' && elB === 'fire') return true;
+    return false;
+};
+
+// 計算某一日是否處於流月天干進氣狀態
+const getMonthlyStemQiStatus = (date, lunar) => {
+    try {
+        // 1. 取得當前經歷的 "節" (Jie) 與 "氣" (Qi)
+        // 使用 prevJie 確保即使在節氣當天之前，我們也能抓到這個月的節氣資訊
+        const jieQiTable = lunar.getJieQiTable();
+        const keys = Object.keys(jieQiTable);
+        
+        // 找出離這一天最近的 "節" (不論是過去還是未來)
+        // 為了簡單起見，我們取 lunar 所在月份的 "節"
+        // 注意：lunar-javascript 的 getJieQiTable 返回的是整個農曆年的節氣，需要篩選
+        
+        // 策略：直接利用 Solar 對象反查最近的節氣
+        const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+        
+        // 獲取當月(或鄰近)的節令資訊
+        // 這裡需要稍微複雜的運算：找到本月所屬的 "節" (Start) 和 "中氣" (End)
+        // 簡易做法：往回找最近的一個 "節"
+        let currentJie = null;
+        let currentJieDate = null;
+        let midQiDate = null;
+
+        // 搜尋範圍：前後 35 天，確保涵蓋節氣交界
+        for (let i = 15; i >= -20; i--) {
+            const tempDate = new Date(date);
+            tempDate.setDate(date.getDate() - i);
+            const tempSolar = window.Solar.fromYmd(tempDate.getFullYear(), tempDate.getMonth()+1, tempDate.getDate());
+            const tempLunar = tempSolar.getLunar();
+            const jq = tempLunar.getJieQi();
+            
+            // 如果是 "節" (非中氣)
+            if (jq && tempLunar.getJie() === jq) { 
+                // 找到了節，這就是流月的起點
+                currentJie = jq;
+                currentJieDate = tempDate;
+                
+                // 順便找中氣 (通常在節後 ~15 天)
+                // 從這個節往後找中氣
+                for (let k = 1; k < 20; k++) {
+                    const qDate = new Date(tempDate);
+                    qDate.setDate(tempDate.getDate() + k);
+                    const qSolar = window.Solar.fromYmd(qDate.getFullYear(), qDate.getMonth()+1, qDate.getDate());
+                    const qLunar = qSolar.getLunar();
+                    const qName = qLunar.getJieQi();
+                    if (qName && qLunar.getQi() === qName) {
+                        midQiDate = qDate;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+
+        if (!currentJieDate || !midQiDate) return false;
+
+        // [Rule]: 到達中氣(冬至等)後，天干不再進氣 (PDF Source: 92)
+        // 如果當前日期 >= 中氣日期，直接回傳 false (或交由地支邏輯，此處僅處理天干)
+        if (date >= midQiDate) return false;
+
+        // 2. 確定流月天干
+        // 使用節氣當天的八字來定月柱
+        const jieSolar = window.Solar.fromYmdHms(currentJieDate.getFullYear(), currentJieDate.getMonth()+1, currentJieDate.getDate(), 23, 59, 59);
+        const monthGan = jieSolar.getLunar().getEightChar().getMonthGan(); 
+        const monthGanIdx = TIANGAN.indexOf(monthGan);
+
+        // 3. 計算 "實際進氣日" (Start Date)
+        let actualStartDate = new Date(currentJieDate);
+        const jieDayGan = jieSolar.getLunar().getEightChar().getDayGan();
+        const jieDayGanIdx = TIANGAN.indexOf(jieDayGan);
+
+        // [Rule]: 節氣日子干支不是剋流月干支 (PDF Source: 5)
+        const isJieDayClash = doesStemControl(jieDayGanIdx, monthGanIdx);
+
+        if (!isJieDayClash) {
+            // [Rule]: 提早的日子在半數之內 (5.5天) (PDF Source: 5)
+            // 往回查 5 天，看有沒有 "同干" (Same Stem) 的日子
+            for (let d = 5; d >= 1; d--) {
+                const lookBackDate = new Date(currentJieDate);
+                lookBackDate.setDate(currentJieDate.getDate() - d);
+                const lbSolar = window.Solar.fromYmd(lookBackDate.getFullYear(), lookBackDate.getMonth()+1, lookBackDate.getDate());
+                const lbGan = lbSolar.getLunar().getEightChar().getDayGan();
+                
+                if (lbGan === monthGan) {
+                    actualStartDate = lookBackDate; // 提早進氣
+                    break;
+                }
+            }
+        }
+
+        // 如果當前日期還沒到實際進氣日，回傳 false
+        if (date < actualStartDate) return false;
+
+        // 4. 模擬進退氣狀態 (從 實際進氣日 到 當前日期)
+        // 我們需要逐日檢查是否有 "剋" (退氣) 或 "同" (重進氣)
+        let isActive = true; // 起始日一定是進氣的
+        
+        // 迴圈從 actualStartDate + 1 天 開始檢查，直到 current date
+        const loopStart = new Date(actualStartDate);
+        loopStart.setDate(loopStart.getDate() + 1);
+        
+        // 計算天數差
+        const diffDays = Math.floor((date - actualStartDate) / (1000 * 60 * 60 * 24));
+        
+        for (let i = 1; i <= diffDays; i++) {
+            const checkDate = new Date(actualStartDate);
+            checkDate.setDate(actualStartDate.getDate() + i);
+            
+            const cSolar = window.Solar.fromYmd(checkDate.getFullYear(), checkDate.getMonth()+1, checkDate.getDate());
+            const cGan = cSolar.getLunar().getEightChar().getDayGan();
+            const cGanIdx = TIANGAN.indexOf(cGan);
+
+            if (isActive) {
+                // [Rule]: 遇到剋流月干支的日子 -> 退氣 (PDF Source: 19)
+                if (doesStemControl(cGanIdx, monthGanIdx)) {
+                    isActive = false;
+                }
+            } else {
+                // [Rule]: 退氣後，遇到同流月干支的日子 -> 再次進氣 (PDF Source: 90)
+                if (cGan === monthGan) {
+                    isActive = true;
+                }
+            }
+        }
+
+        return { isActive, color: STEM_COLORS[monthGanIdx] };
+
+    } catch (e) {
+        console.error("Qi Calc Error", e);
+        return false;
+    }
+};
+
 const useLunarScript = () => {
   const [status, setStatus] = useState('loading');
   useEffect(() => {
@@ -429,7 +580,7 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間簡易神煞，輔助使用者進行擇日與命理分析。",
+    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間簡易神煞，輔助使用者進行擇日用事分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
@@ -490,19 +641,36 @@ const CalendarToolbar = ({
       transition: 'all 0.2s'
     });
 
+    const toggleJinQi = () => {
+        if (showJinQi) {
+            setShowJinQi(false);
+        } else {
+            setShowJinQi(true);
+            setShowTuiQi(false); // 關閉流月
+        }
+    };
+
+    const toggleTuiQi = () => {
+        if (showTuiQi) {
+            setShowTuiQi(false);
+        } else {
+            setShowTuiQi(true);
+            setShowJinQi(false); // 關閉流年
+        }
+    };
+
     return (
       <div style={{ padding: '10px 16px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* 上排按鈕區 (維持不變) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button 
-                    onClick={() => setShowJinQi(!showJinQi)} 
+                    onClick={toggleJinQi} 
                     style={getBtnStyle(showJinQi, '#722ed1', '#f9f0ff')}
                 >
                     {showJinQi ? <Eye size={14}/> : <EyeOff size={14}/>} 流年進退氣
                 </button>
                 <button 
-                    onClick={() => setShowTuiQi(!showTuiQi)} 
+                    onClick={toggleTuiQi} 
                     style={getBtnStyle(showTuiQi, '#fa8c16', '#fff7e6')}
                 >
                     {showTuiQi ? <Eye size={14}/> : <EyeOff size={14}/>} 流月進退氣
@@ -519,7 +687,7 @@ const CalendarToolbar = ({
                     display: 'flex', alignItems: 'center', gap: '4px'
                 }}
             >
-                <RotateCcw size={12} /> 返回今天
+                <RotateCcw size={12} /> 今天
             </button>
           </div>
 
@@ -562,7 +730,11 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
   try {
       const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
       const lunar = solar.getLunar();
-      const baziObj = lunar.getEightChar(); 
+      const baziObj = lunar.getEightChar();
+
+      // 確保只要當天有交節氣，該格子就會顯示新的進氣顏色
+      const solarEndOfDay = window.Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 23, 59, 59);
+      const baziEnd = solarEndOfDay.getLunar().getEightChar();
 
       const d = lunar.getDay();
       const m = lunar.getMonthInChinese();
@@ -604,45 +776,50 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
           let currStemIdx = -1, currBranchIdx = -1;
           
           if (qiMode === 'nian') {
-              // 修改：從 baziObj 獲取年柱與月柱 (立春換年、節氣換月)
-              baseStemIdx = TIANGAN.indexOf(baziObj.getYearGan());
-              baseBranchIdx = DIZHI.indexOf(baziObj.getYearZhi());
-              currStemIdx = TIANGAN.indexOf(baziObj.getMonthGan());
-              currBranchIdx = DIZHI.indexOf(baziObj.getMonthZhi());
+              // [FIX] 使用 baziEnd (23:59) 來獲取年與月，確保節氣當天變色
+              baseStemIdx = TIANGAN.indexOf(baziEnd.getYearGan());
+              baseBranchIdx = DIZHI.indexOf(baziEnd.getYearZhi());
+              currStemIdx = TIANGAN.indexOf(baziEnd.getMonthGan());
+              currBranchIdx = DIZHI.indexOf(baziEnd.getMonthZhi());
           } else if (qiMode === 'yue') {
-              // 修改：從 baziObj 獲取月柱與日柱
-              baseStemIdx = TIANGAN.indexOf(baziObj.getMonthGan());
-              baseBranchIdx = DIZHI.indexOf(baziObj.getMonthZhi());
+              // [FIX] 月柱使用 baziEnd (23:59) 以捕捉節氣
+              // 但日柱建議維持使用 baziObj (00:00) 或 lunar，以避免夜子時(23:00後)導致日柱顯示為隔天的問題
+              // 這樣做到了：月令換氣看當天最後，日辰對應看當天顯示
+              baseStemIdx = TIANGAN.indexOf(baziEnd.getMonthGan());
+              baseBranchIdx = DIZHI.indexOf(baziEnd.getMonthZhi());
               currStemIdx = TIANGAN.indexOf(baziObj.getDayGan());
               currBranchIdx = DIZHI.indexOf(baziObj.getDayZhi());
           }
-          const getRelIdx = (bIdx) => (bIdx - 2 + 12) % 12;
-          const currRelIdx = getRelIdx(currBranchIdx); 
-          [-1, 0, 1].forEach(offset => {
-              const targetStemIdx = (baseStemIdx + offset + 10) % 10;
-              const targetBranchIdx = (baseBranchIdx + offset + 12) % 12;
-              const sRules = QI_RULES.stems[targetStemIdx];
-              const bRules = QI_RULES.branches[targetBranchIdx];
-              const myPos = currRelIdx - (offset * 12);
-              if (sRules) {
-                   sRules.forEach(range => {
-                      if (myPos >= range[0] && myPos <= range[1]) {
-                          const color = STEM_COLORS[targetStemIdx];
-                          if (targetStemIdx % 2 === 0) activeColors[0] = color;
-                          else activeColors[1] = color;
-                      }
-                  });
-              }
-              if (bRules) {
-                  bRules.forEach(range => {
-                      if (myPos >= range[0] && myPos <= range[1]) {
-                          const color = BRANCH_COLORS[targetBranchIdx];
-                          if (targetBranchIdx % 2 === 0) activeColors[2] = color;
-                          else activeColors[3] = color;
-                      }
-                  });
-              }
-          });
+
+          if (baseStemIdx !== -1 && currStemIdx !== -1) { // 簡單防呆
+            const getRelIdx = (bIdx) => (bIdx - 2 + 12) % 12;
+            const currRelIdx = getRelIdx(currBranchIdx); 
+            [-1, 0, 1].forEach(offset => {
+                const targetStemIdx = (baseStemIdx + offset + 10) % 10;
+                const targetBranchIdx = (baseBranchIdx + offset + 12) % 12;
+                const sRules = QI_RULES.stems[targetStemIdx];
+                const bRules = QI_RULES.branches[targetBranchIdx];
+                const myPos = currRelIdx - (offset * 12);
+                if (sRules) {
+                    sRules.forEach(range => {
+                        if (myPos >= range[0] && myPos <= range[1]) {
+                            const color = STEM_COLORS[targetStemIdx];
+                            if (targetStemIdx % 2 === 0) activeColors[0] = color;
+                            else activeColors[1] = color;
+                        }
+                    });
+                }
+                if (bRules) {
+                    bRules.forEach(range => {
+                        if (myPos >= range[0] && myPos <= range[1]) {
+                            const color = BRANCH_COLORS[targetBranchIdx];
+                            if (targetBranchIdx % 2 === 0) activeColors[2] = color;
+                            else activeColors[3] = color;
+                        }
+                    });
+                }
+            });
+          }
       }
   } catch (e) { console.error(e); }
 

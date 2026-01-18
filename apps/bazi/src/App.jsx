@@ -513,7 +513,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合董公擇日、建除十二神、二十八星宿、三娘煞等民間簡易神煞，輔助使用者進行擇日與命理分析。",
+    about: "本程式旨在提供專業子平八字排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
