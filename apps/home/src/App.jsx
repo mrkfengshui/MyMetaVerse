@@ -38,9 +38,9 @@ const APPS = [
 const DEFAULT_ARTICLES = [
   {
     id: 'default-1',
-    title: '系統罷工了',
+    title: '喔噢!',
     date: '2026-01-01',
-    content: '喔噢! 系統罷工了工程師正在安撫中'
+    content: '系統罷工了老闆正在安撫中'
   }
 ];
 
@@ -434,7 +434,7 @@ function HomePage() {
           display: flex; justify-content: center; align-items: center; padding: 20px;
         }
         .modal-content {
-          background: white; max-width: 600px; width: 100%; max-height: 80vh;
+          background: white; max-width: 600px; width: 90%; max-height: 80vh;
           overflow-y: auto; border-radius: 12px; padding: 30px; position: relative;
         }
         .modal-close {
