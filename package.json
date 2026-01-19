@@ -7,5 +7,9 @@
   ],
   "scripts": {
     "dev": "echo '請進入各個 app 資料夾執行 npm run dev'"
+  },
+  "dependencies": {
+    "firebase": "^12.8.0",
+    "react-router-dom": "^7.12.0"
   }
 }
