@@ -181,7 +181,7 @@ function HomePage() {
         .article-list-container { display: flex; flex-direction: column; gap: 12px; }
         
         /* Hero 標題樣式 (反白) */
-        .hero-title { font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; color: #ffffff !important; }
+        .hero-title { font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; color: #111 !important; }
         
         .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         @media (max-width: 900px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -204,7 +204,7 @@ function HomePage() {
             {/* Logo 區塊 */}
             <div style={{ fontWeight: '900', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img src="/logo.png" alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-              <span style={{ fontSize: '18px', color: '#000000', display: 'inline-block' }}>許甯博風水命理館</span>
+              <span style={{ fontSize: '18px', color: '#111', display: 'inline-block' }}>許甯博風水命理館</span>
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -217,11 +217,11 @@ function HomePage() {
       </header>
 
       {/* ✅ Hero Section: 改為深色背景，padding 減半 */}
-      <section style={{ padding: '40px 0', textAlign: 'center', background: '#1a1a1a' }}>
+      <section style={{ padding: '40px 0', textAlign: 'center', background: '#ffffff' }}>
         <div className="container">
             {/* 標題已在 CSS 設定為 white */}
             <h1 className="hero-title">玄學就是科學</h1>
-            <p style={{ fontSize: '16px', color: '#cccccc', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
+            <p style={{ fontSize: '16px', color: '#000000', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
             專為你提供最專業玄學服務，自研最流暢且精準的線上命理工具。
             </p>
         </div>
@@ -257,9 +257,9 @@ function HomePage() {
                 <span style={{ fontSize: '14px', color: '#999', fontWeight: 500 }}>{activeArticle?.date}</span>
                 <CategoryBadge label={activeArticle?.category} />
             </div>
-            <h2 style={{ margin: '0 0 24px 0', fontSize: '26px', color: '#111', fontWeight: 800, lineHeight: 1.3 }}>{activeArticle?.title}</h2>
+            <h2 style={{ margin: '0 0 24px 0', fontFamily: 'arial', fontSize: '26px', color: '#111', fontWeight: 800, lineHeight: 1.3 }}>{activeArticle?.title}</h2>
             <div style={{ width: '60px', height: '4px', background: '#722ed1', marginBottom: '30px', borderRadius: '2px' }}></div>
-            <div style={{ fontSize: '16px', lineHeight: '1.8', color: '#333', whiteSpace: 'pre-line' }}>{activeArticle?.content}</div>
+            <div style={{ fontFamily: 'arial', fontSize: '16px', lineHeight: '1.8', color: '#333', whiteSpace: 'pre-line' }}>{activeArticle?.content}</div>
           </div>
           <div className="article-list-container">
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
