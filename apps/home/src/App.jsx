@@ -107,7 +107,7 @@ function AdminPage() {
   const handleEditClick = (article) => { setTitle(article.title); setContent(article.content); setCategory(article.category || '其他'); setEditingId(article.id); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const handleDeleteClick = async (id) => { if (window.confirm('確定刪除？')) { try { await deleteDoc(doc(db, "articles", id)); fetchArticles(); } catch (error) { alert('刪除失敗'); } } };
 
-  if (!isLoggedIn) return ( <div style={{ padding: '50px 20px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}><h2>管理員登入</h2><input type="password" placeholder="輸入密碼" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '12px', margin: '10px 0', width: '90%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid #ccc' }} /><button onClick={handleLogin} style={{ width: '90%', padding: '12px', background: '#722ed1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>登入</button><div style={{marginTop: '20px'}}><Link to="/">返回首頁</Link></div></div> );
+  if (!isLoggedIn) return ( <div style={{ padding: '50px 20px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}><h2>管理員登入</h2><input type="password" placeholder="輸入密碼" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '12px', margin: '10px 0', width: '100%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid #ccc' }} /><button onClick={handleLogin} style={{ width: '100%', padding: '12px', background: '#722ed1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>登入</button><div style={{marginTop: '20px'}}><Link to="/">返回首頁</Link></div></div> );
 
   return (
     <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
@@ -175,7 +175,7 @@ function HomePage() {
         body, html { position: static !important; overflow-y: auto !important; height: auto !important; }
         #root { overflow: visible !important; height: auto !important; }
         .app-container { min-height: 100vh; display: flex; flex-direction: column; height: auto; overflow: visible; }
-        .container { max-width: 1280px; margin: 0 auto; width: 90%; padding: 0 24px; box-sizing: border-box; }
+        .container { max-width: 1280px; margin: 0 auto; width: 95%; padding: 0 24px; box-sizing: border-box; }
         .article-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 32px; align-items: start; }
         .article-reader { background: white; border-radius: 16px; padding: 40px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04); min-height: 600px; height: auto; }
         .article-list-container { display: flex; flex-direction: column; gap: 12px; }
@@ -189,12 +189,12 @@ function HomePage() {
           .container { padding: 0 16px; }
           .hero-title { font-size: 32px; }
           .article-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; }
-          .article-list-container { order: 2; margin-top: 20px; width: 90%; }
+          .article-list-container { order: 2; margin-top: 20px; width: 95%; }
           .article-reader { order: 1; padding: 24px; min-height: auto; }
           .app-grid { grid-template-columns: 1fr; }
         }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: white; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border-radius: 12px; padding: 30px; position: relative; }
+        .modal-content { background: white; max-width: 600px; width: 95%; max-height: 80vh; overflow-y: auto; border-radius: 12px; padding: 30px; position: relative; }
         .modal-close { position: absolute; top: 20px; right: 20px; border: none; background: none; cursor: pointer; }
       `}</style>
 
@@ -233,10 +233,10 @@ function HomePage() {
             <PlayCircle size={24} color="#FF0000" /> 精選影片
         </h3>
         {featuredVideo ? (
-          <div className="video-wrapper" style={{ maxWidth: '960px', margin: '0 auto', width: '90%' }}>
+          <div className="video-wrapper" style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
             <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
-                <div style={{ position: 'relative', width: '90%', paddingBottom: '56.25%', background: '#000' }}>
-                  <iframe src={`https://www.youtube.com/embed/${featuredVideo.id}`} title={featuredVideo.title} style={{ position: 'absolute', top: 0, left: 0, width: '90%', height: '100%', border: 0 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"></iframe>
+                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
+                  <iframe src={`https://www.youtube.com/embed/${featuredVideo.id}`} title={featuredVideo.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"></iframe>
                 </div>
                 <div style={{ padding: '16px 24px' }}>
                   <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{featuredVideo.title}</h4>
@@ -274,7 +274,7 @@ function HomePage() {
                  </div>
                );
              })}
-             <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '90%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
+             <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '100%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
           </div>
         </div>
       </section>
@@ -299,9 +299,7 @@ function HomePage() {
       </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
-      <div className="container" style={{ marginBottom: '10px', minHeight: '50px', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
          <AdBanner />
-      </div>
 
       {/* ✅ Footer: 減少 padding */}
       <footer style={{ borderTop: '1px solid #eaeaea', padding: '20px 0', background: 'white' }}>
