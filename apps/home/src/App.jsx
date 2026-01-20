@@ -42,7 +42,7 @@ const APPS = [
 ];
 
 const DEFAULT_ARTICLES = [
-  { id: 'default-1', title: '許甯博風水命理館', date: '2026-01-01', category: '其他', content: '系統載入中...' }
+  { id: 'default-1', title: '許甯博風水命理館', date: '2026-01-01', category: '其他', content: '系統努力載入中' }
 ];
 
 const CategoryBadge = ({ label }) => {
@@ -113,7 +113,7 @@ function AdminPage() {
     <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ margin: 0 }}>{editingId ? '修改文章' : '新增文章'}</h2>
-        <Link to="/" style={{ color: '#666', textDecoration: 'none' }}>回首頁</Link>
+        <Link to="/" style={{ color: '#666', textDecoration: 'none' }}>返回首頁</Link>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <div>
@@ -124,7 +124,7 @@ function AdminPage() {
         </div>
         <input type="text" placeholder="標題" value={title} onChange={e => setTitle(e.target.value)} required style={{ padding: '15px', fontSize: '18px', borderRadius: '8px', border: '1px solid #ddd' }} />
         <textarea placeholder="內容" value={content} onChange={e => setContent(e.target.value)} required style={{ padding: '15px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ddd', minHeight: '200px' }} />
-        <button type="submit" disabled={loading} style={{ padding: '15px', background: editingId ? '#fa8c16' : '#722ed1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer' }}>{loading ? '處理中...' : (editingId ? '確認修改' : '發布')}</button>
+        <button type="submit" disabled={loading} style={{ padding: '15px', background: editingId ? '#fa8c16' : '#722ed1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer' }}>{loading ? '諾!' : (editingId ? '確認修改' : '發布')}</button>
       </form>
       <div style={{ marginTop: '50px' }}>
         <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}><List size={20} /> 文章列表 <button onClick={fetchArticles} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#007aff', display: 'flex', alignItems: 'center', gap: '4px' }}><RefreshCw size={14} /> 重新整理</button></h3>
@@ -158,7 +158,7 @@ function HomePage() {
           for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
           setDisplayArticles(shuffled.slice(0, 5));
         } else {
-            const fallback = [{ id: 'fallback-1', title: '許甯博風水命理館', date: new Date().toISOString().split('T')[0], category: '其他', content: '目前尚未有新文章...' }];
+            const fallback = [{ id: 'fallback-1', title: '許甯博風水命理館', date: new Date().toISOString().split('T')[0], category: '其他', content: '目前尚未有新文章' }];
             setArticles(fallback); setDisplayArticles(fallback); setActiveArticleId('fallback-1');
         }
       } catch (error) { console.error(error); }
@@ -175,7 +175,7 @@ function HomePage() {
         body, html { position: static !important; overflow-y: auto !important; height: auto !important; }
         #root { overflow: visible !important; height: auto !important; }
         .app-container { min-height: 100vh; display: flex; flex-direction: column; height: auto; overflow: visible; }
-        .container { max-width: 1280px; margin: 0 auto; width: 100%; padding: 0 24px; box-sizing: border-box; }
+        .container { max-width: 1280px; margin: 0 auto; width: 90%; padding: 0 24px; box-sizing: border-box; }
         .article-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 32px; align-items: start; }
         .article-reader { background: white; border-radius: 16px; padding: 40px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04); min-height: 600px; height: auto; }
         .article-list-container { display: flex; flex-direction: column; gap: 12px; }
@@ -189,7 +189,7 @@ function HomePage() {
           .container { padding: 0 16px; }
           .hero-title { font-size: 32px; }
           .article-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; }
-          .article-list-container { order: 2; margin-top: 20px; width: 100%; }
+          .article-list-container { order: 2; margin-top: 20px; width: 90%; }
           .article-reader { order: 1; padding: 24px; min-height: auto; }
           .app-grid { grid-template-columns: 1fr; }
         }
