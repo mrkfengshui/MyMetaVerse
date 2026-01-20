@@ -107,19 +107,19 @@ function AdminPage() {
   const handleEditClick = (article) => { setTitle(article.title); setContent(article.content); setCategory(article.category || '其他'); setEditingId(article.id); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const handleDeleteClick = async (id) => { if (window.confirm('確定刪除？')) { try { await deleteDoc(doc(db, "articles", id)); fetchArticles(); } catch (error) { alert('刪除失敗'); } } };
 
-  if (!isLoggedIn) return ( <div style={{ padding: '50px 20px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}><h2>管理員登入</h2><input type="password" placeholder="輸入密碼" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '12px', margin: '10px 0', width: '100%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid #ccc' }} /><button onClick={handleLogin} style={{ width: '100%', padding: '12px', background: '#722ed1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>登入</button><div style={{marginTop: '20px'}}><Link to="/">返回首頁</Link></div></div> );
+  if (!isLoggedIn) return ( <div style={{ padding: '50px 20px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}><h2>管理員登入</h2><input type="password" placeholder="輸入密碼" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '12px', margin: '10px 0', width: '90%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid #ccc' }} /><button onClick={handleLogin} style={{ width: '90%', padding: '12px', background: '#722ed1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>登入</button><div style={{marginTop: '20px'}}><Link to="/">返回首頁</Link></div></div> );
 
   return (
     <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ margin: 0 }}>{editingId ? '修改文章' : '新增文章'}</h2>
-        <Link to="/" style={{ color: '#666', textDecoration: 'none' }}>返回首頁</Link>
+        <Link to="/" style={{ color: '#888', textDecoration: 'none' }}>返回首頁</Link>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: '#666' }}>分類</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: '#888' }}>分類</label>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {CATEGORIES.map(cat => ( <label key={cat.id} style={{ cursor: 'pointer', padding: '8px 16px', borderRadius: '20px', backgroundColor: category === cat.label ? cat.color : '#f0f0f0', color: category === cat.label ? 'white' : '#666', border: category === cat.label ? 'none' : '1px solid #ddd', fontSize: '14px' }}> <input type="radio" name="category" value={cat.label} checked={category === cat.label} onChange={e => setCategory(e.target.value)} style={{ display: 'none' }} /> {cat.label} </label> ))}
+            {CATEGORIES.map(cat => ( <label key={cat.id} style={{ cursor: 'pointer', padding: '8px 16px', borderRadius: '20px', backgroundColor: category === cat.label ? cat.color : '#f0f0f0', color: category === cat.label ? 'white' : '#888', border: category === cat.label ? 'none' : '1px solid #ddd', fontSize: '14px' }}> <input type="radio" name="category" value={cat.label} checked={category === cat.label} onChange={e => setCategory(e.target.value)} style={{ display: 'none' }} /> {cat.label} </label> ))}
           </div>
         </div>
         <input type="text" placeholder="標題" value={title} onChange={e => setTitle(e.target.value)} required style={{ padding: '15px', fontSize: '18px', borderRadius: '8px', border: '1px solid #ddd' }} />
@@ -208,7 +208,7 @@ function HomePage() {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <a href="mailto:mail@mrkfengshui.com" style={{ textDecoration: 'none', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <a href="mailto:mail@mrkfengshui.com" style={{ textDecoration: 'none', color: '#888', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mail size={18} /> <span style={{display: 'none', md: 'inline'}}>聯絡我們</span>
                 </a>
                 <Link to="/admin" style={{ color: '#eee' }} title="後台管理"><Lock size={16} /></Link>
@@ -217,11 +217,11 @@ function HomePage() {
       </header>
 
       {/* ✅ Hero Section: 改為深色背景，padding 減半 */}
-      <section style={{ padding: '40px 0', textAlign: 'center', background: '#ffffff' }}>
+      <section style={{ padding: '20px 0', textAlign: 'center', background: '#ffffff' }}>
         <div className="container">
             {/* 標題已在 CSS 設定為 white */}
             <h1 className="hero-title">玄學就是科學</h1>
-            <p style={{ fontSize: '16px', color: '#000000', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
+            <p style={{ fontSize: '16px', color: '#888', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
             專為你提供最專業玄學服務，自研最流暢且精準的線上命理工具。
             </p>
         </div>
@@ -233,10 +233,10 @@ function HomePage() {
             <PlayCircle size={24} color="#FF0000" /> 精選影片
         </h3>
         {featuredVideo ? (
-          <div className="video-wrapper" style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
+          <div className="video-wrapper" style={{ maxWidth: '960px', margin: '0 auto', width: '90%' }}>
             <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
-                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
-                  <iframe src={`https://www.youtube.com/embed/${featuredVideo.id}`} title={featuredVideo.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"></iframe>
+                <div style={{ position: 'relative', width: '90%', paddingBottom: '56.25%', background: '#000' }}>
+                  <iframe src={`https://www.youtube.com/embed/${featuredVideo.id}`} title={featuredVideo.title} style={{ position: 'absolute', top: 0, left: 0, width: '90%', height: '100%', border: 0 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"></iframe>
                 </div>
                 <div style={{ padding: '16px 24px' }}>
                   <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{featuredVideo.title}</h4>
@@ -263,7 +263,7 @@ function HomePage() {
           </div>
           <div className="article-list-container">
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{showAllArticles ? '所有文章' : '精選隨機'}</div>
+                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{showAllArticles ? '所有文章' : '精選文章'}</div>
              </div>
              {listToRender.map(article => {
                const isActive = article.id === activeArticleId;
@@ -274,7 +274,7 @@ function HomePage() {
                  </div>
                );
              })}
-             <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '100%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#666', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
+             <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '90%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
           </div>
         </div>
       </section>
@@ -289,8 +289,8 @@ function HomePage() {
             <a key={app.id} href={app.url} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{ background: 'white', borderRadius: '16px', padding: '24px', border: '1px solid #eee', height: '100%', display: 'flex', flexDirection: 'column', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', boxSizing: 'border-box', transition: 'transform 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                 <div style={{ background: app.color, width: '56px', height: '56px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>{app.icon}</div>
-                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 8px 0' }}>{app.name}</h3>
-                <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5', flex: 1 }}>{app.desc}</p>
+                <h3 style={{ fontSize: '18px', color: '#111', fontWeight: 'bold', margin: '0 0 8px 0' }}>{app.name}</h3>
+                <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.5', flex: 1 }}>{app.desc}</p>
                 <div style={{ display: 'flex', alignItems: 'center', color: '#007aff', fontWeight: 'bold', fontSize: '14px', marginTop: '16px' }}>立即使用 <ChevronRight size={16} /></div>
               </div>
             </a>
@@ -299,7 +299,7 @@ function HomePage() {
       </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
-      <div className="container" style={{ marginBottom: '20px', minHeight: '60px', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <div className="container" style={{ marginBottom: '10px', minHeight: '50px', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
          <AdBanner />
       </div>
 
