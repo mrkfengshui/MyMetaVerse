@@ -7,8 +7,6 @@ import {
   Facebook, Instagram, Youtube, X, Mail, ChevronRight, Edit, Trash2, RefreshCw,
   ChevronDown, ChevronUp
 } from 'lucide-react';
-
-// --- 引入共用 UI ---
 import { AdBanner } from '@my-meta/ui';
 
 // --- 0. 設定與常數 ---
@@ -69,7 +67,7 @@ const PrivacyModal = ({ onClose }) => (
   </div>
 );
 
-// --- Admin Page (保持不變) ---
+// --- Admin Page ---
 function AdminPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -146,17 +144,31 @@ function HomePage() {
   const [showAllArticles, setShowAllArticles] = useState(false);
 
   useEffect(() => {
+    // 隨機影片
     if (VIDEOS.length > 0) setFeaturedVideo(VIDEOS[Math.floor(Math.random() * VIDEOS.length)]);
+
+    // 讀取文章
     const fetchArticles = async () => {
       try {
         const q = query(collection(db, "articles"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
         if (data.length > 0) {
-          setArticles(data); setActiveArticleId(data[0].id);
+          setArticles(data);
+
+          // ✨ 關鍵修改：主畫面預設顯示隨機一篇，而非第一篇
+          const randomMainIndex = Math.floor(Math.random() * data.length);
+          setActiveArticleId(data[randomMainIndex].id);
+
+          // 列表也隨機洗牌
           const shuffled = [...data];
-          for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+          for (let i = shuffled.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; 
+          }
           setDisplayArticles(shuffled.slice(0, 5));
+
         } else {
             const fallback = [{ id: 'fallback-1', title: '許甯博風水命理館', date: new Date().toISOString().split('T')[0], category: '其他', content: '目前尚未有新文章' }];
             setArticles(fallback); setDisplayArticles(fallback); setActiveArticleId('fallback-1');
@@ -180,7 +192,6 @@ function HomePage() {
         .article-reader { background: white; border-radius: 16px; padding: 40px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04); min-height: 600px; height: auto; }
         .article-list-container { display: flex; flex-direction: column; gap: 12px; }
         
-        /* Hero 標題樣式 (反白) */
         .hero-title { font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; color: #111 !important; }
         
         .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
@@ -198,15 +209,13 @@ function HomePage() {
         .modal-close { position: absolute; top: 20px; right: 20px; border: none; background: none; cursor: pointer; }
       `}</style>
 
-      {/* ✅ Header: 強制設定標題顏色，確保不會消失 */}
+      {/* Header */}
       <header style={{ background: 'white', borderBottom: '1px solid #eee', position: 'sticky', top: 0, zIndex: 100, height: '60px', display: 'flex', alignItems: 'center' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
-            {/* Logo 區塊 */}
             <div style={{ fontWeight: '900', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img src="/logo.png" alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
               <span style={{ fontSize: '18px', color: '#111', display: 'inline-block' }}>許甯博風水命理館</span>
             </div>
-            
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <a href="mailto:mail@mrkfengshui.com" style={{ textDecoration: 'none', color: '#888', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mail size={18} /> <span style={{display: 'none', md: 'inline'}}>聯絡我們</span>
@@ -216,10 +225,9 @@ function HomePage() {
         </div>
       </header>
 
-      {/* ✅ Hero Section: 改為深色背景，padding 減半 */}
+      {/* Hero */}
       <section style={{ padding: '20px 0', textAlign: 'center', background: '#ffffff' }}>
         <div className="container">
-            {/* 標題已在 CSS 設定為 white */}
             <h1 className="hero-title">玄學就是科學</h1>
             <p style={{ fontSize: '16px', color: '#888', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
             專為你提供最專業玄學服務，自研最流暢且精準的線上命理工具。
@@ -227,7 +235,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* YouTube Section */}
+      {/* Video */}
       <section style={{ padding: '40px 0' }} className="container">
         <h3 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <PlayCircle size={24} color="#FF0000" /> 精選影片
@@ -246,7 +254,7 @@ function HomePage() {
         ) : null}
       </section>
 
-      {/* Articles Section */}
+      {/* Articles */}
       <section style={{ padding: '40px 0' }} className="container">
         <h3 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <BookOpen size={24} color="#722ed1" /> 命理專欄
@@ -279,7 +287,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Apps Grid */}
+      {/* Apps */}
       <section style={{ padding: '40px 0 60px' }} className="container">
         <h3 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Sparkles size={24} color="#fa8c16" /> 自研工具開發
@@ -299,9 +307,9 @@ function HomePage() {
       </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
-                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
+      <div style={{ marginTop: '20px' }}><AdBanner /></div>
 
-      {/* ✅ Footer: 減少 padding */}
+      {/* Footer */}
       <footer style={{ borderTop: '1px solid #eaeaea', padding: '20px 0', background: 'white' }}>
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '24px' }}>
