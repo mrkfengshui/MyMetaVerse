@@ -78,6 +78,23 @@ const WUXING_MAP = {
   '子': '水', '丑': '土'
 };
 
+// 計算空亡
+const getKongWang = (gan, zhi) => {
+    if (!gan || !zhi) return [];
+    const ganIdx = TIANGAN.indexOf(gan);
+    const zhiIdx = DIZHI.indexOf(zhi);
+    if (ganIdx === -1 || zhiIdx === -1) return [];
+
+    // 計算旬首偏移量
+    const offset = (zhiIdx - ganIdx + 12) % 12;
+    
+    // 計算兩個空亡地支的索引
+    const empty1Idx = (offset + 10) % 12;
+    const empty2Idx = (offset + 11) % 12;
+
+    return [DIZHI[empty1Idx], DIZHI[empty2Idx]];
+};
+
 const CN_MAP = {
   '惊': '驚', '蛰': '蟄', '种': '種', '长': '長', '涧': '澗', '蜡': '蠟', '杨': '楊', '雳': '靂', 
   '灯': '燈', '驿': '驛', '钗': '釵', '炉': '爐', '剑': '劍', '钟': '鐘', '岚': '嵐', '构': '構', 
@@ -481,6 +498,12 @@ const calculateBaziResult = (formData, ziHourRule) => {
     const daYuns = calculateDaYun(baziObj, formData.gender, startSolar.getYear(), startAge);
     const pad = (n) => String(n).padStart(2, '0');
 
+    // 1. 計算日空亡 (以日柱查)
+    const dayKongWang = getKongWang(baziObj.dayGan, baziObj.dayZhi);
+    
+    // 2. 計算年空亡 (以年柱查)
+    const yearKongWang = getKongWang(baziObj.yearGan, baziObj.yearZhi);
+
     return {
         id: formData.id || Date.now(),
         name: formData.name || '未命名',
@@ -491,6 +514,10 @@ const calculateBaziResult = (formData, ziHourRule) => {
         solarDate: `${rawYear}-${pad(rawMonth)}-${pad(rawDay)} ${pad(rawHour)}:${pad(rawMinute)}`,
         lunarDate: lunarString,
         bazi: baziObj,
+        meta: {
+            dayKongWang: dayKongWang,   // 日空亡
+            yearKongWang: yearKongWang, // 年空亡
+        },
         naYin: {
             year: toTraditional(bazi.getYearNaYin()), month: toTraditional(bazi.getMonthNaYin()),
             day: toTraditional(bazi.getDayNaYin()), time: toTraditional(bazi.getTimeNaYin())
@@ -834,7 +861,12 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
 };
 
 // --- PillarCard (四柱卡片) ---
-const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, yearZhi, monthZhi, colorTheme, genderText, onShenShaClick }) => {
+const PillarCard = ({ 
+    title, gan, zhi, naYin, dayMaster, displayMode, 
+    dayZhi, yearZhi, monthZhi, colorTheme, genderText, 
+    onShenShaClick, kongWangStatus 
+    }) => {
+
    const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
    const zhiColor = safeTheme === 'elemental' ? (BRANCH_COLORS[zhi] || '#555555') : '#555555';
@@ -911,6 +943,25 @@ const PillarCard = ({ title, gan, zhi, naYin, dayMaster, displayMode, dayZhi, ye
                             {item}
                         </span>
                     )) : null
+                )}
+                {/* ★ 新增：空亡標記 (顯示在左下角) */}
+                    {kongWangStatus && (
+                        <div style={{ 
+                        position: 'absolute', 
+                        left: -50,             // 移至左側
+                        top: '30%',             // 垂直置中
+                        transform: 'translateY(-50%)', 
+                        fontSize: '11px', 
+                        color: '#ffffff',       // 白字
+                        backgroundColor: '#999999', // 灰底
+                        borderRadius: '1px',    // 圓角
+                        padding: '1px 3px',
+                        lineHeight: '1.2',
+                        fontWeight: 'bold',
+                        zIndex: 2
+                    }}>
+                        空
+                    </div>
                 )}
 
             </div>
@@ -1076,7 +1127,14 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
         );
     };
 
-  const renderDaYunRow = (list) => {
+    // 空亡
+    const getKongWangStatus = (zhi) => {
+       if (!data.meta) return null;
+       const { dayKongWang, yearKongWang } = data.meta;
+       return dayKongWang.includes(zhi) || yearKongWang.includes(zhi);
+    };
+
+    const renderDaYunRow = (list) => {
         return (
             <div style={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: '8px' }}>
                 {list.map((dy) => {
@@ -1120,7 +1178,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
         );
     };
     
-const renderLiuNianGrid = () => {
+    const renderLiuNianGrid = () => {
         if (data.isManual) return null;
         const targetDaYun = data.daYuns[selectedDaYunIndex];
         if (!targetDaYun || !targetDaYun.liuNians || targetDaYun.liuNians.length === 0) return null;
@@ -1316,7 +1374,9 @@ return (
                 ) : ( 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> 
                         <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate}</div> 
+                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate} </div> 
+                        {/* 空亡摘要顯示在這裡 */}
+                        <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500' }}>日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}</div> 
                     </div> 
                 )}
                 
@@ -1328,7 +1388,6 @@ return (
                     </> 
                 ) : null}
             </div>
-
 
             {/* --- 右側：控制區 (垂直排列) --- */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
@@ -1377,28 +1436,24 @@ return (
         </div>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
             <PillarCard 
-                title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} naYin={data.naYin.time} 
-                dayMaster={data.bazi.dayGan} displayMode={displayMode}
-                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
-                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+                title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} 
+                kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
+                {...{naYin:data.naYin.time, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
-                title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} naYin={data.naYin.day} 
-                dayMaster={data.bazi.dayGan} displayMode={displayMode}
-                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
-                colorTheme={safeTheme} genderText={data.genderText} onShenShaClick={openShenShaModal}
+                title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
+                kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
+                {...{naYin:data.naYin.day, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText:data.genderText, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
-                title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} naYin={data.naYin.month} 
-                dayMaster={data.bazi.dayGan} displayMode={displayMode} 
-                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
-                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+                title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
+                kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
+                {...{naYin:data.naYin.month, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
-                title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} naYin={data.naYin.year} 
-                dayMaster={data.bazi.dayGan} displayMode={displayMode} 
-                dayZhi={data.bazi.dayZhi} yearZhi={data.bazi.yearZhi} monthZhi={data.bazi.monthZhi}
-                colorTheme={safeTheme} onShenShaClick={openShenShaModal}
+                title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
+                kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
+                {...{naYin:data.naYin.year, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
             />
         </div>
        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
