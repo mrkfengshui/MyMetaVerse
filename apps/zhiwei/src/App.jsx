@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// 1. 引入共用 UI 和 工具
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
-// 1. 引入共用 UI 和 工具
 import { 
   AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
@@ -13,10 +13,11 @@ import {
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
-  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Circle, Compass, CloudUpload,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
+  ChevronUp, ChevronDown, Circle, Compass, CloudUpload,
   DoorOpen, Download,
-  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
-  RefreshCw, Save, Settings, Sparkles,
+  Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
+  RefreshCw, RotateCcw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 

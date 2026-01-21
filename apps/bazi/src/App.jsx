@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// 1. 引入共用 UI 和 工具
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
-// 1. 引入共用 UI 和 工具
 import { 
   AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
@@ -13,10 +13,11 @@ import {
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
-  Calendar, CalendarCheck, ChevronLeft, ChevronRight, Circle, Compass, CloudUpload,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
+  ChevronUp, ChevronDown, Circle, Compass, CloudUpload,
   DoorOpen, Download,
-  Edit3, Eye, EyeOff, Grid, Lock, MapPin,
-  RefreshCw, Save, Settings, Sparkles,
+  Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
+  RefreshCw, RotateCcw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -954,7 +955,7 @@ const PillarCard = ({
                         fontSize: '11px', 
                         color: '#ffffff',       // 白字
                         backgroundColor: '#999999', // 灰底
-                        borderRadius: '1px',    // 圓角
+                        borderRadius: '4px',    // 圓角
                         padding: '1px 3px',
                         lineHeight: '1.2',
                         fontWeight: 'bold',
@@ -1301,12 +1302,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                             >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '12px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '10px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -11 }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -10 }}>
                                         {displayMode === 'shenSha' ? (
                                             <ShenShaVerticalList 
                                                 items={displayBottomRight}
