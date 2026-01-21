@@ -1574,7 +1574,7 @@ export default function BaziApp() {
           {view === 'input' && (
             <>
               <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
-              <AdBanner />
+                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
             </>
           )}
           

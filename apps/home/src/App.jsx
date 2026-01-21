@@ -299,7 +299,7 @@ function HomePage() {
       </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
-         <AdBanner />
+                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
 
       {/* ✅ Footer: 減少 padding */}
       <footer style={{ borderTop: '1px solid #eaeaea', padding: '20px 0', background: 'white' }}>

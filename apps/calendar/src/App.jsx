@@ -1397,7 +1397,7 @@ export default function CalendarApp() {
                   ))}
                 </div>
                 {/* 在月曆網格下方加入廣告 */}
-                    <AdBanner />
+                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
             </div>
 
             <BottomSummaryPanel 
