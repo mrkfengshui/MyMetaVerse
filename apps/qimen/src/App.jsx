@@ -27,6 +27,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 // --- 基礎定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const CHINESE_NUM = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
 
 // 原始宮位 (洛書數)
 const PALACE_BASE = {
@@ -378,6 +379,9 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         };
     });
 
+    // 局數中文
+    const juNumCN = CHINESE_NUM[juNum];
+
     return {
         id: Date.now(),
         solarDateStr: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
@@ -385,7 +389,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         jieQi: jieQiName,
         jieQiTime: jieQiTimeStr,
         nextJieQiTime: nextJieQiStr,
-        juName: `${dunType}${juNum}局`,
+        juName: `${dunType}${juNumCN}局`, // 改為中文數字
         xunInfo: `${xun}${xunLeaderGan}`,
         zhiFuStar: `天${originStar}`,
         zhiShiDoor: `${originDoor}門`,
@@ -426,11 +430,11 @@ const navBtnStyle = {
 // 轉宮控制條
 const RotateControlBar = ({ rotateOffset, onRotate }) => {
     const btnStyle = {
-        flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.blue}`,
-        backgroundColor: THEME.bgBlue, color: THEME.blue, fontSize: '12px', fontWeight: 'bold',
+        flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`,
+        backgroundColor: THEME.bgGray, color: THEME.black, fontSize: '11px', fontWeight: 'bold',
         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
     };
-    const centerStyle = { ...btnStyle, backgroundColor: THEME.white, color: THEME.gray, border: `1px solid ${THEME.border}` };
+    const centerStyle = { ...btnStyle, backgroundColor: THEME.bgGray, color: THEME.black, border: `1px solid ${THEME.border}` };
 
     return (
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -438,7 +442,7 @@ const RotateControlBar = ({ rotateOffset, onRotate }) => {
                 <RotateCcw size={14}/> 逆轉 (轉宮)
             </button>
             <button onClick={() => onRotate(0)} style={centerStyle}>
-                <Undo2 size={14}/> 原局
+                原局
             </button>
             <button onClick={() => onRotate(1)} style={btnStyle} disabled={rotateOffset >= 7}>
                 順轉 (轉宮) <RotateCw size={14}/>
@@ -506,7 +510,7 @@ const InputView = ({ onCalculate, initialData }) => {
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                     <button onClick={() => setDate(new Date())} style={{ padding: '14px', borderRadius: '30px', border: `1px solid ${THEME.border}`, backgroundColor: THEME.white, color: THEME.gray, fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>現在</button>
-                    <button onClick={handleCalculate} style={{ flex: 1, padding: '14px', backgroundColor: THEME.black, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}><Sparkles size={18} />{initialData ? '重新排盤' : '開始排盤'}</button>
+                    <button onClick={handleCalculate} style={{ flex: 1, padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}><Sparkles size={18} />{initialData ? '重新排盤' : '開始排盤'}</button>
                 </div>
             </div>
         </div>
@@ -519,16 +523,17 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
         return (
             <div style={{ ...cellStyle, backgroundColor: '#fffbe6', justifyContent: 'center' }}>
                 <div style={{ fontSize: '14px', color: THEME.black, fontWeight: 'bold', marginBottom: '4px' }}>{extraInfo.juName}</div>
-                <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>{extraInfo.xunInfo}</div>
-                <div style={{ display: 'flex', gap: '8px', fontSize: '12px', color: THEME.blue }}>
+                <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '4px' }}>{extraInfo.xunInfo}旬</div>
+                {/* 值符值使同行 */}
+                <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: THEME.blue, fontWeight: '500' }}>
                     <span>值符: {extraInfo.zhiFuStar}</span>
                     <span>值使: {extraInfo.zhiShiDoor}</span>
                 </div>
                 {/* 顯示特別格局 */}
                 {patterns && patterns.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px dashed #ccc', marginTop:'6px', paddingTop:'4px', width:'100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px', marginTop:'6px', paddingTop:'4px', width:'100%' }}>
                         {patterns.map((p, i) => (
-                            <span key={i} style={{ fontSize: '10px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
+                            <span key={i} style={{ fontSize: '12px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
                         ))}
                     </div>
                 )}
@@ -542,52 +547,52 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const ROW4_TOP = '74px';  // 門
 
     const centerStyle = { position: 'absolute', left: 0, right: 0, textAlign: 'center', width: '100%', zIndex: 1 };
-    const leftStyle = { position: 'absolute', left: '4px', textAlign: 'left', zIndex: 2 };
-    const rightStyle = { position: 'absolute', right: '4px', textAlign: 'right', zIndex: 2 };
+    const leftStyle = { position: 'absolute', left: '8px', textAlign: 'left', zIndex: 2 };
+    const rightStyle = { position: 'absolute', right: '8px', textAlign: 'right', zIndex: 2 };
 
     // 安全處理 data.an (確保是字串)
     const anGan = data.an || '';
 
     return (
         <div style={cellStyle}>
-            <div style={{ position: 'absolute', top: 2, right: 4, fontSize: '12px', fontWeight: 'bold', color: '#888' }}>
+            <div style={{ position: 'absolute', top: 2, right: 4, fontSize: '12px', fontWeight: 'bold', color: THEME.black }}>
                 {data.name}
             </div>
 
             <div style={{ marginTop: '18px', width: '100%', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {/* 第2行 */}
                 <div style={{ position: 'absolute', top: ROW2_TOP, width: '100%' }}>
-                    <div style={{ ...leftStyle, color: THEME.red, fontWeight: 'bold', fontSize: '12px' }}>
+                    <div style={{ ...leftStyle, color: THEME.red, fontWeight: 'bold', fontSize: '14px' }}>
                         {data.isKong ? '空' : ''}
                     </div>
-                    <div style={{ ...centerStyle, fontSize: '16px', color: '#722ed1', fontWeight: 'bold' }}>
+                    <div style={{ ...centerStyle, fontSize: '18px', color: THEME.purple, fontWeight: 'bold' }}>
                         {data.shen}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '20px', color: THEME.gray, fontWeight: 'bold' }}>
                         {data.diShen}
                     </div>
                 </div>
 
                 {/* 第3行 */}
                 <div style={{ position: 'absolute', top: ROW3_TOP, width: '100%' }}>
-                    <div style={{ ...leftStyle, top: '-2px', fontSize: '12px', color: '#555', lineHeight: '0.9', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ ...leftStyle, top: '4px', fontSize: '18px', color: THEME.gray, lineHeight: '0.9', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {/* 引干直排，防止 data.an undefined */}
                         {anGan.length > 1 ? anGan.split('').map((c,i)=><div key={i}>{c}</div>) : anGan}
                     </div>
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', color: THEME.red, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-2px' : '0' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-2px' : '0' }}>
                         {data.tian}
                     </div>
                 </div>
 
                 {/* 第4行 */}
                 <div style={{ position: 'absolute', top: ROW4_TOP, width: '100%' }}>
-                    <div style={{ ...centerStyle, fontSize: '18px', color: '#d46b08', fontWeight: 'bold' }}>
+                    <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '0' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '0' }}>
                         {data.di}
                     </div>
                 </div>
@@ -595,10 +600,10 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
 
             {/* 第5行 */}
             <div style={{ position: 'absolute', bottom: 2, width: '100%', display: 'flex', justifyContent: 'center', gap: '4px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: THEME.red, visibility: data.isMa ? 'visible' : 'hidden' }}>馬</span>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: THEME.red, visibility: data.isPo ? 'visible' : 'hidden' }}>迫</span>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: THEME.red, visibility: data.isXing ? 'visible' : 'hidden' }}>刑</span>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: THEME.red, visibility: data.isMu ? 'visible' : 'hidden' }}>墓</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.red, visibility: data.isMa ? 'visible' : 'hidden' }}>馬</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.red, visibility: data.isPo ? 'visible' : 'hidden' }}>迫</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.red, visibility: data.isXing ? 'visible' : 'hidden' }}>刑</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: THEME.red, visibility: data.isMu ? 'visible' : 'hidden' }}>墓</span>
             </div>
         </div>
     );
@@ -646,19 +651,16 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
     return (
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                {/* 節氣資訊 */}
-                <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px', borderLeft: `3px solid ${THEME.blue}`, paddingLeft: '6px' }}>
-                    <div>{data.jieQiTime}</div>
-                    <div>{data.nextJieQiTime}</div>
-                </div>
-
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black, marginBottom: '4px' }}>{currentData.lunarDateStr}</div>
                         <div style={{ fontSize: '13px', color: THEME.gray }}>{currentData.solarDateStr}</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black, marginBottom: '4px' }}>{currentData.lunarDateStr}</div>
+                        {/* 節氣資訊 */}
+                        <div style={{ fontSize: '12px', color: THEME.purple, marginBottom: '8px', borderLeft: `3px solid ${THEME.blue}`, paddingLeft: '6px' }}>
+                            <div>{data.jieQiTime}</div>
+                            <div>{data.nextJieQiTime}</div>
+                        </div>
                         <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                            <span style={{ backgroundColor: THEME.bgBlue, color: THEME.blue, padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{currentData.jieQi}</span>
-                            <span style={{ backgroundColor: THEME.bgOrange, color: '#d46b08', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{currentData.juName}</span>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -725,7 +727,7 @@ export default function QiMenApp() {
       }
   };
 
-  const saveBookmark = async (data) => { const title = prompt("請輸入紀錄名稱", `${data.lunarDateStr.split(' ')[2]}事占`); if (!title) return; const newEntry = { id: data.id, name: title, solarDate: data.solarDateStr, lunarString: data.lunarDateStr, rawDate: data.rawDate, type: 'qimen' }; const newBk = [newEntry, ...bookmarks]; setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); alert('已儲存'); };
+  const saveBookmark = async (data) => { const title = prompt("請輸入紀錄名稱", `${data.lunarDateStr.split(' ')[2]}占`); if (!title) return; const newEntry = { id: data.id, name: title, solarDate: data.solarDateStr, lunarString: data.lunarDateStr, rawDate: data.rawDate, type: 'qimen' }; const newBk = [newEntry, ...bookmarks]; setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); alert('已儲存'); };
   const deleteBookmark = async (id) => { if (!confirm('確定刪除？')) return; const newBk = bookmarks.filter(b => b.id !== id); setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); };
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入曆法數據...</div>;
