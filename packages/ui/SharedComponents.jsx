@@ -9,6 +9,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     { name: '八字', url: 'https://bazi.mrkfengshui.com', id: 'bazi' },
     { name: '紫微', url: 'https://zhiwei.mrkfengshui.com', id: 'zhiwei' },
     { name: '風水', url: 'https://compass.mrkfengshui.com', id: 'compass' },
+    { name: '奇門', url: 'https://qimen.mrkfengshui.com', id: 'qimen' },
     { name: '萬年曆', url: 'https://calendar.mrkfengshui.com', id: 'calendar' },
   ];
 
