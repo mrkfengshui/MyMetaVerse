@@ -583,14 +583,14 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
 
                 {/* 第3行 */}
                 <div style={{ position: 'absolute', top: ROW3_TOP, width: '100%' }}>
-                    <div style={{ ...leftStyle, top: '4px', fontSize: '18px', color: THEME.gray, lineHeight: '0.9', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ ...leftStyle, top: '4px', fontSize: '18px', color: THEME.tael, lineHeight: '0.9', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {/* 引干直排，防止 data.an undefined */}
                         {anGan.length > 1 ? anGan.split('').map((c,i)=><div key={i}>{c}</div>) : anGan}
                     </div>
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '14px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '13px' }}>
                         {data.tian}
                     </div>
                 </div>
@@ -600,7 +600,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '14px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '13px' }}>
                         {data.di}
                     </div>
                 </div>
