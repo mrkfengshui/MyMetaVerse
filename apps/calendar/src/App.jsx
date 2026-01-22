@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -1407,7 +1407,7 @@ export default function CalendarApp() {
                   ))}
                 </div>
                 {/* 在月曆網格下方加入廣告 */}
-                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
+                  <div style={{ marginTop: '20px' }}><Adsterra /></div>
             </div>
 
             <BottomSummaryPanel 
@@ -1438,7 +1438,7 @@ export default function CalendarApp() {
                         onDelete={(id) => { if(window.confirm('確定刪除此書籤？')) toggleBookmark(new Date(id)); }}
                     />
                     <div style={{ marginTop: '20px' }}>
-                        <AdBanner />
+                        <Adsterra />
                     </div>
                 </div>
              </div>

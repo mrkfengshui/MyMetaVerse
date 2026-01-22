@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -755,9 +755,9 @@ export default function QiMenApp() {
     <div style={COMMON_STYLES.fullScreen}>
         <AppHeader title={APP_NAME} logoChar={{ main: '奇', sub: '門' }} />
         <div style={COMMON_STYLES.contentArea}>
-            {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} /><AdBanner /></>}
-            {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><AdBanner /></>}
-            {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><AdBanner /></div></div>}
+            {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} /><Adsterra /></>}
+            {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><Adsterra /></>}
+            {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><Adsterra /></div></div>}
             {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
             {view === 'settings' && <SettingsView bookmarks={bookmarks} setBookmarks={setBookmarks} />}
         </div>

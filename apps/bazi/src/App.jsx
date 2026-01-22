@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -1634,14 +1634,14 @@ export default function BaziApp() {
           {view === 'input' && (
             <>
               <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
-                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
+                  <div style={{ marginTop: '20px' }}><Adsterra /></div>
             </>
           )}
           
           {view === 'result' && (
             <>
               <BaziResult data={baziData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} colorTheme={colorTheme} />
-              <AdBanner />
+              <Adsterra />
             </>
           )}
             
@@ -1659,7 +1659,7 @@ export default function BaziApp() {
                     onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
                   />
                   
-                  <div style={{ marginTop: '20px' }}><AdBanner /></div>
+                  <div style={{ marginTop: '20px' }}><Adsterra /></div>
               </div>
           )}
 

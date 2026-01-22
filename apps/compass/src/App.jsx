@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -1215,7 +1215,7 @@ const ChartView = ({ heading, period, setPeriod, year, setYear, month, setMonth,
                 )}
             </div>
 
-            <AdBanner />
+            <Adsterra />
 
             <CommercialView isOpen={showCommercial} onClose={() => setShowCommercial(false)} sittingMt={data.sitting} facingMt={data.facing} />
             <DetailModal isOpen={!!selectedSector} onClose={() => setSelectedSector(null)} data={selectedSector} facingDaGua={data.advanced.daGua.face} />
@@ -1435,10 +1435,10 @@ export default function FengShuiApp() {
                 {view === 'bookmarks' && (
                     <div style={{ padding: '16px', paddingBottom: '100px' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
-                            <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的風水紀錄</h2>
+                            <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的堪察紀錄</h2>
                         </div>
                         <BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} />
-                        <div style={{ marginTop: '20px' }}><AdBanner /></div>
+                        <div style={{ marginTop: '20px' }}><Adsterra /></div>
                     </div>
                 )}
 

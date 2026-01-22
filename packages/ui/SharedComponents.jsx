@@ -1,7 +1,9 @@
 // packages/ui/SharedComponents.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { THEME } from './theme';
-import { ChevronRight, Coffee, Share, X, PlusSquare, Share2, UploadCloud } from 'lucide-react';
+import { ChevronRight, Coffee, Gift,
+  Share, X, PlusSquare, Share2, UploadCloud
+  } from 'lucide-react';
 
 // --- 1. AppHeader ---
 export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => {
@@ -234,27 +236,51 @@ export const SettingLink = ({ label, subLabel, icon: Icon, onClick }) => (
 );
 
 // 請我飲杯咖啡
-export const BuyMeCoffee = () => (
-    <a href="https://buymeacoffee.com/kanekyosan" target="_blank" rel="noreferrer" 
-    style={{ display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      gap: '8px', 
-      width: 'auto',      // 讓寬度自動填滿 left 和 right 之間的空間        
-      boxSizing: 'border-box', 
-      padding: '12px',
-      backgroundColor: '#FFDD00', 
-      color: '#000000', 
-      borderRadius: '12px', 
-      textDecoration: 'none', 
-      fontWeight: 'bold', 
-      fontSize: '14px', 
-      marginTop: '20px', 
-      boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-      <Coffee size={20} />
-      <span>請我飲杯咖啡</span>
-    </a>
-);
+export const BuyMeCoffee = () => {
+  // Adsterra SmartLink
+  const DIRECT_LINK_URL = "https://www.effectivegatecpm.com/gh5wbv6itr?key=2e49883033c900b76d2a3c7b3e407d4a"; 
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+      <h3 style={{ fontSize: '14px', color: '#888', margin: '0 0 4px 4px' }}>支持開發者</h3>
+      
+      {/* 1. Buy Me a Coffee */}
+      <a href="https://buymeacoffee.com/kanekyosan" target="_blank" rel="noreferrer" 
+        style={{ 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
+          width: 'auto', padding: '14px',
+          backgroundColor: '#FFDD00', color: '#000000', 
+          borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px', 
+          boxShadow: '0 4px 10px rgba(255, 221, 0, 0.3)',
+          transition: 'transform 0.1s'
+        }}
+        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <Coffee size={20} />
+        <span>請我飲杯咖啡</span>
+      </a>
+
+      {/* Adsterra SmartLink */}
+      <a href={DIRECT_LINK_URL} target="_blank" rel="noreferrer" 
+        style={{ 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
+          width: 'auto', padding: '14px',
+          backgroundColor: '#ffffff', color: '#555555', 
+          border: '1px solid #e0e0e0',
+          borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px', 
+          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+          transition: 'transform 0.1s'
+        }}
+        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <Gift size={20} />
+        <span>免費贊助 (點擊開啟廣告)</span>
+      </a>
+    </div>
+  );
+};
 
 const COMMON_INFO = {
   agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。\n開發者不對因使用本程式而產生的任何直接或間接後果負責。",
@@ -555,6 +581,65 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 8. 廣告條 (Adsense 替代, 改用 Adsterra) ---
+export const Adsterra = () => {
+  const bannerRef = React.useRef(null);
+
+  useEffect(() => {
+    // 避免重複載入
+    if (bannerRef.current && bannerRef.current.innerHTML !== "") return;
+
+    const confScript = document.createElement("script");
+    confScript.type = "text/javascript";
+    confScript.text = `
+      atOptions = {
+        'key' : '621f5e8b755596d4912f3d558fa25f54',
+        'format' : 'iframe',
+        'height' : 250,
+        'width' : 300,
+        'params' : {}
+      };
+    `;
+    
+    // 2. 建立載入 script
+    const invokeScript = document.createElement("script");
+    invokeScript.type = "text/javascript";
+    invokeScript.src = "https://www.highperformanceformat.com/621f5e8b755596d4912f3d558fa25f54/invoke.js"; 
+
+    // 3. 注入到 div 中
+    if (bannerRef.current) {
+      bannerRef.current.appendChild(confScript);
+      bannerRef.current.appendChild(invokeScript);
+    }
+  }, []);
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      margin: '20px 0',
+      width: '100%' 
+    }}>
+      {/* 廣告容器：設定固定大小以防版面跳動 (CLS) */}
+      <div 
+        ref={bannerRef}
+        style={{ 
+          width: '300px', 
+          height: '250px', 
+          backgroundColor: '#f0f0f0', // 載入前顯示灰色背景
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: '8px' // 稍微圓角比較好看
+        }}
+      >
+        {/* Adsterra 廣告會出現在這裡 */}
       </div>
     </div>
   );
