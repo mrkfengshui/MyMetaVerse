@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// 1. 引入共用 UI 和 工具
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
-// 1. 引入共用 UI 和 工具
 import { 
   AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
@@ -10,18 +10,24 @@ import {
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
+import { useProtection } from '@my-meta/ui';
+
 // 2. 引入 Icon
 import { 
-  Bookmark, CalendarCheck, Compass, Grid, Settings, 
-  RefreshCw, Save, ChevronLeft, ChevronRight, Info,
-  Sparkles, Calendar, Clock, RotateCcw, RotateCw, Undo2
+  Bookmark, BookOpen, Briefcase,
+  Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
+  ChevronUp, ChevronDown, Circle, Compass,
+  CloudUpload, DoorOpen, Download,
+  Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
+  Trash2, Unlock, User, X
 } from 'lucide-react';
 
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博奇門";
-const APP_VERSION = "v2.8 (穩定修復版)";
+const APP_VERSION = "v1.0";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -526,7 +532,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                 <div style={{ display: 'flex', justifyContent: 'left', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '16px', color: THEME.black, fontWeight: 'bold' }}>{extraInfo.juName}</span>
                     {extraInfo.rotateStatus && (
-                        <span style={{ fontSize: '14px', color: THEME.red, fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '10px', color: THEME.red, fontWeight: 'bold' }}>
                             {extraInfo.rotateStatus}
                         </span>
                     )}
@@ -541,7 +547,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                 {patterns && patterns.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'center', borderTop:'2px', marginTop:'2px', paddingTop:'2px', width:'100%' }}>
                         {patterns.map((p, i) => (
-                            <span key={i} style={{ fontSize: '11px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
+                            <span key={i} style={{ fontSize: '14px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
                         ))}
                     </div>
                 )}
@@ -590,7 +596,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '13px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '12px' }}>
                         {data.tian}
                     </div>
                 </div>
@@ -600,7 +606,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '13px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '12px' }}>
                         {data.di}
                     </div>
                 </div>
@@ -700,6 +706,10 @@ const SettingsView = ({ bookmarks, setBookmarks }) => (
 );
 
 export default function QiMenApp() {
+  // 全局啟用保護機制
+  const isAuthorized = useProtection([]);
+  if (!isAuthorized) return null;
+  
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
   const [resultData, setResultData] = useState(null);
@@ -747,7 +757,7 @@ export default function QiMenApp() {
         <div style={COMMON_STYLES.contentArea}>
             {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} /><AdBanner /></>}
             {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><AdBanner /></>}
-            {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>排盤紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><AdBanner /></div></div>}
+            {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><AdBanner /></div></div>}
             {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
             {view === 'settings' && <SettingsView bookmarks={bookmarks} setBookmarks={setBookmarks} />}
         </div>

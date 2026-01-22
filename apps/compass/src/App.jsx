@@ -10,14 +10,16 @@ import {
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
+import { useProtection } from '@my-meta/ui';
+
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
   Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
-  ChevronUp, ChevronDown, Circle, Compass, CloudUpload,
-  DoorOpen, Download,
+  ChevronUp, ChevronDown, Circle, Compass,
+  CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
-  RefreshCw, RotateCcw, Save, Settings, Sparkles,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -1280,6 +1282,10 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode }) => {
 // =========================================================================
 
 export default function FengShuiApp() {
+    // 全局啟用保護機制
+    const isAuthorized = useProtection([]);
+    if (!isAuthorized) return null;
+
     const [view, setView] = useState('input'); 
     const [bookmarks, setBookmarks] = useState([]);
     

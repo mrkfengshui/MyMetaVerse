@@ -10,14 +10,16 @@ import {
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
+import { useProtection } from '@my-meta/ui';
+
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
   Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
-  ChevronUp, ChevronDown, Circle, Compass, CloudUpload,
-  DoorOpen, Download,
+  ChevronUp, ChevronDown, Circle, Compass,
+  CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
-  RefreshCw, RotateCcw, Save, Settings, Sparkles,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -1063,8 +1065,10 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
 // =========================================================================
 
 export default function ZwdsApp() {
-  // 1. 安全保護 & 載入檢查
-  // useProtection(['mrkfengshui.com', 'localhost']);
+  // 全局啟用保護機制
+  const isAuthorized = useProtection([]);
+  if (!isAuthorized) return null;
+  
   const libStatus = useLunarScript();
   
   // 2. 狀態管理

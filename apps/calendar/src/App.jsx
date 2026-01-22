@@ -1,8 +1,8 @@
+// 1. 引入共用 UI 和 工具
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
-// 1. 引入共用 UI 和 工具
 import { 
   AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
@@ -10,14 +10,16 @@ import {
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
+import { useProtection } from '@my-meta/ui';
+
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
   Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
-  ChevronUp, ChevronDown, Circle, Compass, CloudUpload,
-  DoorOpen, Download,
+  ChevronUp, ChevronDown, Circle, Compass,
+  CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
-  RefreshCw, RotateCcw, Save, Settings, Sparkles,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -1070,6 +1072,10 @@ const YearMonthPicker = ({ visible, onClose, onConfirm, initialDate }) => {
 // =========================================================================
 
 export default function CalendarApp() {
+  // 全局啟用保護機制
+  const isAuthorized = useProtection([]);
+  if (!isAuthorized) return null;
+
   const libStatus = useLunarScript();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
