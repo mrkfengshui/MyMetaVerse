@@ -323,7 +323,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     if (starFanyin) patterns.push('九星反吟');
     if (doorFuyin) patterns.push('八門伏吟');
     if (doorFanyin) patterns.push('八門反吟');
-    if (rotateOffset !== 0) patterns.push(`轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}`);
+    // if (rotateOffset !== 0) patterns.push(`轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}`);
 
     // 整合顯示數據 (確保所有欄位都有值，防止 undefined 導致崩潰)
     const gridData = GRID_RENDER_ORDER.map(num => {
@@ -523,23 +523,23 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
         return (
             <div style={{ ...cellStyle, backgroundColor: '#fffbe6', justifyContent: 'center' }}>
                 {/* 局數 與 轉宮狀態 (顯示在同一行) */}
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'left', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '16px', color: THEME.black, fontWeight: 'bold' }}>{extraInfo.juName}</span>
                     {extraInfo.rotateStatus && (
-                        <span style={{ fontSize: '12px', color: THEME.red, fontWeight: 'bold', backgroundColor: '#fff0f6', padding: '1px 4px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '14px', color: THEME.red, fontWeight: 'bold' }}>
                             {extraInfo.rotateStatus}
                         </span>
                     )}
                 </div>
                 <div style={{ fontSize: '14px', color: '#555', marginBottom: '6px' }}>{extraInfo.xunInfo}旬</div>
                 {/* 值符值使同行 */}
-                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: THEME.blue, fontWeight: '500' }}>
+                <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: THEME.blue, fontWeight: '500' }}>
                     <span>值符: {extraInfo.zhiFuStar}</span>
                     <span>值使: {extraInfo.zhiShiDoor}</span>
                 </div>
                 {/* 顯示特別格局 */}
                 {patterns && patterns.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px', marginTop:'1px', paddingTop:'2px', width:'100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'center', borderTop:'2px', marginTop:'2px', paddingTop:'2px', width:'100%' }}>
                         {patterns.map((p, i) => (
                             <span key={i} style={{ fontSize: '11px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
                         ))}
@@ -555,7 +555,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const ROW4_TOP = '74px';  // 門
 
     const centerStyle = { position: 'absolute', left: 0, right: 0, textAlign: 'center', width: '100%', zIndex: 1 };
-    const leftStyle = { position: 'absolute', left: '8px', textAlign: 'left', zIndex: 2 };
+    const leftStyle = { position: 'absolute', left: '18px', textAlign: 'left', zIndex: 2 };
     const rightStyle = { position: 'absolute', right: '8px', textAlign: 'right', zIndex: 2 };
 
     // 安全處理 data.an (確保是字串)
@@ -590,7 +590,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '2px' : '10px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '14px' }}>
                         {data.tian}
                     </div>
                 </div>
@@ -600,7 +600,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '14px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '14px' }}>
                         {data.di}
                     </div>
                 </div>
@@ -645,7 +645,8 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
         juName: currentData.juName,
         xunInfo: currentData.xunInfo,
         zhiFuStar: currentData.zhiFuStar,
-        zhiShiDoor: currentData.zhiShiDoor
+        zhiShiDoor: currentData.zhiShiDoor,
+        rotateStatus: rotateOffset !== 0 ? `轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}` : ''
     };
 
     const handleRotate = (val) => {
