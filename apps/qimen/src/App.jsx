@@ -522,10 +522,18 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     if (data.num === 5) {
         return (
             <div style={{ ...cellStyle, backgroundColor: '#fffbe6', justifyContent: 'center' }}>
-                <div style={{ fontSize: '14px', color: THEME.black, fontWeight: 'bold', marginBottom: '4px' }}>{extraInfo.juName}</div>
-                <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '4px' }}>{extraInfo.xunInfo}旬</div>
+                {/* 局數 與 轉宮狀態 (顯示在同一行) */}
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '16px', color: THEME.black, fontWeight: 'bold' }}>{extraInfo.juName}</span>
+                    {extraInfo.rotateStatus && (
+                        <span style={{ fontSize: '12px', color: THEME.red, fontWeight: 'bold', backgroundColor: '#fff0f6', padding: '1px 4px', borderRadius: '4px' }}>
+                            {extraInfo.rotateStatus}
+                        </span>
+                    )}
+                </div>
+                <div style={{ fontSize: '14px', color: '#555', marginBottom: '6px' }}>{extraInfo.xunInfo}旬</div>
                 {/* 值符值使同行 */}
-                <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: THEME.blue, fontWeight: '500' }}>
+                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: THEME.blue, fontWeight: '500' }}>
                     <span>值符: {extraInfo.zhiFuStar}</span>
                     <span>值使: {extraInfo.zhiShiDoor}</span>
                 </div>
@@ -533,7 +541,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                 {patterns && patterns.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px', marginTop:'1px', paddingTop:'2px', width:'100%' }}>
                         {patterns.map((p, i) => (
-                            <span key={i} style={{ fontSize: '12px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
+                            <span key={i} style={{ fontSize: '11px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
                         ))}
                     </div>
                 )}
@@ -579,10 +587,10 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                         {/* 引干直排，防止 data.an undefined */}
                         {anGan.length > 1 ? anGan.split('').map((c,i)=><div key={i}>{c}</div>) : anGan}
                     </div>
-                    <div style={{ ...centerStyle, fontSizeanGan: '18px', color: THEME.black, fontWeight: 'bold' }}>
+                    <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '2px' : '14px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '2px' : '10px' }}>
                         {data.tian}
                     </div>
                 </div>
