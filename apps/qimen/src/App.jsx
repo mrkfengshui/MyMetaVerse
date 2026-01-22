@@ -700,7 +700,7 @@ const SettingsView = ({ bookmarks, setBookmarks }) => (
     <div style={{ padding: '16px', paddingBottom: '100px' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2></div>
         <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="QIMEN_BACKUP" />
-        <AppInfoCard info={{ appName: APP_NAME, version: APP_VERSION, about: "本程式提供陰盤奇門遁甲排盤功能，包含伏吟反吟與凶格提示，並支援轉宮演局。" }} />
+        <AppInfoCard info={{ appName: APP_NAME, version: APP_VERSION, about: "本程式提供道家陰盤奇門遁甲排盤功能，解說仍需專業師傅進行。" }} />
         <BuyMeCoffee />
     </div>
 );
@@ -709,7 +709,7 @@ export default function QiMenApp() {
   // 全局啟用保護機制
   const isAuthorized = useProtection([]);
   if (!isAuthorized) return null;
-  
+
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
   const [resultData, setResultData] = useState(null);

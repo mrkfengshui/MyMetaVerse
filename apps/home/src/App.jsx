@@ -8,6 +8,7 @@ import {
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import { AdBanner } from '@my-meta/ui';
+import { useProtection } from '@my-meta/ui';
 
 // --- 0. 設定與常數 ---
 const SOCIAL_LINKS = [
@@ -33,10 +34,11 @@ const VIDEOS = [
 ];
 
 const APPS = [
-  { id: 'bazi', name: '八字', desc: '精準計算大運流年流月', url: 'https://bazi.mrkfengshui.com', icon: <Grid size={40} color="#1890ff" />, color: '#e6f7ff' },
+  { id: 'bazi', name: '八字', desc: '精準計算大運流年流月', url: 'https://bazi.mrkfengshui.com', icon: <BookOpen size={40} color="#1890ff" />, color: '#e6f7ff' },
   { id: 'compass', name: '風水', desc: '結合羅庚與各式風水砂法水法理論', url: 'https://compass.mrkfengshui.com', icon: <Compass size={40} color="#fa8c16" />, color: '#fff7e6' },
-  { id: 'zhiwei', name: '紫微斗數', desc: '紫微斗數命盤解析', url: 'https://zhiwei.mrkfengshui.com', icon: <Sparkles size={40} color="#722ed1" />, color: '#f9f0ff' },
-  { id: 'calendar', name: '年月進氣萬年曆', desc: '非一般的萬年曆', url: 'https://calendar.mrkfengshui.com', icon: <Calendar size={40} color="#52c41a" />, color: '#f6ffed' }
+  { id: 'zhiwei', name: '紫微斗數', desc: '明朝紫微斗數全書排盤', url: 'https://zhiwei.mrkfengshui.com', icon: <Sparkles size={40} color="#722ed1" />, color: '#f9f0ff' },
+  { id: 'calendar', name: '年月進氣萬年曆', desc: '非一般的萬年曆', url: 'https://calendar.mrkfengshui.com', icon: <Calendar size={40} color="#52c41a" />, color: '#f6ffed' },
+  { id: 'qimen', name: '奇門遁甲', desc: '道家陰盤奇門遁甲', url: 'https://qimen.mrkfengshui.com', icon: <Grid size={40} color="#13c2c2" />, color: '#e6f7ff' },
 ];
 
 const DEFAULT_ARTICLES = [
@@ -328,6 +330,10 @@ function HomePage() {
 }
 
 export default function App() {
+  // 全局啟用保護機制
+  const isAuthorized = useProtection([]);
+  if (!isAuthorized) return null;
+
   return (
     <BrowserRouter>
       <Routes>
