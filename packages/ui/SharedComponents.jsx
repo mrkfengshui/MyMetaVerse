@@ -238,7 +238,7 @@ export const SettingLink = ({ label, subLabel, icon: Icon, onClick }) => (
 // 請我飲杯咖啡
 export const BuyMeCoffee = () => {
   // Adsterra SmartLink
-  const DIRECT_LINK_URL = "https://www.effectivegatecpm.com/gh5wbv6itr?key=2e49883033c900b76d2a3c7b3e407d4a"; 
+  const DIRECT_LINK_URL = "https://www.effectivegatecpm.com/h7md4wmxk?key=ef72536b8dd24291d5af1d01d858e1b4"; 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>

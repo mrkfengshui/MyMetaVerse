@@ -332,6 +332,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     // if (rotateOffset !== 0) patterns.push(`轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}`);
 
     // 整合顯示數據 (確保所有欄位都有值，防止 undefined 導致崩潰)
+    const dayGan = bazi.getDayGan();
     const gridData = GRID_RENDER_ORDER.map(num => {
         const base = PALACE_BASE[num];
         const content = rotatedLayout[num] || { star:'', men:'', shen:'', diShen:'', tian:'', di:'', an:'' };
@@ -367,6 +368,8 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         if (doorEle === '水' && palaceEle === '火') isPo = true;
         if (doorEle === '火' && palaceEle === '金') isPo = true;
 
+        const isDayGan = tianGanStr.includes(dayGan);
+
         return {
             num: num,
             name: base.name,
@@ -381,7 +384,8 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
             isMa: (maXingGong === num),    
             isXing: isXing,
             isMu: isMu,
-            isPo: isPo
+            isPo: isPo,
+            isDayGan: isDayGan
         };
     });
 
@@ -596,7 +600,13 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '12px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px',
+                    color: data.isDayGan ? THEME.white : THEME.black, 
+                    // 如果是日干：紫色背景；否則：透明
+                    backgroundColor: data.isDayGan ? THEME.green : 'transparent',
+                    // 如果是日干：加一點圓角和內距
+                    borderRadius: data.isDayGan ? '4px' : '0',
+                    padding: data.isDayGan ? '1px 2px' : '0', fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '12px' }}>
                         {data.tian}
                     </div>
                 </div>
