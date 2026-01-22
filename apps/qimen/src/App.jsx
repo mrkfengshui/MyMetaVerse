@@ -531,7 +531,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                 </div>
                 {/* 顯示特別格局 */}
                 {patterns && patterns.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px', marginTop:'6px', paddingTop:'4px', width:'100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', borderTop:'1px', marginTop:'1px', paddingTop:'2px', width:'100%' }}>
                         {patterns.map((p, i) => (
                             <span key={i} style={{ fontSize: '12px', color: THEME.red, fontWeight: 'bold' }}>{p}</span>
                         ))}
@@ -579,10 +579,10 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                         {/* 引干直排，防止 data.an undefined */}
                         {anGan.length > 1 ? anGan.split('').map((c,i)=><div key={i}>{c}</div>) : anGan}
                     </div>
-                    <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
+                    <div style={{ ...centerStyle, fontSizeanGan: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-2px' : '0' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '2px' : '14px' }}>
                         {data.tian}
                     </div>
                 </div>
@@ -592,7 +592,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '0' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '14px' }}>
                         {data.di}
                     </div>
                 </div>
@@ -676,7 +676,7 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '1px', backgroundColor: '#000', border: `2px solid ${THEME.black}`, borderRadius: '4px', aspectRatio: '1/1', marginBottom: '20px' }}>
                 {currentData.grid.map((cell, idx) => <PalaceCell key={idx} data={cell} patterns={currentData.patterns} extraInfo={extraInfo} />)}
             </div>
-            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>陰盤奇門 • 道家數理排盤</div>
+            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>道家陰盤奇門遁甲</div>
         </div>
     );
 };
