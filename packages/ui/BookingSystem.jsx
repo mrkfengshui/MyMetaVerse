@@ -29,8 +29,9 @@ const generateBookingId = () => {
 export const BookingSystem = ({ apiUrl, onNavigate }) => {
   const [viewMode, setViewMode] = useState('book'); 
   const [step, setStep] = useState(1);
-  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '', email: '', notes: '' });
-  const [searchPhone, setSearchPhone] = useState('');
+
+  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '852', email: '', notes: '' });
+  const [searchPhone, setSearchPhone] = useState('852');
   const [searchId, setSearchId] = useState('');
   const [myBookings, setMyBookings] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -121,8 +122,14 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
       const phoneRegex = /^852\d{8}$/;
       if (!phoneRegex.test(phone)) return alert('電話格式錯誤！\n請輸入 852 開頭的 11 位數字');
       if (email && !/\S+@\S+\.\S+/.test(email)) return alert('Email 格式不正確');
-      const isConfirmed = window.confirm("【預約須知】\n\n1. 按金一經收取，恕不退還。\n2. 按金將全數扣除於您的服務總額中。\n\n請問您確認以上條款並前往支付嗎？");
-      if (isConfirmed) handlePayment();
+
+      const depositAmount = bookingData.service?.deposit || 0;
+      const confirmMsg = depositAmount > 0 
+          ? "【預約須知】\n\n1. 按金一經收取，恕不退還。\n2. 按金將全數扣除於您的服務總額中。\n\n請問您確認以上條款並前往支付嗎？"
+          : "【預約須知】\n\n確認提交預約嗎？我們將盡快聯絡您確認細節。";
+
+      const isConfirmed = window.confirm(confirmMsg);
+            if (isConfirmed) handlePayment();
   };
 
   const handlePayment = async () => {
@@ -263,7 +270,9 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
             <textarea placeholder="例如：想問的問題、準確出生時間等..." rows={3} value={bookingData.notes} onChange={e => setBookingData({...bookingData, notes: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${THEME.border}`, fontSize: '16px', resize: 'none', boxSizing: 'border-box' }} />
         </div>
       </div>
-      <button onClick={validateAndSubmit} style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: THEME.white, borderRadius: '30px', border: 'none', fontSize: '16px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>前往支付 HK${bookingData.service?.deposit}</button>
+      <button onClick={validateAndSubmit} style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: THEME.white, borderRadius: '30px', border: 'none', fontSize: '16px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        {bookingData.service?.deposit > 0 ? `前往支付 HK$${bookingData.service?.deposit}` : `確認預約`}
+      </button>
     </div>
   );
 
