@@ -26,7 +26,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博風水";
-const APP_VERSION = "v1.0";
+const APP_VERSION = "v1.1 雙星斷事 & ui updates";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // 引入 Lunar 庫
@@ -531,13 +531,17 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     const baZhaiDetail = baZhaiStar ? BA_ZHAI_INFO[baZhaiStar] : null;
 
     const palaceMountains = MOUNTAINS.filter(m => m.gua === guaName);
-
     const getDaGuaRelations = (targetGua, refGua) => {
+        if (!refGua || !targetGua) return [];
         const rels = [];
-        if (targetGua.y === refGua.y) rels.push({t:'同元一氣', c:'#722ed1'});
-        if (targetGua.q + refGua.q === 10) rels.push({t:'卦氣合十', c:'#c41d7f'});
-        if (targetGua.y + refGua.y === 10) rels.push({t:'卦運合十', c:'#eb2f96'});
-        if (Math.abs(targetGua.q - refGua.q) === 5) rels.push({t:'卦氣生成', c:'#13c2c2'});
+        // 1. 一卦純清 (卦運相同)
+        if (targetGua.y === refGua.y) rels.push({t:'同元一氣', c:'#722ed1'}); // 紫色
+        // 2. 合十 (卦氣相加=10)
+        if (targetGua.q + refGua.q === 10) rels.push({t:'卦氣合十', c:'#c41d7f'}); // 深粉
+        // 3. 卦運合十
+        if (targetGua.y + refGua.y === 10) rels.push({t:'卦運合十', c:'#eb2f2f'}); // 淺粉
+        // 4. 生成 (卦氣差5)
+        if (Math.abs(targetGua.q - refGua.q) === 5) rels.push({t:'卦氣生成', c:'#13c2c2'}); // 青色
         return rels;
     };
 
@@ -550,7 +554,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
             <div style={{
                 background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
                 padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                maxHeight: '70vh', overflowY: 'auto', overscrollBehavior: 'contain' // 修改 3: 防止滑動時帶動到底層頁面
+                maxHeight: '70vh', overflowY: 'auto', overscrollBehavior: 'contain'
             }} onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
                     <X size={24} color="#666"/>
@@ -564,23 +568,18 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     <div style={{textAlign: 'center', position:'relative'}}>
                         <div style={{fontSize: '12px', color: THEME.gray}}>山星</div>
                         <div style={{fontSize: '32px', fontWeight: 'bold', color: '#333'}}>{mt}</div>
-                         <div style={{fontSize: '14px', fontWeight: 'bold', color: '#722ed1', marginTop: '-4px'}}>
-                           (年{annual})
-                        </div>
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: THEME.gray}}>運星</div>
-                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#999', marginTop: '-4px'}}>{PERIOD_MAP_CHART[base]}</div>
+                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#999'}}>{PERIOD_MAP_CHART[base]}</div>
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: THEME.gray}}>向星</div>
                         <div style={{fontSize: '32px', fontWeight: 'bold', color: THEME.red}}>{face}</div>
-                        <div style={{fontSize: '14px', fontWeight: 'bold', color: THEME.orange, marginTop: '-4px'}}>
-                           (月{monthly})
-                        </div>
                     </div>
                 </div>
 
+                {/* 雙星斷事 */}
                 <div style={{background: THEME.white, padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
                     <div style={{fontSize: '16px', fontWeight: 'bold', color: THEME.blue, marginBottom: '4px'}}>
                         🚀 玄空飛星：{combination.title}
@@ -588,12 +587,18 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333', marginBottom: '10px'}}>
                         {combination.text}
                     </div>
-                    <div style={{fontSize: '12px', color: THEME.lightgray, fontStyle: 'italic', paddingTop: '8px'}}>
-                        📖 {combination.source}
+                    
+                    {/* 動態渲染所有存在的 source 欄位 */}
+                    <div style={{marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #eee'}}>
+                        {['source', 'source2', 'source3', 'source4', 'source5'].map((key) => (
+                            combination[key] ? (
+                                <div key={key} style={{fontSize: '12px', color: '#888', fontStyle: 'italic', marginBottom: '4px', display: 'flex', gap: '4px'}}>
+                                    <span style={{flexShrink:0}}>📖</span>
+                                    <span>{combination[key]}</span>
+                                </div>
+                            ) : null
+                        ))}
                     </div>
-                    {/* <div style={{fontSize: '12px', color: THEME.lightgray, fontStyle: 'italic', paddingTop: '8px'}}>
-                        📖 {combination.source2}
-                    </div> */}
                 </div>
 
                 {baZhaiDetail && (
@@ -607,7 +612,6 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     </div>
                 )}
 
-                {/* 只在非中宮時顯示這兩個區塊 */}
                 {!isCenter && (
                     <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px'}}>
                         <div style={{background: '#fff7e6', padding: '12px', borderRadius: '8px', border: '1px solid #ffd591'}}>
@@ -650,18 +654,49 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                 )}
 
                 {!isCenter && (
-                <div style={{background: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f'}}>
-                    <div style={{fontSize: '16px', fontWeight: 'bold', color: THEME.green, marginBottom: '8px'}}>
-                        ☯️ 玄空大卦：坐向剋應
+                    <div style={{background: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f'}}>
+                        <div style={{fontSize: '16px', fontWeight: 'bold', color: THEME.green, marginBottom: '8px'}}>
+                            ☯️ 玄空大卦：坐向剋應
+                        </div>
+                                            <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
+                         向首: {facingDaGua.n}卦 氣{facingDaGua.q} / 運{facingDaGua.y}
                     </div>
-                    {/* ... 省略中間內容，不用改，保持原樣 ... */}
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
-                        {palaceMountains.map(pm => {
-                            {/* ... map 裡面的內容 ... */}
-                        })}
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
+                            {palaceMountains.map(pm => {
+                                // 1. 計算該山的大卦
+                                const myDaGua = getDaGua(pm.angle); 
+                                // 2. 與向首大卦比較
+                                const relations = getDaGuaRelations(myDaGua, facingDaGua);
+
+                                return (
+                                    <div key={pm.name} style={{
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        fontSize: '13px', padding: '4px 0', borderBottom: '1px dashed #e8e8e8'
+                                    }}>
+                                        <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
+                                            <span style={{fontWeight:'bold', width:'30px', textAlign:'center', background:'#f0f0f0', borderRadius:'3px'}}>{pm.name}山</span>
+                                            <span style={{color:'#666', fontSize:'12px'}}>
+                                                {myDaGua ? `${myDaGua.n}卦 氣${myDaGua.q} / 運${myDaGua.y}` : '無'}
+                                            </span>
+                                        </div>
+                                        <div style={{display:'flex', gap:'4px'}}>
+                                            {relations.length > 0 ? (
+                                                relations.map((r, i) => (
+                                                    <span key={i} style={{
+                                                        fontSize:'10px', color:'white', background: r.c,
+                                                        padding:'2px 5px', borderRadius:'4px', fontWeight:'bold'
+                                                    }}>
+                                                        {r.t}
+                                                    </span>
+                                                ))
+                                            ) : <span style={{color:'#ccc', fontSize:'12px'}}>-</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
                 <div style={{fontSize: '12px', color: '#aaa', textAlign: 'center', marginTop: '16px'}}>
                     * 點擊遮罩層即可關閉
@@ -699,6 +734,13 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     const sitDirName = GUA_TO_DIR[sittingMt.gua];
     const faceDirName = GUA_TO_DIR[facingMt.gua];
 
+    const CARDINALS = [
+        { text: '北', angle: 0, color: THEME.teal },
+        { text: '東', angle: 90, color: '#333' },
+        { text: '南', angle: 180, color: THEME.red }, // 南方為火，傳統用紅色標示 (或配合風水習慣)
+        { text: '西', angle: 270, color: '#333' }
+    ];
+
     return (
         <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow: 'hidden', height: '100%', width: '100%'}}>
             
@@ -710,6 +752,30 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                      {MOUNTAINS.map((m, i) => (
                         <div key={i} style={{ position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px', transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)` }}>
                             <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)', whiteSpace:'nowrap'}}>{m.name}</span>
+                        </div>
+                     ))}
+                     {CARDINALS.map((c, i) => (
+                        <div key={`card-${i}`} style={{ 
+                            position: 'absolute', 
+                            top: '50%', left: '50%', 
+                            height: '28%', // 控制離中心的距離 (半徑)
+                            width: '0px', 
+                            transformOrigin: 'top center', // 從中心點旋轉
+                            transform: `rotate(${c.angle + 180}deg)` // +180 是為了讓文字方向朝內，如果不加則文字在上方
+                        }}>
+                             {/* 文字容器，將文字推到線條末端 */}
+                             <div style={{
+                                 position: 'absolute',
+                                 bottom: '0', 
+                                 left: '50%',
+                                 transform: 'translateX(-50%) rotate(0deg)', // 文字轉正 (字底朝向圓心)
+                                 fontSize: '18px',
+                                 fontWeight: '900',
+                                 color: c.color,
+                                 whiteSpace: 'nowrap'
+                             }}>
+                                 {c.text}
+                             </div>
                         </div>
                      ))}
                      <div style={{ width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red', boxSizing: 'border-box' }}></div>
