@@ -7,7 +7,7 @@ import {
   Facebook, Instagram, Youtube, X, Mail, ChevronRight, Edit, Trash2, RefreshCw,
   ChevronDown, ChevronUp
 } from 'lucide-react';
-import { AdBanner } from '@my-meta/ui';
+import { AdBanner, Adsterra } from '@my-meta/ui';
 import { useProtection } from '@my-meta/ui';
 
 // --- 0. 設定與常數 ---
@@ -309,7 +309,7 @@ function HomePage() {
       </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
-      <div style={{ marginTop: '20px' }}><AdBanner /></div>
+      <div style={{ marginTop: '20px' }}><Adsterra /></div>
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid #eaeaea', padding: '20px 0', background: 'white' }}>

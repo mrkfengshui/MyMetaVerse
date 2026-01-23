@@ -643,59 +643,68 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
 
 // --- 8. 廣告條 (Adsense 替代, 改用 Adsterra) ---
 export const Adsterra = () => {
-  const bannerRef = React.useRef(null);
+  const bannerRef = useRef(null);
 
   useEffect(() => {
-    // 避免重複載入
-    if (bannerRef.current && bannerRef.current.innerHTML !== "") return;
+    const container = bannerRef.current;
+    if (!container) return;
 
-    const confScript = document.createElement("script");
-    confScript.type = "text/javascript";
-    confScript.text = `
-      atOptions = {
-        'key' : '621f5e8b755596d4912f3d558fa25f54',
-        'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
-        'params' : {}
-      };
-    `;
+    // 清空容器，避免重複渲染
+    container.innerHTML = '';
+
+    // 建立一個 iframe
+    const iframe = document.createElement('iframe');
     
-    // 2. 建立載入 script
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = "https://www.highperformanceformat.com/621f5e8b755596d4912f3d558fa25f54/invoke.js"; 
+    // ★ 關鍵：設定 Sandbox 屬性
+    // allow-scripts: 允許執行廣告的 JS
+    // allow-same-origin: 允許資源載入
+    // ❌ 不加 allow-top-navigation: 這就是禁止廣告強制轉址的關鍵！
+    // ❌ 不加 allow-popups: 禁止自動彈出新視窗 (視需求，若廣告商要求點擊要開新窗，可能需加這項，但先不加最安全)
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups'); 
+    
+    iframe.style.width = '300px';
+    iframe.style.height = '250px';
+    iframe.style.border = 'none';
+    iframe.style.overflow = 'hidden';
+    
+    container.appendChild(iframe);
 
-    // 3. 注入到 div 中
-    if (bannerRef.current) {
-      bannerRef.current.appendChild(confScript);
-      bannerRef.current.appendChild(invokeScript);
-    }
+    // 廣告配置 (請確認您的 key 是否正確對應 300x250 Banner)
+    const adScript = `
+      <style>body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; }</style>
+      <script type="text/javascript">
+        atOptions = {
+          'key' : '621f5e8b755596d4912f3d558fa25f54', 
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="https://www.highperformanceformat.com/621f5e8b755596d4912f3d558fa25f54/invoke.js"></script>
+    `;
+
+    // 將廣告代碼寫入 iframe 內部
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(adScript);
+    doc.close();
+
   }, []);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      margin: '20px 0',
-      width: '100%' 
-    }}>
-      {/* 廣告容器：設定固定大小以防版面跳動 (CLS) */}
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0', width: '100%' }}>
+      {/* 外部容器 */}
       <div 
-        ref={bannerRef}
+        ref={bannerRef} 
         style={{ 
           width: '300px', 
           height: '250px', 
-          backgroundColor: '#f0f0f0', // 載入前顯示灰色背景
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          borderRadius: '8px' // 稍微圓角比較好看
+          backgroundColor: '#f0f0f0', 
+          borderRadius: '8px',
+          overflow: 'hidden'
         }}
-      >
-        {/* Adsterra 廣告會出現在這裡 */}
-      </div>
+      ></div>
     </div>
   );
 };
