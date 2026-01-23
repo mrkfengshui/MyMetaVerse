@@ -28,7 +28,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v1.0";
+const APP_VERSION = "v1.1 增加冬月臘月表示";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -58,8 +58,8 @@ const CN_NUMS = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', 
 const getLunarMonthText = (m) => {
     if (m === 1) return '正月';
     if (m <= 10) return CN_NUMS[m] + '月';
-    if (m === 11) return '十一月';
-    if (m === 12) return '十二月';
+    if (m === 11) return '十一月 (冬月) ';
+    if (m === 12) return '十二月 (臘月) ';
     return m + '月';
 };
 
@@ -443,7 +443,7 @@ const calculateBaziResult = (formData, ziHourRule) => {
         timeGan: bazi.getTimeGan(), timeZhi: bazi.getTimeZhi(),
     };
 
-    const stdMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    const stdMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月 (冬月) ', '十二月 (臘月) '];
     const stdDays = [
         '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
         '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
