@@ -606,7 +606,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     backgroundColor: data.isDayGan ? THEME.green : 'transparent',
                     // 如果是日干：加一點圓角和內距
                     borderRadius: data.isDayGan ? '4px' : '0',
-                    padding: data.isDayGan ? '1px 2px' : '0', fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-1px' : '12px' }}>
+                    padding: data.isDayGan ? '1px 2px' : '0', fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-2px' : '12px' }}>
                         {data.tian}
                     </div>
                 </div>
@@ -616,7 +616,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '12px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '12px' }}>
                         {data.di}
                     </div>
                 </div>
