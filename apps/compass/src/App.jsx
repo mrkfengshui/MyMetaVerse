@@ -668,7 +668,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     );
 };
 
-// 羅庚 (羅盤) - 修正版
+// 羅庚頁面
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
     const isFrozenRef = React.useRef(isFrozen);
     useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
@@ -693,6 +693,8 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     
     const facingMt = getMountain(heading);
     const sittingMt = getMountain(heading + 180);
+    const sitDirName = GUA_TO_DIR[sittingMt.gua];
+    const faceDirName = GUA_TO_DIR[facingMt.gua];
 
     return (
         <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow: 'hidden', height: '100%', width: '100%'}}>
@@ -713,17 +715,22 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 
             {/* 底部數據與控制 */}
             <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
-                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機對準方位'}</div>
+                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿對準方位'}</div>
                 <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
-                <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>{sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向</div>
-                
+                <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>
+                    {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向
+                </div>
+                <div style={{fontSize: '15px', color: '#ccc', marginTop: '4px', fontWeight: 'normal'}}>
+                    (坐{sitDirName}向{faceDirName})
+                </div>
+
                 {/* 按鈕區 */}
                 <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
                     <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
                         {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
                     </button>
                     
-                    {/* ★ 修改 1: 啟用羅庚按鈕移至此處 */}
+                    {/* 啟用羅庚按鈕 */}
                     {!isFrozen && (
                         <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
                             <Compass size={18}/> 啟用羅庚
@@ -1198,7 +1205,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                     <div style={{ background: naQiResult.type === '凶' ? '#fff1f0' : (naQiResult.type === '平' ? '#fff7e6' : '#f6ffed'), border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                         <div>
                             <div style={{fontSize:'12px', color:THEME.gray}}>
-                                納氣：<span style={{fontWeight:'bold'}}>{naQiDoor}</span> ({naQiResult.sub})
+                                納氣口：<span style={{fontWeight:'bold'}}>{naQiDoor}宮</span>
                             </div>
                             <div style={{fontSize:'18px', fontWeight:'bold', color: naQiResult.color}}>
                                 {naQiResult.text}

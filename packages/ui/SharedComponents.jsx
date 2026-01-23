@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { THEME } from './theme';
 import { ChevronRight, Coffee, Gift,
-  Share, X, PlusSquare, Share2, UploadCloud
+  Share, X, PlusSquare, Share2, UploadCloud,
+  Menu, PlusCircle, MoreHorizontal, MoreVertical
   } from 'lucide-react';
 
 // --- 1. AppHeader ---
@@ -237,9 +238,6 @@ export const SettingLink = ({ label, subLabel, icon: Icon, onClick }) => (
 
 // 請我飲杯咖啡
 export const BuyMeCoffee = () => {
-  // Adsterra SmartLink
-  const DIRECT_LINK_URL = "https://www.effectivegatecpm.com/h7md4wmxk?key=ef72536b8dd24291d5af1d01d858e1b4"; 
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
       <h3 style={{ fontSize: '14px', color: '#888', margin: '0 0 4px 4px' }}>支持開發者</h3>
@@ -261,8 +259,8 @@ export const BuyMeCoffee = () => {
         <span>請我飲杯咖啡</span>
       </a>
 
-      {/* Adsterra SmartLink */}
-      <a href={DIRECT_LINK_URL} target="_blank" rel="noreferrer" 
+      {/* 2. Adsterra SmartLink */}
+      <a href="https://www.effectivegatecpm.com/h7md4wmxk?key=ef72536b8dd24291d5af1d01d858e1b4" target="_blank" rel="noreferrer" 
         style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
           width: 'auto', padding: '14px',
@@ -353,39 +351,71 @@ const handleContactClick = () => {
   );
 };
 
-// --- 6. 安裝引導提示 (InstallGuide) ---
+// --- 6. 安裝引導提示 (Update: iOS & Samsung) ---
 export const InstallGuide = () => {
   const [show, setShow] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isSamsung, setIsSamsung] = useState(false);
+  
+  // 1. 建立 ref 來引用提示視窗的 DOM 元素
+  const guideRef = useRef(null);
 
   useEffect(() => {
-    // 1. 檢查是否已經是 Standalone 模式 (已安裝)
+    // 檢查 Standalone 與 localStorage (保持不變)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    
-    // 2. 檢查是否已經關閉過提示 (避免每次煩使用者)
     const hasClosed = localStorage.getItem('installGuideClosed');
 
     if (!isStandalone && !hasClosed) {
-      // 簡單的 iOS 偵測
       const userAgent = window.navigator.userAgent.toLowerCase();
       const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+      const isSamsungBrowser = /samsungbrowser/.test(userAgent);
+
       setIsIOS(isIosDevice);
+      setIsSamsung(isSamsungBrowser);
       
-      // 延遲 2 秒顯示，讓使用者先看到內容
       setTimeout(() => setShow(true), 2000);
     }
   }, []);
 
+  // 2. 自動消失計時器 (10秒)
+  useEffect(() => {
+    if (show) {
+      const timer = setTimeout(() => {
+        setShow(false);
+      }, 10000); 
+      return () => clearTimeout(timer);
+    }
+  }, [show]);
+
+  // 3. 點擊畫面其他地方自動關閉 (Click Outside)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // 如果提示顯示中，且點擊的目標不在 guideRef (提示視窗) 內
+      if (show && guideRef.current && !guideRef.current.contains(event.target)) {
+        setShow(false);
+      }
+    };
+
+    // 同時監聽滑鼠與觸控事件
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [show]);
+
   const handleClose = () => {
     setShow(false);
-    // 記錄已關閉，7天內不再顯示 (可自行調整邏輯)
     localStorage.setItem('installGuideClosed', 'true');
   };
 
   if (!show) return null;
 
   return (
-    <div style={{
+    // 4. 綁定 ref 到最外層 div
+    <div ref={guideRef} style={{
       position: 'fixed', bottom: '20px', left: '16px', right: '16px',
       backgroundColor: 'rgba(30, 30, 30, 0.95)', color: '#fff',
       padding: '20px', borderRadius: '16px',
@@ -393,12 +423,11 @@ export const InstallGuide = () => {
       zIndex: 1000, backdropFilter: 'blur(10px)',
       animation: 'slideUp 0.3s ease-out'
     }}>
-      {/* 關閉按鈕 */}
       <button onClick={handleClose} style={{ 
         position: 'absolute', top: '10px', right: '10px', 
-        background: 'none', border: 'none', color: '#999', cursor: 'pointer' 
+        background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer' 
       }}>
-        <X size={20} />
+        <X size={40} />
       </button>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -411,23 +440,49 @@ export const InstallGuide = () => {
         </p>
 
         {isIOS ? (
-          // iOS 專用教學
+          // iOS 專用教學 (已更新：分享圖示 或 橫向三點)
           <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span>1. 點擊瀏覽器下方的</span>
-              <Share size={16} style={{ color: '#007AFF' }} />
-              <span>分享按鈕</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              <span>1. 點擊瀏覽器下方的分享圖示</span>
+              <Share size={16} style={{ color: '#fff' }} />
+              <span>或</span>
+              <MoreHorizontal size={16} style={{ color: '#fff' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>2. 選擇</span>
-              <span style={{ fontWeight: 'bold', color: '#fff' }}>加入主畫面</span>
+              <span>2. 選擇共享</span>
               <PlusSquare size={16} />
+              <span style={{ fontWeight: 'bold', color: '#fff' }}>加至主畫面</span>
+            </div>
+          </div>
+        ) : isSamsung ? (
+          // Samsung 專用教學 (新增)
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span>1. 右下角三條線</span>
+              <Menu size={16} style={{ color: '#fff' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span>2. 點擊「加入至」</span>
+              <PlusCircle size={16} style={{ color: '#fff' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>3. 選擇「主螢幕」</span>
             </div>
           </div>
         ) : (
-          // Android / 其他 教學
+          // Generic Android / Chrome
           <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
-            點擊瀏覽器選單右上角的三個點圖示 (⋮)，選擇 <strong>加至主畫面</strong> 或 <strong>安裝應用程式</strong>。
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                <span>點擊瀏覽器右上角或右下角的</span>
+                <MoreVertical size={16} style={{ color: '#fff' }} />
+                <span>或</span>
+                <MoreHorizontal size={16} style={{ color: '#fff' }} />
+                <span>或</span>
+                <Menu size={16} style={{ color: '#fff' }} />
+            </div>
+            <div>
+                選擇 <strong>加至主畫面</strong> 或 <strong>安裝應用程式</strong>。
+            </div>
           </div>
         )}
       </div>
