@@ -588,9 +588,12 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333', marginBottom: '10px'}}>
                         {combination.text}
                     </div>
-                    <div style={{fontSize: '12px', color: THEME.lightgray, fontStyle: 'italic', borderTop: '1px dashed #ddd', paddingTop: '8px'}}>
+                    <div style={{fontSize: '12px', color: THEME.lightgray, fontStyle: 'italic', paddingTop: '8px'}}>
                         📖 {combination.source}
                     </div>
+                    {/* <div style={{fontSize: '12px', color: THEME.lightgray, fontStyle: 'italic', paddingTop: '8px'}}>
+                        📖 {combination.source2}
+                    </div> */}
                 </div>
 
                 {baZhaiDetail && (
@@ -717,11 +720,8 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
             <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
                 <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿對準方位'}</div>
                 <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
-                <div style={{fontSize: '24px', fontWeight:'bold', marginTop:'5px'}}>
-                    {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向
-                </div>
-                <div style={{fontSize: '15px', color: '#ccc', marginTop: '4px', fontWeight: 'normal'}}>
-                    (坐{sitDirName}向{faceDirName})
+                <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'5px'}}>
+                    {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向 <span style={{fontSize: '15px', fontWeight: 'normal', color: '#ccc'}}>(坐{sitDirName}向{faceDirName})</span>
                 </div>
 
                 {/* 按鈕區 */}
