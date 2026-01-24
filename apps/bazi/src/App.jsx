@@ -507,6 +507,39 @@ const calculateBaziResult = (formData, ziHourRule) => {
     // 2. 計算年空亡 (以年柱查)
     const yearKongWang = getKongWang(baziObj.yearGan, baziObj.yearZhi);
 
+    // 3. 計算節氣
+    let jieQiSpan = '';
+    try {
+    if (typeof window.Lunar !== 'undefined' && lunar) {
+        const prevJie = lunar.getPrevJieQi(false);
+        const nextJie = lunar.getNextJieQi(false);
+
+        if (prevJie && nextJie) {
+            const pSolar = prevJie.getSolar();
+            const nSolar = nextJie.getSolar();
+
+            // 使用 julianDay 進行浮點數運算，確保毫秒級的精準
+            const currentJD = solar.getJulianDay();
+            const prevJD = pSolar.getJulianDay();
+            const nextJD = nSolar.getJulianDay();
+
+            // 天數差 = 當前時間減去節氣交換點
+            const daysSince = Math.round(currentJD - prevJD);
+            const daysLeft = Math.round(nextJD - currentJD);
+            
+            // 這樣顯示會最接近您月柱的判定邏輯
+            if (daysSince === 0) {
+                jieQiSpan = `${toTraditional(prevJie.getName())}當日`;
+            } else {
+                jieQiSpan = `${toTraditional(prevJie.getName())}後 ${daysSince} 天，距${toTraditional(nextJie.getName())}尚餘 ${daysLeft} 天`;
+            }
+        }
+    }
+    } catch (e) {
+        console.error('節氣計算詳細錯誤:', e);
+        jieQiSpan = '計算錯誤'; 
+    }
+
     return {
         id: formData.id || Date.now(),
         name: formData.name || '未命名',
@@ -516,6 +549,7 @@ const calculateBaziResult = (formData, ziHourRule) => {
         rawDate: formData, 
         solarDate: `${rawYear}-${pad(rawMonth)}-${pad(rawDay)} ${pad(rawHour)}:${pad(rawMinute)}`,
         lunarDate: lunarString,
+        jieQiSpan: jieQiSpan,           // 計算節氣天數
         bazi: baziObj,
         meta: {
             dayKongWang: dayKongWang,   // 日空亡
@@ -543,7 +577,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本程式旨在提供專業子平八字排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
+    about: "本程式旨在提供專業子平排盤，四柱八字精確至節氣，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
@@ -1377,8 +1411,14 @@ return (
                 ) : ( 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> 
                         <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500' }}>農曆 {data.lunarDate} </div> 
-                        {/* 空亡摘要顯示在這裡 */}
+                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1.5' }}>
+                            農曆 {data.lunarDate} 
+                            {data.jieQiSpan && (
+                                <span style={{ marginLeft: '8px', fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
+                                    ({data.jieQiSpan})
+                                </span>
+                            )}
+                        </div>
                         <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500' }}>日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}</div> 
                     </div> 
                 )}
