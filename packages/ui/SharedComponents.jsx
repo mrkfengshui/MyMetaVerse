@@ -642,7 +642,7 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
   );
 };
 
-// --- 8. 廣告條 (Adsense 替代, 改用 Adsterra) ---
+// 8. 廣告條 Adsterra (300x250)
 export const Adsterra = () => {
   const bannerRef = useRef(null);
 
@@ -701,6 +701,74 @@ export const Adsterra = () => {
         style={{ 
           width: '300px', 
           height: '250px', 
+          backgroundColor: '#f0f0f0', 
+          borderRadius: '8px',
+          overflow: 'hidden'
+        }}
+      ></div>
+    </div>
+  );
+};
+
+// 9. 廣告條 AdsterraNarrow (320x50)
+export const AdsterraNarrow = () => {
+  const bannerRef = useRef(null);
+
+  useEffect(() => {
+    const container = bannerRef.current;
+    if (!container) return;
+
+    // 清空容器，避免重複渲染
+    container.innerHTML = '';
+
+    // 建立一個 iframe
+    const iframe = document.createElement('iframe');
+    
+    // ★ 關鍵：設定 Sandbox 屬性
+    // allow-scripts: 允許執行廣告的 JS
+    // allow-same-origin: 允許資源載入
+    // ❌ 不加 allow-top-navigation: 這就是禁止廣告強制轉址的關鍵！
+    // ❌ 不加 allow-popups: 禁止自動彈出新視窗 (視需求，若廣告商要求點擊要開新窗，可能需加這項，但先不加最安全)
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups'); 
+    
+    iframe.style.width = '320px';
+    iframe.style.height = '50px';
+    iframe.style.border = 'none';
+    iframe.style.overflow = 'hidden';
+    
+    container.appendChild(iframe);
+
+    // 廣告配置 (請確認您的 key 是否正確對應 320x50 Banner)
+    const adScript = `
+      <style>body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; }</style>
+      <script type="text/javascript">
+        atOptions = {
+          'key' : '17db7e5eb0c309e6639a663dd7fb235b', 
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="https://www.highperformanceformat.com/17db7e5eb0c309e6639a663dd7fb235b/invoke.js"></script>
+    `;
+
+    // 將廣告代碼寫入 iframe 內部
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(adScript);
+    doc.close();
+
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0', width: '100%' }}>
+      {/* 外部容器 */}
+      <div 
+        ref={bannerRef} 
+        style={{ 
+          width: '320px', 
+          height: '50px', 
           backgroundColor: '#f0f0f0', 
           borderRadius: '8px',
           overflow: 'hidden'
