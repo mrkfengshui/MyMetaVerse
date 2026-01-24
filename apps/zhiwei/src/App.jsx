@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, Adsterra, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -1207,14 +1207,14 @@ export default function ZwdsApp() {
           {view === 'input' && (
             <>
                 <ZwdsInput onCalculate={handleCalculate} initialData={editingData} />
-                <Adsterra />
+                <AdsterraNarrow />
             </>
           )}
           
           {view === 'result' && (
             <>
                 <ZwdsResult data={resultData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} />
-                <Adsterra />
+                <AdsterraNarrow />
             </>
           )}
             

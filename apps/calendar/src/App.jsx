@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, Adsterra, AppHeader, AppInfoCard, 
+  AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES
@@ -1407,7 +1407,7 @@ export default function CalendarApp() {
                   ))}
                 </div>
                 {/* 在月曆網格下方加入廣告 */}
-                  <div style={{ marginTop: '20px' }}><Adsterra /></div>
+                  <div style={{ marginTop: '20px' }}><AdsterraNarrow /></div>
             </div>
 
             <BottomSummaryPanel 
