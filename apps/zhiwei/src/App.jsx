@@ -546,7 +546,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
+    about: "本程式旨在提供專業紫微斗數排盤，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
     };
 
 const ToggleSelector = ({ options, currentValue, onChange }) => (

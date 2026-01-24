@@ -5,7 +5,7 @@ import { collection, getDocs, addDoc, orderBy, query, doc, deleteDoc, updateDoc 
 import { 
   BookOpen, PlayCircle, Grid, Compass, Sparkles, Calendar, List, Plus, Lock,
   Facebook, Instagram, Youtube, X, Mail, ChevronRight, Edit, Trash2, RefreshCw,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Home
 } from 'lucide-react';
 import { AdBanner, Adsterra } from '@my-meta/ui';
 import { useProtection } from '@my-meta/ui';
@@ -37,7 +37,7 @@ const APPS = [
   { id: 'bazi', name: '八字', desc: '精準計算大運流年流月', url: 'https://bazi.mrkfengshui.com', icon: <BookOpen size={40} color="#1890ff" />, color: '#e6f7ff' },
   { id: 'compass', name: '風水', desc: '結合羅庚與各式風水砂法水法理論', url: 'https://compass.mrkfengshui.com', icon: <Compass size={40} color="#fa8c16" />, color: '#fff7e6' },
   { id: 'zhiwei', name: '紫微斗數', desc: '明朝紫微斗數全書排盤', url: 'https://zhiwei.mrkfengshui.com', icon: <Sparkles size={40} color="#722ed1" />, color: '#f9f0ff' },
-  { id: 'calendar', name: '年月進氣萬年曆', desc: '非一般的萬年曆', url: 'https://calendar.mrkfengshui.com', icon: <Calendar size={40} color="#52c41a" />, color: '#f6ffed' },
+  { id: 'calendar', name: '年月進氣萬年曆', desc: '非一般的流年流月進退氣萬年曆', url: 'https://calendar.mrkfengshui.com', icon: <Calendar size={40} color="#52c41a" />, color: '#f6ffed' },
   { id: 'qimen', name: '奇門遁甲', desc: '道家陰盤奇門遁甲', url: 'https://qimen.mrkfengshui.com', icon: <Grid size={40} color="#13c2c2" />, color: '#e6f7ff' },
 ];
 
@@ -183,6 +183,29 @@ function HomePage() {
   const listToRender = showAllArticles ? articles : displayArticles;
   const activeArticle = articles.find(a => a.id === activeArticleId) || articles[0];
 
+  // Adsterra Social Bar
+  useEffect(() => {
+    const socialBarSrc = 'https://pl28554409.effectivegatecpm.com/6e/e1/c4/6ee1c40d38db850234636bf57069fbdf.js'; 
+    const scriptId = 'adsterra-social-script'; // Unique ID for this script
+
+    // Check if script already exists
+    if (document.getElementById(scriptId)) {
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.id = scriptId; 
+    script.src = socialBarSrc;
+    script.async = true;
+    script.type = 'text/javascript';
+    
+    script.onerror = () => {
+      console.log('Adsterra Social Bar blocked or failed to load');
+    };
+
+    document.body.appendChild(script);
+  }, []); 
+
   return (
     <div className="app-container">
       <style>{`
@@ -217,12 +240,13 @@ function HomePage() {
             <div style={{ fontWeight: '900', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img src="/logo.png" alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
               <span style={{ fontSize: '18px', color: '#111', display: 'inline-block' }}>許甯博風水命理館</span>
+              <span style={{ fontSize: '12px', color: '#888', display: 'inline-block' }}>since 2021</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <Link to="/admin" style={{ color: '#eee' }} title="後台管理"><Lock size={16} /></Link>
                 <a href="mailto:mail@mrkfengshui.com" style={{ textDecoration: 'none', color: '#888', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mail size={18} /> <span style={{display: 'none', md: 'inline'}}>聯絡我們</span>
                 </a>
-                <Link to="/admin" style={{ color: '#eee' }} title="後台管理"><Lock size={16} /></Link>
             </div>
         </div>
       </header>
@@ -232,7 +256,7 @@ function HomePage() {
         <div className="container">
             <h1 className="hero-title">玄學就是科學</h1>
             <p style={{ fontSize: '16px', color: '#888', maxWidth: '600px', margin: '0 auto 10px auto', lineHeight: '1.6' }}>
-            專為你提供最專業玄學服務，自研最流暢且精準的線上命理工具。
+            為你提供專業玄學服務，自研最流暢且精準的線上命理工具
             </p>
         </div>
       </section>

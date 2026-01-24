@@ -4,7 +4,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; // 引入日曆樣式
 import { THEME } from './theme';
 import { 
-  ChevronLeft, Search, Check, House, LampDesk, Sparkles, Grid, Calendar as CalendarIcon 
+  ChevronLeft, Search, Check, Home, LampDesk, Sparkles, Grid, Calendar as CalendarIcon 
 } from 'lucide-react';
 
 // --- 輔助函式 ---
@@ -61,7 +61,7 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
          const COLORS = { yi: '#90EE90', wu: '#8B4513', geng: '#FFA500' }; // 簡單定義顏色
          const mappedServices = data.services.map(s => ({
              ...s,
-             icon: s.id === 'fs_home' ? <House size={24} color={COLORS.yi} /> : 
+             icon: s.id === 'fs_home' ? <Home size={24} color={COLORS.yi} /> : 
                    s.id === 'fs_biz' ? <LampDesk size={24} color={THEME.red} /> : 
                    s.id === 'bz' ? <Sparkles size={24} color={COLORS.wu} /> :
                    s.id === 'qm' ? <Grid size={24} color={COLORS.geng} /> :

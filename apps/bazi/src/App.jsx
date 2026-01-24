@@ -577,7 +577,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本程式旨在提供專業子平排盤，四柱八字精確至節氣，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
+    about: "本程式旨在提供專業子平八字排盤，精確至節氣日時，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
