@@ -72,6 +72,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
 
         /* 1.1 強制表單元件顏色 (解決輸入框變黑、文字變白問題) */
         input, select, textarea {
+        　font-size: 16px !important;
           background-color: #ffffff !important;
           color: #000000 !important;
           border-color: #e8e8e8; /* 確保邊框顏色正常 */
@@ -274,7 +275,7 @@ export const BuyMeCoffee = () => {
         onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
       >
         <Gift size={20} />
-        <span>免費贊助 (點擊開啟廣告)</span>
+        <span>免費贊助 (點擊觀看廣告)</span>
       </a>
     </div>
   );
@@ -424,7 +425,7 @@ export const InstallGuide = () => {
       animation: 'slideUp 0.3s ease-out'
     }}>
       <button onClick={handleClose} style={{ 
-        position: 'absolute', top: '10px', right: '10px', 
+        position: 'absolute', top: '20px', right: '10px', 
         background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer' 
       }}>
         <X size={40} />
