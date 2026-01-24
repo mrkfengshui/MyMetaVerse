@@ -187,12 +187,21 @@ function HomePage() {
   useEffect(() => {
     const socialBarSrc = 'https://pl28554409.effectivegatecpm.com/6e/e1/c4/6ee1c40d38db850234636bf57069fbdf.js'; 
     const scriptId = 'adsterra-social-script'; // Unique ID for this script
+    const storageKey = 'AD_SHOWN_SESSION'; // 用來記錄是否已經顯示過的 Key
 
-    // Check if script already exists
+    // 步驟 A: 檢查本次會話 (Session) 是否已經顯示過廣告
+    // 如果 sessionStorage 裡有紀錄，代表使用者已經看過（或關過），直接 return 不載入
+    if (sessionStorage.getItem(storageKey)) {
+        // console.log('本次會話已顯示過廣告，不再彈出');
+        return; 
+    }
+
+    // 步驟 B: 檢查 DOM 是否已存在 (雙重保險，防止 React 重複渲染)
     if (document.getElementById(scriptId)) {
         return;
     }
 
+    // 步驟 C: 載入廣告腳本
     const script = document.createElement('script');
     script.id = scriptId; 
     script.src = socialBarSrc;
@@ -200,11 +209,15 @@ function HomePage() {
     script.type = 'text/javascript';
     
     script.onerror = () => {
-      console.log('Adsterra Social Bar blocked or failed to load');
+      console.log('Adsterra Social Bar blocked');
     };
 
+    // 步驟 D: 成功加入腳本後，立刻寫入 sessionStorage
+    // 這樣下次（例如切換頁面回來，或重新整理）就不會再跑這段 code
     document.body.appendChild(script);
-  }, []); 
+    sessionStorage.setItem(storageKey, 'true');
+
+}, []);
 
   return (
     <div className="app-container">
