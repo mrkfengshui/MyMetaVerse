@@ -248,7 +248,7 @@ A：為什麼「洪水」與「鼠疫」在中國命理沒成「大煞」？
               gridColumn: isFeatured ? '1 / -1' : 'auto',
               
             }}>
-              <h4 style={{ fontSize: '18px', fontWeight: 'bold', color: '#722ed1', marginBottom: '12px', lineHeight: '1.4' }}>
+              <h4 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fa8c16', marginBottom: '12px', lineHeight: '1.4' }}>
                 {art.title}
               </h4>
               <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#555', lineHeight: '1.8', textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}>
