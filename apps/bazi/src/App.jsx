@@ -1391,95 +1391,105 @@ return (
             borderRadius: '12px', 
             padding: '16px', 
             marginBottom: '16px', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', // 垂直置中改為對齊頂部可能會更好，視內容多寡而定，這邊維持 center 
             border: `1px solid ${THEME.border}`, 
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)' 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            display: 'flex',           
+            flexDirection: 'column'    // 垂直排列：上方內容 vs 下方起運
         }}>
             
-            {/* --- 左側：姓名與日期資訊 --- */}
-            <div style={{ flex: 1, marginRight: '8px' }}>
-                {/* 姓名行 */}
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black }}>
-                    {data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span>
-                </div>
+            {/* --- 上半部區域 (資料 + 按鈕) --- */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 
-                {/* 日期資訊 */}
-                {data.isManual ? ( 
-                    <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '6px' }}></div> 
-                ) : ( 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}> 
-                        <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1.5' }}>
-                            農曆 {data.lunarDate} 
-                        </div>
-
-                        {/* 3. 節氣天數 (移到這裡，獨立一行，避免被右邊按鈕擠壓) */}
-                        {data.jieQiSpan && (
-                            <div style={{ fontSize: '12px', color: THEME.dark, fontWeight: 'bold' }}>
-                                ({data.jieQiSpan})
+                {/* 1. 左側：姓名與日期資訊 (佔用剩餘空間) */}
+                <div style={{ flex: 1, marginRight: '12px' }}>
+                    {/* 姓名行 */}
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black, marginBottom: '6px' }}>
+                        {data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span>
+                    </div>
+                    
+                    {/* 日期資訊 */}
+                    {data.isManual ? ( 
+                        <div style={{ fontSize: '13px', color: THEME.gray }}></div> 
+                    ) : ( 
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}> 
+                            <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
+                            <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
+                                農曆 {data.lunarDate} 
                             </div>
-                        )}
-                        <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500' }}>日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}</div> 
-                    </div> 
-                )}
-                
-                {/* 起運資訊 */}
-                {data.yunInfo ? ( 
-                    <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '6px', fontWeight: 'bold' }}>
-                        {data.yunInfo.detail}
-                        {/* 將起運年份放在同一行右側 */}
-                        <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-                            (西曆 {data.yunInfo.startDate} 起運)
-                        </span>
-                    </div> 
-                ) : null}
-            </div>
-
-            {/* --- 右側：控制區 (垂直排列) --- */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
-                
-                {/* 1. 上方：顯示模式切換 (藏干 / 神煞) */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    {/* 藏干按鈕 */}
-                    <button 
-                        onClick={() => toggleMode('zangGan')} 
-                        style={{ 
-                            ...btnStyle, // [繼承] 基礎按鈕樣式
-                            // [覆寫] 選中時變黑底白字，未選中維持 btnStyle 的灰底灰字
-                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
-                            color: displayMode === 'zangGan' ? 'white' : THEME.gray,
-                            // 微調：讓兩個按鈕寬度一致看起來較整齊 (可選)
-                            justifyContent: 'center'
-                        }}>
-                        {/* 圖示邏輯：選中(開啟)時顯示 Eye，未選中(關閉)時顯示 EyeOff */}
-                        {displayMode === 'zangGan' ? <Eye size={14}/> : <EyeOff size={14}/>} 
-                        藏干
-                    </button>
-
-                    {/* 神煞按鈕 */}
-                    <button 
-                        onClick={() => toggleMode('shenSha')} 
-                        style={{ 
-                            ...btnStyle, // [繼承] 基礎按鈕樣式
-                            // [覆寫] 選中時變紫底白字
-                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
-                            color: displayMode === 'shenSha' ? 'white' : THEME.gray,
-                            justifyContent: 'center'
-                        }}>
-                        {displayMode === 'shenSha' ? <Eye size={14}/> : <EyeOff size={14}/>} 
-                        神煞
-                    </button>
+                            {/* 節氣天數 */}
+                            {data.jieQiSpan && (
+                                <div style={{ fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
+                                    ({data.jieQiSpan})
+                                </div>
+                            )}
+                            <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', marginTop: '1px' }}>
+                                日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}
+                            </div> 
+                        </div> 
+                    )}
                 </div>
 
-                {/* 2. 下方：操作按鈕 (保存 / 重排) */}
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
-                    <button onClick={() => onSave(data)} style={btnStyle}> <Bookmark size={14} /> 保存 </button>
-                    <button onClick={onBack} style={btnStyle}> <RefreshCw size={14} /> 重排 </button>
+                {/* 2. 右側：4個按鈕集中區 (固定在右上角) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', flexShrink: 0 }}>
+                    {/* 第一排按鈕：操作功能 (保存/重排) */}
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <Bookmark size={13} /> 保存 
+                        </button>
+                        <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <RefreshCw size={13} /> 重排 
+                        </button>
+                    </div>
+                    {/* 第二排按鈕：顯示模式 (藏干/神煞) */}
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button 
+                            onClick={() => toggleMode('zangGan')} 
+                            style={{ 
+                                ...btnStyle, 
+                                backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
+                                color: displayMode === 'zangGan' ? 'white' : THEME.gray,
+                                justifyContent: 'center',
+                                padding: '6px 10px', // 微調大小讓其緊湊
+                                minWidth: '60px'
+                            }}>
+                            {displayMode === 'zangGan' ? <Eye size={13}/> : <EyeOff size={13}/>} 
+                            藏干
+                        </button>
+                        <button 
+                            onClick={() => toggleMode('shenSha')} 
+                            style={{ 
+                                ...btnStyle, 
+                                backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
+                                color: displayMode === 'shenSha' ? 'white' : THEME.gray,
+                                justifyContent: 'center',
+                                padding: '6px 10px',
+                                minWidth: '60px'
+                            }}>
+                            {displayMode === 'shenSha' ? <Eye size={13}/> : <EyeOff size={13}/>} 
+                            神煞
+                        </button>
+                    </div>
+
                 </div>
-                
             </div>
+
+            {/* --- 下半部區域：起運資訊 (獨立一行，寬度 100%) --- */}
+            {data.yunInfo ? ( 
+                <div style={{ 
+                    fontSize: '13px', 
+                    color: THEME.blue, 
+                    fontWeight: 'bold',
+                    marginTop: '1px',              // 與上方拉開距離
+                    paddingTop: '1px',             // 增加內距
+                    width: '100%',
+                    lineHeight: '1'
+                }}>
+                    {data.yunInfo.detail}
+                    <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
+                        (西曆 {data.yunInfo.startDate} 起運)
+                    </span>
+                </div> 
+            ) : null}
 
         </div>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
