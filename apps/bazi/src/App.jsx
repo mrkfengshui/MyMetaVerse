@@ -1413,22 +1413,27 @@ return (
                         <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
                         <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1.5' }}>
                             農曆 {data.lunarDate} 
-                            {data.jieQiSpan && (
-                                <span style={{ marginLeft: '8px', fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
-                                    ({data.jieQiSpan})
-                                </span>
-                            )}
                         </div>
+
+                        {/* 3. 節氣天數 (移到這裡，獨立一行，避免被右邊按鈕擠壓) */}
+                        {data.jieQiSpan && (
+                            <div style={{ fontSize: '12px', color: THEME.dark, fontWeight: 'bold' }}>
+                                ({data.jieQiSpan})
+                            </div>
+                        )}
                         <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500' }}>日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}</div> 
                     </div> 
                 )}
                 
                 {/* 起運資訊 */}
                 {data.yunInfo ? ( 
-                    <> 
-                        <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>{data.yunInfo.detail}</div> 
-                        <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '4px', fontWeight: 'bold' }}>(西元 {data.yunInfo.startDate} 起運)</div> 
-                    </> 
+                    <div style={{ fontSize: '13px', color: THEME.blue, marginTop: '6px', fontWeight: 'bold' }}>
+                        {data.yunInfo.detail}
+                        {/* 將起運年份放在同一行右側 */}
+                        <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
+                            (西曆 {data.yunInfo.startDate} 起運)
+                        </span>
+                    </div> 
                 ) : null}
             </div>
 
