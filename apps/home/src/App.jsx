@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { db } from './firebase'; 
 import { collection, getDocs, addDoc, orderBy, query, doc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { AdBanner, Adsterra } from '@my-meta/ui';
 import { useProtection } from '@my-meta/ui';
+import { Helmet, HelmetProvider } from 'react-helmet-async'; 
+import { StaticBlogData } from './StaticBlogData';
 
 // --- 0. 設定與常數 ---
 const SOCIAL_LINKS = [
@@ -144,6 +146,7 @@ function HomePage() {
   const [activeArticleId, setActiveArticleId] = useState(null);
   const [displayArticles, setDisplayArticles] = useState([]);
   const [showAllArticles, setShowAllArticles] = useState(false);
+  const readerRef = useRef(null);
 
   useEffect(() => {
     // 隨機影片
@@ -221,13 +224,20 @@ function HomePage() {
 
   return (
     <div className="app-container">
+      {/* ★ 新增：Helmet SEO 設定 (放在最上面) */}
+      <Helmet>
+        <title>許甯博風水命理館 - 免費八字、紫微斗數、風水、奇門、萬年曆工具</title>
+        <meta name="description" content="提供最專業的線上算命工具，包含八字、紫微斗數、風水、奇門遁甲與萬年曆。深入解析2026丙午年運勢、流年風水佈局與結婚擇日宜忌。玄學就是科學，立即免費體驗" />
+        <meta name="keywords" content="八字, 紫微斗數, 風水, 算命, 萬年曆, 免費排盤, 2026運勢, 赤馬紅羊, 擇日, 奇門遁甲, 許甯博" />
+        <link rel="canonical" href="https://www.mrkfengshui.com/" />
+      </Helmet>
       <style>{`
         body, html { position: static !important; overflow-y: auto !important; height: auto !important; }
         #root { overflow: visible !important; height: auto !important; }
         .app-container { min-height: 100vh; display: flex; flex-direction: column; height: auto; overflow: visible; }
         .container { max-width: 1280px; margin: 0 auto; width: 95%; padding: 0 24px; box-sizing: border-box; }
         .article-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 32px; align-items: start; }
-        .article-reader { background: white; border-radius: 16px; padding: 40px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04); min-height: 600px; height: auto; }
+        .article-reader { background: white; border-radius: 16px; padding: 40px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04); min-height: 600px; height: auto; scroll-margin-top: 80px; }
         .article-list-container { display: flex; flex-direction: column; gap: 12px; }
         
         .hero-title { font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; color: #111 !important; }
@@ -252,8 +262,14 @@ function HomePage() {
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
             <div style={{ fontWeight: '900', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img src="/logo.png" alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-              <span style={{ fontSize: '18px', color: '#111', display: 'inline-block' }}>許甯博風水命理館</span>
-              <span style={{ fontSize: '12px', color: '#888', display: 'inline-block' }}>since 2021</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '18px', color: '#111', fontWeight: 'bold', lineHeight: '1' }}>
+                      許甯博風水命理館
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#888', fontWeight: 'bold' }}>
+                      since 2021
+                  </span>
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <Link to="/admin" style={{ color: '#eee' }} title="後台管理"><Lock size={16} /></Link>
@@ -299,7 +315,7 @@ function HomePage() {
             <BookOpen size={24} color="#722ed1" /> 命理專欄
         </h3>
         <div className="article-grid">
-          <div className="article-reader">
+          <div className="article-reader" ref={readerRef}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <span style={{ fontSize: '14px', color: '#999', fontWeight: 500 }}>{activeArticle?.date}</span>
                 <CategoryBadge label={activeArticle?.category} />
@@ -309,19 +325,52 @@ function HomePage() {
             <div style={{ fontFamily: 'arial', fontSize: '16px', lineHeight: '1.8', color: '#333', whiteSpace: 'pre-line' }}>{activeArticle?.content}</div>
           </div>
           <div className="article-list-container">
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{showAllArticles ? '所有文章' : '精選文章'}</div>
-             </div>
-             {listToRender.map(article => {
-               const isActive = article.id === activeArticleId;
-               return (
-                 <div key={article.id} onClick={() => setActiveArticleId(article.id)} style={{ padding: '16px', borderRadius: '12px', background: isActive ? '#f9f0ff' : 'white', border: isActive ? '1px solid #d3adf7' : '1px solid #eee', cursor: 'pointer', transition: 'all 0.2s', position: 'relative', boxShadow: isActive ? '0 2px 8px rgba(114, 46, 209, 0.1)' : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span style={{ fontSize: '12px', color: '#999' }}>{article.date}</span><CategoryBadge label={article.category} /></div>
-                    <div style={{ fontSize: '15px', fontWeight: isActive ? 'bold' : '500', color: isActive ? '#722ed1' : '#333', lineHeight: 1.4 }}>{article.title}</div>
-                 </div>
-               );
-             })}
-             <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '100%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
+              {/* 標題列 + 上方收起按鈕 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      {showAllArticles ? '所有文章' : '精選文章'}
+                  </div>
+                  {/* 當顯示所有文章時，標題列右側出現收起按鈕 */}
+                  {showAllArticles && (
+                      <div 
+                          onClick={() => setShowAllArticles(false)} 
+                          style={{ 
+                              cursor: 'pointer', 
+                              fontSize: '13px', 
+                              color: '#007aff', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '4px',
+                              padding: '4px 8px',
+                              background: '#f5f5f5',
+                              borderRadius: '6px'
+                          }}
+                      >
+                          <ChevronUp size={14} /> 收起
+                      </div>
+                  )}
+              </div>
+
+              {/* 文章列表 (這裡不需要額外的 div 包裹，直接渲染) */}
+              {listToRender.map(article => {
+                  const isActive = article.id === activeArticleId;
+                  return (
+                      <div 
+                      key={article.id} 
+                      onClick={() => { 
+                          setActiveArticleId(article.id);
+                          readerRef.current?.scrollIntoView({ behavior: 'smooth' });
+                      }} 
+                      style={{ padding: '16px', borderRadius: '12px', background: isActive ? '#f9f0ff' : 'white', border: isActive ? '1px solid #d3adf7' : '1px solid #eee', cursor: 'pointer', transition: 'all 0.2s', position: 'relative', boxShadow: isActive ? '0 2px 8px rgba(114, 46, 209, 0.1)' : 'none', marginBottom: '8px' }} // 加一點 marginBottom 讓列表有間距
+                      >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span style={{ fontSize: '12px', color: '#999' }}>{article.date}</span><CategoryBadge label={article.category} /></div>
+                          <div style={{ fontSize: '15px', fontWeight: isActive ? 'bold' : '500', color: isActive ? '#722ed1' : '#333', lineHeight: 1.4 }}>{article.title}</div>
+                      </div>
+                  );
+              })}
+
+              {/* 底部按鈕 (展開/收起) */}
+              <button onClick={() => setShowAllArticles(!showAllArticles)} style={{ padding: '10px', marginTop: '8px', width: '100%', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{showAllArticles ? <><ChevronUp size={16}/> 收起</> : <><ChevronDown size={16}/> 查看所有</>}</button>
           </div>
         </div>
       </section>
@@ -344,8 +393,13 @@ function HomePage() {
           ))}
         </div>
       </section>
+      {/* 靜態文章區塊 */}
+      <section className="container">
+          <StaticBlogData />
+      </section>
 
       {/* ✅ AdBanner: 限制高度，減少 margin */}
+      <div style={{ marginTop: '20px' }}><AdBanner /></div>
       <div style={{ marginTop: '20px' }}><Adsterra /></div>
 
       {/* Footer */}
@@ -367,16 +421,17 @@ function HomePage() {
 }
 
 export default function App() {
-  // 全局啟用保護機制
   const isAuthorized = useProtection([]);
   if (!isAuthorized) return null;
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/admin" element={<AdminPage />} />
-      </Routes>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/admin" element={<AdminPage />} />
+        </Routes>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }
