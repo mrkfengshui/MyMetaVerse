@@ -664,6 +664,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
   const years = useMemo(() => { const arr = []; for (let i = 1900; i <= 2100; i++) arr.push(i); return arr; }, []);
   const hours = useMemo(() => Array.from({length: 24}, (_, i) => i), []);
   const minutes = useMemo(() => Array.from({length: 60}, (_, i) => i), []);
+  const pad = (n) => String(n).padStart(2, '0');
   
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -674,7 +675,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>姓名</label>
-            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
+            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
           </div>
           
           <div style={{ marginBottom: '20px' }}>
@@ -693,9 +694,9 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{pad(h)}</option>)}</select> </div>
               <span>:</span>
-              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
               </div>
           </div>
 

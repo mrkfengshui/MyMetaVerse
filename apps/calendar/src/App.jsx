@@ -8,7 +8,7 @@ import {
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES,
-  DONG_GONG_RULES
+  DONG_GONG_RULES, XIU_INFO, JIAN_CHU_INFO
 } from '@my-meta/ui';
 
 import { useProtection } from '@my-meta/ui';
@@ -28,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博年月進氣萬年曆";
-const APP_VERSION = "v1.0"; // 升級版本號
+const APP_VERSION = "v1.1 詳列建除、二十八宿、董公吉凶";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -440,28 +440,63 @@ const getShiGan = (dayGan, timeZhiName) => {
 // =========================================================================
 
 // B-1: 可點擊的資訊項目 (用於 Modal 內)
-const InfoItem = ({ label, value, desc }) => {
+const InfoItem = ({ label, value, yi, ji, source }) => {
   const handleClick = (e) => {
     e.stopPropagation();
-    alert(`【${label} - ${value}】\n\n${desc}`);
+    // 點擊時，顯示 source (典故/詳細解釋)
+    if (source) {
+        alert(`【${label} - ${value}】典故\n\n${source}`);
+    } else {
+        alert(`暫無 ${value} 的詳細典故資料`);
+    }
   };
 
   return (
     <div 
       onClick={handleClick}
       style={{ 
-        background: '#f9f9f9', padding: '10px 12px', borderRadius: '12px', 
+        background: '#f9f9f9', padding: '12px', borderRadius: '12px', 
         cursor: 'pointer', display: 'flex', flexDirection: 'column',
         border: '1px solid transparent', transition: 'all 0.2s',
-        marginBottom: '8px'
+        height: '100%',
+        boxSizing: 'border-box' 
       }}
       onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
     >
-      <span style={{ fontSize: '12px', color: '#888', marginBottom: '4px', display:'flex', alignItems:'center', gap:'4px' }}>
-        {label} <Info size={12}/>
-      </span>
-      <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#333' }}>{value}</span>
+      {/* 頂部：標籤與數值 */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'8px' }}>
+          <span style={{ fontSize: '12px', color: '#888', display:'flex', alignItems:'center', gap:'4px' }}>
+            {label} <Info size={12}/>
+          </span>
+          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{value}</span>
+      </div>
+
+      {/* 宜忌區域：長期顯示 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+              <span style={{ 
+                  color: '#389e0d', // 綠色
+                  background: '#f6ffed', 
+                  padding: '1px 4px', 
+                  borderRadius: '4px', 
+                  fontSize: '11px',
+                  flexShrink: 0
+              }}>宜</span>
+              <span style={{ color: '#555', lineHeight: '1.4' }}>{yi || '無'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+               <span style={{ 
+                  color: '#cf1322', // 紅色
+                  background: '#fff1f0', 
+                  padding: '1px 4px', 
+                  borderRadius: '4px', 
+                  fontSize: '11px',
+                  flexShrink: 0
+              }}>忌</span>
+              <span style={{ color: '#555', lineHeight: '1.4' }}>{ji || '無'}</span>
+          </div>
+      </div>
     </div>
   );
 };
@@ -488,7 +523,7 @@ const AccordionSection = ({ title, children, defaultOpen = false, color = '#333'
 };
 
 // B-3: 底部摘要面板 (點擊可展開詳細資訊，點擊時柱可換時辰)
-const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
+const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, onToggleBookmark }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // 當日期改變時，自動收合 (可選)
@@ -498,7 +533,26 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
 
   if (!info) return null;
 
-  const dgColor = info.dongGongRating.includes('吉') ? THEME.blue : (info.dongGongRating.includes('凶') ? THEME.red : THEME.gray);
+  const dgColor = info.dongGongRating.includes('吉') ? THEME.blue : (info.dongGongRating.includes('平') ? THEME.gray : THEME.red);
+
+  const BookmarkBtn = () => (
+    <button 
+      onClick={(e) => { 
+        e.stopPropagation(); // 阻止冒泡，避免觸發面板展開
+        onToggleBookmark(); 
+      }}
+      style={{ 
+        background: 'none', border: 'none', padding: '4px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', marginLeft: '4px'
+      }}
+    >
+      <Bookmark 
+        size={20} 
+        fill={isBookmarked ? THEME.red : 'none'} 
+        color={isBookmarked ? THEME.red : '#ccc'} 
+      />
+    </button>
+  );
 
   // --- 1. 摺疊狀態 (只顯示簡單資訊) ---
   if (!isExpanded) {
@@ -522,9 +576,10 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
+            <BookmarkBtn />
          </div>
          <div style={{ color: THEME.blue }}>
-            <ChevronUp size={16} />
+            <ChevronUp size={24} />
          </div>
       </div>
     );
@@ -549,6 +604,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
+            <BookmarkBtn />
          </div>
          
          {/* 這裡改為收合按鈕，阻止冒泡以免觸發 onDetailClick */}
@@ -556,7 +612,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
             onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
             style={{ display: 'flex', alignItems: 'center', gap: '4px', color: THEME.blue, fontSize: '12px', padding: '4px' }}
          >
-            <ChevronDown size={16} />
+            <ChevronDown size={24} />
          </div>
       </div>
 
@@ -611,6 +667,12 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick }) => {
 const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmarked }) => {
   if (!isOpen || !date || !info) return null;
 
+  const DONG_GONG_INTRO = `大富貴人用事與平常富貴者迥異，夫大富貴人擇日，惟合吉時即可成立定局，縱日干凶煞，一被其時內吉神化解，兼被其威勢節制，凶煞自退，用之無妨。平常富貴人用之，終不能獲吉。而平民百姓用之，難免招非破財之事。故用日宜擇吉兼參照本命而行，無不獲善也。
+
+同一吉日，可能利甲某人而不利乙某人。如嫁娶需同參主人年歲合局、洞房花燭之吉時；移居需同參主人入宅、敬神時辰為吉。故嫁娶、開張、出行、起造、移居等事，除擇吉日之外，擇時亦十分重要。古雲：年吉不如月吉，月吉不如日吉，日吉不如時吉也。若吉日能合吉時，則萬事大吉利也。
+
+如遇煞入中宮或白虎入中宮之日，不可在庭院之中釘釘及鼓樂喧嘩之聲浪，凡此種日干，即使有煞貢、直星、人專、天德、月德星臨，似可化解、然已生疑及旁觀，故避用為上策。又或起造者雲有水星化解、嫁娶者雲有文星化解、或雲可用字元鎮壓化解，皆不可信，需知凡嫁娶、起造等事，如犯五鬼凶日、黑煞星臨，或白虎入中宮之日，速者百日內，緩者一年內外見官司、傷亡等凶禍之事。實不容忽視之。`;
+
   return (
     <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -660,16 +722,62 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
 
             {/* 擇日神煞 */}
             <AccordionSection title="擇日神煞" defaultOpen={true} color="#722ed1">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <InfoItem label="建除十二神" value={info.jian} desc="傳統擇日學的重要依據，每日輪值不同神煞。" />
-                    <InfoItem label="二十八宿" value={info.xiuFull} desc="中國古代天文學的恆星區分系統。" />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', alignItems: 'stretch' }}>
+                    
+                    {/* 建除十二神 */}
+                    {(() => {
+                        // 直接從 Constants 獲取對應物件
+                        const data = JIAN_CHU_INFO[info.jian] || {};
+                        return (
+                            <InfoItem 
+                                label="建除十二神" 
+                                value={info.jian}
+                                yi={data.yi}      // 傳入 宜
+                                ji={data.ji}      // 傳入 忌
+                                source={data.source} // 傳入 典故 (點擊顯示)
+                            />
+                        );
+                    })()}
+
+                    {/* 二十八宿 */}
+                    {(() => {
+                        // 直接從 Constants 獲取對應物件
+                        const data = XIU_INFO[info.xiu] || {};
+                        return (
+                            <InfoItem 
+                                label="二十八宿" 
+                                value={info.xiuFull} 
+                                yi={data.yi}      // 傳入 宜
+                                ji={data.ji}      // 傳入 忌
+                                source={data.source} // 傳入 典故 (點擊顯示)
+                            />
+                        );
+                    })()}
+                    
                 </div>
             </AccordionSection>
 
             {/* 董公 */}
-            <AccordionSection title="董公擇日便覽" defaultOpen={true} color="#fa8c16">
+            <AccordionSection 
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        董公擇日便覽
+                        <div 
+                            onClick={(e) => {
+                                e.stopPropagation(); // 防止觸發摺疊
+                                alert(DONG_GONG_INTRO); // 顯示總論
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px' }}
+                        >
+                            <Info size={18} color="#fa8c16" />
+                        </div>
+                    </div>
+                } 
+                defaultOpen={true} 
+                color="#fa8c16"
+            >
                 <div style={{ marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold', color: info.dongGongRating.includes('吉') ? THEME.blue : THEME.red }}>
+                  <span style={{ fontWeight: 'bold', color: info.dongGongRating.includes('吉') ? THEME.blue : (info.dongGongRating === '平' ? THEME.gray : THEME.red) }}>
                     {info.dongGongRating}
                   </span>
                 </div>
@@ -1006,13 +1114,13 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       
       <div style={{ opacity: textOpacity, position: 'relative', height: '100%', zIndex: 2, fontWeight: qiMode ? 'bold' : 'normal' }}>
           <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
-          <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.teal, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
-          {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'normal' }}>三娘煞</div>)}
+          <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.orange, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
+          {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'bold' }}>三娘煞</div>)}
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
           <div style={{ position: 'absolute', bottom: '16px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
-          <div style={{ position: 'absolute', bottom: '2px', left: '4px', fontSize: '14px', fontWeight: 'bold', color: data.colorJian }}>{data.jian}</div>
+          <div style={{ position: 'absolute', bottom: '2px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorJian }}>{data.jian}</div>
           {data.dongGongRating && (
-            <div style={{ position: 'absolute', bottom: '2px', right: '4px', fontSize: '11px', fontWeight: 'bold', color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('凶') ? THEME.red : THEME.gray) }}>{data.dongGongRating}</div>
+            <div style={{ position: 'absolute', bottom: '2px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('平') ? THEME.gray : THEME.red) }}>{data.dongGongRating}</div>
           )}
       </div>
       {isBookmarked && <div style={{ position: 'absolute', top: '4px', right: '28px', width: '6px', height: '6px', backgroundColor: THEME.red, borderRadius: '50%', zIndex: 3 }}></div>}
@@ -1256,8 +1364,14 @@ export default function CalendarApp() {
         let dgRating = '平'; let dgText = '暫無資料';
         if (dgRule) {
             dgText = dgRule.t;
-            if (dgRule.s && dgRule.s[dayGanZhi]) { dgRating = dgRule.s[dayGanZhi]; dgText += ` (本日${dayGanZhi}為${dgRating})`; } 
-            else { dgRating = dgRule.r; }
+            if (dgRule.s && dgRule.s[dayGanZhi]) { 
+                // 特殊情況下，直接修改標題 (Rating)
+                const specialVal = dgRule.s[dayGanZhi];
+                dgRating = `本日${dayGanZhi}為${specialVal}`; 
+            } 
+            else { 
+                dgRating = dgRule.r; 
+            }
         }
         const dgSummary = dgText.split('：')[1]?.split('。')[0] || dgRating;
 
@@ -1402,6 +1516,8 @@ export default function CalendarApp() {
                 onDetailClick={() => setIsDetailModalOpen(true)}
                 // 當點擊時柱時，開啟時辰選擇器
                 onTimeClick={() => setShowTimeModal(true)}
+                isBookmarked={selectedDate ? bookmarks.includes(getLocalDateString(selectedDate)) : false}
+                onToggleBookmark={() => selectedDate && toggleBookmark(selectedDate)}
             />
           </>
         )}
