@@ -628,7 +628,6 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
               </div>
               <div style={{ fontSize: '13px', color: THEME.grey, marginTop: '2px' }}>
                  董公：<span style={{ fontWeight: 'bold', color: dgColor }}>{info.dongGongRating}</span>
-                 <span style={{ color: '#999', marginLeft: '6px', fontSize: '12px' }}>{info.dongGongSummary}</span>
               </div>
           </div>
 
