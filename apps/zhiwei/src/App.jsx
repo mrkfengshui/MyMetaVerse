@@ -938,11 +938,11 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
             stars.liu = { lu: lLu, yang:(lLu+1)%12, tuo:(lLu+11)%12, ma:({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[tYearZhi]), kui: DEFAULT_KUI_YUE[tYearGan]?.k, yue: DEFAULT_KUI_YUE[tYearGan]?.y };
             if (daXianGan) { const dLu = getLuPos(daXianGan); stars.da = { lu: dLu, yang:(dLu+1)%12, tuo:(dLu+11)%12, kui: DEFAULT_KUI_YUE[daXianGan]?.k, yue: DEFAULT_KUI_YUE[daXianGan]?.y }; }
             if (currentLiuYueGan) { const yLu = getLuPos(currentLiuYueGan); const curMonthZhi = targetLunar.getMonthZhi(); stars.yue = { lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12, ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]), kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y }; }
-            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan };
+            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan, currentLunarYear: targetLunar.getYear() };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText]);
 
-        const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;    const activeSiHua = useMemo(() => {
+        const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan, currentLunarYear } = resultParams;    const activeSiHua = useMemo(() => {
         const getMap = (gan) => { if (!gan) return {}; const r = DEFAULT_SI_HUA[gan]; return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' }; };
         const bGan = window.Solar.fromYmdHms(chartData.rawDate.year, chartData.rawDate.month, chartData.rawDate.day, chartData.rawDate.hour, chartData.rawDate.minute, 0).getLunar().getYearGan();
         return { year: getMap(bGan), daXian: getMap(daXianGan), xiaoXian: getMap(currentLiuNianGan), liuYue: getMap(currentLiuYueGan) };
@@ -1025,10 +1025,13 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                             daXianIdx={daXianIdx} 
                             xiaoXianIdx={xiaoXianIdx}
                             liuNianIdx={liuNianZhiIdx} 
-                            currentYear={targetDate.year} 
-                            onYearChange={(y) => handleDateChange('year', y)}
+                            // 1. 顯示農曆年份 (如果未就緒則 fallback 到西元)
+                            currentYear={currentLunarYear || targetDate.year} 
+                            // 2：切換年份時，強制設為該年 6月30日 (避開年初農曆未換的問題)
+                            onYearChange={(y) => setTargetDate({ year: parseInt(y), month: 6, day: 30 })}
+                            
                             yearOptions={yearOptions}
-                            onClose={() => setShowScore(false)} 
+                            onClose={() => setShowScore(false)}
                         />
                     )}
 
@@ -1065,8 +1068,16 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
                         <button 
-                            onClick={() => setShowScore(true)} 
-                            style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.orange, color: 'white', border: 'none' }}>運勢評分</button>
+                        onClick={() => {
+                            const now = new Date();
+                            setTargetDate({ 
+                                year: now.getFullYear(), 
+                                month: now.getMonth() + 1, 
+                                day: now.getDate() 
+                            });
+                            setShowScore(true);
+                        }} 
+                        style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.orange, color: 'white', border: 'none' }}>運勢評分</button>
                         <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
                     </div>
                 </div>
