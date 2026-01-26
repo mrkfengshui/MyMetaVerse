@@ -15,9 +15,9 @@ const getJiaGong = (centerIdx) => [
 
 const calculateScoreAndFormations = (grid, centerIdx) => {
     // ... (請保留原本完整的 calculateScoreAndFormations 程式碼) ...
-    if (centerIdx === -1 || centerIdx === undefined) return { score: 60, formations: [] };
+    if (centerIdx === -1 || centerIdx === undefined) return { score: 50, formations: [] };
 
-    let score = 60; 
+    let score = 50; 
     let formations = [];
     const indices = getSanFangSiZheng(centerIdx);
     const jiaIndices = getJiaGong(centerIdx);
@@ -37,9 +37,10 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
             allStars.push(s.name);
             starMap[s.name] = relPos; 
 
-            if (s.brightness === '廟') score += 2;
+            if (s.brightness === '廟') score += 1;
             else if (s.brightness === '旺') score += 1;
-            else if (s.brightness === '陷') score -= 1.5;
+            else if (s.brightness === '地') score -= 1;
+            else if (s.brightness === '陷') score -= 1;
 
             if (s.hua) {
                 huaMap[s.hua] = (huaMap[s.hua] || 0) + 1;
@@ -48,15 +49,16 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
                 if (s.hua === '科') score += 3;
                 if (s.hua === '忌') { 
                     score -= 5; 
-                    if(isSelf) formations.push("化忌坐命");
-                    else if(isOpposite) formations.push("化忌衝命");
+                    if (isSelf) formations.push("化忌坐命");
+                    else if (isOpposite) formations.push("化忌衝命");
+                    else formations.push("化忌會照");
                 }
             }
 
             if (['左輔','右弼','天魁','天鉞'].includes(s.name)) score += 2;
-            if (['文昌','文曲'].includes(s.name)) score += 1.5;
-            if (s.name === '祿存') score += 4;
-            if (['擎羊','陀羅','火星','鈴星','地劫','天空'].includes(s.name)) score -= 3;
+            if (['文昌','文曲'].includes(s.name)) score += 2;
+            if (s.name === '祿存') score += 2;
+            if (['擎羊','陀羅','火星','鈴星','地劫','天空'].includes(s.name)) score -= 2;
         });
     });
 
@@ -95,7 +97,7 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
     if (inSelf('破軍') && (currentZhi === '子' || currentZhi === '午')) { score += 6; formations.push("英星入廟"); }
     if (inSelf('巨門') && (currentZhi === '子' || currentZhi === '午')) {
         if (huaMap['祿']>0 || huaMap['權']>0 || huaMap['科']>0) { score += 8; formations.push("石中隱玉"); }
-        else { formations.push("石中隱玉(未成)"); }
+        else { formations.push("假石中隱玉"); }
     }
     if (inSelf('七殺')) {
         if (['寅','申'].includes(currentZhi)) { score += 6; formations.push("七殺朝斗"); }
@@ -118,14 +120,14 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
         else { score += 5; formations.push("魁鉞朝垣"); }
     }
     if (has('貪狼')) {
-        if (has('火星')) { score += 10; formations.push("火貪格(橫發)"); }
-        if (has('鈴星')) { score += 10; formations.push("鈴貪格(橫發)"); }
+        if (has('火星')) { score += 10; formations.push("火貪格"); }
+        if (has('鈴星')) { score += 10; formations.push("鈴貪格"); }
     }
-    if (has('鈴星') && has('文昌') && has('陀羅') && has('武曲')) { score -= 20; formations.push("鈴昌陀武(大凶)"); }
+    if (has('鈴星') && has('文昌') && has('陀羅') && has('武曲')) { score -= 20; formations.push("鈴昌陀武"); }
     if (has('巨門') && has('火星') && has('擎羊')) { score -= 10; formations.push("巨火羊"); }
     if (inSelf('地劫') || inSelf('天空')) { score -= 5; formations.push("命裡逢空"); }
     if (currentZhi === '午' && inSelf('擎羊')) { 
-        if (inSelf('天同') || inSelf('太陰') || inSelf('貪狼')) { score += 5; formations.push("馬頭帶劍(威鎮)"); } 
+        if (inSelf('天同') || inSelf('太陰') || inSelf('貪狼')) { score += 5; formations.push("馬頭帶劍"); } 
         else { formations.push("馬頭帶劍"); }
     }
     if (has('廉貞') && has('天相') && has('擎羊') && currentZhi === '午') { score -= 10; formations.push("刑囚夾印"); }
@@ -150,7 +152,7 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
     if (isJia('地劫', '天空')) { score -= 10; formations.push("空劫夾命"); }
     if (isJia('火星', '鈴星')) { score -= 10; formations.push("火鈴夾命"); }
     if (isJia('擎羊', '陀羅')) { 
-        if (huaMap['忌'] > 0 || jiaStars.includes('忌')) { score -= 20; formations.push("羊陀夾忌(敗局)"); } 
+        if (huaMap['忌'] > 0 || jiaStars.includes('忌')) { score -= 20; formations.push("羊陀夾忌"); } 
         else { score -= 5; formations.push("羊陀夾命"); }
     }
 
