@@ -46,6 +46,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
           background-color: #f5f5f5;
           width: 100vw;
           height: 100vh;
+          height: 100dvh;
           height: -webkit-fill-available;
           overflow-x: hidden; 
           position: fixed;
@@ -65,6 +66,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
         #root {
           width: 100%;
           height: 100%;
+          height: 100dvh;
           overflow: hidden; /* 防止 root 本身出現捲軸 */
           display: flex;
           flex-direction: column;
