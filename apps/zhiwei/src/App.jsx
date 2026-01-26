@@ -1054,27 +1054,7 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                         <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
                         <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
                     </div>
-                    {/* 👇 在日期選擇器與命主資訊之間，插入「評分」按鈕 */}
-                    <button 
-                        onClick={() => setShowScore(true)} 
-                        style={{
-                            margin: '4px 0',
-                            padding: '6px 20px',
-                            backgroundColor: '#fff7e6', // 淺黃色背景突顯
-                            border: `1px solid ${THEME.border}`,
-                            borderRadius: '20px',
-                            color: '#d48806',
-                            fontWeight: 'bold',
-                            fontSize: '13px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                    >
-                        運勢評分
-                    </button>
+                    
                     <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
                             <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
@@ -1084,6 +1064,9 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
+                        <button 
+                            onClick={() => setShowScore(true)} 
+                            style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.orange, color: 'white', border: 'none' }}>運勢評分</button>
                         <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
                     </div>
                 </div>

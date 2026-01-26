@@ -212,7 +212,7 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
     };
 
     // 小卡片組件 (並排顯示)
-    const ScoreCard = ({ title, sub, score }) => (
+    const ScoreCard = ({ title, score }) => (
         <div style={{ 
             flex: 1, 
             display: 'flex', 
@@ -225,7 +225,6 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
             borderRadius: '8px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
-            <div style={{ fontSize: '11px', color: THEME.gray, marginBottom: '2px' }}>{sub}</div>
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: THEME.black, marginBottom: '4px' }}>{title}</div>
             <div style={{ fontSize: '22px', fontWeight: 'bold', color: getScoreColor(score), lineHeight: 1 }}>{score}</div>
         </div>
@@ -272,9 +271,9 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
 
             {/* Body: Scores Display (橫向並排) */}
             <div style={{ flexShrink: 0, padding: '12px 12px', display: 'flex', gap: '8px', backgroundColor: THEME.bgGray }}>
-                <ScoreCard title="總運勢" sub="命宮" score={dataMing.score} />
-                <ScoreCard title="事業運" sub="官祿" score={dataGuan.score} />
-                <ScoreCard title="財運" sub="財帛" score={dataCai.score} />
+                <ScoreCard title="總運勢" score={dataMing.score} />
+                <ScoreCard title="事業運" score={dataGuan.score} />
+                <ScoreCard title="財運" score={dataCai.score} />
             </div>
 
             {/* Footer: 格局列表 */}
