@@ -241,7 +241,7 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
         }}>
             {/* Header */}
             <div style={{ padding: '8px 10px', borderBottom: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                <span style={{ fontWeight: 'bold', color: THEME.black }}>運勢評分</span>
+                <span style={{ fontWeight: 'bold', color: THEME.orange }}>運勢評分</span>
                 <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><X size={20} color={THEME.gray}/></button>
             </div>
 

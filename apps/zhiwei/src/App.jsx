@@ -850,6 +850,7 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
     useEffect(() => { setChartData(data); }, [data]);
 
     const [showScore, setShowScore] = useState(false);
+    const [savedDate, setSavedDate] = useState(null);
 
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
@@ -1031,7 +1032,12 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                             onYearChange={(y) => setTargetDate({ year: parseInt(y), month: 6, day: 30 })}
                             
                             yearOptions={yearOptions}
-                            onClose={() => setShowScore(false)}
+                            onClose={() => {
+                                if (savedDate) {
+                                    setTargetDate(savedDate); // 還原回原本選的日期
+                                }
+                                setShowScore(false);
+                            }}
                         />
                     )}
 
@@ -1068,16 +1074,30 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
                         <button 
-                        onClick={() => {
-                            const now = new Date();
-                            setTargetDate({ 
-                                year: now.getFullYear(), 
-                                month: now.getMonth() + 1, 
-                                day: now.getDate() 
-                            });
-                            setShowScore(true);
-                        }} 
-                        style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.orange, color: 'white', border: 'none' }}>運勢評分</button>
+                            onClick={() => {
+                                // 1. 先備份當前選定的日期 (例如 2030/3/5)
+                                setSavedDate(targetDate);
+                                
+                                // 2. 切換到「該年」的年中 (6月30日)，確保算出該年的流年運勢
+                                //    (原本是切換到 new Date() 今天，現在改為 targetDate.year)
+                                setTargetDate({ 
+                                    year: targetDate.year, 
+                                    month: 6, 
+                                    day: 30 
+                                });
+                                
+                                // 3. 開啟視窗
+                                setShowScore(true);
+                            }} 
+                            style={{ 
+                                padding: '2px 8px', 
+                                fontSize: '11px', 
+                                backgroundColor: THEME.orange, 
+                                color: 'white', 
+                                border: 'none', 
+                            }}
+                        >
+                        運勢評分</button>
                         <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
                     </div>
                 </div>
