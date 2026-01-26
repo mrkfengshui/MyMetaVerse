@@ -6,8 +6,9 @@ import 'react-calendar/dist/Calendar.css';
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
-  COLORS, THEME, COMMON_STYLES
+  InstallGuide, WebBackupManager,
+  COLORS, THEME, COMMON_STYLES,
+  ScorePanel
 } from '@my-meta/ui';
 
 import { useProtection } from '@my-meta/ui';
@@ -28,7 +29,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博紫微斗數";
-const APP_VERSION = "v1.0";
+const APP_VERSION = "v1.1 運勢評分";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -848,6 +849,8 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
     const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
 
+    const [showScore, setShowScore] = useState(false);
+
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
@@ -939,8 +942,7 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText]);
 
-    const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;
-    const activeSiHua = useMemo(() => {
+        const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;    const activeSiHua = useMemo(() => {
         const getMap = (gan) => { if (!gan) return {}; const r = DEFAULT_SI_HUA[gan]; return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' }; };
         const bGan = window.Solar.fromYmdHms(chartData.rawDate.year, chartData.rawDate.month, chartData.rawDate.day, chartData.rawDate.hour, chartData.rawDate.minute, 0).getLunar().getYearGan();
         return { year: getMap(bGan), daXian: getMap(daXianGan), xiaoXian: getMap(currentLiuNianGan), liuYue: getMap(currentLiuYueGan) };
@@ -977,6 +979,9 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
     const daysInMonth = useMemo(() => { const lastDay = new Date(targetDate.year, targetDate.month, 0).getDate(); return Array.from({ length: lastDay }, (_, i) => i + 1); }, [targetDate.year, targetDate.month]);
     const targetLunarDisplay = useMemo(() => { try { const solar = window.Solar.fromYmd(parseInt(targetDate.year), parseInt(targetDate.month), parseInt(targetDate.day)); const lunar = solar.getLunar(); let monthName = lunar.getMonthInChinese().replace('闰', '閏').replace('冬', '十一').replace('腊', '十二'); return `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}`; } catch (e) { return ""; } }, [targetDate]);
 
+    // 找出命宮的位置，用於傳遞給評分面板
+    const mingIdx = g.findIndex(p => p.name === '命宮');
+    
     return (
         <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
             <div style={{ 
@@ -1010,8 +1015,23 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                     justifyContent: 'center', 
                     padding: '10px',
                     // ★ 確保中宮不會遮住任何格線
-                    zIndex: 1 
+                    zIndex: 1,
+                    position: 'relative'
                 }}>
+                    {showScore && (
+                        <ScorePanel 
+                            grid={g} 
+                            mingIdx={mingIdx} 
+                            daXianIdx={daXianIdx} 
+                            xiaoXianIdx={xiaoXianIdx}
+                            liuNianIdx={liuNianZhiIdx} 
+                            currentYear={targetDate.year} 
+                            onYearChange={(y) => handleDateChange('year', y)}
+                            yearOptions={yearOptions}
+                            onClose={() => setShowScore(false)} 
+                        />
+                    )}
+
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -1034,6 +1054,27 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                         <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
                         <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
                     </div>
+                    {/* 👇 在日期選擇器與命主資訊之間，插入「評分」按鈕 */}
+                    <button 
+                        onClick={() => setShowScore(true)} 
+                        style={{
+                            margin: '4px 0',
+                            padding: '6px 20px',
+                            backgroundColor: '#fff7e6', // 淺黃色背景突顯
+                            border: `1px solid ${THEME.border}`,
+                            borderRadius: '20px',
+                            color: '#d48806',
+                            fontWeight: 'bold',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        運勢評分
+                    </button>
                     <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
                             <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
