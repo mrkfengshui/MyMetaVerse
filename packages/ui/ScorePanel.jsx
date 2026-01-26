@@ -4,25 +4,24 @@ import { THEME } from './theme';
 import { X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 // --- 1. 內部核心邏輯 (格局判斷) ---
-// (保留原本的 getSanFangSiZheng, getJiaGong, calculateScoreAndFormations 邏輯，不需變動)
 const getSanFangSiZheng = (centerIdx) => [
-    centerIdx, (centerIdx + 4) % 12, (centerIdx + 8) % 12, (centerIdx + 6) % 12
+    centerIdx,            // 0: 本宮
+    (centerIdx + 4) % 12, // 1: 三方 (財/官)
+    (centerIdx + 8) % 12, // 2: 三方 (官/財)
+    (centerIdx + 6) % 12  // 3: 對宮
 ];
 
-const getJiaGong = (centerIdx) => [
-    (centerIdx + 11) % 12, (centerIdx + 1) % 12
-];
-
-const calculateScoreAndFormations = (grid, centerIdx) => {
-    // ... (請保留原本完整的 calculateScoreAndFormations 程式碼) ...
+const calculateScoreAndFormations = (grid, centerIdx, targetName = '命') => {
     if (centerIdx === -1 || centerIdx === undefined) return { score: 50, formations: [] };
 
     let score = 50; 
     let formations = [];
     const indices = getSanFangSiZheng(centerIdx);
-    const jiaIndices = getJiaGong(centerIdx);
     const currentPalace = grid[centerIdx];
     const currentZhi = currentPalace.zhi; 
+
+    // ★ 權重設定：[本宮, 三方1, 三方2, 對宮]
+    const POS_WEIGHTS = [4.0, 1.75, 1.75, 2.5];
 
     let allStars = []; 
     let starMap = {};  
@@ -32,33 +31,30 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
         const palace = grid[idx];
         const isSelf = relPos === 0; 
         const isOpposite = relPos === 3; 
+        const weight = POS_WEIGHTS[relPos]; 
 
         [...palace.stars, ...palace.minorStars].forEach(s => {
             allStars.push(s.name);
             starMap[s.name] = relPos; 
 
-            if (s.brightness === '廟') score += 1;
-            else if (s.brightness === '旺') score += 1;
-            else if (s.brightness === '地') score -= 1;
-            else if (s.brightness === '陷') score -= 1;
+            // 亮度與四化加分邏輯 (配合權重)
+            if (s.brightness === '廟' || s.brightness === '旺') score += 0.3 * weight;
+            else if (s.brightness === '地' || s.brightness === '陷') score -= 0.3 * weight;
 
             if (s.hua) {
                 huaMap[s.hua] = (huaMap[s.hua] || 0) + 1;
-                if (s.hua === '祿') score += isSelf ? 5 : 3;
-                if (s.hua === '權') score += 3;
-                if (s.hua === '科') score += 3;
+                if (s.hua === '祿') score += 1.5 * weight;
+                if (s.hua === '權' || s.hua === '科') score += 1.0 * weight;
                 if (s.hua === '忌') { 
-                    score -= 5; 
-                    if (isSelf) formations.push("化忌坐命");
-                    else if (isOpposite) formations.push("化忌衝命");
+                    score -= 1.5 * weight; 
+                    if (isSelf) formations.push(`化忌坐${targetName}`);
+                    else if (isOpposite) formations.push(`化忌衝${targetName}`);
                     else formations.push("化忌會照");
                 }
             }
 
-            if (['左輔','右弼','天魁','天鉞'].includes(s.name)) score += 2;
-            if (['文昌','文曲'].includes(s.name)) score += 2;
-            if (s.name === '祿存') score += 2;
-            if (['擎羊','陀羅','火星','鈴星','地劫','天空'].includes(s.name)) score -= 2;
+            if (['左輔','右弼','天魁','天鉞','文昌','文曲','祿存'].includes(s.name)) score += 0.5 * weight;
+            if (['擎羊','陀羅','火星','鈴星','地劫','天空'].includes(s.name)) score -= 0.5 * weight;
         });
     });
 
@@ -66,7 +62,7 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
     const inSelf = (star) => starMap[star] === 0;
     const inOpposite = (star) => starMap[star] === 3;
 
-    // --- 格局判斷庫 (簡略版，請保留您原本完整的判斷邏輯) ---
+    // --- 格局判斷庫 ---
     if (inSelf('紫微') && inSelf('天府')) { score += 8; formations.push("紫府同宮"); }
     if (has('紫微') && has('天府') && !inSelf('紫微')) { score += 6; formations.push("紫府朝垣"); }
     if (inSelf('紫微')) {
@@ -75,8 +71,8 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
         if (count >= 4) { score += 10; formations.push("君臣慶會"); }
     }
     if (has('天機') && has('太陰') && has('天同') && has('天梁')) { score += 6; formations.push("機月同梁"); }
-    // ... (請務必保留所有格局判斷代碼) ...
-    // 日月並明
+    
+    // 日月相關
     const sunPos = grid.find(p => p.stars.some(s => s.name === '太陽'))?.zhi;
     const moonPos = grid.find(p => p.stars.some(s => s.name === '太陰'))?.zhi;
     if (has('太陽') && has('太陰')) {
@@ -135,14 +131,28 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
     if (inSelf('貪狼') && inSelf('擎羊')) { score -= 5; formations.push("風流彩杖"); }
     if (inSelf('廉貞') && inSelf('七殺') && (has('擎羊') || has('陀羅') || has('化忌'))) { score -= 10; formations.push("路上埋屍"); }
 
-    let jiaStars = [];
-    jiaIndices.forEach(idx => {
-        grid[idx].stars.forEach(s => jiaStars.push(s.name));
-        grid[idx].minorStars.forEach(s => jiaStars.push(s.name));
-        grid[idx].stars.forEach(s => { if(s.hua === '忌') jiaStars.push('忌'); });
-        grid[idx].minorStars.forEach(s => { if(s.hua === '忌') jiaStars.push('忌'); });
-    });
-    const isJia = (s1, s2) => jiaStars.includes(s1) && jiaStars.includes(s2);
+    // --- ★ 修正夾宮判斷邏輯 ★ ---
+    // 分別取得 前一宮(左) 與 後一宮(右) 的星曜，避免同宮誤判
+    const getPalaceStars = (idx) => {
+        const p = grid[idx];
+        const stars = [];
+        [...p.stars, ...p.minorStars].forEach(s => {
+            stars.push(s.name);
+            if (s.hua === '忌') stars.push('忌');
+        });
+        return stars;
+    };
+    
+    const prevIdx = (centerIdx + 11) % 12;
+    const nextIdx = (centerIdx + 1) % 12;
+    const prevStars = getPalaceStars(prevIdx);
+    const nextStars = getPalaceStars(nextIdx);
+
+    // 嚴格定義：必須分別位於兩側 (左A右B 或 左B右A)
+    const isJia = (s1, s2) => {
+        return (prevStars.includes(s1) && nextStars.includes(s2)) || 
+               (prevStars.includes(s2) && nextStars.includes(s1));
+    };
 
     if (isJia('左輔', '右弼')) { score += 6; formations.push("輔弼夾命"); }
     if (isJia('文昌', '文曲')) { score += 6; formations.push("昌曲夾命"); }
@@ -152,7 +162,7 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
     if (isJia('地劫', '天空')) { score -= 10; formations.push("空劫夾命"); }
     if (isJia('火星', '鈴星')) { score -= 10; formations.push("火鈴夾命"); }
     if (isJia('擎羊', '陀羅')) { 
-        if (huaMap['忌'] > 0 || jiaStars.includes('忌')) { score -= 20; formations.push("羊陀夾忌"); } 
+        if (huaMap['忌'] > 0 || prevStars.includes('忌') || nextStars.includes('忌')) { score -= 20; formations.push("羊陀夾忌"); } 
         else { score -= 5; formations.push("羊陀夾命"); }
     }
 
@@ -164,12 +174,10 @@ const calculateScoreAndFormations = (grid, centerIdx) => {
 };
 
 // --- 2. 主組件 (UI) ---
-// 👇 加入 xiaoXianIdx 參數
 export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, currentYear, onYearChange, yearOptions, onClose }) => {
     // View State: 0=本命, 1=大限, 2=小限, 3=歲限
     const [viewMode, setViewMode] = useState(0); 
 
-    // 切換視圖 (0-3)
     const switchView = (delta) => {
         setViewMode(prev => {
             let next = prev + delta;
@@ -179,7 +187,6 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
         });
     };
 
-    // 根據當前模式決定 計算中心 與 標題
     let centerIdx = -1;
     let title = "";
     let themeColor = THEME.black;
@@ -202,10 +209,13 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
         themeColor = THEME.orange;
     }
 
-    // 計算當前盤的三方 (命/官/財)
-    const dataMing = calculateScoreAndFormations(grid, centerIdx);
-    const dataGuan = calculateScoreAndFormations(grid, (centerIdx + 8) % 12);
-    const dataCai  = calculateScoreAndFormations(grid, (centerIdx + 4) % 12);
+    // ★ 修改點：只計算並顯示「主宮位」(命) 的格局
+    // 這樣三方四正的格局只會顯示一次，也不會出現「官 xxxx」「財 xxxx」的重複或多餘資訊
+    const dataMing = calculateScoreAndFormations(grid, centerIdx, '命');
+    
+    // 雖然不顯示格局，但分數卡片仍需要計算事業與財帛的分數
+    const dataGuanScore = calculateScoreAndFormations(grid, (centerIdx + 8) % 12, '官').score;
+    const dataCaiScore  = calculateScoreAndFormations(grid, (centerIdx + 4) % 12, '財').score;
 
     const getScoreColor = (s) => {
         if (s >= 85) return THEME.red;
@@ -213,7 +223,6 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
         return THEME.gray;
     };
 
-    // 小卡片組件 (並排顯示)
     const ScoreCard = ({ title, score }) => (
         <div style={{ 
             flex: 1, 
@@ -239,13 +248,11 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
             display: 'flex', flexDirection: 'column',
             animation: 'fadeIn 0.2s ease-out'
         }}>
-            {/* Header */}
             <div style={{ padding: '8px 10px', borderBottom: `1px solid ${THEME.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                 <span style={{ fontWeight: 'bold', color: THEME.orange }}>運勢評分</span>
                 <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><X size={20} color={THEME.gray}/></button>
             </div>
 
-            {/* Navigation Bar (切換盤種) */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', backgroundColor: '#f9f9f9', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
                 <button onClick={() => switchView(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><ChevronLeft size={20} color={THEME.blue} /></button>
                 <div style={{ textAlign: 'center' }}>
@@ -254,7 +261,6 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
                 <button onClick={() => switchView(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><ChevronRight size={20} color={THEME.blue} /></button>
             </div>
 
-            {/* Year Picker (只在歲限/流年盤顯示) */}
             {(viewMode === 2 || viewMode === 3) && (
                 <div style={{ padding: '6px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f0fdf4', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
                     <Calendar size={14} color="gray" />
@@ -271,43 +277,37 @@ export const ScorePanel = ({ grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
                 </div>
             )}
 
-            {/* Body: Scores Display (橫向並排) */}
             <div style={{ flexShrink: 0, padding: '12px 12px', display: 'flex', gap: '8px', backgroundColor: THEME.bgGray }}>
                 <ScoreCard title="總運勢" score={dataMing.score} />
-                <ScoreCard title="事業運" score={dataGuan.score} />
-                <ScoreCard title="財運" score={dataCai.score} />
+                <ScoreCard title="事業運" score={dataGuanScore} />
+                <ScoreCard title="財運" score={dataCaiScore} />
             </div>
 
-            {/* Footer: 格局列表 */}
+            {/* 格局列表：僅顯示主盤 (命/運/限) 的格局 */}
             <div style={{ flex: 1, borderTop: `1px solid ${THEME.border}`, padding: '12px', overflowY: 'auto', backgroundColor: '#fffcf0' }}>
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: THEME.gray, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ width: '3px', height: '12px', backgroundColor: THEME.vermillion, display: 'block' }}></span>
-                    三方四正格局分析
+                    格局分析
                 </div>
                 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {[...dataMing.formations, ...dataGuan.formations, ...dataCai.formations].length > 0 ? (
-                        [
-                            ...dataMing.formations.map(f => ({t: '命', f})),
-                            ...dataGuan.formations.map(f => ({t: '官', f})),
-                            ...dataCai.formations.map(f => ({t: '財', f}))
-                        ].map((item, idx) => (
+                    {dataMing.formations.length > 0 ? (
+                        dataMing.formations.map((f, idx) => (
                             <span key={idx} style={{ 
                                 fontSize: '12px', padding: '6px 10px', 
                                 backgroundColor: THEME.white, 
-                                border: `${item.f.includes('凶') || item.f.includes('忌') || item.f.includes('空') || item.f.includes('敗') || item.f.includes('死') ? '2px' : '2px'} solid ${item.f.includes('凶') || item.f.includes('忌') || item.f.includes('空') || item.f.includes('敗') || item.f.includes('死') ? '#ffccc7' : '#d9f7be'}`,
+                                border: `${f.includes('凶') || f.includes('忌') || f.includes('空') || f.includes('敗') || f.includes('死') ? '2px' : '2px'} solid ${f.includes('凶') || f.includes('忌') || f.includes('空') || f.includes('敗') || f.includes('死') ? '#ffccc7' : '#d9f7be'}`,
                                 borderRadius: '6px', 
                                 color: THEME.black,
                                 display: 'flex', alignItems: 'center', gap: '6px',
                                 boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
                             }}>
-                                <span style={{ fontSize: '10px', padding: '1px 4px', borderRadius: '3px', backgroundColor: THEME.bgGray, color: THEME.gray }}>{item.t}</span>
-                                {item.f}
+                                {f}
                             </span>
                         ))
                     ) : (
                         <div style={{ width: '100%', textAlign: 'center', padding: '40px', color: '#ccc', fontSize: '13px' }}>
-                            此盤三方四正無顯著特殊格局
+                            此盤無顯著特殊格局
                         </div>
                     )}
                 </div>
