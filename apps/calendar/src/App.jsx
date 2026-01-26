@@ -1189,8 +1189,8 @@ export default function CalendarApp() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   
   const scrollRef = useRef(null);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const touchStartRef = useRef(null);
+  const touchEndRef = useRef(null);
 
   useEffect(() => {
     const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
@@ -1269,13 +1269,26 @@ export default function CalendarApp() {
     }, 50);
   };
 
-  const onTouchStart = (e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); };
-  const onTouchMove = (e) => { setTouchEnd(e.targetTouches[0].clientX); };
+  const onTouchStart = (e) => { 
+      touchEndRef.current = null; 
+      touchStartRef.current = e.targetTouches[0].clientX; 
+  };
+  
+  const onTouchMove = (e) => { 
+      touchEndRef.current = e.targetTouches[0].clientX; 
+  };
+  
   const onTouchEnd = () => {
-      if (!touchStart || !touchEnd) return;
-      const distance = touchStart - touchEnd;
+      if (!touchStartRef.current || !touchEndRef.current) return;
+      const distance = touchStartRef.current - touchEndRef.current;
+      
+      // 只有滑動距離夠長才切換月份
       if (distance > 50) changeMonth(1);
       else if (distance < -50) changeMonth(-1);
+      
+      // 重置
+      touchStartRef.current = null;
+      touchEndRef.current = null;
   };
 
   const solarTerms = useMemo(() => {

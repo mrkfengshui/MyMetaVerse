@@ -16,6 +16,40 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     { name: '萬年曆', url: 'https://calendar.mrkfengshui.com', id: 'calendar' },
   ];
 
+  // 👇 新增：強制鎖定 Viewport 禁止縮放
+  useEffect(() => {
+    // 1. 嘗試尋找現有的 viewport meta tag
+    let meta = document.querySelector('meta[name="viewport"]');
+    
+    // 2. 如果沒有，創建一個新的
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+      document.head.appendChild(meta);
+    }
+
+    // 3. 設定關鍵屬性：user-scalable=no, maximum-scale=1.0
+    // width=device-width, initial-scale=1.0 是基本 RWD 設定
+    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+
+    // 4. 防止 iOS Safari 雙擊縮放 (額外防護)
+    const preventDoubleTap = (e) => {
+      // 這裡不需要做任何事，只是為了讓某些舊版瀏覽器知道我們有處理 touch
+    };
+    document.addEventListener('touchstart', preventDoubleTap, { passive: false });
+
+    // 5. 防止 iOS Safari 雙指縮放 (額外防護 - 攔截 gesturestart)
+    const preventGesture = (e) => {
+      e.preventDefault();
+    };
+    document.addEventListener('gesturestart', preventGesture);
+
+    return () => {
+      document.removeEventListener('touchstart', preventDoubleTap);
+      document.removeEventListener('gesturestart', preventGesture);
+    };
+  }, []);
+
   return (
     <header style={{ 
       backgroundColor: THEME.white, 
@@ -163,7 +197,7 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
   <div style={{ 
       position: 'relative', width: '100%', zIndex: 50, flexShrink: 0, 
       backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`,
-      paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' 
+      paddingBottom: 'calc(env(safe-area-inset-bottom) + 30px)' 
   }}>
       <div style={{ display: 'flex', justifyContent: 'space-around', height: '75px', alignItems: 'center' }}>
           {tabs.map(tab => {
