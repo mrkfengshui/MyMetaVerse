@@ -154,7 +154,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命') => {
                (prevStars.includes(s2) && nextStars.includes(s1));
     };
 
-    if (isJia('左輔', '右弼')) { score += 6; formations.push("輔弼夾命"); }
+    if (isJia('左輔', '右弼')) { score += 6; formations.push("左右夾命"); }
     if (isJia('文昌', '文曲')) { score += 6; formations.push("昌曲夾命"); }
     if (isJia('天魁', '天鉞')) { score += 6; formations.push("魁鉞夾命"); }
     if (isJia('紫微', '天府')) { score += 8; formations.push("紫府夾命"); }
