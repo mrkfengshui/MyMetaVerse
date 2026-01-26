@@ -163,7 +163,7 @@ export const BottomTabBar = ({ tabs, currentTab, onTabChange }) => (
   <div style={{ 
       position: 'relative', width: '100%', zIndex: 50, flexShrink: 0, 
       backgroundColor: THEME.white, borderTop: `1px solid ${THEME.border}`,
-      paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' 
+      paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' 
   }}>
       <div style={{ display: 'flex', justifyContent: 'space-around', height: '75px', alignItems: 'center' }}>
           {tabs.map(tab => {
