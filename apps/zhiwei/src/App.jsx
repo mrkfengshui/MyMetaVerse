@@ -396,11 +396,28 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     const yinShaMap = [2, 0, 10, 8, 6, 4];
     gridPalaces[yinShaMap[(lunarMonth - 1) % 6]].minorStars.push('陰煞');
 
-    const jieKongMap = {
-        '甲': [8, 9], '己': [8, 9], '乙': [6, 7], '庚': [6, 7],
-        '丙': [4, 5], '辛': [4, 5], '丁': [2, 3], '壬': [2, 3], '戊': [0, 1], '癸': [0, 1]
+    const jieKongRules = {
+        '甲': { zheng: 8, pang: 9 }, // 申(8), 酉(9) -> 甲為陽, 申為陽宮 -> 申為正空
+        '己': { zheng: 9, pang: 8 }, // 申(8), 酉(9) -> 己為陰, 酉為陰宮 -> 酉為正空
+        
+        '乙': { zheng: 6, pang: 7 }, // 午(6), 未(7) -> 乙為陰, 未為陰宮 -> 未為正空
+        '庚': { zheng: 7, pang: 6 }, // 午(6), 未(7) -> 庚為陽, 午為陽宮 -> 午為正空
+        
+        '丙': { zheng: 4, pang: 5 }, // 辰(4), 巳(5) -> 丙為陽, 辰為陽宮 -> 辰為正空
+        '辛': { zheng: 5, pang: 4 }, // 辰(4), 巳(5) -> 辛為陰, 巳為陰宮 -> 巳為正空
+        
+        '丁': { zheng: 2, pang: 3 }, // 寅(2), 卯(3) -> 丁為陰, 卯為陰宮 -> 卯為正空
+        '壬': { zheng: 3, pang: 2 }, // 寅(2), 卯(3) -> 壬為陽, 寅為陽宮 -> 寅為正空
+        
+        '戊': { zheng: 0, pang: 1 }, // 子(0), 丑(1) -> 戊為陽, 子為陽宮 -> 子為正空
+        '癸': { zheng: 1, pang: 0 }  // 子(0), 丑(1) -> 癸為陰, 丑為陰宮 -> 丑為正空
     };
-    jieKongMap[yearGan].forEach(idx => gridPalaces[idx].minorStars.push('截空'));
+
+    const jkRule = jieKongRules[yearGan];
+    if (jkRule) {
+        gridPalaces[jkRule.zheng].minorStars.push('截空');
+        gridPalaces[jkRule.pang].minorStars.push('截亡');
+    }
 
     gridPalaces[(mingIndex + yearZhiIdx) % 12].minorStars.push('天才');
     gridPalaces[(shenIndex + yearZhiIdx) % 12].minorStars.push('天壽');
@@ -539,6 +556,7 @@ const SettingsView = ({
         tianMaRules, setTianMaRules,
         tianMaType, setTianMaType,
         mingHasDaXian, setMingHasDaXian,
+        daXianGanType, setDaXianGanType,
         bookmarks, setBookmarks
     }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -576,6 +594,7 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
           setTianMaRules(DEFAULT_TIAN_MA);
           setTianMaType('year');
           setMingHasDaXian(false);
+          setDaXianGanType('dun');
           alert('已還原預設值');
       }
   };
@@ -592,6 +611,15 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限起限宮位</div>
           <ToggleSelector options={[{val: false, label: '命宮無大限'}, {val: true, label: '命宮有大限'}]} currentValue={mingHasDaXian} onChange={setMingHasDaXian} />
+      </div>
+
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限四化天干</div>
+          <ToggleSelector 
+            options={[{val: 'dun', label: '全書'}, {val: 'gong', label: '宮干四化'}]} 
+            currentValue={daXianGanType || 'dun'} 
+            onChange={setDaXianGanType} 
+          />
       </div>
 
       <CollapsibleSection title="四化星曜" isOpen={openSection === 'sihua'} onToggle={() => toggleSection('sihua')}>
@@ -845,7 +873,7 @@ const PalaceGrid = ({
     );
 };
 
-const ZwdsResult = ({ data, onBack, onSave }) => {
+const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
     const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
 
@@ -915,12 +943,19 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
 
             let daXianGan = null;
             const mingPalace = g.find(p => p.name === '命宮');
+            
             if (mingPalace && dIdx !== -1) {
-                const bYearGan = birthLunar.getYearGan();
-                const isMale = chartData.genderText === '男';
-                const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
-                const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
-                daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                if (daXianGanType === 'gong') {
+                    // 宮干四化
+                    daXianGan = g[dIdx].gan;
+                } else {
+                    // 預設四化
+                    const bYearGan = birthLunar.getYearGan();
+                    const isMale = chartData.genderText === '男';
+                    const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                    const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
+                    daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                }
             }
 
             let leapMonth = 0;
@@ -941,7 +976,7 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
             if (currentLiuYueGan) { const yLu = getLuPos(currentLiuYueGan); const curMonthZhi = targetLunar.getMonthZhi(); stars.yue = { lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12, ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]), kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y }; }
             return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan, currentLunarYear: targetLunar.getYear() };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
-    }, [chartData.rawDate, targetDate, g, chartData.genderText]);
+    }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianGanType]);
 
         const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan, currentLunarYear } = resultParams;    const activeSiHua = useMemo(() => {
         const getMap = (gan) => { if (!gan) return {}; const r = DEFAULT_SI_HUA[gan]; return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' }; };
@@ -1010,96 +1045,100 @@ const ZwdsResult = ({ data, onBack, onSave }) => {
                     gridColumn: '2 / span 2', 
                     gridRow: '2 / span 2', 
                     backgroundColor: THEME.white, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    padding: '10px',
-                    // ★ 確保中宮不會遮住任何格線
-                    zIndex: 1,
-                    position: 'relative'
+                    // ★ 修改：移除 padding, 改為相對定位以容納 ScorePanel
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden', // 防止溢出
+                    zIndex: 1
                 }}>
-                    {showScore && (
+                    {showScore ? (
+                        // ★ 情況 A: 顯示運勢評分面板 (填滿這個格子)
                         <ScorePanel 
                             grid={g} 
                             mingIdx={mingIdx} 
                             daXianIdx={daXianIdx} 
                             xiaoXianIdx={xiaoXianIdx}
                             liuNianIdx={liuNianZhiIdx} 
-                            // 1. 顯示農曆年份 (如果未就緒則 fallback 到西元)
                             currentYear={currentLunarYear || targetDate.year} 
-                            // 2：切換年份時，強制設為該年 6月30日 (避開年初農曆未換的問題)
                             onYearChange={(y) => setTargetDate({ year: parseInt(y), month: 6, day: 30 })}
-                            
                             yearOptions={yearOptions}
+                            daXianGan={daXianGan}
+                            siHuaRules={siHuaRules}
+                            liuNianGan={currentLiuNianGan}
                             onClose={() => {
-                                if (savedDate) {
-                                    setTargetDate(savedDate); // 還原回原本選的日期
-                                }
-                                setShowScore(false);
+                                if (savedDate) setTargetDate(savedDate);
+                                setShowScore(false); // 點擊返回，切換回個資面板
                             }}
                         />
-                    )}
+                    ) : (
+                        // ★ 情況 B: 顯示原本的個資面板 (加上 padding 讓排版正常)
+                        <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            padding: '10px', 
+                            width: '100%', 
+                            height: '100%' 
+                        }}>
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
+                            <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                                    <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                        <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                    </div>
+                                </div>
+                                <div>西曆 {birthDetails.solarStr}</div>
+                                <div>農曆 {birthDetails.lunarStr}</div>
+                            </div>
+                            
+                            {/* 層級切換按鈕 */}
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', width: '100%', marginBottom: '4px' }}>
+                                <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, cursor: 'pointer', padding: '4px' }}><ChevronLeft size={24} /></button>
+                                <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center', minWidth: '60px' }}>{getLayerTitle()}</span>
+                                <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, cursor: 'pointer', padding: '4px' }}><ChevronRight size={24} /></button>
+                            </div>
 
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
-                    <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            {/* 日期選擇器 */}
+                            <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                                <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+                                <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
+                                <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                            </div>
+                            
+                            <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
+                                    <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
+                                    <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
+                                    <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
+                            </div>
+                            {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
+                            
+                            {/* 底部按鈕區 */}
+                            <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                                <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
+                                <button 
+                                    onClick={() => {
+                                        setSavedDate(targetDate);
+                                        setTargetDate({ year: targetDate.year, month: 6, day: 30 });
+                                        setShowScore(true); // ★ 觸發切換
+                                    }} 
+                                    style={{ 
+                                        padding: '2px 8px', 
+                                        fontSize: '11px', 
+                                        backgroundColor: THEME.orange, 
+                                        color: 'white', 
+                                        border: 'none', 
+                                    }}
+                                >
+                                運勢評分</button>
+                                <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
+                            </div>
                         </div>
-                    </div>
-                        <div>西曆 {birthDetails.solarStr}</div>
-                        <div>農曆 {birthDetails.lunarStr}</div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 48px', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
-                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
-                        <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
-                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
-                    </div>
-                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                        <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
-                        <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
-                        <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
-                    </div>
-                    
-                    <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
-                            <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
-                            <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
-                            <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
-                    </div>
-                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                        <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
-                        <button 
-                            onClick={() => {
-                                // 1. 先備份當前選定的日期 (例如 2030/3/5)
-                                setSavedDate(targetDate);
-                                
-                                // 2. 切換到「該年」的年中 (6月30日)，確保算出該年的流年運勢
-                                //    (原本是切換到 new Date() 今天，現在改為 targetDate.year)
-                                setTargetDate({ 
-                                    year: targetDate.year, 
-                                    month: 6, 
-                                    day: 30 
-                                });
-                                
-                                // 3. 開啟視窗
-                                setShowScore(true);
-                            }} 
-                            style={{ 
-                                padding: '2px 8px', 
-                                fontSize: '11px', 
-                                backgroundColor: THEME.orange, 
-                                color: 'white', 
-                                border: 'none', 
-                            }}
-                        >
-                        運勢評分</button>
-                        <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
-                    </div>
+                    )}
                 </div>
 
                 {/* 第二列右 (酉) */}
@@ -1140,6 +1179,7 @@ export default function ZwdsApp() {
   const [tianMaRules, setTianMaRules] = useState(DEFAULT_TIAN_MA);
   const [tianMaType, setTianMaType] = useState('year'); 
   const [mingHasDaXian, setMingHasDaXian] = useState(false);
+  const [daXianGanType, setDaXianGanType] = useState('dun');
 
   // 3. 底部導航設定
   const tabs = [
@@ -1163,6 +1203,7 @@ export default function ZwdsApp() {
             const { value: r4 } = await Preferences.get({ key: 'zwds_rule_tianMa' }); if(r4) setTianMaRules(JSON.parse(r4));
             const { value: r5 } = await Preferences.get({ key: 'zwds_rule_tm_type' }); if(r5) setTianMaType(r5);
             const { value: r6 } = await Preferences.get({ key: 'zwds_ming_daxian' }); if(r6 !== null) setMingHasDaXian(r6 === 'true');
+            const { value: r7 } = await Preferences.get({ key: 'zwds_rule_daxian_gan' }); if(r7) setDaXianGanType(r7);
 
         } catch (e) { console.error("Data load error:", e); }
     };
@@ -1173,6 +1214,7 @@ export default function ZwdsApp() {
   useEffect(() => {
     const saveData = async () => {
        await Preferences.set({ key: 'zwds_ming_daxian', value: String(mingHasDaXian) });
+       await Preferences.set({ key: 'zwds_rule_daxian_gan', value: daXianGanType });
        await Preferences.set({ key: 'zwds_rule_sihua', value: JSON.stringify(siHuaRules) });
        await Preferences.set({ key: 'zwds_rule_kuiyue', value: JSON.stringify(kuiYueRules) });
        await Preferences.set({ key: 'zwds_rule_huoling', value: JSON.stringify(huoLingRules) });
@@ -1186,9 +1228,10 @@ export default function ZwdsApp() {
        localStorage.setItem('zwds_rule_tianMa', JSON.stringify(tianMaRules));
        localStorage.setItem('zwds_rule_tm_type', tianMaType);
        localStorage.setItem('zwds_ming_daxian', mingHasDaXian);
+       localStorage.setItem('zwds_rule_daxian_gan', daXianGanType);
     };
     saveData();
-  }, [mingHasDaXian, siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType]);
+  }, [mingHasDaXian, daXianGanType, siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType]);
 
   // 5. 動作處理
   const handleCalculate = (formData) => {
@@ -1269,7 +1312,13 @@ export default function ZwdsApp() {
           
           {view === 'result' && (
             <>
-                <ZwdsResult data={resultData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} />
+                <ZwdsResult 
+                    data={resultData} 
+                    onBack={() => { setEditingData(null); setView('input'); }} 
+                    onSave={saveBookmark} 
+                    siHuaRules={siHuaRules} 
+                    daXianGanType={daXianGanType}
+                />
                 <AdsterraNarrow />
             </>
           )}
@@ -1304,6 +1353,7 @@ export default function ZwdsApp() {
                 tianMaRules={tianMaRules} setTianMaRules={setTianMaRules}
                 tianMaType={tianMaType} setTianMaType={setTianMaType}
                 mingHasDaXian={mingHasDaXian} setMingHasDaXian={setMingHasDaXian}
+                daXianGanType={daXianGanType} setDaXianGanType={setDaXianGanType}
                 bookmarks={bookmarks} setBookmarks={setBookmarks}
             />
           }
