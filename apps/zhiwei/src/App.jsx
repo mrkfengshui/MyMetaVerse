@@ -397,20 +397,20 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     gridPalaces[yinShaMap[(lunarMonth - 1) % 6]].minorStars.push('陰煞');
 
     const jieKongRules = {
-        '甲': { zheng: 8, pang: 9 }, // 申(8), 酉(9) -> 甲為陽, 申為陽宮 -> 申為正空
-        '己': { zheng: 9, pang: 8 }, // 申(8), 酉(9) -> 己為陰, 酉為陰宮 -> 酉為正空
+        '甲': { zheng: 8, pang: 9 },
+        '己': { zheng: 8, pang: 9 },
         
-        '乙': { zheng: 6, pang: 7 }, // 午(6), 未(7) -> 乙為陰, 未為陰宮 -> 未為正空
-        '庚': { zheng: 7, pang: 6 }, // 午(6), 未(7) -> 庚為陽, 午為陽宮 -> 午為正空
+        '乙': { zheng: 6, pang: 7 },
+        '庚': { zheng: 6, pang: 7 },
         
-        '丙': { zheng: 4, pang: 5 }, // 辰(4), 巳(5) -> 丙為陽, 辰為陽宮 -> 辰為正空
-        '辛': { zheng: 5, pang: 4 }, // 辰(4), 巳(5) -> 辛為陰, 巳為陰宮 -> 巳為正空
+        '丙': { zheng: 4, pang: 5 },
+        '辛': { zheng: 4, pang: 5 },
         
-        '丁': { zheng: 2, pang: 3 }, // 寅(2), 卯(3) -> 丁為陰, 卯為陰宮 -> 卯為正空
-        '壬': { zheng: 3, pang: 2 }, // 寅(2), 卯(3) -> 壬為陽, 寅為陽宮 -> 寅為正空
+        '丁': { zheng: 2, pang: 3 },
+        '壬': { zheng: 2, pang: 3 },
         
-        '戊': { zheng: 0, pang: 1 }, // 子(0), 丑(1) -> 戊為陽, 子為陽宮 -> 子為正空
-        '癸': { zheng: 1, pang: 0 }  // 子(0), 丑(1) -> 癸為陰, 丑為陰宮 -> 丑為正空
+        '戊': { zheng: 0, pang: 1 },
+        '癸': { zheng: 0, pang: 1 }
     };
 
     const jkRule = jieKongRules[yearGan];

@@ -6,6 +6,8 @@ import { X, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 // --- 1. 定義常量 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 
+const PALACE_ORDER = ['命宮', '兄弟', '夫妻', '子女', '財帛', '疾厄', '遷移', '奴僕', '官祿', '田宅', '福德', '父母'];
+
 const getSanFangSiZheng = (centerIdx) => [
     centerIdx,            // 0: 本宮
     (centerIdx + 4) % 12, // 1: 三方 (財/官)
@@ -13,10 +15,11 @@ const getSanFangSiZheng = (centerIdx) => [
     (centerIdx + 6) % 12  // 3: 對宮
 ];
 
-const RELATIVE_PALACE_NAMES = {
-    '命': ['同宮', '財帛', '官祿', '遷移'],
-    '官': ['同宮', '命宮', '財帛', '夫妻'],
-    '財': ['同宮', '官祿', '命宮', '福德']
+const getRelativePalaceName = (centerIdx, targetIdx) => {
+    // 計算相對距離 (逆時針計算：0=命, 1=兄, 2=夫...)
+    // 公式： (命宮 - 目標 + 12) % 12
+    const offset = (centerIdx - targetIdx + 12) % 12;
+    return PALACE_ORDER[offset];
 };
 
 const PATTERN_DESC = {
@@ -46,18 +49,21 @@ const PATTERN_DESC = {
     "火貪格": "「貪狼遇火必英雄。」主突發橫財，爆發力強，機遇一來勢不可擋，指日高升。",
     "鈴貪格": "「鈴貪並守，將相之名。」主偏財運強，善於把握隱形機會，亦主爆發。",
     "日月有暉": "「日月有暉，貴不可言。」太陽與太陰在三方四正交會，且亮度皆佳（廟旺），主富貴雙全，聲名遠播。",
-    "祿馬交馳": "「祿馬交馳，發財遠邦。」祿存與天馬在三方四正交會，主奔波生財，越動越發，利於國貿、運輸或遠地發展。",
+    "祿馬交馳": "「祿馬最喜交馳。」祿存與天馬在三方四正交會，主奔波生財，越動越發，利於國貿、運輸或遠地發展。",
+    "文曲文昌天魁秀": "文曲文昌天魁秀，不讀詩書也可人。",
     
     // --- 凶格 ---
     "鈴昌陀武": "「鈴昌陀武，限至投河。」最忌想不開，需防重大挫折或意外，行事宜保守謹慎。",
     "巨火羊": "「巨火擎羊，終身縊死。」此為古語誇飾，實指易有感情困擾或人生波折，需修身養性，防口舌是非。",
-    "命裡逢空": "「命裡逢空，半空折翅。」精神上易孤獨，財來財去不易留住，利於宗教哲學或創意產業。",
+    "命逢空劫": "劫空為害最愁人，才智英雄誤一身，只好為僧並學術，堆金積玉也須貧。",
     "馬頭帶劍": "「馬頭帶劍，鎮衛邊疆。」擎羊在午，需經艱辛奮鬥後方能大富大貴，先苦後甘。",
     "刑囚夾印": "「刑囚夾印，刑杖惟司。」易惹官非訴訟，文書簽約需特別謹慎，適合法律相關行業。",
     "泛水桃花": "「貪狼居子，泛水桃花。」異性緣過旺，易因色生災，需防桃花糾紛。",
     "廉貞七殺": "「廉殺丑未，路上埋屍。」古論意外凶險，今論運勢大起大落，需防交通意外或血光。",
-    "貪狼遇文昌文曲": "「貪狼與文昌文曲，正事顛倒。」言行誇大，多虛少實，作事易虎頭蛇尾；但利於演藝、藝術或冷門學術發展。",
- 
+    "貪狼遇文昌": "「貪狼與文昌，正事顛倒。」言行誇大，多虛少實，作事易虎頭蛇尾；但利於演藝、藝術或冷門學術發展。",
+    "貪狼遇文曲": "「貪狼與文曲，正事顛倒。」言行誇大，多虛少實，作事易虎頭蛇尾；但利於演藝、藝術或冷門學術發展。",
+    "空宮": "命宮無主星，需借命主星組合研判。",
+
     // --- 夾局 ---
     "左右夾命": "「左右夾命為貴格。」兄弟朋友得力，家世背景佳，助力無窮。",
     "昌曲夾命": "「昌曲夾命，文采風流。」書香世家，聰明多藝，學術成就高。",
@@ -140,7 +146,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
     let sunBrightness = null;
     let moonBrightness = null;
 
-    const POS_WEIGHTS = [1.2, 0.6, 0.6, 0.9]; 
+    const POS_WEIGHTS = [4, 1.5, 1.5, 3]; 
 
     indices.forEach((idx, relPos) => {
         const palace = grid[idx];
@@ -149,8 +155,8 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
         const isSelf = relPos === 0;
         const isOpposite = relPos === 3;
 
-        // 用於顯示的宮位名稱後綴
-        const palaceNameSuffix = isSelf ? ' (同宮)' : ` (${palace.name})`;
+        const relName = getRelativePalaceName(centerIdx, idx);
+        const palaceNameSuffix = isSelf ? ' (命宮)' : ` (${relName})`;
 
         [...palace.stars, ...palace.minorStars].forEach(s => {
             allStars.push(s.name);
@@ -194,7 +200,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
                 if (isSelf) formations.push(`化忌坐${targetName}`);
                 if (isOpposite) formations.push(`化忌沖${targetName}`);
             }
-            else if (['空劫', '地劫', '天空'].includes(s.name)) bPt = 12;
+            else if (['地劫', '天空'].includes(s.name)) bPt = 12;
             else if (['擎羊', '陀羅'].includes(s.name)) bPt = 15;
             else if (['火星', '鈴星'].includes(s.name)) bPt = 15;
 
@@ -210,7 +216,6 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
     const inSelf = (star) => starMap[star] === 0;
     const inOpposite = (star) => starMap[star] === 3;
     const isBright = (b) => ['廟', '旺'].includes(b);
-    const isVeryBright = (b) => ['廟', '旺'].includes(b);
     const currentZhi = grid[centerIdx].zhi;
 
     // 吉格
@@ -224,7 +229,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
     if (has('天機') && has('太陰') && has('天同') && has('天梁')) formations.push("機月同梁");
     
     // 日月有暉：排除地
-    if (has('太陽') && has('太陰') && isVeryBright(sunBrightness) && isVeryBright(moonBrightness)) {
+    if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
         const sunPos = grid.find(p => p.stars.some(s => s.name === '太陽'))?.zhi;
         const moonPos = grid.find(p => p.stars.some(s => s.name === '太陰'))?.zhi;
         if (sunPos !== moonPos) {
@@ -262,13 +267,18 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
         if (has('火星')) formations.push("火貪格");
         if (has('鈴星')) formations.push("鈴貪格");
     }
+    if (has('天魁')) {
+        if (has('文曲') && has('文昌')) formations.push("文曲文昌天魁秀");
+    }
 
     // 凶格
-    if (has('貪狼') && has('文昌')) formations.push("貪狼遇文昌文曲");
-    if (has('貪狼') && has('文曲')) formations.push("貪狼遇文昌文曲");
+    if (has('貪狼')) {
+        if (has('文曲')) formations.push("貪狼遇文昌");
+        if (has('文昌')) formations.push("貪狼遇文曲");
+    }  
     if (has('鈴星') && has('文昌') && has('陀羅') && has('武曲')) formations.push("鈴昌陀武");
     if (has('巨門') && has('火星') && has('擎羊')) formations.push("巨火羊");
-    if (inSelf('地劫') || inSelf('天空')) formations.push("命裡逢空");
+    if (inSelf('地劫') || inSelf('天空')) formations.push("命逢空劫");
     if (currentZhi === '午' && inSelf('擎羊')) formations.push("馬頭帶劍");
     if (has('廉貞') && has('天相') && has('擎羊') && currentZhi === '午') formations.push("刑囚夾印");
     if (inSelf('貪狼') && currentZhi === '子') formations.push("泛水桃花");
