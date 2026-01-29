@@ -4,14 +4,12 @@ import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
 
 import { 
-  AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
+  AdBanner, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager,
+  InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES,
-  ScorePanel
+  Adsterra, AdsterraNarrow, ScorePanel
 } from '@my-meta/ui';
-
-import { useProtection } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
@@ -29,7 +27,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博紫微斗數";
-const APP_VERSION = "v1.1 運勢評分";
+const APP_VERSION = "v1.2 增加設定 - 小限/流年盤";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -396,28 +394,11 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     const yinShaMap = [2, 0, 10, 8, 6, 4];
     gridPalaces[yinShaMap[(lunarMonth - 1) % 6]].minorStars.push('陰煞');
 
-    const jieKongRules = {
-        '甲': { zheng: 8, pang: 9 },
-        '己': { zheng: 8, pang: 9 },
-        
-        '乙': { zheng: 6, pang: 7 },
-        '庚': { zheng: 6, pang: 7 },
-        
-        '丙': { zheng: 4, pang: 5 },
-        '辛': { zheng: 4, pang: 5 },
-        
-        '丁': { zheng: 2, pang: 3 },
-        '壬': { zheng: 2, pang: 3 },
-        
-        '戊': { zheng: 0, pang: 1 },
-        '癸': { zheng: 0, pang: 1 }
+    const jieKongMap = {
+        '甲': [8, 9], '己': [8, 9], '乙': [6, 7], '庚': [6, 7],
+        '丙': [4, 5], '辛': [4, 5], '丁': [2, 3], '壬': [2, 3], '戊': [0, 1], '癸': [0, 1]
     };
-
-    const jkRule = jieKongRules[yearGan];
-    if (jkRule) {
-        gridPalaces[jkRule.zheng].minorStars.push('截空');
-        gridPalaces[jkRule.pang].minorStars.push('截亡');
-    }
+    jieKongMap[yearGan].forEach(idx => gridPalaces[idx].minorStars.push('截空'));
 
     gridPalaces[(mingIndex + yearZhiIdx) % 12].minorStars.push('天才');
     gridPalaces[(shenIndex + yearZhiIdx) % 12].minorStars.push('天壽');
@@ -556,7 +537,8 @@ const SettingsView = ({
         tianMaRules, setTianMaRules,
         tianMaType, setTianMaType,
         mingHasDaXian, setMingHasDaXian,
-        daXianGanType, setDaXianGanType,
+        daXianSiHuaType, setDaXianSiHuaType,
+        liuNianStartType, setLiuNianStartType,
         bookmarks, setBookmarks
     }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -565,7 +547,7 @@ const SettingsView = ({
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本程式旨在提供專業紫微斗數排盤，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
+    about: "本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
     };
 
 const ToggleSelector = ({ options, currentValue, onChange }) => (
@@ -594,7 +576,8 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
           setTianMaRules(DEFAULT_TIAN_MA);
           setTianMaType('year');
           setMingHasDaXian(false);
-          setDaXianGanType('dun');
+          setDaXianSiHuaType('book');
+          setLiuNianStartType('xiao_xian');
           alert('已還原預設值');
       }
   };
@@ -614,11 +597,19 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
       </div>
 
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
-          <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限四化天干</div>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限四化依據</div>
           <ToggleSelector 
-            options={[{val: 'dun', label: '全書'}, {val: 'gong', label: '宮干四化'}]} 
-            currentValue={daXianGanType || 'dun'} 
-            onChange={setDaXianGanType} 
+            options={[{val: 'book', label: '全書'}, {val: 'gong', label: '宮干'}]} 
+            currentValue={daXianSiHuaType} 
+            onChange={setDaXianSiHuaType} 
+          />
+      </div>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>歲限盤起法</div>
+          <ToggleSelector 
+            options={[{val: 'xiao_xian', label: '小限'}, {val: 'year_zhi', label: '流年'}]} 
+            currentValue={liuNianStartType} 
+            onChange={setLiuNianStartType} 
           />
       </div>
 
@@ -693,7 +684,6 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
   const years = useMemo(() => { const arr = []; for (let i = 1900; i <= 2100; i++) arr.push(i); return arr; }, []);
   const hours = useMemo(() => Array.from({length: 24}, (_, i) => i), []);
   const minutes = useMemo(() => Array.from({length: 60}, (_, i) => i), []);
-  const pad = (n) => String(n).padStart(2, '0');
   
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -704,7 +694,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>姓名</label>
-            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
+            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
           </div>
           
           <div style={{ marginBottom: '20px' }}>
@@ -723,9 +713,9 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{pad(h)}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select> </div>
               <span>:</span>
-              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select> </div>
               </div>
           </div>
 
@@ -836,36 +826,60 @@ const PalaceGrid = ({
 
     return (
         <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
-            <div style={{ position: 'absolute', top: 2, left: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', zIndex: 2 }}>
-                <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px', marginBottom: '4px' }}>{palace.gan}{palace.zhi}</div>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '0px' }}>
-                    {showDa && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')} {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')} {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')} {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')} {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')} {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')} </div> )}
-                    {showXiao && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', 'green', '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
-                    {showLiuYue && fs.yue && ( <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')} {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')} {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')} {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')} {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')} {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')} </div> )}
+            <div style={{ 
+                position: 'absolute', 
+                top: 2, 
+                left: 2, 
+                bottom: 2, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'space-between', 
+                alignItems: 'flex-start',
+                zIndex: 2,
+                pointerEvents: 'none' // 避免遮擋點擊
+            }}>
+                
+                {/* 上半部：干支 + 流運飛星 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                     <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginTop: '0px' }}>
+                        {palace.gan}{palace.zhi}
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '30px' }}>
+                        {showDa && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')} {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')} {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')} {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')} {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')} {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')} </div> )}
+                        {showXiao && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', THEME.green, '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
+                        {showLiuYue && fs.yue && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')} {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')} {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')} {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')} {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')} {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')} </div> )}
+                     </div>
                 </div>
-            </div>
-            
-            <div style={{ position: 'absolute', bottom: 2, left: 2, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', maxWidth: '30px', zIndex: 2 }}>
-                <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', gap: '2px' }}>
-                    <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '2px' }}>{palace.name}</div>
-                    {showDa && daXianName && <div style={{ fontSize: '11px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
-                    {showXiao && xiaoXianName && <div style={{ fontSize: '11px', color: 'green', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
-                    {showLiuYue && liuYueName && <div style={{ fontSize: '11px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
+
+                {/* 下半部：宮名 + 限名 (這裡使用 column-reverse 讓宮名保持在最底，限名往上堆疊) */}
+                <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: '1px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginBottom: '0px' }}>{palace.name}</div>
+                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: '9px', borderRadius: '3px', padding: '1px 1px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                    </div>
+                    
+                    {/* 限名 (大限命宮、歲限兄弟等) */}
+                    {showDa && daXianName && <div style={{ fontSize: '10px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
+                    {showXiao && xiaoXianName && <div style={{ fontSize: '10px', color: THEME.green, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
+                    {showLiuYue && liuYueName && <div style={{ fontSize: '10px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
                 </div>
-                {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: '10px', borderRadius: '4px', padding: '1px 1px', lineHeight: 1, marginBottom: '2px', marginLeft: '1px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+
             </div>
 
+            {/* 右下角的長生博士 (位置保持不變，因為是在右邊) */}
             <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', zIndex: 2 }}>
                 {palace.changSheng12 && <span style={{ fontSize: '12px', color: COLORS.geng, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1, fontWeight: 'normal' }}>{palace.changSheng12}</span>}
                 {palace.doctor12 && <span style={{ fontSize: '12px', color: COLORS.jia, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1 }}>{palace.doctor12}</span>}
             </div>
 
-            <div style={{ position: 'absolute', top: 2, bottom: '36px', left: '24px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
+            {/* 星曜顯示 (避開左側 31px) */}
+            <div style={{ position: 'absolute', top: 2, bottom: '36px', left: '31px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
                 {topStars.map((s, i) => renderStar(s, i, true))}
                 {bottomStars.map((s, i) => renderStar(s, i, false, bottomStarsFontSize))}
             </div>
             
-            <div style={{ position: 'absolute', bottom: 2, left: '25px', right: '25px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* 中間下方的小限年齡 */}
+            <div style={{ position: 'absolute', bottom: 2, left: '30px', right: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
                 <div style={{ fontSize: '12px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px' }}>{palace.daXian || '\u00A0'}</div>
             </div>
@@ -873,17 +887,15 @@ const PalaceGrid = ({
     );
 };
 
-const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
+const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianStartType = 'xiao_xian' }) => {
     const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
-
-    const [showScore, setShowScore] = useState(false);
-    const [savedDate, setSavedDate] = useState(null);
 
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
     const [layerMode, setLayerMode] = useState(0); 
+    const [showScorePanel, setShowScorePanel] = useState(false);
 
     const handleHourAdjust = (delta) => {
         const current = chartData.rawDate;
@@ -904,7 +916,7 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
             tianMaType: localStorage.getItem('zwds_rule_tm_type') || 'year'
         };
         const mingHasDaXian = localStorage.getItem('zwds_ming_daxian') === 'true';
-
+        
         try {
             const newResult = calculateZwdsResult(newFormData, rulesConfig, { mingHasDaXian });
             setChartData(newResult);
@@ -933,29 +945,39 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
             const finalAge = targetLunar.getYear() - birthLunar.getYear() + 1;
             const tYearGan = targetLunar.getYearGan();
             const tYearZhi = targetLunar.getYearZhi();
-            const liuNianZhiIdx = DIZHI.indexOf(tYearZhi);
+            const liuNianZhiIdx = DIZHI.indexOf(tYearZhi); // 目標流年地支 Index
 
             let dIdx = -1; let xIdx = -1;
             g.forEach((p, i) => {
                 if(p.daXian) { const [start, end] = p.daXian.split('-').map(Number); if(finalAge >= start && finalAge <= end) dIdx = i; }
-                if(p.xiaoXian?.includes(finalAge)) xIdx = i;
+                if(p.xiaoXian?.includes(finalAge)) xIdx = i; // 小限宮位 Index
             });
 
             let daXianGan = null;
-            const mingPalace = g.find(p => p.name === '命宮');
-            
-            if (mingPalace && dIdx !== -1) {
-                if (daXianGanType === 'gong') {
-                    // 宮干四化
+            if (dIdx !== -1) {
+                if (daXianSiHuaType === 'gong') {
+                    // 1. 使用「宮干」
                     daXianGan = g[dIdx].gan;
                 } else {
-                    // 預設四化
-                    const bYearGan = birthLunar.getYearGan();
-                    const isMale = chartData.genderText === '男';
-                    const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
-                    const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
-                    daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                    // 2. 使用「全書」
+                    const mingPalace = g.find(p => p.name === '命宮');
+                    if (mingPalace) {
+                        const bYearGan = birthLunar.getYearGan();
+                        const isMale = chartData.genderText === '男';
+                        const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                        const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
+                        daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                    }
                 }
+            }
+
+            let activeSuiIdx = -1;
+            if (liuNianStartType === 'year_zhi') {
+                // 如果設定為「流年地支」，則找出地支與流年地支相同的宮位
+                activeSuiIdx = g.findIndex(p => p.zhiIdx === liuNianZhiIdx);
+            } else {
+                // 預設：使用小限宮位
+                activeSuiIdx = xIdx;
             }
 
             let leapMonth = 0;
@@ -974,38 +996,50 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
             stars.liu = { lu: lLu, yang:(lLu+1)%12, tuo:(lLu+11)%12, ma:({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[tYearZhi]), kui: DEFAULT_KUI_YUE[tYearGan]?.k, yue: DEFAULT_KUI_YUE[tYearGan]?.y };
             if (daXianGan) { const dLu = getLuPos(daXianGan); stars.da = { lu: dLu, yang:(dLu+1)%12, tuo:(dLu+11)%12, kui: DEFAULT_KUI_YUE[daXianGan]?.k, yue: DEFAULT_KUI_YUE[daXianGan]?.y }; }
             if (currentLiuYueGan) { const yLu = getLuPos(currentLiuYueGan); const curMonthZhi = targetLunar.getMonthZhi(); stars.yue = { lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12, ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]), kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y }; }
-            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan, currentLunarYear: targetLunar.getYear() };
+            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
-    }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianGanType]);
+    }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianSiHuaType, liuNianStartType]);
 
-        const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan, currentLunarYear } = resultParams;    const activeSiHua = useMemo(() => {
+    const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, activeSuiIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;
+    const activeSiHua = useMemo(() => {
         const getMap = (gan) => { if (!gan) return {}; const r = DEFAULT_SI_HUA[gan]; return { [r.lu]: '祿', [r.quan]: '權', [r.ke]: '科', [r.ji]: '忌' }; };
         const bGan = window.Solar.fromYmdHms(chartData.rawDate.year, chartData.rawDate.month, chartData.rawDate.day, chartData.rawDate.hour, chartData.rawDate.minute, 0).getLunar().getYearGan();
         return { year: getMap(bGan), daXian: getMap(daXianGan), xiaoXian: getMap(currentLiuNianGan), liuYue: getMap(currentLiuYueGan) };
     }, [chartData.rawDate, daXianGan, currentLiuNianGan, currentLiuYueGan]);
 
     const switchLayer = (d) => setLayerMode(prev => { let n=prev+d; if(n>3)n=0; if(n<0)n=3; return n; });
-    
     useEffect(() => {
         if (layerMode === 0) setFocusedIndex(g.findIndex(p => p.name === '命宮'));
         else if (layerMode === 1 && daXianIdx !== -1) setFocusedIndex(daXianIdx);
-        else if (layerMode === 2 && xiaoXianIdx !== -1) setFocusedIndex(xiaoXianIdx);
+        else if (layerMode === 2) {const targetSuiIdx = (liuNianStartType === 'year_zhi') 
+            ? g.findIndex(p => p.zhiIdx === liuNianZhiIdx) 
+            : xiaoXianIdx;
+        
+        if (targetSuiIdx !== -1) setFocusedIndex(targetSuiIdx); }
         else if (layerMode === 3 && currentLiuYueIdx !== -1) setFocusedIndex(currentLiuYueIdx);
-    }, [layerMode, daXianIdx, xiaoXianIdx, currentLiuYueIdx, g]);
+    }, [layerMode, daXianIdx, activeSuiIdx, currentLiuYueIdx, g]);
 
     const renderCell = (idx) => {
         const getDN = (base, cur, pre) => (base === -1 || base === undefined || isNaN(base)) ? null : pre + PALACE_NAMES[(base - cur + 12) % 12].charAt(0);
         
-        const cellStyle = {
-            boxSizing: 'border-box'
-        };
+        const cellStyle = { boxSizing: 'border-box' };
 
         return (
             <PalaceGrid 
                 palace={g[idx]} onClick={() => setFocusedIndex(idx)}
                 highlightMode={focusedIndex === idx ? 'target' : ([(focusedIndex+4)%12, (focusedIndex+8)%12, (focusedIndex+6)%12].includes(idx) ? 'related' : null)}
-                siHuaMap={activeSiHua} layerMode={layerMode} isDaXian={idx === daXianIdx} isXiaoXian={idx === xiaoXianIdx} currentAge={currentAge} liuNianZhiIdx={liuNianZhiIdx}
-                daXianName={getDN(daXianIdx, idx, '大')} xiaoXianName={getDN(xiaoXianIdx, idx, '歲')} liuYueName={getDN(currentLiuYueIdx, idx, '月')} flowingStars={flowingStars}
+                siHuaMap={activeSiHua} layerMode={layerMode} 
+                isDaXian={idx === daXianIdx}
+                
+                // 這裡保持 xiaoXianIdx，讓小限年齡數字(紅色數字)顯示在正確的小限宮位
+                isXiaoXian={idx === xiaoXianIdx} 
+                
+                currentAge={currentAge}
+                liuNianZhiIdx={liuNianZhiIdx}
+                daXianName={getDN(daXianIdx, idx, '大')}
+                xiaoXianName={getDN(activeSuiIdx, idx, '歲')} 
+                liuYueName={getDN(currentLiuYueIdx, idx, '月')} 
+                flowingStars={flowingStars}
                 customStyle={cellStyle}
                 />
         );
@@ -1015,9 +1049,20 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
     const daysInMonth = useMemo(() => { const lastDay = new Date(targetDate.year, targetDate.month, 0).getDate(); return Array.from({ length: lastDay }, (_, i) => i + 1); }, [targetDate.year, targetDate.month]);
     const targetLunarDisplay = useMemo(() => { try { const solar = window.Solar.fromYmd(parseInt(targetDate.year), parseInt(targetDate.month), parseInt(targetDate.day)); const lunar = solar.getLunar(); let monthName = lunar.getMonthInChinese().replace('闰', '閏').replace('冬', '十一').replace('腊', '十二'); return `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}`; } catch (e) { return ""; } }, [targetDate]);
 
-    // 找出命宮的位置，用於傳遞給評分面板
-    const mingIdx = g.findIndex(p => p.name === '命宮');
-    
+    const currentSiHuaRules = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem('zwds_rule_sihua')) || DEFAULT_SI_HUA;
+        } catch { return DEFAULT_SI_HUA; }
+    }, [showScorePanel]); // 當打開面板時重新讀取一次確保最新
+
+    // 計算流年宮位在 grid 中的 index (因為 resultParams 給的是地支 index)
+    const liuNianGridIdx = useMemo(() => {
+        return chartData.grid.findIndex(p => p.zhiIdx === resultParams.liuNianZhiIdx);
+    }, [chartData.grid, resultParams.liuNianZhiIdx]);
+
+    // 取得命宮 Index
+    const mingIdx = useMemo(() => chartData.grid.findIndex(p => p.name === '命宮'), [chartData.grid]);
+
     return (
         <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
             <div style={{ 
@@ -1045,100 +1090,60 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
                     gridColumn: '2 / span 2', 
                     gridRow: '2 / span 2', 
                     backgroundColor: THEME.white, 
-                    // ★ 修改：移除 padding, 改為相對定位以容納 ScorePanel
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden', // 防止溢出
-                    zIndex: 1
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: '10px',
+                    // ★ 確保中宮不會遮住任何格線
+                    zIndex: 1 
                 }}>
-                    {showScore ? (
-                        // ★ 情況 A: 顯示運勢評分面板 (填滿這個格子)
-                        <ScorePanel 
-                            grid={g} 
-                            mingIdx={mingIdx} 
-                            daXianIdx={daXianIdx} 
-                            xiaoXianIdx={xiaoXianIdx}
-                            liuNianIdx={liuNianZhiIdx} 
-                            currentYear={currentLunarYear || targetDate.year} 
-                            onYearChange={(y) => setTargetDate({ year: parseInt(y), month: 6, day: 30 })}
-                            yearOptions={yearOptions}
-                            daXianGan={daXianGan}
-                            siHuaRules={siHuaRules}
-                            liuNianGan={currentLiuNianGan}
-                            onClose={() => {
-                                if (savedDate) setTargetDate(savedDate);
-                                setShowScore(false); // 點擊返回，切換回個資面板
-                            }}
-                        />
-                    ) : (
-                        // ★ 情況 B: 顯示原本的個資面板 (加上 padding 讓排版正常)
-                        <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            padding: '10px', 
-                            width: '100%', 
-                            height: '100%' 
-                        }}>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
-                            <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                        <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                    </div>
-                                </div>
-                                <div>西曆 {birthDetails.solarStr}</div>
-                                <div>農曆 {birthDetails.lunarStr}</div>
-                            </div>
-                            
-                            {/* 層級切換按鈕 */}
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', width: '100%', marginBottom: '4px' }}>
-                                <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, cursor: 'pointer', padding: '4px' }}><ChevronLeft size={24} /></button>
-                                <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center', minWidth: '60px' }}>{getLayerTitle()}</span>
-                                <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, cursor: 'pointer', padding: '4px' }}><ChevronRight size={24} /></button>
-                            </div>
-
-                            {/* 日期選擇器 */}
-                            <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                                <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
-                                <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
-                                <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
-                            </div>
-                            
-                            <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
-                                    <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
-                                    <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
-                                    <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
-                            </div>
-                            {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                            
-                            {/* 底部按鈕區 */}
-                            <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                                <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
-                                <button 
-                                    onClick={() => {
-                                        setSavedDate(targetDate);
-                                        setTargetDate({ year: targetDate.year, month: 6, day: 30 });
-                                        setShowScore(true); // ★ 觸發切換
-                                    }} 
-                                    style={{ 
-                                        padding: '2px 8px', 
-                                        fontSize: '11px', 
-                                        backgroundColor: THEME.orange, 
-                                        color: 'white', 
-                                        border: 'none', 
-                                    }}
-                                >
-                                運勢評分</button>
-                                <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
-                            </div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
+                    <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
                         </div>
-                    )}
+                    </div>
+                        <div>西曆 {birthDetails.solarStr}</div>
+                        <div>農曆 {birthDetails.lunarStr}</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 48px', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
+                        <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
+                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                        <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+                        <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
+                        <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                    </div>
+                    <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
+                            <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
+                            <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
+                            <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
+                    </div>
+                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                        <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
+                        <button 
+                            onClick={() => setShowScorePanel(true)} 
+                            style={{ 
+                                padding: '2px 8px', 
+                                fontSize: '11px', 
+                                backgroundColor: THEME.orange, // 使用不同顏色區分
+                                color: 'white', 
+                                border: 'none', 
+                                cursor: 'pointer'
+                            }}
+                        >
+                            運勢評分
+                        </button>
+                        <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
+                    </div>
                 </div>
 
                 {/* 第二列右 (酉) */}
@@ -1151,6 +1156,23 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
                 {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
             </div>
             <div style={{ marginTop: '1px', textAlign: 'center', fontSize: '10px', color: THEME.gray, paddingBottom: '1px' }}>排盤依據明朝紫微斗數全書</div>
+            {/* 渲染懸浮的 ScorePanel */}
+            {showScorePanel && (
+                <ScorePanel 
+                    grid={chartData.grid}
+                    mingIdx={mingIdx}
+                    daXianIdx={resultParams.daXianIdx}
+                    xiaoXianIdx={resultParams.activeSuiIdx} 
+                    liuNianIdx={liuNianGridIdx} // 這是單純的地支宮位，ScorePanel 內部可能用於其他參考，暫時保留
+                    currentYear={targetDate.year}
+                    onYearChange={(y) => handleDateChange('year', y)}
+                    yearOptions={yearOptions}
+                    onClose={() => setShowScorePanel(false)}
+                    siHuaRules={currentSiHuaRules}
+                    daXianGan={resultParams.daXianGan}
+                    liuNianGan={resultParams.currentLiuNianGan}
+                />
+            )}
         </div>
     );
 };
@@ -1160,10 +1182,8 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
 // =========================================================================
 
 export default function ZwdsApp() {
-  // 全局啟用保護機制
-  const isAuthorized = useProtection([]);
-  if (!isAuthorized) return null;
-  
+  // 1. 安全保護 & 載入檢查
+  // useProtection(['mrkfengshui.com', 'localhost']);
   const libStatus = useLunarScript();
   
   // 2. 狀態管理
@@ -1179,7 +1199,8 @@ export default function ZwdsApp() {
   const [tianMaRules, setTianMaRules] = useState(DEFAULT_TIAN_MA);
   const [tianMaType, setTianMaType] = useState('year'); 
   const [mingHasDaXian, setMingHasDaXian] = useState(false);
-  const [daXianGanType, setDaXianGanType] = useState('dun');
+  const [daXianSiHuaType, setDaXianSiHuaType] = useState('book');
+  const [liuNianStartType, setLiuNianStartType] = useState('xiao_xian');
 
   // 3. 底部導航設定
   const tabs = [
@@ -1203,7 +1224,8 @@ export default function ZwdsApp() {
             const { value: r4 } = await Preferences.get({ key: 'zwds_rule_tianMa' }); if(r4) setTianMaRules(JSON.parse(r4));
             const { value: r5 } = await Preferences.get({ key: 'zwds_rule_tm_type' }); if(r5) setTianMaType(r5);
             const { value: r6 } = await Preferences.get({ key: 'zwds_ming_daxian' }); if(r6 !== null) setMingHasDaXian(r6 === 'true');
-            const { value: r7 } = await Preferences.get({ key: 'zwds_rule_daxian_gan' }); if(r7) setDaXianGanType(r7);
+            const { value: r7 } = await Preferences.get({ key: 'zwds_rule_daxian_sihua' }); if(r7) setDaXianSiHuaType(r7);
+            const { value: r8 } = await Preferences.get({ key: 'zwds_rule_liunian_start' }); if(r8) setLiuNianStartType(r8);
 
         } catch (e) { console.error("Data load error:", e); }
     };
@@ -1213,13 +1235,14 @@ export default function ZwdsApp() {
   // 儲存設定 Effect
   useEffect(() => {
     const saveData = async () => {
-       await Preferences.set({ key: 'zwds_ming_daxian', value: String(mingHasDaXian) });
-       await Preferences.set({ key: 'zwds_rule_daxian_gan', value: daXianGanType });
        await Preferences.set({ key: 'zwds_rule_sihua', value: JSON.stringify(siHuaRules) });
        await Preferences.set({ key: 'zwds_rule_kuiyue', value: JSON.stringify(kuiYueRules) });
        await Preferences.set({ key: 'zwds_rule_huoling', value: JSON.stringify(huoLingRules) });
        await Preferences.set({ key: 'zwds_rule_tianMa', value: JSON.stringify(tianMaRules) });
        await Preferences.set({ key: 'zwds_rule_tm_type', value: tianMaType });
+       await Preferences.set({ key: 'zwds_ming_daxian', value: String(mingHasDaXian) });
+       await Preferences.set({ key: 'zwds_rule_daxian_sihua', value: daXianSiHuaType });
+       await Preferences.set({ key: 'zwds_rule_liunian_start', value: liuNianStartType });
        
        // 為確保 ZwdsResult 能即時讀取 (它使用 localStorage)，這裡進行同步寫入
        localStorage.setItem('zwds_rule_sihua', JSON.stringify(siHuaRules));
@@ -1228,10 +1251,11 @@ export default function ZwdsApp() {
        localStorage.setItem('zwds_rule_tianMa', JSON.stringify(tianMaRules));
        localStorage.setItem('zwds_rule_tm_type', tianMaType);
        localStorage.setItem('zwds_ming_daxian', mingHasDaXian);
-       localStorage.setItem('zwds_rule_daxian_gan', daXianGanType);
+       localStorage.setItem('zwds_rule_daxian_sihua', daXianSiHuaType);
+       localStorage.setItem('zwds_rule_liunian_start', liuNianStartType);
     };
     saveData();
-  }, [mingHasDaXian, daXianGanType, siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType]);
+  }, [siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType, mingHasDaXian, daXianSiHuaType, liuNianStartType]);
 
   // 5. 動作處理
   const handleCalculate = (formData) => {
@@ -1316,8 +1340,8 @@ export default function ZwdsApp() {
                     data={resultData} 
                     onBack={() => { setEditingData(null); setView('input'); }} 
                     onSave={saveBookmark} 
-                    siHuaRules={siHuaRules} 
-                    daXianGanType={daXianGanType}
+                    daXianSiHuaType={daXianSiHuaType}
+                    liuNianStartType={liuNianStartType}
                 />
                 <AdsterraNarrow />
             </>
@@ -1353,7 +1377,8 @@ export default function ZwdsApp() {
                 tianMaRules={tianMaRules} setTianMaRules={setTianMaRules}
                 tianMaType={tianMaType} setTianMaType={setTianMaType}
                 mingHasDaXian={mingHasDaXian} setMingHasDaXian={setMingHasDaXian}
-                daXianGanType={daXianGanType} setDaXianGanType={setDaXianGanType}
+                daXianSiHuaType={daXianSiHuaType} setDaXianSiHuaType={setDaXianSiHuaType}
+                liuNianStartType={liuNianStartType} setLiuNianStartType={setLiuNianStartType}
                 bookmarks={bookmarks} setBookmarks={setBookmarks}
             />
           }

@@ -335,6 +335,7 @@ export const ScorePanel = ({
     currentYear, onYearChange, yearOptions, onClose, 
     siHuaRules, daXianGan, liuNianGan    
 }) => {
+
     const [viewMode, setViewMode] = useState(0); 
     const [selectedPattern, setSelectedPattern] = useState(null);
 
@@ -420,108 +421,151 @@ export const ScorePanel = ({
     };
 
     return (
-        <div style={{ width: '100%', height: '100%', backgroundColor: THEME.white, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-            <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: THEME.white }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>運勢評分</div>
-                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#999' }}><X size={24} /></button>
-            </div>
+        /* 第一層：全屏遮罩 */
+        <div style={{ 
+            position: 'fixed', 
+            top: 0, left: 0, right: 0, bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.5)', 
+            zIndex: 10,
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '20px' // 保持外部邊距，避免貼邊
+        }} onClick={onClose}>
+            
+            {/* 評分面板本體 */}
+            <div style={{ 
+                width: '100%', 
+                maxWidth: '380px', // ★ 修改 1：寬度收窄 (原 480px -> 380px)
+                maxHeight: '85vh', // 限制最大高度
+                backgroundColor: '#fff', borderRadius: '16px',
+                position: 'relative',
+                zIndex: 3,
+                overflow: 'hidden', // 隱藏溢出，讓內部 div 負責捲動
+                display: 'flex', flexDirection: 'column',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }} onClick={e => e.stopPropagation()}>
+                
+                {/* 標題欄 (固定不動) */}
+                <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>運勢評分</div>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#999' }}>
+                        <X size={24} />
+                    </button>
+                </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '0 20px 20px 20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', border: `1px solid ${THEME.border}`, borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', backgroundColor: '#fff' }}>
-                        <button onClick={() => switchView(-1)} style={{ background: 'none', border: '2px solid #333', borderRadius:'8px', cursor: 'pointer', padding: '2px', width:'28px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center' }}><ChevronLeft size={20} color="#333" /></button>
-                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: themeColor }}>{title}</span>
-                        <button onClick={() => switchView(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0px' }}><ChevronRight size={24} color="#1890ff" /></button>
-                    </div>
+                {/* ★ 修改 2：內容區域 (可捲動) - 所有內容都搬到這裡面 */}
+                <div style={{ 
+                    flex: 1, 
+                    overflowY: 'auto', // 允許垂直滑動
+                    padding: '20px',
+                    paddingBottom: '40px' // 底部留白，方便手機操作
+                }}>
+                    
+                    {/* 年份選擇器 (僅在流運模式顯示) */}
                     {(viewMode === 2 || viewMode === 3) && (
-                        <div style={{ padding: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f5f5f5', borderTop: `1px solid ${THEME.border}` }}>
+                        <div style={{ padding: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '20px' }}>
                             <span style={{ fontSize: '12px', color: '#666' }}>{viewMode === 2 ? '小限年份:' : '流年年份:'}</span>
                             <select value={currentYear} onChange={(e) => onYearChange(parseInt(e.target.value))} style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px', color: '#333', backgroundColor: '#fff' }}>
                                 {yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}
                             </select>
                         </div>
                     )}
-                </div>
 
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                    <ScoreCard title="總運" data={dataMing} />
-                    <ScoreCard title="事業" data={dataGuan} />
-                    <ScoreCard title="財運" data={dataCai} />
-                </div>
-
-                <div style={{ marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <div style={{ width: '4px', height: '16px', backgroundColor: '#d9363e', borderRadius: '2px' }}></div>
-                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>主要格局</div>
+                    {/* 分數卡片 */}
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                        <ScoreCard title="總運" data={dataMing} />
+                        <ScoreCard title="事業" data={dataGuan} />
+                        <ScoreCard title="財運" data={dataCai} />
                     </div>
-                    
-                    {/* ★ 修改：使用 Grid 佈局確保每行最多 2 個 */}
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 2fr))', // 自動填充，最小 120px
-                        gap: '8px' 
-                    }}>
-                        {dataMing.formations.length > 0 ? (
-                            dataMing.formations.map((f, idx) => {
-                                const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
-                                return (
-                                    <button 
-                                        key={idx} 
-                                        onClick={() => setSelectedPattern(f)} 
-                                        style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center', // 居中對齊
-                                            padding: '8px 4px', 
-                                            fontSize: '12px', // 稍微縮小字體以適應窄屏
-                                            fontWeight: 'bold', 
-                                            cursor: 'pointer', 
-                                            border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, 
-                                            borderRadius: '6px', 
-                                            color: isBad ? '#cf1322' : '#389e0d', 
-                                            backgroundColor: isBad ? '#fff1f0' : '#f6ffed',
-                                            whiteSpace: 'nowrap', // 防止換行
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                        }}>
-                                        {f}
-                                    </button>
-                                );
-                            })
-                        ) : (
-                            <div style={{ fontSize: '13px', color: '#999', gridColumn: 'span 2' }}>無特殊格局</div>
-                        )}
-                    </div>
-                </div>
 
-                <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '4px', height: '16px', backgroundColor: '#1890ff', borderRadius: '2px' }}></div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>吉凶曜詳情</div>
+                    {/* 主要格局 */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <div style={{ width: '4px', height: '16px', backgroundColor: '#d9363e', borderRadius: '2px' }}></div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>主要格局</div>
+                        </div>
+                        
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', // 自適應寬度
+                            gap: '8px' 
+                        }}>
+                            {dataMing.formations.length > 0 ? (
+                                dataMing.formations.map((f, idx) => {
+                                    const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
+                                    return (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => setSelectedPattern(f)} 
+                                            style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center',
+                                                padding: '8px 4px', 
+                                                fontSize: '12px',
+                                                fontWeight: 'bold', 
+                                                cursor: 'pointer', 
+                                                border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, 
+                                                borderRadius: '6px', 
+                                                color: isBad ? '#cf1322' : '#389e0d', 
+                                                backgroundColor: isBad ? '#fff1f0' : '#f6ffed',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>
+                                            {f}
+                                        </button>
+                                    );
+                                })
+                            ) : (
+                                <div style={{ fontSize: '13px', color: '#999', gridColumn: 'span 2' }}>無特殊格局</div>
+                            )}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <div style={{ flex: 1, border: '1px solid #d9f7be', borderRadius: '8px', backgroundColor: '#f6ffed', padding: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#389e0d', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #d9f7be', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
-                                <span>吉曜</span> <span>{dataMing.details.good.length}</span>
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#389e0d', lineHeight: '1.6' }}>
-                                {dataMing.details.good.length > 0 ? dataMing.details.good.join('、') : '無'}
+
+                    {/* 吉凶曜詳情 */}
+                    <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '4px', height: '16px', backgroundColor: '#1890ff', borderRadius: '2px' }}></div>
+                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>吉凶曜詳情</div>
                             </div>
                         </div>
-                        <div style={{ flex: 1, border: '1px solid #ffccc7', borderRadius: '8px', backgroundColor: '#fff1f0', padding: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#cf1322', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #ffccc7', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
-                                <span>凶曜</span> <span>{dataMing.details.bad.length}</span>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            {/* 吉曜框 */}
+                            <div style={{ flex: 1, border: '1px solid #d9f7be', borderRadius: '8px', backgroundColor: '#f6ffed', padding: '12px' }}>
+                                <div style={{ fontSize: '12px', color: '#389e0d', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #d9f7be', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
+                                    <span>吉曜</span> <span>{dataMing.details.good.length}</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#389e0d', lineHeight: '1.5' }}>
+                                    {dataMing.details.good.length > 0 ? (
+                                        dataMing.details.good.map((star, index) => (
+                                            <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
+                                        ))
+                                    ) : '無'}
+                                </div>
                             </div>
-                            <div style={{ fontSize: '12px', color: '#cf1322', lineHeight: '1.6' }}>
-                                {dataMing.details.bad.length > 0 ? dataMing.details.bad.join('、') : '無'}
+                            
+                            {/* 凶曜框 */}
+                            <div style={{ flex: 1, border: '1px solid #ffccc7', borderRadius: '8px', backgroundColor: '#fff1f0', padding: '12px' }}>
+                                <div style={{ fontSize: '12px', color: '#cf1322', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #ffccc7', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
+                                    <span>凶曜</span> <span>{dataMing.details.bad.length}</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#cf1322', lineHeight: '1.5' }}>
+                                    {dataMing.details.bad.length > 0 ? (
+                                        dataMing.details.bad.map((star, index) => (
+                                            <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
+                                        ))
+                                    ) : '無'}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* 彈窗：詳細說明 (保持不變) */}
             {selectedPattern && (
                 <div onClick={(e) => { e.stopPropagation(); setSelectedPattern(null); }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
                     <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '20px', maxWidth: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', animation: 'popIn 0.2s ease-out', borderLeft: `6px solid ${THEME.red}` }}>
