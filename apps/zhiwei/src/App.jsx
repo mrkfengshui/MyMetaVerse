@@ -881,7 +881,7 @@ const PalaceGrid = ({
             {/* 中間下方的小限年齡 */}
             <div style={{ position: 'absolute', bottom: 2, left: '30px', right: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
-                <div style={{ fontSize: '12px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px' }}>{palace.daXian || '\u00A0'}</div>
+                <div style={{ fontSize: '10px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px' }}>{palace.daXian || '\u00A0'}</div>
             </div>
         </div>
     );
@@ -1173,8 +1173,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     grid={chartData.grid}
                     mingIdx={mingIdx}
                     daXianIdx={resultParams.daXianIdx}
-                    xiaoXianIdx={resultParams.activeSuiIdx} 
-                    liuNianIdx={liuNianGridIdx} // 這是單純的地支宮位，ScorePanel 內部可能用於其他參考，暫時保留
+                    xiaoXianIdx={resultParams.activeSuiIdx} // 這裡傳入 App 計算好的歲限中心 (已考慮設定：小限法/流年地支法)
+                    liuYueIdx={resultParams.currentLiuYueIdx} // 流月宮位
                     currentYear={targetDate.year}
                     onYearChange={(y) => handleDateChange('year', y)}
                     yearOptions={yearOptions}
@@ -1182,6 +1182,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     siHuaRules={currentSiHuaRules}
                     daXianGan={resultParams.daXianGan}
                     liuNianGan={resultParams.currentLiuNianGan}
+                    liuYueGan={resultParams.currentLiuYueGan} // 流月天干
                 />
             )}
         </div>

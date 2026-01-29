@@ -8,18 +8,22 @@ const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', 
 
 const PALACE_ORDER = ['命宮', '兄弟', '夫妻', '子女', '財帛', '疾厄', '遷移', '奴僕', '官祿', '田宅', '福德', '父母'];
 
-const getSanFangSiZheng = (centerIdx) => [
-    centerIdx,            // 0: 本宮
-    (centerIdx + 4) % 12, // 1: 三方 (財/官)
-    (centerIdx + 8) % 12, // 2: 三方 (官/財)
-    (centerIdx + 6) % 12  // 3: 對宮
-];
+const getSanFangSiZheng = (centerIdx) => {
+    // 安全取餘數函數，確保結果為正整數
+    const safeIdx = (centerIdx + 120) % 12;
+    return [
+        safeIdx,            // 0: 本宮
+        (safeIdx + 4) % 12, // 1: 三方
+        (safeIdx + 8) % 12, // 2: 三方
+        (safeIdx + 6) % 12  // 3: 對宮
+    ];
+};
 
 const getRelativePalaceName = (centerIdx, targetIdx) => {
-    // 計算相對距離 (逆時針計算：0=命, 1=兄, 2=夫...)
-    // 公式： (命宮 - 目標 + 12) % 12
-    const offset = (centerIdx - targetIdx + 12) % 12;
-    return PALACE_ORDER[offset];
+    // 避免 NaN 導致的錯誤
+    if (isNaN(centerIdx) || isNaN(targetIdx)) return '';
+    const offset = (centerIdx - targetIdx + 120) % 12; // +120 防止負數
+    return PALACE_ORDER[offset] || '';
 };
 
 const PATTERN_DESC = {
@@ -88,254 +92,282 @@ const PATTERN_DESC = {
 };
 
 /**
- * 計算評分與格局
+ * 計算評分與格局 (安全版)
  */
 const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', activeGan = null, siHuaRules = null) => {
-    if (centerIdx === -1 || centerIdx === undefined || !grid || !grid[centerIdx]) {
-        return { score: 50, formations: [], details: { good: [], bad: [] }, luckRatio: 50 };
+    // 預設回傳值
+    const defaultResult = { score: 50, formations: [], details: { good: [], bad: [] }, luckRatio: 50, baseScore: 50 };
+
+    // 1. 強力防呆：檢查索引是否為數字且有效，檢查 grid 是否存在
+    if (
+        centerIdx === undefined || 
+        centerIdx === null || 
+        typeof centerIdx !== 'number' || 
+        isNaN(centerIdx) || 
+        centerIdx < 0 || 
+        !grid || 
+        !grid[centerIdx]
+    ) {
+        return defaultResult;
     }
 
-    const indices = getSanFangSiZheng(centerIdx);
-    const activeRules = (activeGan && siHuaRules) ? siHuaRules[activeGan] : null;
+    try {
+        const indices = getSanFangSiZheng(centerIdx);
+        const activeRules = (activeGan && siHuaRules) ? siHuaRules[activeGan] : null;
 
-    // --- 1. 計算基礎分 (Base Score) - 依據主星旺度 ---
-    let baseScore = 50; 
-    let formations = [];
-    
-    const selfPalace = grid[centerIdx];
-    const oppPalace = grid[indices[3]]; 
-    
-    // 主星列表
-    const MAJOR_STARS = ['紫微','天機','太陽','武曲','天同','廉貞','天府','太陰','貪狼','巨門','天相','天梁','七殺','破軍'];
-    const selfMajors = selfPalace.stars.filter(s => MAJOR_STARS.includes(s.name));
-    const isEmptyPalace = selfMajors.length === 0;
-    
-    // 若空宮，借對宮主星評分，但打折
-    let starsToEval = isEmptyPalace ? oppPalace.stars.filter(s => MAJOR_STARS.includes(s.name)) : selfMajors;
-    
-    if (isEmptyPalace) formations.push("空宮");
+        // --- 1. 計算基礎分 ---
+        let baseScore = 50; 
+        let formations = [];
+        
+        const selfPalace = grid[centerIdx];
+        const oppPalace = grid[indices[3]]; 
+        
+        // 防呆：確保 star 陣列存在
+        const safeStars = (palace) => (palace && Array.isArray(palace.stars)) ? palace.stars : [];
+        const safeMinorStars = (palace) => (palace && Array.isArray(palace.minorStars)) ? palace.minorStars : [];
 
-    if (starsToEval.length > 0) {
-        let brightnessScoreSum = 0;
-        starsToEval.forEach(s => {
-            let b = 50; 
-            if (s.brightness === '廟') b = 85;
-            else if (s.brightness === '旺') b = 65;
-            else if (s.brightness === '地') b = 55;
-            else if (s.brightness === '陷') b = 45;
-            brightnessScoreSum += b;
-        });
-        baseScore = brightnessScoreSum / starsToEval.length;
-        if (isEmptyPalace) { 
-            baseScore *= 0.8; 
-            if (baseScore < 30) baseScore = 30; // 地板分
+        const MAJOR_STARS = ['紫微','天機','太陽','武曲','天同','廉貞','天府','太陰','貪狼','巨門','天相','天梁','七殺','破軍'];
+        const selfMajors = safeStars(selfPalace).filter(s => MAJOR_STARS.includes(s.name));
+        const isEmptyPalace = selfMajors.length === 0;
+        
+        // 若空宮，借對宮
+        let starsToEval = isEmptyPalace ? safeStars(oppPalace).filter(s => MAJOR_STARS.includes(s.name)) : selfMajors;
+        
+        if (isEmptyPalace) formations.push("空宮");
+
+        if (starsToEval.length > 0) {
+            let brightnessScoreSum = 0;
+            starsToEval.forEach(s => {
+                let b = 50; 
+                if (s.brightness === '廟') b = 85;
+                else if (s.brightness === '旺') b = 65;
+                else if (s.brightness === '地') b = 55;
+                else if (s.brightness === '陷') b = 45;
+                brightnessScoreSum += b;
+            });
+            baseScore = brightnessScoreSum / starsToEval.length;
+            if (isEmptyPalace) { 
+                baseScore *= 0.8; 
+                if (baseScore < 30) baseScore = 30;
+            }
+        } else {
+            baseScore = 40; 
         }
-    } else {
-        baseScore = 40; // 對宮也無主星
-    }
 
-    // --- 2. 計算吉凶能量 ---
-    let totalGoodPoints = 0.01; 
-    let totalBadPoints = 0.01;
-    let goodStarsList = [];
-    let badStarsList = [];
-    
-    let allStars = [];
-    let starMap = {}; 
-    let huaMap = { '祿': 0, '權': 0, '科': 0, '忌': 0 };
-    let sunBrightness = null;
-    let moonBrightness = null;
+        // --- 2. 計算吉凶能量 ---
+        let totalGoodPoints = 0.01; 
+        let totalBadPoints = 0.01;
+        let goodStarsList = [];
+        let badStarsList = [];
+        
+        let allStars = [];
+        let starMap = {}; 
+        let huaMap = { '祿': 0, '權': 0, '科': 0, '忌': 0 };
+        let sunBrightness = null;
+        let moonBrightness = null;
 
-    const POS_WEIGHTS = [4, 1.5, 1.5, 3]; 
+        const POS_WEIGHTS = [4, 1.5, 1.5, 3]; 
 
-    indices.forEach((idx, relPos) => {
-        const palace = grid[idx];
-        if (!palace) return;
-        const weight = POS_WEIGHTS[relPos];
-        const isSelf = relPos === 0;
-        const isOpposite = relPos === 3;
+        indices.forEach((idx, relPos) => {
+            const palace = grid[idx];
+            if (!palace) return;
+            const weight = POS_WEIGHTS[relPos];
+            const isSelf = relPos === 0;
+            const isOpposite = relPos === 3;
 
-        const relName = getRelativePalaceName(centerIdx, idx);
-        const palaceNameSuffix = isSelf ? ' (命宮)' : ` (${relName})`;
+            const relName = getRelativePalaceName(centerIdx, idx);
+            const palaceNameSuffix = isSelf ? ` (${targetName}宮)` : ` (${relName})`;
 
-        [...palace.stars, ...palace.minorStars].forEach(s => {
-            allStars.push(s.name);
-            starMap[s.name] = relPos;
-            if (s.name === '太陽') sunBrightness = s.brightness;
-            if (s.name === '太陰') moonBrightness = s.brightness;
+            [...safeStars(palace), ...safeMinorStars(palace)].forEach(s => {
+                if(!s || !s.name) return; // 防呆
+                allStars.push(s.name);
+                starMap[s.name] = relPos;
+                if (s.name === '太陽') sunBrightness = s.brightness;
+                if (s.name === '太陰') moonBrightness = s.brightness;
 
-            // 判斷四化
-            let currentHua = s.hua;
-            if (activeRules) {
-                if (s.name === activeRules.lu) currentHua = '祿';
-                else if (s.name === activeRules.quan) currentHua = '權';
-                else if (s.name === activeRules.ke) currentHua = '科';
-                else if (s.name === activeRules.ji) currentHua = '忌';
-                else currentHua = null;
-            }
+                // 判斷四化
+                let currentHua = s.hua;
+                if (activeRules) {
+                    if (s.name === activeRules.lu) currentHua = '祿';
+                    else if (s.name === activeRules.quan) currentHua = '權';
+                    else if (s.name === activeRules.ke) currentHua = '科';
+                    else if (s.name === activeRules.ji) currentHua = '忌';
+                }
 
-            if (currentHua) huaMap[currentHua] = (huaMap[currentHua] || 0) + 1;
+                if (currentHua) huaMap[currentHua] = (huaMap[currentHua] || 0) + 1;
 
-            // --- 吉曜計分 (修正：化忌時不給分) ---
-            let gPt = 0;
-            // 如果是化忌，絕對不是吉星
-            if (currentHua !== '忌') {
-                if (currentHua === '祿') gPt = 30;
-                else if (currentHua === '權') gPt = 20;
-                else if (currentHua === '科') gPt = 15;
-                else if (['祿存'].includes(s.name)) gPt = 18;
-                else if (['左輔','右弼','天魁','天鉞'].includes(s.name)) gPt = 10;
-                else if (['文昌','文曲'].includes(s.name)) gPt = 8; // 只有不化忌時，昌曲才算吉
-            }
+                // 吉曜計分
+                let gPt = 0;
+                if (currentHua !== '忌') {
+                    if (currentHua === '祿') gPt = 30;
+                    else if (currentHua === '權') gPt = 20;
+                    else if (currentHua === '科') gPt = 15;
+                    else if (['祿存'].includes(s.name)) gPt = 18;
+                    else if (['左輔','右弼','天魁','天鉞'].includes(s.name)) gPt = 10;
+                    else if (['文昌','文曲'].includes(s.name)) gPt = 8;
+                }
 
-            if (gPt > 0) {
-                totalGoodPoints += gPt * weight;
-                goodStarsList.push(`${s.name}${currentHua ? '化'+currentHua : ''}${palaceNameSuffix}`);
-            }
+                if (gPt > 0) {
+                    totalGoodPoints += gPt * weight;
+                    goodStarsList.push(`${s.name}${currentHua ? '化'+currentHua : ''}${palaceNameSuffix}`);
+                }
 
-            // --- 凶曜計分 ---
-            let bPt = 0;
-            if (currentHua === '忌') {
-                bPt = 40;
-                if (isSelf) formations.push(`化忌坐${targetName}`);
-                if (isOpposite) formations.push(`化忌沖${targetName}`);
-            }
-            else if (['地劫', '天空'].includes(s.name)) bPt = 12;
-            else if (['擎羊', '陀羅'].includes(s.name)) bPt = 15;
-            else if (['火星', '鈴星'].includes(s.name)) bPt = 15;
+                // 凶曜計分
+                let bPt = 0;
+                if (currentHua === '忌') {
+                    bPt = 40;
+                    if (isSelf) formations.push("化忌入命");
+                    if (isOpposite) formations.push("化忌沖命");
+                }
+                else if (['地劫', '天空'].includes(s.name)) bPt = 12;
+                else if (['擎羊', '陀羅'].includes(s.name)) bPt = 15;
+                else if (['火星', '鈴星'].includes(s.name)) bPt = 15;
 
-            if (bPt > 0) {
-                totalBadPoints += bPt * weight;
-                badStarsList.push(`${s.name}${currentHua ? '化'+currentHua : ''}${palaceNameSuffix}`);
-            }
+                if (bPt > 0) {
+                    totalBadPoints += bPt * weight;
+                    badStarsList.push(`${s.name}${currentHua ? '化'+currentHua : ''}${palaceNameSuffix}`);
+                }
+            });
         });
-    });
 
-    // --- 3. 格局偵測 (Pattern Detection) ---
-    const has = (star) => allStars.includes(star);
-    const inSelf = (star) => starMap[star] === 0;
-    const inOpposite = (star) => starMap[star] === 3;
-    const isBright = (b) => ['廟', '旺'].includes(b);
-    const currentZhi = grid[centerIdx].zhi;
+        // --- 3. 格局偵測 (Pattern Detection) ---
+        const has = (star) => allStars.includes(star);
+        const inSelf = (star) => starMap[star] === 0;
+        const inOpposite = (star) => starMap[star] === 3;
+        const isBright = (b) => ['廟', '旺'].includes(b);
+        // 安全存取地支
+        const currentZhi = selfPalace.zhi || '';
 
-    // 吉格
-    if (inSelf('紫微') && inSelf('天府')) formations.push("紫府同宮");
-    if (has('紫微') && has('天府') && !inSelf('紫微')) formations.push("紫府朝垣");
-    if (inSelf('紫微')) {
-        let count = 0;
-        ['左輔','右弼','文昌','文曲','天魁','天鉞','天府','天相'].forEach(s => { if(has(s)) count++; });
-        if (count >= 4) formations.push("君臣慶會");
-    }
-    if (has('天機') && has('太陰') && has('天同') && has('天梁')) formations.push("機月同梁");
-    
-    // 日月有暉：排除地
-    if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
-        const sunPos = grid.find(p => p.stars.some(s => s.name === '太陽'))?.zhi;
-        const moonPos = grid.find(p => p.stars.some(s => s.name === '太陰'))?.zhi;
-        if (sunPos !== moonPos) {
-             formations.push("日月有暉");
+        // 吉格
+        if (inSelf('紫微') && inSelf('天府')) formations.push("紫府同宮");
+        if (has('紫微') && has('天府') && !inSelf('紫微')) formations.push("紫府朝垣");
+        if (inSelf('紫微')) {
+            let count = 0;
+            ['左輔','右弼','文昌','文曲','天魁','天鉞','天府','天相'].forEach(s => { if(has(s)) count++; });
+            if (count >= 4) formations.push("君臣慶會");
         }
-    }
+        if (has('天機') && has('太陰') && has('天同') && has('天梁')) formations.push("機月同梁");
+        
+        // 日月有暉
+        if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
+            const sunPos = grid.find(p => safeStars(p).some(s => s.name === '太陽'))?.zhi;
+            const moonPos = grid.find(p => safeStars(p).some(s => s.name === '太陰'))?.zhi;
+            if (sunPos && moonPos && sunPos !== moonPos) {
+                 formations.push("日月有暉");
+            }
+        }
 
-    if (inSelf('太陽') && currentZhi === '午') formations.push("金燦光輝");
-    if (inSelf('太陽') && currentZhi === '卯') formations.push("日照雷門");
-    if (inSelf('太陰') && currentZhi === '亥') formations.push("月朗天門");
-    if (currentZhi === '未' && isEmptyPalace && has('太陽') && has('太陰')) formations.push("明珠出海");
-    if (has('太陽') && has('天梁') && has('文昌') && (has('祿存') || huaMap['祿']>0)) formations.push("陽梁昌祿");
-    if (inSelf('天梁') && currentZhi === '午') formations.push("壽星入廟");
-    if (inSelf('破軍') && (currentZhi === '子' || currentZhi === '午')) formations.push("英星入廟");
-    if (inSelf('巨門') && (currentZhi === '子' || currentZhi === '午')) {
-        if (huaMap['祿']>0 || huaMap['權']>0 || huaMap['科']>0) formations.push("石中隱玉");
-        else formations.push("假石中隱玉");
-    }
-    if (inSelf('七殺')) {
-        if (['寅','申'].includes(currentZhi)) formations.push("七殺朝斗");
-        if (['子','午'].includes(currentZhi)) formations.push("七殺仰斗");
-    }
-    if (has('天府') && has('天相')) formations.push("府相朝垣");
-    if (inSelf('天同') && inSelf('太陰') && currentZhi === '子') formations.push("月生滄海");
-    if (huaMap['祿'] > 0 && huaMap['權'] > 0 && huaMap['科'] > 0) formations.push("三奇加會");
-    if (has('祿存') && huaMap['祿'] > 0) formations.push("雙祿交流");
-    if (has('祿存') && has('天馬')) formations.push("祿馬交馳");
-    if (has('左輔') && has('右弼')) { 
-        if (inSelf('左輔') && inSelf('右弼')) formations.push("左右同宮");
-    }
-    if (has('天魁') && has('天鉞')) { 
-        if (inSelf('天魁') && inOpposite('天鉞') || inSelf('天鉞') && inOpposite('天魁')) formations.push("坐貴向貴"); 
-    }
-    if (has('貪狼')) {
-        if (has('火星')) formations.push("火貪格");
-        if (has('鈴星')) formations.push("鈴貪格");
-    }
-    if (has('天魁')) {
-        if (has('文曲') && has('文昌')) formations.push("文曲文昌天魁秀");
-    }
+        if (inSelf('太陽') && currentZhi === '午') formations.push("金燦光輝");
+        if (inSelf('太陽') && currentZhi === '卯') formations.push("日照雷門");
+        if (inSelf('太陰') && currentZhi === '亥') formations.push("月朗天門");
+        if (currentZhi === '未' && isEmptyPalace && has('太陽') && has('太陰')) formations.push("明珠出海");
+        if (has('太陽') && has('天梁') && has('文昌') && (has('祿存') || huaMap['祿']>0)) formations.push("陽梁昌祿");
+        if (inSelf('天梁') && currentZhi === '午') formations.push("壽星入廟");
+        if (inSelf('破軍') && (currentZhi === '子' || currentZhi === '午')) formations.push("英星入廟");
+        if (inSelf('巨門') && (currentZhi === '子' || currentZhi === '午')) {
+            if (huaMap['祿']>0 || huaMap['權']>0 || huaMap['科']>0) formations.push("石中隱玉");
+            else formations.push("假石中隱玉");
+        }
+        if (inSelf('七殺')) {
+            if (['寅','申'].includes(currentZhi)) formations.push("七殺朝斗");
+            if (['子','午'].includes(currentZhi)) formations.push("七殺仰斗");
+        }
+        if (has('天府') && has('天相')) formations.push("府相朝垣");
+        if (inSelf('天同') && inSelf('太陰') && currentZhi === '子') formations.push("月生滄海");
+        if (huaMap['祿'] > 0 && huaMap['權'] > 0 && huaMap['科'] > 0) formations.push("三奇加會");
+        if (has('祿存') && huaMap['祿'] > 0) formations.push("雙祿交流");
+        if (has('祿存') && has('天馬')) formations.push("祿馬交馳");
+        if (has('左輔') && has('右弼')) { 
+            if (inSelf('左輔') && inSelf('右弼')) formations.push("左右同宮");
+        }
+        if (has('天魁') && has('天鉞')) { 
+            if (inSelf('天魁') && inOpposite('天鉞') || inSelf('天鉞') && inOpposite('天魁')) formations.push("坐貴向貴"); 
+        }
+        if (has('貪狼')) {
+            if (has('火星')) formations.push("火貪格");
+            if (has('鈴星')) formations.push("鈴貪格");
+        }
+        if (has('天魁')) {
+            if (has('文曲') && has('文昌')) formations.push("文曲文昌天魁秀");
+        }
 
-    // 凶格
-    if (has('貪狼')) {
-        if (has('文曲')) formations.push("貪狼遇文昌");
-        if (has('文昌')) formations.push("貪狼遇文曲");
-    }  
-    if (has('鈴星') && has('文昌') && has('陀羅') && has('武曲')) formations.push("鈴昌陀武");
-    if (has('巨門') && has('火星') && has('擎羊')) formations.push("巨火羊");
-    if (inSelf('地劫') || inSelf('天空')) formations.push("命逢空劫");
-    if (currentZhi === '午' && inSelf('擎羊')) formations.push("馬頭帶劍");
-    if (has('廉貞') && has('天相') && has('擎羊') && currentZhi === '午') formations.push("刑囚夾印");
-    if (inSelf('貪狼') && currentZhi === '子') formations.push("泛水桃花");
-    if (inSelf('廉貞') && inSelf('七殺') && (has('擎羊') || has('陀羅') || has('化忌'))) formations.push("廉貞七殺");
+        // 凶格
+        if (has('貪狼')) {
+            if (has('文曲')) formations.push("貪狼遇文昌");
+            if (has('文昌')) formations.push("貪狼遇文曲");
+        }  
+        if (has('鈴星') && has('文昌') && has('陀羅') && has('武曲')) formations.push("鈴昌陀武");
+        if (has('巨門') && has('火星') && has('擎羊')) formations.push("巨火羊");
+        if (inSelf('地劫') || inSelf('天空')) formations.push("命逢空劫");
+        if (currentZhi === '午' && inSelf('擎羊')) formations.push("馬頭帶劍");
+        if (has('廉貞') && has('天相') && has('擎羊') && currentZhi === '午') formations.push("刑囚夾印");
+        if (inSelf('貪狼') && currentZhi === '子') formations.push("泛水桃花");
+        if (inSelf('廉貞') && inSelf('七殺') && (has('擎羊') || has('陀羅') || has('化忌'))) formations.push("廉貞七殺");
 
-    // 夾宮
-    const getPalaceStars = (idx) => {
-        const p = grid[idx]; if (!p) return []; 
-        let stars = [];
-        [...p.stars, ...p.minorStars].forEach(s => {
-            stars.push(s.name);
-            if (activeRules) { if (s.name === activeRules.ji) stars.push('忌'); }
-            else { if (s.hua === '忌') stars.push('忌'); }
-        });
-        return stars;
-    };
-    const prevStars = getPalaceStars((centerIdx + 11) % 12);
-    const nextStars = getPalaceStars((centerIdx + 1) % 12);
-    const isJia = (s1, s2) => (prevStars.includes(s1) && nextStars.includes(s2)) || (prevStars.includes(s2) && nextStars.includes(s1));
+        // 夾宮
+        const getPalaceStars = (idx) => {
+            const safeIdx = (idx + 120) % 12;
+            const p = grid[safeIdx]; if (!p) return []; 
+            let stars = [];
+            [...safeStars(p), ...safeMinorStars(p)].forEach(s => {
+                if(s && s.name) {
+                    stars.push(s.name);
+                    if (activeRules) { if (s.name === activeRules.ji) stars.push('忌'); }
+                    else { if (s.hua === '忌') stars.push('忌'); }
+                }
+            });
+            return stars;
+        };
+        const prevStars = getPalaceStars(centerIdx - 1); // JS Modulo fix handled in func
+        const nextStars = getPalaceStars(centerIdx + 1);
+        const isJia = (s1, s2) => (prevStars.includes(s1) && nextStars.includes(s2)) || (prevStars.includes(s2) && nextStars.includes(s1));
 
-    if (isJia('火星', '鈴星')) formations.push("火鈴夾命");
-    if (isJia('地劫', '天空')) formations.push("空劫夾命");
-    if (isJia('擎羊', '陀羅')) {
-        if (huaMap['忌'] > 0 || prevStars.includes('忌') || nextStars.includes('忌')) formations.push("羊陀夾忌");
+        if (isJia('火星', '鈴星')) formations.push("火鈴夾命");
+        if (isJia('地劫', '天空')) formations.push("空劫夾命");
+        if (isJia('擎羊', '陀羅')) {
+            if (huaMap['忌'] > 0 || prevStars.includes('忌') || nextStars.includes('忌')) formations.push("羊陀夾忌");
+        }
+
+        // --- 4. 分數合成 ---
+        const luckRatio = Math.round((totalGoodPoints / (totalGoodPoints + totalBadPoints)) * 100);
+        const modifierFactor = (luckRatio - 50) / 50; 
+        let adjustment = 0;
+        if (modifierFactor > 0) {
+            const boost = Math.min(totalGoodPoints / 3, 30);
+            adjustment = boost * modifierFactor;
+        } else {
+            const penalty = Math.min(totalBadPoints / 2.5, 40);
+            adjustment = penalty * Math.abs(modifierFactor) * -1;
+        }
+
+        let finalScore = baseScore + adjustment;
+        if (finalScore > 99) finalScore = 99;
+        if (finalScore < 10) finalScore = 10;
+
+        return { 
+            score: Math.round(finalScore), 
+            formations: [...new Set(formations)],
+            details: { good: goodStarsList, bad: badStarsList },
+            luckRatio: luckRatio,
+            baseScore: Math.round(baseScore)
+        };
+    } catch (e) {
+        console.error("Score Calc Error:", e);
+        return defaultResult;
     }
-
-    // --- 4. 分數合成 ---
-    const luckRatio = Math.round((totalGoodPoints / (totalGoodPoints + totalBadPoints)) * 100);
-    const modifierFactor = (luckRatio - 50) / 50; 
-    let adjustment = 0;
-    if (modifierFactor > 0) {
-        const boost = Math.min(totalGoodPoints / 3, 30);
-        adjustment = boost * modifierFactor;
-    } else {
-        const penalty = Math.min(totalBadPoints / 2.5, 40);
-        adjustment = penalty * Math.abs(modifierFactor) * -1;
-    }
-
-    let finalScore = baseScore + adjustment;
-    if (finalScore > 99) finalScore = 99;
-    if (finalScore < 10) finalScore = 10;
-
-    return { 
-        score: Math.round(finalScore), 
-        formations: [...new Set(formations)],
-        details: { good: goodStarsList, bad: badStarsList },
-        luckRatio: luckRatio,
-        baseScore: Math.round(baseScore)
-    };
 };
 
 export const ScorePanel = ({ 
-    grid, mingIdx, daXianIdx, xiaoXianIdx, liuNianIdx, 
-    currentYear, onYearChange, yearOptions, onClose, 
-    siHuaRules, daXianGan, liuNianGan    
+    grid, mingIdx, 
+    daXianIdx, xiaoXianIdx, liuYueIdx, 
+    currentYear, onYearChange, yearOptions, 
+    currentMonth, onMonthChange, // ★ 新增：接收當前月份與切換函數
+    onClose, 
+    siHuaRules, 
+    daXianGan, liuNianGan, liuYueGan 
 }) => {
 
+    // 0: 本命, 1: 大限, 2: 歲限, 3: 流月
     const [viewMode, setViewMode] = useState(0); 
     const [selectedPattern, setSelectedPattern] = useState(null);
 
@@ -364,38 +396,40 @@ export const ScorePanel = ({
         themeColor = THEME.blue;
         activeGan = daXianGan; 
     } else if (viewMode === 2) {
-        centerIdx = xiaoXianIdx;
+        centerIdx = xiaoXianIdx; 
         title = "歲限";
         themeColor = THEME.green;
         activeGan = liuNianGan;
     } else {
-        centerIdx = liuNianIdx;
-        title = "流年";
-        themeColor = THEME.orange;
-        activeGan = liuNianGan;
+        centerIdx = liuYueIdx;
+        title = "流月";
+        themeColor = THEME.purple;
+        activeGan = liuYueGan;
     }
 
+    // 計算分數：如果 centerIdx 無效，calculateScoreAndFormations 會回傳安全預設值
     let dataMing = calculateScoreAndFormations(grid, centerIdx, '命', activeGan, siHuaRules);
-    const dataGuan = calculateScoreAndFormations(grid, (centerIdx + 8) % 12, '官', activeGan, siHuaRules);
-    const dataCai  = calculateScoreAndFormations(grid, (centerIdx + 4) % 12, '財', activeGan, siHuaRules);
 
-    // 新增邏輯：若命宮分數與（事業+財帛）/2 差距過大，進行拉動調整
+    // 安全計算官祿與財帛宮索引
+    const guanIdx = typeof centerIdx === 'number' ? (centerIdx + 8) % 12 : -1;
+    const caiIdx  = typeof centerIdx === 'number' ? (centerIdx + 4) % 12 : -1;
+
+    const dataGuan = calculateScoreAndFormations(grid, guanIdx, '官', activeGan, siHuaRules);
+    const dataCai  = calculateScoreAndFormations(grid, caiIdx, '財', activeGan, siHuaRules);
+
+    // 拉分調整
     const subAvg = (dataGuan.score + dataCai.score) / 2;
     const diff = subAvg - dataMing.score;
-    // 如果差距超過 15 分，開始修正
     if (Math.abs(diff) > 15) {
-        // 修正幅度：差距的 40%
         let adjust = diff * 0.4;
         let newScore = dataMing.score + adjust;
-        // 邊界檢查
         if (newScore > 99) newScore = 99;
         if (newScore < 10) newScore = 10;
-        
         dataMing = { ...dataMing, score: Math.round(newScore) };
     }
 
     const ScoreCard = ({ title, data }) => {
-        const ratio = data.luckRatio;
+        const ratio = data.luckRatio || 50;
         const scoreColor = data.score >= 75 ? '#1890ff' : (data.score <= 50 ? '#ff4d4f' : '#faad14');
         const barColor = ratio >= 60 ? '#52c41a' : (ratio <= 40 ? '#ff4d4f' : '#faad14');
 
@@ -420,8 +454,10 @@ export const ScorePanel = ({
         );
     };
 
+    // 檢查是否可以顯示內容：centerIdx 必須是有效的數字且大於等於 0
+    const isValidIdx = typeof centerIdx === 'number' && !isNaN(centerIdx) && centerIdx >= 0;
+
     return (
-        /* 第一層：全屏遮罩 */
         <div style={{ 
             position: 'fixed', 
             top: 0, left: 0, right: 0, bottom: 0, 
@@ -430,142 +466,173 @@ export const ScorePanel = ({
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            padding: '20px' // 保持外部邊距，避免貼邊
+            padding: '20px'
         }} onClick={onClose}>
             
-            {/* 評分面板本體 */}
             <div style={{ 
                 width: '100%', 
-                maxWidth: '380px', // ★ 修改 1：寬度收窄 (原 480px -> 380px)
-                maxHeight: '85vh', // 限制最大高度
+                maxWidth: '380px', 
+                maxHeight: '70vh', 
                 backgroundColor: '#fff', borderRadius: '16px',
                 position: 'relative',
                 zIndex: 3,
-                overflow: 'hidden', // 隱藏溢出，讓內部 div 負責捲動
+                overflow: 'hidden', 
                 display: 'flex', flexDirection: 'column',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }} onClick={e => e.stopPropagation()}>
                 
-                {/* 標題欄 (固定不動) */}
+                {/* 標題欄 */}
                 <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, flexShrink: 0 }}>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>運勢評分</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                         <button onClick={() => switchView(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+                             <ChevronLeft size={20} />
+                         </button>
+                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: themeColor, minWidth: '40px', textAlign: 'center' }}>{title}</div>
+                         <button onClick={() => switchView(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+                             <ChevronRight size={20} />
+                         </button>
+                    </div>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#999' }}>
                         <X size={24} />
                     </button>
                 </div>
 
-                {/* ★ 修改 2：內容區域 (可捲動) - 所有內容都搬到這裡面 */}
+                {/* 內容區域 */}
                 <div style={{ 
                     flex: 1, 
-                    overflowY: 'auto', // 允許垂直滑動
+                    overflowY: 'auto', 
                     padding: '20px',
-                    paddingBottom: '40px' // 底部留白，方便手機操作
+                    paddingBottom: '40px' 
                 }}>
                     
-                    {/* 年份選擇器 (僅在流運模式顯示) */}
+                    {/* 年份/月份選擇器 */}
                     {(viewMode === 2 || viewMode === 3) && (
                         <div style={{ padding: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '20px' }}>
-                            <span style={{ fontSize: '12px', color: '#666' }}>{viewMode === 2 ? '小限年份:' : '流年年份:'}</span>
+                            {/* 年份選單 */}
+                            <span style={{ fontSize: '12px', color: '#666' }}>{viewMode === 3 ? '流月:' : '流年:'}</span>
                             <select value={currentYear} onChange={(e) => onYearChange(parseInt(e.target.value))} style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px', color: '#333', backgroundColor: '#fff' }}>
                                 {yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}
                             </select>
-                        </div>
-                    )}
 
-                    {/* 分數卡片 */}
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                        <ScoreCard title="總運" data={dataMing} />
-                        <ScoreCard title="事業" data={dataGuan} />
-                        <ScoreCard title="財運" data={dataCai} />
-                    </div>
-
-                    {/* 主要格局 */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <div style={{ width: '4px', height: '16px', backgroundColor: '#d9363e', borderRadius: '2px' }}></div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>主要格局</div>
-                        </div>
-                        
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', // 自適應寬度
-                            gap: '8px' 
-                        }}>
-                            {dataMing.formations.length > 0 ? (
-                                dataMing.formations.map((f, idx) => {
-                                    const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
-                                    return (
-                                        <button 
-                                            key={idx} 
-                                            onClick={() => setSelectedPattern(f)} 
-                                            style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center',
-                                                padding: '8px 4px', 
-                                                fontSize: '12px',
-                                                fontWeight: 'bold', 
-                                                cursor: 'pointer', 
-                                                border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, 
-                                                borderRadius: '6px', 
-                                                color: isBad ? '#cf1322' : '#389e0d', 
-                                                backgroundColor: isBad ? '#fff1f0' : '#f6ffed',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }}>
-                                            {f}
-                                        </button>
-                                    );
-                                })
-                            ) : (
-                                <div style={{ fontSize: '13px', color: '#999', gridColumn: 'span 2' }}>無特殊格局</div>
+                            {/* ★ 新增：月份選單 (僅在流月模式顯示) */}
+                            {viewMode === 3 && (
+                                <select 
+                                    value={currentMonth || 1} 
+                                    onChange={(e) => onMonthChange && onMonthChange(parseInt(e.target.value))} 
+                                    style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px', color: '#333', backgroundColor: '#fff' }}
+                                >
+                                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                                        <option key={m} value={m}>{m}月</option>
+                                    ))}
+                                </select>
                             )}
                         </div>
-                    </div>
+                    )}
+                    
+                    {!isValidIdx ? (
+                         <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                             <Info size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                             <div>尚未進入此運限或資料不足</div>
+                             <div style={{ fontSize: '12px', marginTop: '8px' }}>請調整時間或檢查出生資料</div>
+                         </div>
+                    ) : (
+                        <>
+                            {/* 分數卡片 */}
+                            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                                <ScoreCard title={title === '本命' ? '總運' : '運勢'} data={dataMing} />
+                                <ScoreCard title="事業" data={dataGuan} />
+                                <ScoreCard title="財運" data={dataCai} />
+                            </div>
 
-                    {/* 吉凶曜詳情 */}
-                    <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ width: '4px', height: '16px', backgroundColor: '#1890ff', borderRadius: '2px' }}></div>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>吉凶曜詳情</div>
+                            {/* 主要格局 */}
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                    <div style={{ width: '4px', height: '16px', backgroundColor: '#d9363e', borderRadius: '2px' }}></div>
+                                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>主要格局</div>
+                                </div>
+                                
+                                <div style={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                                    gap: '8px' 
+                                }}>
+                                    {dataMing.formations.length > 0 ? (
+                                        dataMing.formations.map((f, idx) => {
+                                            const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
+                                            return (
+                                                <button 
+                                                    key={idx} 
+                                                    onClick={() => setSelectedPattern(f)} 
+                                                    style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center',
+                                                        padding: '8px 4px', 
+                                                        fontSize: '12px',
+                                                        fontWeight: 'bold', 
+                                                        cursor: 'pointer', 
+                                                        border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, 
+                                                        borderRadius: '6px', 
+                                                        color: isBad ? '#cf1322' : '#389e0d', 
+                                                        backgroundColor: isBad ? '#fff1f0' : '#f6ffed',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                    {f}
+                                                </button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ fontSize: '13px', color: '#999', gridColumn: 'span 2' }}>無特殊格局</div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            {/* 吉曜框 */}
-                            <div style={{ flex: 1, border: '1px solid #d9f7be', borderRadius: '8px', backgroundColor: '#f6ffed', padding: '12px' }}>
-                                <div style={{ fontSize: '12px', color: '#389e0d', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #d9f7be', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
-                                    <span>吉曜</span> <span>{dataMing.details.good.length}</span>
+
+                            {/* 吉凶曜詳情 */}
+                            <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: '16px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '4px', height: '16px', backgroundColor: '#1890ff', borderRadius: '2px' }}></div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>吉凶曜詳情</div>
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#389e0d', lineHeight: '1.5' }}>
-                                    {dataMing.details.good.length > 0 ? (
-                                        dataMing.details.good.map((star, index) => (
-                                            <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
-                                        ))
-                                    ) : '無'}
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    {/* 吉曜框 */}
+                                    <div style={{ flex: 1, border: '1px solid #d9f7be', borderRadius: '8px', backgroundColor: '#f6ffed', padding: '12px' }}>
+                                        <div style={{ fontSize: '12px', color: '#389e0d', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #d9f7be', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
+                                            <span>吉曜</span> <span>{dataMing.details.good.length}</span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#389e0d', lineHeight: '1.5' }}>
+                                            {dataMing.details.good.length > 0 ? (
+                                                dataMing.details.good.map((star, index) => (
+                                                    <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
+                                                ))
+                                            ) : '無'}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 凶曜框 */}
+                                    <div style={{ flex: 1, border: '1px solid #ffccc7', borderRadius: '8px', backgroundColor: '#fff1f0', padding: '12px' }}>
+                                        <div style={{ fontSize: '12px', color: '#cf1322', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #ffccc7', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
+                                            <span>凶曜</span> <span>{dataMing.details.bad.length}</span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#cf1322', lineHeight: '1.5' }}>
+                                            {dataMing.details.bad.length > 0 ? (
+                                                dataMing.details.bad.map((star, index) => (
+                                                    <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
+                                                ))
+                                            ) : '無'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            {/* 凶曜框 */}
-                            <div style={{ flex: 1, border: '1px solid #ffccc7', borderRadius: '8px', backgroundColor: '#fff1f0', padding: '12px' }}>
-                                <div style={{ fontSize: '12px', color: '#cf1322', fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid #ffccc7', paddingBottom: '4px', display:'flex', justifyContent:'space-between' }}>
-                                    <span>凶曜</span> <span>{dataMing.details.bad.length}</span>
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#cf1322', lineHeight: '1.5' }}>
-                                    {dataMing.details.bad.length > 0 ? (
-                                        dataMing.details.bad.map((star, index) => (
-                                            <div key={index} style={{ marginBottom: '2px' }}>{star}</div>
-                                        ))
-                                    ) : '無'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* 彈窗：詳細說明 (保持不變) */}
+            {/* 彈窗：詳細說明 */}
             {selectedPattern && (
                 <div onClick={(e) => { e.stopPropagation(); setSelectedPattern(null); }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
                     <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '20px', maxWidth: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', animation: 'popIn 0.2s ease-out', borderLeft: `6px solid ${THEME.red}` }}>
