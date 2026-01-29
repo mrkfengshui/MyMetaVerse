@@ -454,18 +454,42 @@ export const ScorePanel = ({
                         <div style={{ width: '4px', height: '16px', backgroundColor: '#d9363e', borderRadius: '2px' }}></div>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>主要格局</div>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    
+                    {/* ★ 修改：使用 Grid 佈局確保每行最多 2 個 */}
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', // 自動填充，最小 120px
+                        gap: '8px' 
+                    }}>
                         {dataMing.formations.length > 0 ? (
                             dataMing.formations.map((f, idx) => {
-                                const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('喪') || f.includes('敗') || f.includes('夾');
+                                const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
                                 return (
-                                    <button key={idx} onClick={() => setSelectedPattern(f)} style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, borderRadius: '6px', color: isBad ? '#cf1322' : '#389e0d', backgroundColor: isBad ? '#fff1f0' : '#f6ffed', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                    <button 
+                                        key={idx} 
+                                        onClick={() => setSelectedPattern(f)} 
+                                        style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', // 居中對齊
+                                            padding: '8px 4px', 
+                                            fontSize: '12px', // 稍微縮小字體以適應窄屏
+                                            fontWeight: 'bold', 
+                                            cursor: 'pointer', 
+                                            border: `1px solid ${isBad ? '#ffccc7' : '#d9f7be'}`, 
+                                            borderRadius: '6px', 
+                                            color: isBad ? '#cf1322' : '#389e0d', 
+                                            backgroundColor: isBad ? '#fff1f0' : '#f6ffed',
+                                            whiteSpace: 'nowrap', // 防止換行
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
                                         {f}
                                     </button>
                                 );
                             })
                         ) : (
-                            <div style={{ fontSize: '13px', color: '#999' }}>無特殊格局</div>
+                            <div style={{ fontSize: '13px', color: '#999', gridColumn: 'span 2' }}>無特殊格局</div>
                         )}
                     </div>
                 </div>

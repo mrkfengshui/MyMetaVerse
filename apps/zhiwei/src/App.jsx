@@ -1019,20 +1019,20 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
     const mingIdx = g.findIndex(p => p.name === '命宮');
     
     return (
-        <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '8px', flex: 1, overflow: 'hidden', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
             <div style={{ 
                 display: 'grid', 
-                // 4欄均分
-                gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                // 4列均分
-                gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', 
-                // 1. 設定 gap 為 1px，這會強制分開每個格子
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                // ★ 關鍵：使用 dvh (Dynamic Viewport Height) 或固定比例，確保 4 列填滿且不溢出
+                gridTemplateRows: 'repeat(4, 24%)', 
                 gap: '1px', 
-                // 2. 設定容器背景色為深灰/邊框色，這就是露出來的線條顏色
                 backgroundColor: THEME.border, 
-                // 3. 設定外框
                 border: `1px solid ${THEME.border}`, 
-                flex: 1 
+                flex: 1,
+                aspectRatio: '1 / 1.1', // 保持接近正方形的比例
+                maxWidth: '800px', // 電腦端防止過寬
+                margin: '0 auto',
+                width: '100%'
                 }}>
 
                 {/* 第一列 (巳 午 未 申) */}
@@ -1040,17 +1040,16 @@ const ZwdsResult = ({ data, onBack, onSave, siHuaRules, daXianGanType }) => {
                 {/* 第二列左 (辰) */}
                 {renderCell(4)}
                 
-                {/* 中宮 (跨越 2列 x 2欄) */}
+                {/* 中宮 */}
                 <div style={{ 
                     gridColumn: '2 / span 2', 
                     gridRow: '2 / span 2', 
                     backgroundColor: THEME.white, 
-                    // ★ 修改：移除 padding, 改為相對定位以容納 ScorePanel
-                    position: 'relative',
+                    position: 'relative', // 讓 ScorePanel 可以絕對定位
                     display: 'flex',
                     flexDirection: 'column',
-                    overflow: 'hidden', // 防止溢出
-                    zIndex: 1
+                    overflow: 'hidden', 
+                    zIndex: 10
                 }}>
                     {showScore ? (
                         // ★ 情況 A: 顯示運勢評分面板 (填滿這個格子)
