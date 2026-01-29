@@ -444,8 +444,8 @@ export const ScorePanel = ({
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                    <ScoreCard title="總運勢" data={dataMing} />
-                    <ScoreCard title="事業運" data={dataGuan} />
+                    <ScoreCard title="總運" data={dataMing} />
+                    <ScoreCard title="事業" data={dataGuan} />
                     <ScoreCard title="財運" data={dataCai} />
                 </div>
 
@@ -458,7 +458,7 @@ export const ScorePanel = ({
                     {/* ★ 修改：使用 Grid 佈局確保每行最多 2 個 */}
                     <div style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', // 自動填充，最小 120px
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 2fr))', // 自動填充，最小 120px
                         gap: '8px' 
                     }}>
                         {dataMing.formations.length > 0 ? (
