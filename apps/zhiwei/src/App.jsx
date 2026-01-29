@@ -846,7 +846,7 @@ const PalaceGrid = ({
                      </div>
                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '30px' }}>
                         {showDa && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')} {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')} {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')} {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')} {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')} {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')} </div> )}
-                        {showXiao && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', THEME.green, '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
+                        {showXiao && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', 'green', '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
                         {showLiuYue && fs.yue && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')} {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')} {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')} {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')} {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')} {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')} </div> )}
                      </div>
                 </div>
@@ -860,7 +860,7 @@ const PalaceGrid = ({
                     
                     {/* 限名 (大限命宮、歲限兄弟等) */}
                     {showDa && daXianName && <div style={{ fontSize: '10px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
-                    {showXiao && xiaoXianName && <div style={{ fontSize: '10px', color: THEME.green, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
+                    {showXiao && xiaoXianName && <div style={{ fontSize: '10px', color: 'green', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
                     {showLiuYue && liuYueName && <div style={{ fontSize: '10px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
                 </div>
 
@@ -996,7 +996,18 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             stars.liu = { lu: lLu, yang:(lLu+1)%12, tuo:(lLu+11)%12, ma:({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[tYearZhi]), kui: DEFAULT_KUI_YUE[tYearGan]?.k, yue: DEFAULT_KUI_YUE[tYearGan]?.y };
             if (daXianGan) { const dLu = getLuPos(daXianGan); stars.da = { lu: dLu, yang:(dLu+1)%12, tuo:(dLu+11)%12, kui: DEFAULT_KUI_YUE[daXianGan]?.k, yue: DEFAULT_KUI_YUE[daXianGan]?.y }; }
             if (currentLiuYueGan) { const yLu = getLuPos(currentLiuYueGan); const curMonthZhi = targetLunar.getMonthZhi(); stars.yue = { lu: yLu, yang: (yLu + 1) % 12, tuo: (yLu + 11) % 12, ma: ({'申':2,'子':2,'辰':2,'寅':8,'午':8,'戌':8,'巳':11,'酉':11,'丑':11,'亥':5,'卯':5,'未':5}[curMonthZhi]), kui: DEFAULT_KUI_YUE[currentLiuYueGan]?.k, yue: DEFAULT_KUI_YUE[currentLiuYueGan]?.y }; }
-            return { currentAge: finalAge, liuNianZhiIdx, daXianIdx: dIdx, xiaoXianIdx: xIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars: stars, daXianGan, currentLiuNianGan: tYearGan };
+            return { 
+                currentAge: finalAge, 
+                liuNianZhiIdx, 
+                daXianIdx: dIdx, 
+                xiaoXianIdx: xIdx, 
+                activeSuiIdx,
+                currentLiuYueIdx, 
+                currentLiuYueGan, 
+                flowingStars: stars, 
+                daXianGan, 
+                currentLiuNianGan: tYearGan 
+            };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianSiHuaType, liuNianStartType]);
 
