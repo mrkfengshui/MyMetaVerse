@@ -29,7 +29,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 const APP_NAME = "甯博紫微斗數";
 const APP_VERSION = "v1.2 增加設定 - 小限/流年盤";
 
-// --- 核心數據定義 ---
+// --- 核心數據定義
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 const PALACE_NAMES = ['命宮', '兄弟', '夫妻', '子女', '財帛', '疾厄', '遷移', '奴僕', '官祿', '田宅', '福德', '父母'];
@@ -937,7 +937,13 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
         
     const resultParams = useMemo(() => {
         try {
-            const birthSolar = window.Solar.fromYmdHms(parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day), parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0);
+            const birthSolar = window.Solar.fromYmdHms(
+                parseInt(chartData.rawDate.year), 
+                parseInt(chartData.rawDate.month), 
+                parseInt(chartData.rawDate.day), 
+                parseInt(chartData.rawDate.hour), 
+                parseInt(chartData.rawDate.minute), 0
+            );
             const birthLunar = birthSolar.getLunar();
             const targetSolar = window.Solar.fromYmdHms(parseInt(targetDate.year), parseInt(targetDate.month), parseInt(targetDate.day), 12, 0, 0);
             const targetLunar = targetSolar.getLunar();
@@ -1010,6 +1016,95 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianSiHuaType, liuNianStartType]);
+    
+    // 評分專用參數 (ScorePanel Params)
+    const scoreParams = useMemo(() => {
+        try {
+            const birthSolar = window.Solar.fromYmdHms(
+                parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day), 
+                parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0
+            );
+            const birthLunar = birthSolar.getLunar();
+
+            // --- A. 歲限計算 (強制 6月30日) ---
+            // 這是為了鎖定流年，確保生肖與年份天干穩定
+            const fuzzyYearSolar = window.Solar.fromYmd(parseInt(targetDate.year), 6, 30);
+            const fuzzyYearLunar = fuzzyYearSolar.getLunar();
+            const fuzzyYearGan = fuzzyYearLunar.getYearGan();
+            const fuzzyYearZhi = fuzzyYearLunar.getYearZhi();
+            const fuzzyYearZhiIdx = DIZHI.indexOf(fuzzyYearZhi);
+            const fuzzyAge = fuzzyYearLunar.getYear() - birthLunar.getYear() + 1;
+
+            // 找大限/小限 (依據年中年齡)
+            let dIdx = -1; let xIdx = -1;
+            g.forEach((p, i) => {
+                if(p.daXian) { const [s, e] = p.daXian.split('-').map(Number); if(fuzzyAge >= s && fuzzyAge <= e) dIdx = i; }
+                if(p.xiaoXian?.includes(fuzzyAge)) xIdx = i;
+            });
+            
+            // 決定大限天干 (評分用)
+            let fuzzyDaXianGan = null;
+            if (dIdx !== -1) {
+                if (daXianSiHuaType === 'gong') fuzzyDaXianGan = g[dIdx].gan;
+                else {
+                    const mingPalace = g.find(p => p.name === '命宮');
+                    if (mingPalace) {
+                        const bYearGan = birthLunar.getYearGan();
+                        const isMale = chartData.genderText === '男';
+                        const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                        const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
+                        fuzzyDaXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                    }
+                }
+            }
+
+            // 歲限宮位 (評分用)
+            const fuzzySuiIdx = (liuNianStartType === 'year_zhi') ? g.findIndex(p => p.zhiIdx === fuzzyYearZhiIdx) : xIdx;
+
+            // --- B. 流月計算 (修正：以農曆初一為界) ---
+            
+            // 1. 先用西曆 15 日定位出「目前主要是哪一個農曆月」
+            const midMonthSolar = window.Solar.fromYmd(parseInt(targetDate.year), parseInt(targetDate.month), 15);
+            const tempLunar = midMonthSolar.getLunar();
+
+            // 2. 【關鍵修改】強制鎖定該農曆月的「初一」 (Day 1)
+            // 不論西曆選的是幾號，我們都重建一個「該農曆月 1日」的物件來進行運算
+            // 這確保了「月」的定義完全依照紫微斗數的月令起始點
+            const fuzzyMonthLunar = window.Lunar.fromYmd(
+                tempLunar.getYear(), 
+                tempLunar.getMonth(), 
+                1 
+            );
+            
+            // 3. 使用這個「初一」的物件來計算後續參數
+            const curLunarMonth = Math.abs(fuzzyMonthLunar.getMonth());
+            let leapMonth = 0;
+            try { if (window.LunarYear) leapMonth = window.LunarYear.fromYear(fuzzyMonthLunar.getYear()).getLeapMonth(); } catch(e){}
+            const isLeap = (fuzzyMonthLunar.getMonth() < 0);
+            let monthOffset = curLunarMonth - 1;
+            if (leapMonth > 0 && (curLunarMonth > leapMonth || isLeap)) monthOffset += 1;
+
+            // 流月宮位 (評分用) - 這裡的斗君基礎仍需參照該年流年(fuzzyYearZhiIdx)
+            const douJunIdx = (fuzzyYearZhiIdx - (Math.abs(birthLunar.getMonth()) - 1) + Math.floor((parseInt(chartData.rawDate.hour)+1)%24/2) + 12) % 12;
+            const fuzzyYueIdx = (douJunIdx + monthOffset) % 12;
+
+            // 流月天干 (評分用) - 依據該農曆月所屬年份(初一當下)
+            // 注意：如果西曆1月選到農曆12月，這裡會正確抓到舊年的天干
+            const fuzzyMonthContextYearGan = fuzzyMonthLunar.getYearGan(); 
+            const mGanIdx = TIANGAN.indexOf(fuzzyMonthContextYearGan);
+            const fuzzyYueGan = TIANGAN[(((mGanIdx % 5) * 2 + 2) + monthOffset) % 10];
+
+            return {
+                daXianIdx: dIdx,
+                daXianGan: fuzzyDaXianGan,
+                suiIdx: fuzzySuiIdx,
+                suiGan: fuzzyYearGan,
+                yueIdx: fuzzyYueIdx,
+                yueGan: fuzzyYueGan
+            };
+
+        } catch(e) { console.error("Score Params Error", e); return { daXianIdx: -1, suiIdx: -1, yueIdx: -1 }; }
+    }, [chartData.rawDate, targetDate.year, targetDate.month, g, chartData.genderText, daXianSiHuaType, liuNianStartType]);
 
     const { currentAge, liuNianZhiIdx, daXianIdx, xiaoXianIdx, activeSuiIdx, currentLiuYueIdx, currentLiuYueGan, flowingStars, daXianGan, currentLiuNianGan } = resultParams;
     const activeSiHua = useMemo(() => {
@@ -1172,17 +1267,25 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 <ScorePanel 
                     grid={chartData.grid}
                     mingIdx={mingIdx}
-                    daXianIdx={resultParams.daXianIdx}
-                    xiaoXianIdx={resultParams.activeSuiIdx} // 這裡傳入 App 計算好的歲限中心 (已考慮設定：小限法/流年地支法)
-                    liuYueIdx={resultParams.currentLiuYueIdx} // 流月宮位
+                    
+                    // --- 修改：使用評分專用的模糊參數 ---
+                    daXianIdx={scoreParams.daXianIdx}
+                    daXianGan={scoreParams.daXianGan}
+                    
+                    xiaoXianIdx={scoreParams.suiIdx}   // 傳入 6.30 計算出的歲限宮
+                    liuNianGan={scoreParams.suiGan}    // 傳入 6.30 計算出的流年干
+                    
+                    liuYueIdx={scoreParams.yueIdx}     // 傳入 15日 計算出的流月宮
+                    liuYueGan={scoreParams.yueGan}     // 傳入 15日 計算出的流月干
+                    // ----------------------------------
+
                     currentYear={targetDate.year}
+                    currentMonth={targetDate.month}
                     onYearChange={(y) => handleDateChange('year', y)}
+                    onMonthChange={(m) => handleDateChange('month', m)}
                     yearOptions={yearOptions}
                     onClose={() => setShowScorePanel(false)}
                     siHuaRules={currentSiHuaRules}
-                    daXianGan={resultParams.daXianGan}
-                    liuNianGan={resultParams.currentLiuNianGan}
-                    liuYueGan={resultParams.currentLiuYueGan} // 流月天干
                 />
             )}
         </div>

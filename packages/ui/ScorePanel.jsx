@@ -1,12 +1,20 @@
 // packages/ui/ScorePanel.jsx
 import React, { useState } from 'react';
-import { THEME } from './theme'; 
+import { THEME, PATTERN_DESC } from '@my-meta/ui';
 import { X, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 // --- 1. 定義常量 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 
 const PALACE_ORDER = ['命宮', '兄弟', '夫妻', '子女', '財帛', '疾厄', '遷移', '奴僕', '官祿', '田宅', '福德', '父母'];
+
+const goodJia = ['財蔭夾印', '科權祿夾', '紫府夾命', '日月夾命', '左右夾命', '昌曲夾命', '魁鉞夾命'];
+const badPatterns = [
+    '風流彩杖', '因財持刀', '兩重華蓋', '梁馬飄蕩', '巨逢四煞', 
+    '路上埋屍', '桃花滾浪', '鈴昌陀武', '巨火羊', '馬頭帶劍', 
+    '泛水桃花', '刑囚夾印', '火鈴夾命', '空劫夾命', '羊陀夾忌',
+    '化忌入命', '化忌沖命', '貪狼遇文昌', '貪狼遇文曲', '命逢空劫'
+];
 
 const getSanFangSiZheng = (centerIdx) => {
     // 安全取餘數函數，確保結果為正整數
@@ -26,77 +34,12 @@ const getRelativePalaceName = (centerIdx, targetIdx) => {
     return PALACE_ORDER[offset] || '';
 };
 
-const PATTERN_DESC = {
-    // --- 吉格 ---
-    "紫府同宮": "「紫府同宮，終身福厚。」帝星並坐，氣度恢弘，主福壽雙全，利於公職或管理。",
-    "紫府朝垣": "「紫府朝垣，食祿萬鍾。」兩大帝星照耀，貴人運強，事業格局大，易得長輩提拔。",
-    "君臣慶會": "「君臣慶會，才擅經邦。」輔佐星眾多，一呼百應，具備極佳的領導統御能力。",
-    "機月同梁": "「機月同梁作吏人。」利於公職、企劃、行政或專業技術發展，風格穩健，按部就班。",
-    "日月並明": "「日月並明，佐九重於堯殿。」丹墀桂墀，早年得志，富貴雙全，易早發。",
-    "日月同宮": "「日月同宮，這晦那明。」陰陽調和，性格多重，具備開創與保守的雙重特質。",
-    "金燦光輝": "「太陽居午，專權之貴。」光芒萬丈，主貴氣與名聲，適合進軍政商界，性格豪爽。",
-    "日照雷門": "「日照雷門，富貴名揚。」旭日東昇，充滿朝氣，早年即可展露頭角，名氣大。",
-    "月朗天門": "「月朗天門，進爵封侯。」太陰在亥，如月掛中天，主財運亨通，精神生活富足。",
-    "明珠出海": "「明珠出海，財官雙美。」命坐未宮，日月會照，才華洋溢，名利雙收。",
-    "陽梁昌祿": "「陽梁昌祿，傳臚第一名。」利於考試、競爭、學術研究，必定成名，為國家之棟樑。",
-    "壽星入廟": "「天梁居午，官資清顯。」主高壽且具備長者風範，適合監察、司法或醫療事業。",
-    "英星入廟": "「破軍子午，無煞官資清顯。」魄力十足，開創性極強，動盪後必有大成。",
-    "石中隱玉": "「巨門子午，石中隱玉。」才華內斂，經琢磨後光華顯現，早年辛苦晚年發達，不宜鋒芒太露。",
-    "七殺朝斗": "「七殺朝斗，爵祿榮昌。」權力慾強，具備大將之風，可獨當一面，雖辛勞但有大成。",
-    "七殺仰斗": "「七殺仰斗，主掌權柄。」與朝斗格類似，利於武職、創業或管理，成就非凡。",
-    "府相朝垣": "「府相朝垣，食祿千鍾。」衣食無憂，人際關係良好，利於輔佐與穩定發展，親情緣厚。",
-    "月生滄海": "「天同居子，福壽雙全。」眉清目秀，異性緣佳，財官雙美，生活有情調。",
-    "三奇加會": "「科權祿拱，名譽昭彰。」名聲顯赫，富貴雙全，人生機遇極佳，易成為行業領袖。",
-    "雙祿交流": "「祿合鴛鴦，富堆金玉。」祿存與化祿交馳，財源滾滾，為富商巨賈之格。",
-    "左右同宮": "「左右同宮，披羅衣紫。」人緣極佳，凡事有貴人相助，少勞多得，易居要職。",
-    "坐貴向貴": "「天乙拱命，得人提攜。」天魁天鉞加持，一生多逢貴人提拔，遇難呈祥，際遇極佳。",
-    "火貪格": "「貪狼遇火必英雄。」主突發橫財，爆發力強，機遇一來勢不可擋，指日高升。",
-    "鈴貪格": "「鈴貪並守，將相之名。」主偏財運強，善於把握隱形機會，亦主爆發。",
-    "日月有暉": "「日月有暉，貴不可言。」太陽與太陰在三方四正交會，且亮度皆佳（廟旺），主富貴雙全，聲名遠播。",
-    "祿馬交馳": "「祿馬最喜交馳。」祿存與天馬在三方四正交會，主奔波生財，越動越發，利於國貿、運輸或遠地發展。",
-    "文曲文昌天魁秀": "文曲文昌天魁秀，不讀詩書也可人。",
-    
-    // --- 凶格 ---
-    "鈴昌陀武": "「鈴昌陀武，限至投河。」最忌想不開，需防重大挫折或意外，行事宜保守謹慎。",
-    "巨火羊": "「巨火擎羊，終身縊死。」此為古語誇飾，實指易有感情困擾或人生波折，需修身養性，防口舌是非。",
-    "命逢空劫": "劫空為害最愁人，才智英雄誤一身，只好為僧並學術，堆金積玉也須貧。",
-    "馬頭帶劍": "「馬頭帶劍，鎮衛邊疆。」擎羊在午，需經艱辛奮鬥後方能大富大貴，先苦後甘。",
-    "刑囚夾印": "「刑囚夾印，刑杖惟司。」易惹官非訴訟，文書簽約需特別謹慎，適合法律相關行業。",
-    "泛水桃花": "「貪狼居子，泛水桃花。」異性緣過旺，易因色生災，需防桃花糾紛。",
-    "廉貞七殺": "「廉殺丑未，路上埋屍。」古論意外凶險，今論運勢大起大落，需防交通意外或血光。",
-    "貪狼遇文昌": "「貪狼與文昌，正事顛倒。」言行誇大，多虛少實，作事易虎頭蛇尾；但利於演藝、藝術或冷門學術發展。",
-    "貪狼遇文曲": "「貪狼與文曲，正事顛倒。」言行誇大，多虛少實，作事易虎頭蛇尾；但利於演藝、藝術或冷門學術發展。",
-    "空宮": "命宮無主星，需借命主星組合研判。",
-
-    // --- 夾局 ---
-    "左右夾命": "「左右夾命為貴格。」兄弟朋友得力，家世背景佳，助力無窮。",
-    "昌曲夾命": "「昌曲夾命，文采風流。」書香世家，聰明多藝，學術成就高。",
-    "魁鉞夾命": "「魁鉞夾命，貴人環繞。」長輩提攜，機會自動上門，一生少走彎路。",
-    "紫府夾命": "「紫府夾命，權貴可期。」貴氣逼人，受人敬重，社會地位高。",
-    "日月夾命": "「日月夾命，不權則富。」財運極佳，不勞而獲，主享受，物質生活優渥。",
-    "空劫夾命": "「劫空夾命為敗局。」半生漂泊，六親無力，需靠自己雙手打拼，易感孤獨。",
-    "火鈴夾命": "「火鈴夾命，動盪不安。」環境變動大，易焦慮不安，需培養定性。",
-    "羊陀夾命": "「羊陀夾命，孤貧刑剋。」發展受限，易受親友拖累，宜離鄉發展。",
-    "羊陀夾忌": "「羊陀夾忌，敗局無疑。」最凶之格，諸事不順，需極度保守忍耐，低調行事。",
-
-    // 其他
-    "化忌坐命": "「化忌入命，坎坷難行。」主個性固執，早年多波折，需經磨練方能有成。",
-    "化忌沖命": "「化忌沖命，動盪不安。」對宮化忌沖照，出外易招是非，人際關係較為緊張。",
-    "巨日同宮(寅)": "「巨日同宮，食祿馳名。」在寅宮，太陽旺地，主口才極佳，利於外交、傳播、法律。",
-    "巨日同宮(申)": "「巨日同宮，先勤後惰。」在申宮，太陽西沉，雖有才華但易虎頭蛇尾，需持之以恆。",
-    "假石中隱玉": "巨門坐命但無科權祿加會，才華雖有但難以被世人發現，易感懷才不遇。",
-    "昌曲同宮": "「昌曲同宮，文章錦繡。」才華洋溢，學習能力強，利於學術、文藝發展。",
-    "昌曲守照": "文昌文曲在三方四正會照，主聰明多藝，考試運佳。",
-    "左右守照": "左輔右弼在三方會照，主在外有貴人助力，人際關係佳。",
-    "魁鉞朝垣": "天魁天鉞在三方會照，主一生多逢貴人提拔，機遇優於常人。"
-};
-
 /**
  * 計算評分與格局 (安全版)
  */
 const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', activeGan = null, siHuaRules = null) => {
     // 預設回傳值
-    const defaultResult = { score: 50, formations: [], details: { good: [], bad: [] }, luckRatio: 50, baseScore: 50 };
+    const defaultResult = { score: 40, formations: [], details: { good: [], bad: [] }, luckRatio: 50, baseScore: 40 };
 
     // 1. 強力防呆：檢查索引是否為數字且有效，檢查 grid 是否存在
     if (
@@ -232,11 +175,247 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
 
         // --- 3. 格局偵測 (Pattern Detection) ---
         const has = (star) => allStars.includes(star);
-        const inSelf = (star) => starMap[star] === 0;
-        const inOpposite = (star) => starMap[star] === 3;
+        const inSelf = (star) => starMap[star] === 0;       // 在命宮
+        const inOpposite = (star) => starMap[star] === 3;   // 在遷移宮
+        const inSanFang = (star) => [1, 2].includes(starMap[star]); // 在財帛或官祿
         const isBright = (b) => ['廟', '旺'].includes(b);
-        // 安全存取地支
         const currentZhi = selfPalace.zhi || '';
+        
+        // 判斷煞星數量 (命宮)
+        const selfShaCount = ['擎羊','陀羅','火星','鈴星','地劫','天空'].filter(s => inSelf(s)).length;
+
+        // --- 夾局判斷專用邏輯 ---
+        // 取得鄰宮 (兄弟/父母) 的所有星曜與四化
+        const getNeighborInfo = (offset) => {
+            const idx = (centerIdx + offset + 120) % 12;
+            const p = grid[idx];
+            if (!p) return { stars: [], huas: [] };
+            
+            let stars = [];
+            let huas = [];
+            
+            [...safeStars(p), ...safeMinorStars(p)].forEach(s => {
+                if(s && s.name) {
+                    stars.push(s.name);
+                    // 判斷四化
+                    let h = s.hua;
+                    if (activeRules) {
+                        if (s.name === activeRules.lu) h = '祿';
+                        else if (s.name === activeRules.quan) h = '權';
+                        else if (s.name === activeRules.ke) h = '科';
+                        else if (s.name === activeRules.ji) h = '忌';
+                    }
+                    if(h) huas.push(h);
+                }
+            });
+            return { stars, huas };
+        };
+
+        const prevInfo = getNeighborInfo(-1); // 兄弟宮方向
+        const nextInfo = getNeighborInfo(1);  // 父母宮方向
+
+        // 判斷是否被某兩個條件夾 (支援星曜名稱或四化名稱)
+        // condition1/2 可以是 '天梁' (星名) 或 '祿' (四化)
+        const isClampedBy = (cond1, cond2) => {
+            const check = (info, cond) => info.stars.includes(cond) || info.huas.includes(cond);
+            return (check(prevInfo, cond1) && check(nextInfo, cond2)) || 
+                   (check(prevInfo, cond2) && check(nextInfo, cond1));
+        };
+
+        // ================= 富貴與權祿格局 =================
+        
+        // 極向離明: 紫微在午宮坐命，無煞
+        if (inSelf('紫微') && currentZhi === '午' && selfShaCount === 0) {
+            formations.push("極向離明");
+        }
+
+        // 機巨同臨: 天機巨門在卯宮
+        if (inSelf('天機') && inSelf('巨門') && currentZhi === '卯') {
+            formations.push("機巨同臨");
+        }
+
+        // 雄宿朝元: 廉貞在寅申獨坐 (廉貞在寅申必獨坐，對宮貪狼)
+        if (inSelf('廉貞') && !inSelf('七殺') && !inSelf('破軍') && !inSelf('貪狼') && !inSelf('天府') && ['寅', '申'].includes(currentZhi)) {
+            formations.push("雄宿朝元");
+        }
+
+        // 財蔭夾印: 天相被化祿(財)與天梁(蔭)所夾
+        if (inSelf('天相') && isClampedBy('祿', '天梁')) {
+            formations.push("財蔭夾印");
+        }
+
+        // 將星得地: 武曲在辰戌丑未
+        if (inSelf('武曲') && ['辰', '戌', '丑', '未'].includes(currentZhi)) {
+            formations.push("將星得地");
+        }
+
+        // 權祿巡逢: 化祿與化權在命宮或三方 (這裡簡化為三方四正有)
+        if (huaMap['祿'] > 0 && huaMap['權'] > 0) {
+            formations.push("權祿巡逢");
+        }
+
+        // 科權祿夾: 命宮被科、權、祿任二者所夾
+        // 邏輯：檢查鄰宮是否有科權祿，且合計數量 >= 2 (左右各一)
+        const countJiaHua = (type) => (prevInfo.huas.includes(type) ? 1 : 0) + (nextInfo.huas.includes(type) ? 1 : 0);
+        const jiaLu = countJiaHua('祿');
+        const jiaQuan = countJiaHua('權');
+        const jiaKe = countJiaHua('科');
+        // 簡單判斷：只要左右鄰宮充滿吉化即可，不嚴格限制排列
+        if ((jiaLu + jiaQuan + jiaKe) >= 2 && !prevInfo.huas.includes('忌') && !nextInfo.huas.includes('忌')) {
+            formations.push("科權祿夾");
+        }
+
+        // 文星拱命: 昌曲在三方四正 (不含本宮) 拱照
+        if ((inSanFang('文昌') || inOpposite('文昌')) && (inSanFang('文曲') || inOpposite('文曲'))) {
+            formations.push("文星拱命");
+        }
+
+        // 輔拱文星: 昌曲坐命，左右拱照
+        if ((inSelf('文昌') || inSelf('文曲')) && (inSanFang('左輔') || inSanFang('右弼') || inOpposite('左輔') || inOpposite('右弼'))) {
+            formations.push("輔拱文星");
+        }
+
+        // 天府朝垣: 天府在戌/辰坐命
+        if (inSelf('天府') && ['戌', '辰'].includes(currentZhi)) {
+            formations.push("天府朝垣");
+        }
+
+        // 祿合鴛鴦: 祿存與化祿，一在命一在遷 (或三方匯聚)
+        // 嚴格定義：命有祿存，遷有化祿；或命有化祿，遷有祿存
+        if ((inSelf('祿存') && inOpposite('祿')) || (inSelf('祿') && inOpposite('祿存'))) {
+            formations.push("祿合鴛鴦");
+        } else if (has('祿存') && huaMap['祿'] > 0 && !inSelf('祿存') && !inSelf('祿')) {
+            // 寬鬆定義：雙祿交流 (已在下方舊代碼包含，這裡可保留鴛鴦的嚴格定義)
+        }
+
+        // ================= 特殊與凶局 =================
+
+        // 風流彩杖: 貪狼廉貞同宮 (必在巳亥)
+        if (inSelf('貪狼') && inSelf('廉貞')) {
+            formations.push("風流彩杖");
+        }
+
+        // 因財持刀: 武曲七殺同宮 (必在卯酉)，見擎羊
+        if (inSelf('武曲') && inSelf('七殺') && has('擎羊')) {
+            formations.push("因財持刀");
+        }
+
+        // 兩重華蓋: 祿存或化祿坐命，遇空劫
+        if ((inSelf('祿存') || inSelf('祿')) && (inSelf('地劫') || inSelf('天空'))) {
+            formations.push("兩重華蓋");
+        }
+
+        // 梁馬飄蕩: 天梁天馬同宮 (巳亥申寅)
+        if (inSelf('天梁') && inSelf('天馬')) {
+            formations.push("梁馬飄蕩");
+        }
+
+        // 巨逢四煞: 巨門坐命，三方四正見羊陀火鈴 (這裡設為見2煞以上即警示)
+        if (inSelf('巨門')) {
+            const shaCount = (has('擎羊')?1:0) + (has('陀羅')?1:0) + (has('火星')?1:0) + (has('鈴星')?1:0);
+            if (shaCount >= 2) formations.push("巨逢四煞");
+        }
+
+        // 刑忌夾印: 天相受 化忌+天梁 夾，或 化忌+擎羊 夾
+        if (inSelf('天相')) {
+            if (isClampedBy('忌', '天梁') || isClampedBy('忌', '擎羊')) {
+                formations.push("刑忌夾印");
+            }
+        }
+
+        // 馬落空亡: 天馬遇空亡星
+        if (inSelf('天馬') && (inSelf('地劫') || inSelf('天空') || inSelf('截空'))) {
+            formations.push("馬落空亡");
+        }
+
+        // 太陽太陰系列格局
+
+        // 1. 日月同宮 (丑未)
+        if (inSelf('太陽') && inSelf('太陰')) {
+            formations.push("日月同宮");
+        }
+
+        // 2. 明珠出海 (命宮在未，空宮，日月廟旺拱照)
+        // 修正：必須檢查亮度(廟旺)，避免誤判「日月在丑(陷)沖命」的格局
+        if (currentZhi === '未' && isEmptyPalace && has('太陽') && has('太陰')) {
+            if (isBright(sunBrightness) && isBright(moonBrightness)) {
+                formations.push("明珠出海");
+            }
+        }
+
+        // 3. 日月並明 (丹墀桂墀的另一種說法，或指日月皆在廟旺之地照命)
+        // 定義：太陽在巳/辰，太陰在酉/戌
+        if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
+            // 排除掉已經是「明珠出海」的情況，避免重複顯示
+            if (!formations.includes("明珠出海")) {
+                 // 檢查位置是否符合典型的並明 (日巳月酉 或 日辰月戌)
+                 const sunZhi = grid.find(p => safeStars(p).some(s => s.name === '太陽'))?.zhi;
+                 const moonZhi = grid.find(p => safeStars(p).some(s => s.name === '太陰'))?.zhi;
+                 
+                 // 嚴格定義：太陽在辰巳，太陰在酉戌
+                 if (['辰','巳'].includes(sunZhi) && ['酉','戌'].includes(moonZhi)) {
+                     formations.push("丹墀桂墀");
+                 }
+                 // 日月有暉
+                 if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
+                    const sunPos = grid.find(p => safeStars(p).some(s => s.name === '太陽'))?.zhi;
+                    const moonPos = grid.find(p => safeStars(p).some(s => s.name === '太陰'))?.zhi;
+                    if (sunPos && moonPos && sunPos !== moonPos) {
+                        formations.push("日月有暉");
+                 }
+        }
+            }
+        }
+
+        // 4. 日月反背 (太陽在戌亥子，太陰在卯辰巳)
+        // 修正：除了命宮主星外，若命宮無主星借到反背的日月，也算
+        let isFanBei = false;
+        
+        // 情況A: 命宮主星反背
+        if ((inSelf('太陽') && ['戌', '亥', '子'].includes(currentZhi)) || 
+            (inSelf('太陰') && ['卯', '辰', '巳'].includes(currentZhi))) {
+            isFanBei = true;
+        }
+        
+        // 情況B: 命宮空宮，借對宮(遷移)日月反背 (例如命宮在辰空宮，對宮戌有太陽)
+        if (isEmptyPalace) {
+            const oppSun = safeStars(oppPalace).find(s => s.name === '太陽');
+            const oppMoon = safeStars(oppPalace).find(s => s.name === '太陰');
+            
+            // 檢查對宮太陽是否落陷
+            if (oppSun && ['戌', '亥', '子'].includes(oppPalace.zhi)) isFanBei = true;
+            // 檢查對宮太陰是否落陷
+            if (oppMoon && ['卯', '辰', '巳'].includes(oppPalace.zhi)) isFanBei = true;
+        }
+        if (isFanBei) formations.push("日月反背");
+
+        // 5. 其他單星亮度格局
+        if (inSelf('太陽') && currentZhi === '卯') formations.push("日照雷門");
+        if (inSelf('太陰') && currentZhi === '亥') formations.push("月朗天門");
+        // 日麗中天: 太陽在午宮，無煞 (嚴格來說要廟旺，午宮必廟)
+        if (inSelf('太陽') && currentZhi === '午' && selfShaCount === 0) {
+            formations.push("日麗中天");
+        }
+        // 水澄桂萼: 太陰在子宮，夜生人更吉 (此處僅判斷星位)
+        if (inSelf('太陰') && currentZhi === '子') {
+            formations.push("水澄桂萼");
+        }
+        // 陽梁昌祿
+        if (has('太陽') && has('天梁') && has('文昌') && (has('祿存') || huaMap['祿']>0)) formations.push("陽梁昌祿");
+        // 桃花滾浪: 巨門太陽 (寅申) 加會桃花 (紅鸞天喜文曲咸池)
+        if (inSelf('巨門') && inSelf('太陽')) {
+            const peachCount = (has('紅鸞')?1:0) + (has('天喜')?1:0) + (has('文曲')?1:0) + (has('咸池')?1:0) + (has('天姚')?1:0);
+            if (peachCount >= 2) {
+                formations.push("桃花滾浪");
+            }
+        }
+        // 巨日同宮
+        if (inSelf('巨門') && inSelf('太陽')) {
+            if (!formations.includes("桃花滾浪")) {
+                if (currentZhi === '寅') formations.push("巨日同宮(寅)");
+                else if (currentZhi === '申') formations.push("巨日同宮(申)");
+            }
+        }
 
         // 吉格
         if (inSelf('紫微') && inSelf('天府')) formations.push("紫府同宮");
@@ -247,21 +426,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
             if (count >= 4) formations.push("君臣慶會");
         }
         if (has('天機') && has('太陰') && has('天同') && has('天梁')) formations.push("機月同梁");
-        
-        // 日月有暉
-        if (has('太陽') && has('太陰') && isBright(sunBrightness) && isBright(moonBrightness)) {
-            const sunPos = grid.find(p => safeStars(p).some(s => s.name === '太陽'))?.zhi;
-            const moonPos = grid.find(p => safeStars(p).some(s => s.name === '太陰'))?.zhi;
-            if (sunPos && moonPos && sunPos !== moonPos) {
-                 formations.push("日月有暉");
-            }
-        }
 
-        if (inSelf('太陽') && currentZhi === '午') formations.push("金燦光輝");
-        if (inSelf('太陽') && currentZhi === '卯') formations.push("日照雷門");
-        if (inSelf('太陰') && currentZhi === '亥') formations.push("月朗天門");
-        if (currentZhi === '未' && isEmptyPalace && has('太陽') && has('太陰')) formations.push("明珠出海");
-        if (has('太陽') && has('天梁') && has('文昌') && (has('祿存') || huaMap['祿']>0)) formations.push("陽梁昌祿");
         if (inSelf('天梁') && currentZhi === '午') formations.push("壽星入廟");
         if (inSelf('破軍') && (currentZhi === '子' || currentZhi === '午')) formations.push("英星入廟");
         if (inSelf('巨門') && (currentZhi === '子' || currentZhi === '午')) {
@@ -274,7 +439,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
         }
         if (has('天府') && has('天相')) formations.push("府相朝垣");
         if (inSelf('天同') && inSelf('太陰') && currentZhi === '子') formations.push("月生滄海");
-        if (huaMap['祿'] > 0 && huaMap['權'] > 0 && huaMap['科'] > 0) formations.push("三奇加會");
+        if (huaMap['祿'] > 0 && huaMap['權'] > 0 && huaMap['科'] > 0) formations.push("三奇嘉會");
         if (has('祿存') && huaMap['祿'] > 0) formations.push("雙祿交流");
         if (has('祿存') && has('天馬')) formations.push("祿馬交馳");
         if (has('左輔') && has('右弼')) { 
@@ -290,6 +455,10 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
         if (has('天魁')) {
             if (has('文曲') && has('文昌')) formations.push("文曲文昌天魁秀");
         }
+        // 補：昌曲同宮 (丑未)
+        if (inSelf('文昌') && inSelf('文曲')) {
+            formations.push("昌曲同宮");
+        }
 
         // 凶格
         if (has('貪狼')) {
@@ -302,9 +471,10 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
         if (currentZhi === '午' && inSelf('擎羊')) formations.push("馬頭帶劍");
         if (has('廉貞') && has('天相') && has('擎羊') && currentZhi === '午') formations.push("刑囚夾印");
         if (inSelf('貪狼') && currentZhi === '子') formations.push("泛水桃花");
-        if (inSelf('廉貞') && inSelf('七殺') && (has('擎羊') || has('陀羅') || has('化忌'))) formations.push("廉貞七殺");
+        if (inSelf('廉貞') && inSelf('七殺') && !['丑', '未'].includes(currentZhi) && (has('擎羊') || has('陀羅') || has('化忌'))) {
+            formations.push("路上埋屍");
+        }
 
-        // 夾宮
         const getPalaceStars = (idx) => {
             const safeIdx = (idx + 120) % 12;
             const p = grid[safeIdx]; if (!p) return []; 
@@ -328,6 +498,21 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
             if (huaMap['忌'] > 0 || prevStars.includes('忌') || nextStars.includes('忌')) formations.push("羊陀夾忌");
         }
 
+        const isClampedByStars = (s1, s2) => {
+            return (prevInfo.stars.includes(s1) && nextInfo.stars.includes(s2)) || 
+                   (prevInfo.stars.includes(s2) && nextInfo.stars.includes(s1));
+        };
+        // 1. 紫府夾命 (命宮在寅申，紫微天府夾)
+        if (isClampedByStars('紫微', '天府')) formations.push("紫府夾命");
+        // 2. 日月夾命 (命宮在丑未，太陽太陰夾)
+        if (isClampedByStars('太陽', '太陰')) formations.push("日月夾命");
+        // 3. 左右夾命 (左輔右弼夾)
+        if (isClampedByStars('左輔', '右弼')) formations.push("左右夾命");
+        // 4. 昌曲夾命 (文昌文曲夾)
+        if (isClampedByStars('文昌', '文曲')) formations.push("昌曲夾命");
+        // 5. 魁鉞夾命 (天魁天鉞夾 - 辰戌宮較常見)
+        if (isClampedByStars('天魁', '天鉞')) formations.push("魁鉞夾命");
+
         // --- 4. 分數合成 ---
         const luckRatio = Math.round((totalGoodPoints / (totalGoodPoints + totalBadPoints)) * 100);
         const modifierFactor = (luckRatio - 50) / 50; 
@@ -342,7 +527,7 @@ const calculateScoreAndFormations = (grid, centerIdx, targetName = '命', active
 
         let finalScore = baseScore + adjustment;
         if (finalScore > 99) finalScore = 99;
-        if (finalScore < 10) finalScore = 10;
+        if (finalScore < 20) finalScore = 20;
 
         return { 
             score: Math.round(finalScore), 
@@ -361,7 +546,7 @@ export const ScorePanel = ({
     grid, mingIdx, 
     daXianIdx, xiaoXianIdx, liuYueIdx, 
     currentYear, onYearChange, yearOptions, 
-    currentMonth, onMonthChange, // ★ 新增：接收當前月份與切換函數
+    currentMonth, onMonthChange, // 接收參數
     onClose, 
     siHuaRules, 
     daXianGan, liuNianGan, liuYueGan 
@@ -385,6 +570,7 @@ export const ScorePanel = ({
     let themeColor = THEME.black;
     let activeGan = null;
 
+    // 邏輯判定區
     if (viewMode === 0) {
         centerIdx = mingIdx;
         title = "本命";
@@ -400,9 +586,9 @@ export const ScorePanel = ({
         title = "歲限";
         themeColor = THEME.green;
         activeGan = liuNianGan;
-    } else {
-        centerIdx = liuYueIdx;
-        title = "流月";
+    } else if (viewMode === 3) {
+        centerIdx = liuYueIdx; 
+        title = "流月"; 
         themeColor = THEME.purple;
         activeGan = liuYueGan;
     }
@@ -487,7 +673,14 @@ export const ScorePanel = ({
                          <button onClick={() => switchView(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
                              <ChevronLeft size={20} />
                          </button>
-                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: themeColor, minWidth: '40px', textAlign: 'center' }}>{title}</div>
+                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                             <div style={{ fontSize: '18px', fontWeight: 'bold', color: themeColor, textAlign: 'center' }}>
+                                 {title}
+                             </div>
+                             <div style={{ fontSize: '10px', color: '#999', marginTop: '2px', fontWeight: 'normal' }}>
+                                 評分只供娛樂，論命需參照大運流限
+                             </div>
+                         </div>
                          <button onClick={() => switchView(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
                              <ChevronRight size={20} />
                          </button>
@@ -507,27 +700,30 @@ export const ScorePanel = ({
                     
                     {/* 年份/月份選擇器 */}
                     {(viewMode === 2 || viewMode === 3) && (
-                        <div style={{ padding: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '20px' }}>
-                            {/* 年份選單 */}
-                            <span style={{ fontSize: '12px', color: '#666' }}>{viewMode === 3 ? '流月:' : '流年:'}</span>
-                            <select value={currentYear} onChange={(e) => onYearChange(parseInt(e.target.value))} style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px', color: '#333', backgroundColor: '#fff' }}>
-                                {yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}
-                            </select>
+                    <div style={{ padding: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '20px' }}>
+                        <span style={{ fontSize: '12px', color: '#666' }}>{viewMode === 3 ? '西曆:' : '流年:'}</span>
+                        <select 
+                            value={currentYear} 
+                            onChange={(e) => onYearChange(parseInt(e.target.value))}
+                            style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px' }}
+                        >
+                            {yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}
+                        </select>
 
-                            {/* ★ 新增：月份選單 (僅在流月模式顯示) */}
-                            {viewMode === 3 && (
-                                <select 
-                                    value={currentMonth || 1} 
-                                    onChange={(e) => onMonthChange && onMonthChange(parseInt(e.target.value))} 
-                                    style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px', color: '#333', backgroundColor: '#fff' }}
-                                >
-                                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                                        <option key={m} value={m}>{m}月</option>
-                                    ))}
-                                </select>
-                            )}
-                        </div>
-                    )}
+                        {/* 關鍵：實裝流月切換選單 */}
+                        {viewMode === 3 && (
+                            <select 
+                                value={currentMonth} 
+                                onChange={(e) => onMonthChange(parseInt(e.target.value))}
+                                style={{ padding: '1px 4px', borderRadius: '4px', border: `1px solid #ccc`, fontSize: '12px' }}
+                            >
+                                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                                    <option key={m} value={m}>{m}月</option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
+                )}
                     
                     {!isValidIdx ? (
                          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
@@ -558,7 +754,12 @@ export const ScorePanel = ({
                                 }}>
                                     {dataMing.formations.length > 0 ? (
                                         dataMing.formations.map((f, idx) => {
-                                            const isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || f.includes('凶') || f.includes('遇') || f.includes('敗') || f.includes('夾');
+                                            let isBad = badPatterns.includes(f);
+                                            if (!isBad && !goodJia.includes(f)) {
+                                                    isBad = f.includes('忌') || f.includes('空') || f.includes('沖') || 
+                                                            f.includes('凶') || f.includes('遇') || f.includes('敗') || 
+                                                            (f.includes('夾') && !goodJia.includes(f));
+                                                }
                                             return (
                                                 <button 
                                                     key={idx} 

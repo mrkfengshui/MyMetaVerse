@@ -256,20 +256,42 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     });
 
     // 暗干 (時干飛宮)
-    const anGanMap = {};
-    let anGanCurr = 5; 
-    let anStartGan = (timeGan === '甲') ? xunLeaderGan : timeGan;
-    let anIdx = GAN_ORDER.indexOf(anStartGan);
-    
-    // 防呆: 若 anIdx 為 -1 (未找到)，預設為0 (戊)
-    if (anIdx === -1) anIdx = 0;
+    const FLY_ORDER = [1, 8, 3, 4, 9, 2, 7, 6];
 
-    for(let k=0; k<9; k++) {
-        let currentAnGan = GAN_ORDER[anIdx];
-        anGanMap[anGanCurr] = currentAnGan;
-        anIdx = (anIdx + 1) % 9; 
-        if (isYangDun) { anGanCurr++; if(anGanCurr>9) anGanCurr=1; } 
-        else { anGanCurr--; if(anGanCurr<1) anGanCurr=9; }
+    // 1. 取得「當前地盤」的天干順序
+    const tianPanOrder = FLY_ORDER.map(g => tianPanGanMap[g]);
+
+    // 2. 找出「時干」在這個地盤陣列中的位置 (作為起點)
+    let anStartGan = (timeGan === '甲') ? xunLeaderGan : timeGan;
+    let startGanIdx = tianPanOrder.indexOf(anStartGan);
+    // 防呆：如果找不到 (例如剛好是中宮寄宮的干)，回退到 0
+    if (startGanIdx === -1) startGanIdx = 0;
+
+    // 3. 找出「值使門」在飛宮路徑中的位置 (作為落點)
+    // 規則：時干 加臨 值使門
+    let startGong = (doorGong === 5) ? 2 : doorGong;
+    let startGongIdx = FLY_ORDER.indexOf(startGong);
+    if (startGongIdx === -1) startGongIdx = 0;
+
+    const anGanMap = {};
+
+    // 4. 進行排盤：雙指針同步移動
+    // 讓天盤干的鍊子 (tianPanOrder) 與 宮位路徑 (FLY_ORDER) 對齊
+    for (let i = 0; i < 8; i++) {
+        // 計算當前宮位 (從值使門宮位開始，順時針走)
+        const currentGongIdx = (startGongIdx + i) % 8;
+        const currentGong = FLY_ORDER[currentGongIdx];
+
+        // 計算當前天干 (從時干開始，依照天盤原本的鄰接順序取出)
+        const currentGanIdx = (startGanIdx + i) % 8;
+        const currentGan = tianPanOrder[currentGanIdx];
+
+        anGanMap[currentGong] = currentGan;
+
+        // 中宮 (5) 處理：跟隨坤宮 (2)
+        if (currentGong === 2) {
+            anGanMap[5] = currentGan;
+        }
     }
 
     // --- 轉宮邏輯 (Rotate) ---
@@ -325,8 +347,8 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     let doorFanyin = (menMapResult[9] === '休');
 
     const patterns = [];
-    if (starFuyin) patterns.push('九星伏吟');
-    if (starFanyin) patterns.push('九星反吟');
+    if (starFuyin) patterns.push('天干伏吟');
+    if (starFanyin) patterns.push('天干反吟');
     if (doorFuyin) patterns.push('八門伏吟');
     if (doorFanyin) patterns.push('八門反吟');
     // if (rotateOffset !== 0) patterns.push(`轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}`);
@@ -349,8 +371,29 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
             if (g5 && !diGanStr.includes(g5)) diGanStr += g5;
         }
 
-        const isXing = (jiXingRules[tianGanStr[0]] === num) || (jiXingRules[diGanStr[0]] === num);
-        
+        const tianMain = tianGanStr[0];
+        const diMain = diGanStr[0];
+
+        // 定義檢查函式：遍歷字串中每一個天干，檢查是否在當前宮位犯刑
+        const checkXing = (str) => {
+            if (!str) return false;
+            // jiXingRules = { '戊':3, '己':2, '庚':8, '辛':9, '壬':4, '癸':4 }
+            return str.split('').some(gan => jiXingRules[gan] === num);
+        };
+
+        // 1. 六儀擊刑 (只要天盤或地盤字串中包含犯刑的天干，即標記為刑)
+        let isXing = checkXing(tianGanStr) || checkXing(diGanStr);
+
+        // 2. 特殊自刑：辛辛、壬壬 (保留原有邏輯作為補充)
+        const tianHasXin = tianGanStr.includes('辛');
+        const diHasXin = diGanStr.includes('辛');
+        const tianHasRen = tianGanStr.includes('壬');
+        const diHasRen = diGanStr.includes('壬');
+
+        if ((tianHasXin && diHasXin) || (tianHasRen && diHasRen)) {
+            isXing = true;
+        }
+
         const checkMu = (str) => {
             const rules = ruMuRules[num];
             if (!rules) return false;
@@ -566,8 +609,14 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
 
     const centerStyle = { position: 'absolute', left: 0, right: 0, textAlign: 'center', width: '100%', zIndex: 1 };
     const leftStyle = { position: 'absolute', left: '18px', textAlign: 'left', zIndex: 2 };
-    const rightStyle = { position: 'absolute', right: '8px', textAlign: 'right', zIndex: 2 };
-
+    const rightStyle = { 
+        position: 'absolute', 
+        right: '4px',         // 統一靠右距離
+        width: '38px',        // 固定寬度 (容納雙字)
+        display: 'flex', 
+        justifyContent: 'center', // 水平置中
+        zIndex: 2 
+    };
     // 安全處理 data.an (確保是字串)
     const anGan = data.an || '';
 
@@ -586,28 +635,41 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.purple, fontWeight: 'bold' }}>
                         {data.shen}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '20px', color: THEME.gray, fontWeight: 'bold' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', color: THEME.gray, fontWeight: 'bold' }}>
                         {data.diShen}
                     </div>
                 </div>
 
                 {/* 第3行 */}
                 <div style={{ position: 'absolute', top: ROW3_TOP, width: '100%' }}>
-                    <div style={{ ...leftStyle, top: '4px', fontSize: '18px', color: THEME.tael, lineHeight: '0.9', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        {/* 引干直排，防止 data.an undefined */}
-                        {anGan.length > 1 ? anGan.split('').map((c,i)=><div key={i}>{c}</div>) : anGan}
+                    <div style={{ 
+                        ...leftStyle, 
+                        top: '4px',           // 固定位置，無需動態調整
+                        fontSize: '18px',     // 恢復原大小
+                        color: THEME.tael, 
+                        lineHeight: '1.0',
+                        fontWeight: 'bold',   // 保持粗體
+                        whiteSpace: 'wrap'  // 強制不換行，確保並排
+                    }}>
+                        {anGan}
                     </div>
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px',
-                    color: data.isDayGan ? THEME.white : THEME.black, 
-                    // 如果是日干：紫色背景；否則：透明
-                    backgroundColor: data.isDayGan ? THEME.green : 'transparent',
-                    // 如果是日干：加一點圓角和內距
-                    borderRadius: data.isDayGan ? '4px' : '0',
-                    padding: data.isDayGan ? '1px 2px' : '0', fontWeight: 'bold', letterSpacing: data.tian.length > 1 ? '-2px' : '12px' }}>
-                        {data.tian}
+                    <div style={rightStyle}>
+                        <span style={{
+                            display: 'inline-block',
+                            fontSize: data.isDayGan && data.tian.length > 1 ? '18px' : '18px',
+                            fontWeight: 'bold',
+                            color: data.isDayGan ? THEME.white : THEME.black,
+                            backgroundColor: data.isDayGan ? THEME.green : 'transparent',
+                            borderRadius: '4px',
+                            padding: data.isDayGan ? '0px 1px' : '0',
+                            lineHeight: '1.6',
+                            letterSpacing: data.tian.length > 1 ? '-1px' : '0' // 雙字微調，單字不加寬
+                        }}>
+                            {data.tian}
+                        </span>
                     </div>
                 </div>
 
@@ -616,7 +678,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.orange, fontWeight: 'bold' }}>
                         {data.men}
                     </div>
-                    <div style={{ ...rightStyle, fontSize: '18px', right: '7px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-2px' : '12px' }}>
+                    <div style={{ ...rightStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold', letterSpacing: data.di.length > 1 ? '-1px' : '0' }}>
                         {data.di}
                     </div>
                 </div>
