@@ -990,12 +990,24 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             try { if (window.LunarYear) leapMonth = window.LunarYear.fromYear(targetLunar.getYear()).getLeapMonth(); } catch(e){}
             const curLunarMonth = Math.abs(targetLunar.getMonth());
             const isLeap = (targetLunar.getMonth() < 0);
-            let monthOffset = curLunarMonth - 1;
-            if (leapMonth > 0 && (curLunarMonth > leapMonth || isLeap)) { monthOffset += 1; }
+            
+            // 1. 宮位位移 (Palace Offset)：閏月及之後的月份，宮位需要 +1 (順延一格)
+            let palaceOffset = curLunarMonth - 1;
+            if (leapMonth > 0 && (curLunarMonth > leapMonth || isLeap)) { 
+                palaceOffset += 1; 
+            }
+
+            // 2. 天干位移 (Gan Offset)：單純依據月份數字 (1月=0, 6月=5, 閏6月=5, 7月=6)，不須額外跳格
+            const ganOffset = curLunarMonth - 1;
 
             const douJunIdx = (liuNianZhiIdx - (Math.abs(birthLunar.getMonth()) - 1) + Math.floor((parseInt(chartData.rawDate.hour)+1)%24/2) + 12) % 12;
-            const currentLiuYueIdx = (douJunIdx + monthOffset) % 12;
-            const currentLiuYueGan = TIANGAN[(((TIANGAN.indexOf(tYearGan) % 5) * 2 + 2) + monthOffset) % 10];
+            
+            // 使用 palaceOffset 計算流月宮位
+            const currentLiuYueIdx = (douJunIdx + palaceOffset) % 12;
+
+            // 使用 ganOffset 計算流月天干 (五虎遁月)
+            const currentLiuYueGan = TIANGAN[(((TIANGAN.indexOf(tYearGan) % 5) * 2 + 2) + ganOffset) % 10];
+
             const getLuPos = (gan) => ({'甲':2,'乙':3,'丙':5,'丁':6,'戊':5,'己':6,'庚':8,'辛':9,'壬':11,'癸':0}[gan]);
             const stars = { da: {}, liu: {}, yue: {} };
             const lLu = getLuPos(tYearGan);
@@ -1016,7 +1028,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             };
         } catch (e) { console.error("Calc Error:", e); return { currentAge: 1, flowingStars: {da:{}, liu:{}, yue:{}} }; }
     }, [chartData.rawDate, targetDate, g, chartData.genderText, daXianSiHuaType, liuNianStartType]);
-    
+
     // 評分專用參數 (ScorePanel Params)
     const scoreParams = useMemo(() => {
         try {
@@ -1081,18 +1093,22 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             let leapMonth = 0;
             try { if (window.LunarYear) leapMonth = window.LunarYear.fromYear(fuzzyMonthLunar.getYear()).getLeapMonth(); } catch(e){}
             const isLeap = (fuzzyMonthLunar.getMonth() < 0);
-            let monthOffset = curLunarMonth - 1;
-            if (leapMonth > 0 && (curLunarMonth > leapMonth || isLeap)) monthOffset += 1;
+            
+            // 修正：宮位位移 (考慮閏月跳宮)
+            let palaceOffset = curLunarMonth - 1;
+            if (leapMonth > 0 && (curLunarMonth > leapMonth || isLeap)) palaceOffset += 1;
 
-            // 流月宮位 (評分用) - 這裡的斗君基礎仍需參照該年流年(fuzzyYearZhiIdx)
+            // 修正：天干位移 (閏月不跳干)
+            const ganOffset = curLunarMonth - 1;
+
             const douJunIdx = (fuzzyYearZhiIdx - (Math.abs(birthLunar.getMonth()) - 1) + Math.floor((parseInt(chartData.rawDate.hour)+1)%24/2) + 12) % 12;
-            const fuzzyYueIdx = (douJunIdx + monthOffset) % 12;
+            const fuzzyYueIdx = (douJunIdx + palaceOffset) % 12;
 
-            // 流月天干 (評分用) - 依據該農曆月所屬年份(初一當下)
-            // 注意：如果西曆1月選到農曆12月，這裡會正確抓到舊年的天干
             const fuzzyMonthContextYearGan = fuzzyMonthLunar.getYearGan(); 
             const mGanIdx = TIANGAN.indexOf(fuzzyMonthContextYearGan);
-            const fuzzyYueGan = TIANGAN[(((mGanIdx % 5) * 2 + 2) + monthOffset) % 10];
+            
+            // 使用 ganOffset 計算評分用的流月天干
+            const fuzzyYueGan = TIANGAN[(((mGanIdx % 5) * 2 + 2) + ganOffset) % 10];
 
             return {
                 daXianIdx: dIdx,
