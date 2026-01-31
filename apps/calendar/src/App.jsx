@@ -1558,7 +1558,7 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                 {data.wutu && (
                     <div style={{ 
                         position: 'absolute',
-                        left: '50%',
+                        left: '25%',
                         bottom: '0',
                         transform: 'translateX(-50%)', // 核心：確保它是以中心點對齊 50%
                         fontSize: '12px', 
