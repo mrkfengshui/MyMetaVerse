@@ -1563,7 +1563,7 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                 {/* 左下角建除十二神 */}
                 <div style={{ 
                     position: 'absolute',
-                    left: '4px',
+                    left: '2px',
                     bottom: '0',
                     fontSize: '12px', 
                     fontWeight: 'bold', 
@@ -1599,7 +1599,7 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                 {data.dongGongRating && (
                     <div style={{ 
                         position: 'absolute',
-                        right: '4px',
+                        right: '2px',
                         bottom: '0',
                         fontSize: '12px', 
                         fontWeight: 'bold', 
