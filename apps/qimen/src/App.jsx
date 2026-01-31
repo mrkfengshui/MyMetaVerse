@@ -204,7 +204,16 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         Object.keys(ORIGINAL_CONFIG).forEach(k => {
             if (ORIGINAL_CONFIG[k].star === sName) homeGong = parseInt(k);
         });
-        tianPanGanMap[g] = diPanMap[homeGong] || '';
+        let ganStr = diPanMap[homeGong] || '';
+        
+        // 修正：如果在計算數據階段就處理「天芮星」寄宮邏輯
+        // 這樣後續計算「暗干(引干)」引用天盤干時，就會自動包含雙星
+        if (sName === '芮') {
+            const centerGan = diPanMap[5]; // 取中宮地盤干
+            if (centerGan) ganStr += centerGan;
+        }
+        
+        tianPanGanMap[g] = ganStr;
     });
 
     // 八門
@@ -360,10 +369,6 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         const content = rotatedLayout[num] || { star:'', men:'', shen:'', diShen:'', tian:'', di:'', an:'' };
 
         let tianGanStr = content.tian || '';
-        if (content.star === '芮') { 
-             const g5 = diPanMap[5];
-             if (g5) tianGanStr += g5;
-        }
 
         let diGanStr = content.di || '';
         if (diGanStr === diPanMap[2]) {
@@ -608,7 +613,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const ROW4_TOP = '74px';  // 門
 
     const centerStyle = { position: 'absolute', left: 0, right: 0, textAlign: 'center', width: '100%', zIndex: 1 };
-    const leftStyle = { position: 'absolute', left: '18px', textAlign: 'left', zIndex: 2 };
+    const leftStyle = { position: 'absolute', left: '4px', width: '38px', display: 'flex', justifyContent: 'center', zIndex: 2 };
     const rightStyle = { 
         position: 'absolute', 
         right: '4px',         // 統一靠右距離
@@ -644,10 +649,11 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                 <div style={{ position: 'absolute', top: ROW3_TOP, width: '100%' }}>
                     <div style={{ 
                         ...leftStyle, 
-                        top: '4px',           // 固定位置，無需動態調整
                         fontSize: '18px',     // 恢復原大小
-                        color: THEME.tael, 
-                        lineHeight: '1.0',
+                        color: THEME.gray, 
+                        fontSize: anGan.length > 1 ? '18px' : '18px', // 如果是雙字，字體稍微縮小
+                        letterSpacing: anGan.length > 1 ? '-1px' : '0', // 雙字時縮減字距，防止換行或溢出
+                        lineHeight: '1.6',
                         fontWeight: 'bold',   // 保持粗體
                         whiteSpace: 'wrap'
                     }}>
