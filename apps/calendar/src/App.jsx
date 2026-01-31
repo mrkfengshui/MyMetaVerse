@@ -44,6 +44,82 @@ const QI_RULES = {
   branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
 };
 
+// 烏兔太陽太陰日計算
+const WUTU_YANG_STEMS = ['甲', '丁', '戊', '己', '壬', '癸']; // 陽干順行
+// 地支對應九宮起始點 (子1, 丑寅8, 卯3, 辰巳4, 午9, 未申2, 酉7, 戌亥6)
+// 索引 0-11 對應 子-亥
+const WUTU_BRANCH_MAP = [1, 8, 8, 3, 4, 4, 9, 2, 2, 7, 6, 6]; 
+const WUTU_STAR_MAP = {
+  8: { name: '太陽星', 吉: true, color: '#f5222d', desc: '光輝大吉' }, // 艮
+  2: { name: '太陰星', 吉: true, color: '#fa8c16', desc: '進益次吉' }, // 坤
+  1: { name: '水星', 吉: true, color: '#1890ff', desc: '聰明財運' },   // 坎
+  3: { name: '木星', 吉: true, color: '#52c41a', desc: '紫氣催官' },   // 震
+  7: { name: '金星', 吉: true, color: '#faad14', desc: '領袖英傑' },   // 兌
+  9: { name: '火星', 吉: false, color: '#8c8c8c', desc: '破財' },      // 離
+  5: { name: '土星', 吉: false, color: '#8c8c8c', desc: '災厄' },      // 中
+  6: { name: '羅睺', 吉: false, color: '#8c8c8c', desc: '口舌' },      // 乾
+  4: { name: '計都', 吉: false, color: '#8c8c8c', desc: '是非' }       // 巽
+};
+
+const getWuTuSolarStar = (lunar) => {
+    try {
+        // 1. 取得該農曆月的初一
+        const lYear = lunar.getYear();
+        const lMonth = lunar.getMonth();
+        const firstDayLunar = window.Lunar.fromYmd(lYear, lMonth, 1);
+        const firstDaySolar = firstDayLunar.getSolar();
+        
+        // 2. 尋找初一(含)之前的最近一個「卯日」
+        let maoDayLunar = null;
+        let offsetDays = 0;
+        
+        // 往回找最多13天 (地支循環12)
+        for (let i = 0; i < 13; i++) {
+             const d = new Date(firstDaySolar.getYear(), firstDaySolar.getMonth() - 1, firstDaySolar.getDay());
+             d.setDate(d.getDate() - i);
+             const l = window.Solar.fromYmd(d.getFullYear(), d.getMonth()+1, d.getDate()).getLunar();
+             if (l.getDayZhi() === '卯') {
+                 maoDayLunar = l;
+                 offsetDays = i; // 初一 與 卯日 差幾天
+                 break;
+             }
+        }
+        if (!maoDayLunar) return null;
+
+        // 3. 判斷順逆 (卯日天干)
+        const maoGan = maoDayLunar.getDayGan();
+        const isYang = WUTU_YANG_STEMS.includes(maoGan);
+        const dir = isYang ? 1 : -1;
+
+        // 4. 計算「初一」的起宮位置
+        // 規則：卯日從「子(坎1)」起算，一日一宮推至初一
+        // 卯日位置 = 子(索引0)
+        // 初一位置 = (0 + dir * offsetDays) % 12
+        let firstDayBranchIdx = (0 + dir * offsetDays) % 12;
+        if (firstDayBranchIdx < 0) firstDayBranchIdx += 12;
+        
+        // 轉換為九宮起始點 (截法圖)
+        const startGua = WUTU_BRANCH_MAP[firstDayBranchIdx];
+
+        // 5. 計算「目標日」的星曜
+        // 從初一開始，一日一宮飛佈九宮
+        // 目標日 與 初一 的天數差
+        const currentDayDiff = lunar.getDay() - 1; // 初一為1, 差0
+        
+        // 九宮循環 (1-9)
+        // 公式：(起點 - 1 + 方向 * 天數) % 9 + 1
+        let finalGuaIdx = (startGua - 1 + dir * currentDayDiff) % 9;
+        if (finalGuaIdx < 0) finalGuaIdx += 9;
+        const finalGua = finalGuaIdx + 1;
+
+        return WUTU_STAR_MAP[finalGua];
+
+    } catch (e) {
+        console.error("WuTu Error", e);
+        return null;
+    }
+};
+
 // 月將與貴人登天門計算常數
 const MOON_GENERAL_MAP = {
   '大寒': '子', '立春': '子',
@@ -750,6 +826,15 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
         } catch(e) { return null; }
     }, [date]);
 
+    // 烏兔太陽太陰日
+    const wuTuData = useMemo(() => {
+    if(!date) return null;
+    try {
+        const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+        return getWuTuSolarStar(solar.getLunar());
+    } catch(e) { return null; }
+}, [date]);
+
   return (
     <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -885,6 +970,33 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         </div>
                     </div>
                 </AccordionSection>
+            )}
+            {/* 烏兔太陽太陰日 */}
+            {wuTuData && (
+                <div style={{ 
+                    marginTop: '10px', 
+                    padding: '12px', 
+                    borderRadius: '12px', 
+                    border: `1px solid ${wuTuData.吉 ? wuTuData.color : '#eee'}`,
+                    backgroundColor: wuTuData.吉 ? `${wuTuData.color}15` : '#f5f5f5', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center' 
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#555' }}>烏兔值日</span>
+                        <span style={{ 
+                            fontSize: '18px', 
+                            fontWeight: 'bold', 
+                            color: wuTuData.color 
+                        }}>
+                            {wuTuData.name}
+                        </span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: wuTuData.吉 ? wuTuData.color : '#999', fontWeight: '500' }}>
+                        {wuTuData.desc}
+                    </div>
+                </div>
             )}
           </div>
       </div>
