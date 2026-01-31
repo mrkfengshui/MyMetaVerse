@@ -27,7 +27,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v1.1 加強日干顯示";
+const APP_VERSION = "v1.1 修正暗干Bug";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -384,7 +384,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         // 1. 六儀擊刑 (只要天盤或地盤字串中包含犯刑的天干，即標記為刑)
         let isXing = checkXing(tianGanStr) || checkXing(diGanStr);
 
-        // 2. 特殊自刑：辛辛、壬壬 (保留原有邏輯作為補充)
+        // 2. 特殊自刑：辛辛、壬壬
         const tianHasXin = tianGanStr.includes('辛');
         const diHasXin = diGanStr.includes('辛');
         const tianHasRen = tianGanStr.includes('壬');
@@ -607,7 +607,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const ROW3_TOP = '48px';  // 星
     const ROW4_TOP = '74px';  // 門
 
-    const centerStyle = { position: 'absolute', left: 0, right: 0, textAlign: 'center', width: '100%', zIndex: 1 };
+    const centerStyle = { position: 'absolute', left: '4px', textAlign: 'center', width: '38%', zIndex: 2 };
     const leftStyle = { position: 'absolute', left: '18px', textAlign: 'left', zIndex: 2 };
     const rightStyle = { 
         position: 'absolute', 
@@ -642,16 +642,16 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
 
                 {/* 第3行 */}
                 <div style={{ position: 'absolute', top: ROW3_TOP, width: '100%' }}>
-                    <div style={{ 
-                        ...leftStyle, 
-                        top: '4px',           // 固定位置，無需動態調整
-                        fontSize: '18px',     // 恢復原大小
-                        color: THEME.tael, 
-                        lineHeight: '1.0',
-                        fontWeight: 'bold',   // 保持粗體
-                        whiteSpace: 'wrap'  // 強制不換行，確保並排
-                    }}>
-                        {anGan}
+                    <div style={leftStyle}>
+                        <span style={{
+                            display: 'inline-block',
+                            fontSize: data.an.length > 1 ? '18px' : '18px',
+                            fontWeight: 'bold',
+                            lineHeight: '1.6',
+                            letterSpacing: data.an.length > 1 ? '-1px' : '0' // 雙字微調，單字不加寬
+                        }}>
+                            {anGan}
+                        </span>
                     </div>
                     <div style={{ ...centerStyle, fontSize: '18px', color: THEME.black, fontWeight: 'bold' }}>
                         {data.star}
