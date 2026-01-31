@@ -58,8 +58,13 @@ const WUTU_STAR_MAP = {
   7: { name: '金星', 吉: true, color: COLORS.geng, desc: '倉箱盈積' },  // 兌
   9: { name: '火星', 吉: false, color: THEME.red, desc: '瘟疫火災' },   // 離
   5: { name: '土星', 吉: false, color: COLORS.wu, desc: '禍事多端' },   // 中
-  6: { name: '羅喉', 吉: false, color: THEME.dark, desc: '官非鼎鑊' },  // 乾
+  6: { name: '羅睺', 吉: false, color: THEME.dark, desc: '官非鼎鑊' },  // 乾
   4: { name: '計都', 吉: false, color: THEME.dark, desc: '財散人亡' }   // 巽
+};
+const WUTU_ABBR = {
+    '太陽': '日', '太陰': '月',
+    '木星': '木', '水星': '水', '金星': '金', '火星': '火', '土星': '土',
+    '羅睺': '羅', '計都': '計'
 };
 
 const getWuTuSolarStar = (lunar) => {
@@ -1145,7 +1150,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.moonPos}
                                     </div>
                                 </div>
-                                <div style={{ gridColumn: '1 / -1', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                <div style={{ gridColumn: '1 / -1', fontSize: '11px', color: THEME.gray, marginTop: '2px' }}>
                                     * 太陽到向、烏兔太陰到山最吉。太陽到山、太陰到向次吉
                                 </div>
                             </div>
@@ -1179,7 +1184,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         </div>
 
                         {/* 底部註解 */}
-                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: THEME.gray, marginTop: '4px' }}>
                             * 用鳥兔太陽方除五黃會力士，乃五黃會劫煞外，其餘一切神煞均不忌，若用太陽太陰日時（或其他吉星）可以助吉
                         </div>
                     </div>
@@ -1239,7 +1244,7 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
   const APP_INFO = {
     appName: APP_NAME,
     version: APP_VERSION,
-    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間簡易神煞，輔助使用者進行擇日用事分析。",
+    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間神煞，輔助使用者進行擇日修方用事分析。",
   };
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
@@ -1383,13 +1388,13 @@ const CalendarToolbar = ({
 const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender, bookmarks, qiMode, showTuiQi }) => {
   if (!canRender || !date || isNaN(date.getTime())) return <div style={{ height: '75px', background: '#fff' }}></div>;
   
-  let data = { lunarDisplay: date.getDate(), ganZhi: '', jian: '', xiu: '', isSanNiang: false, colorJian: THEME.black, colorXiu: THEME.black, isJieQi: false, dongGongRating: '', isNewYear: false };
+  let data = { lunarDisplay: date.getDate(), ganZhi: '', jian: '', xiu: '', isSanNiang: false, colorJian: THEME.black, colorXiu: THEME.black, isJieQi: false, dongGongRating: '', isNewYear: false, wutu: null };
   let activeColors = [null, null, null, null];
 
   try {
       const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
       const lunar = solar.getLunar();
-      const baziObj = lunar.getEightChar(); // 補回這行，流月日柱需要用到
+      const baziObj = lunar.getEightChar();
 
       // 確保只要當天有交節氣，該格子就會顯示新的進氣顏色
       const solarEndOfDay = window.Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 23, 59, 59);
@@ -1423,12 +1428,15 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       const fixXiu = XIU_FIX_MAP[rawXiu] || rawXiu;
       data.xiu = fixXiu; data.colorXiu = XIU_COLOR_MAP[rawXiu] || XIU_COLOR_MAP[fixXiu] || THEME.red;
       
-      if (SAN_NIANG_DAYS.includes(d)) data.isSanNiang = true;
+        if (SAN_NIANG_DAYS.includes(d)) data.isSanNiang = true;
       const monthNum = Math.abs(lunar.getMonth());
       const dayZhi = lunar.getDayZhi(); const dayGanZhi = lunar.getDayInGanZhi();
       const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
-      if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
-      
+        if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
+      const star = getWuTuSolarStar(lunar);
+        if (star) {
+            data.wutu = star;
+        }
       // 進退氣邏輯
       if (qiMode) {
           let baseStemIdx = -1, baseBranchIdx = -1;
@@ -1513,12 +1521,35 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       {activeColors[3] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '76%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[3], opacity: 0.4, zIndex: 1 }} />}
       
       <div style={{ opacity: textOpacity, position: 'relative', height: '100%', zIndex: 2, fontWeight: qiMode ? 'bold' : 'normal' }}>
+          {/* 左上角西曆日 */}
           <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
+          {/* 右上角干支 */}
           <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.orange, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
+          {/* 左中三娘煞 */}
           {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'bold' }}>三娘煞</div>)}
+          {/* 左中節氣 */}
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
+          {/* 右中二十八星宿 */}
           <div style={{ position: 'absolute', bottom: '16px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
+          {/* 左下角建除十二神 */}
           <div style={{ position: 'absolute', bottom: '2px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorJian }}>{data.jian}</div>
+          {/* 中下烏兔太陽太陰日 */}
+            {data.wutu && (
+                <div style={{ 
+                    position: 'absolute', 
+                    bottom: '2px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    fontSize: '12px', 
+                    fontWeight: 'bold', 
+                    color: data.wutu.color,
+                    zIndex: 5 
+                }}>
+                    {/* 優先使用簡稱，若無則顯示全名 */}
+                    {WUTU_ABBR[data.wutu.name] || data.wutu.name[0]}
+                </div>
+            )}
+          {/* 右下角董公 */}
           {data.dongGongRating && (
             <div style={{ position: 'absolute', bottom: '2px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('平') ? THEME.gray : THEME.red) }}>{data.dongGongRating}</div>
           )}
