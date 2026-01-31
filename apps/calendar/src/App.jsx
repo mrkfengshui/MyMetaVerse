@@ -28,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博年月進氣萬年曆";
-const APP_VERSION = "v1.1 詳列建除、二十八宿、董公吉凶";
+const APP_VERSION = "v1.2 新增貴人登天門時";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -44,6 +44,74 @@ const QI_RULES = {
   branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
 };
 
+// 月將與貴人登天門計算常數
+const MOON_GENERAL_MAP = {
+  '大寒': '子', '立春': '子',
+  '雨水': '亥', '驚蟄': '亥',
+  '春分': '戌', '清明': '戌',
+  '穀雨': '酉', '立夏': '酉',
+  '小滿': '申', '芒種': '申',
+  '夏至': '未', '小暑': '未',
+  '大暑': '午', '立秋': '午',
+  '處暑': '巳', '白露': '巳',
+  '秋分': '辰', '寒露': '辰',
+  '霜降': '卯', '立冬': '卯',
+  '小雪': '寅', '大雪': '寅',
+  '冬至': '丑', '小寒': '丑'
+};
+
+const NOBLE_MAN_MAP = {
+  '甲': { yang: '未', yin: '丑' },
+  '戊': { yang: '丑', yin: '未' },
+  '庚': { yang: '丑', yin: '未' },
+  '乙': { yang: '申', yin: '子' }, 
+  '己': { yang: '子', yin: '申' },
+  '丙': { yang: '酉', yin: '亥' },
+  '丁': { yang: '亥', yin: '酉' },
+  '壬': { yang: '卯', yin: '巳' },
+  '癸': { yang: '巳', yin: '卯' },
+  '辛': { yang: '寅', yin: '午' }
+};
+
+const ZHI_INDEX = { '子':0, '丑':1, '寅':2, '卯':3, '辰':4, '巳':5, '午':6, '未':7, '申':8, '酉':9, '戌':10, '亥':11 };
+const ZHI_ARRAY = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+// 計算貴人登天門時
+const getGuiRenTimes = (lunar) => {
+    try {
+        // 1. 取得月將 (依據最近的一個節氣或中氣)
+        // lunar.getPrevJieQi(false) 會包含當天的節氣
+        const prevJieQi = lunar.getPrevJieQi(false); 
+        const jieQiName = prevJieQi ? prevJieQi.getName() : '大寒'; // 預設fallback
+        const moonGeneral = MOON_GENERAL_MAP[jieQiName] || '子';
+        const generalIdx = ZHI_INDEX[moonGeneral];
+
+        // 2. 取得日干貴人
+        const dayGan = lunar.getDayGan();
+        const noblePos = NOBLE_MAN_MAP[dayGan];
+        
+        if (!noblePos) return null;
+        
+        const calcTime = (nobleZhi) => {
+            const nobleIdx = ZHI_INDEX[nobleZhi];
+            // 亥的索引是 11
+            let shift = 11 - nobleIdx; 
+            let timeIdx = (generalIdx + shift) % 12;
+            if (timeIdx < 0) timeIdx += 12;
+            return ZHI_ARRAY[timeIdx];
+        };
+
+        return {
+            yang: calcTime(noblePos.yang),
+            yin: calcTime(noblePos.yin),
+            general: moonGeneral
+        };
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+};
+
 const YI_JI_MAP = {
   '开': '開', '满': '滿', '执': '執', '闭': '閉', '壮': '壯', '冲': '沖',
   '节': '節', '纳': '納', '采': '採', '动': '動', '竖': '豎', '画': '畫',
@@ -57,7 +125,7 @@ const YI_JI_MAP = {
   '仓': '倉', '库': '庫', '窑': '窯', '养': '養', '门': '門', '厨': '廚',
   '涂': '塗', '厕': '廁', '临': '臨', '启': '啟', '殡': '殯', '殓': '殮', 
   '谢': '謝', '设': '設', '驾': '駕', '筑': '築', '坟': '墳', '绘': '繪', 
-  '产': '產', '馀': '餘'
+  '产': '產', '馀': '餘', '丧': '喪'
 };
 
 const toTraditionalYiJi = (str) => {
@@ -666,11 +734,21 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
 const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmarked }) => {
   if (!isOpen || !date || !info) return null;
 
-  const DONG_GONG_INTRO = `大富貴人用事與平常富貴者迥異，夫大富貴人擇日，惟合吉時即可成立定局，縱日干凶煞，一被其時內吉神化解，兼被其威勢節制，凶煞自退，用之無妨。平常富貴人用之，終不能獲吉。而平民百姓用之，難免招非破財之事。故用日宜擇吉兼參照本命而行，無不獲善也。
+    // 董公
+    const DONG_GONG_INTRO = `大富貴人用事與平常富貴者迥異，夫大富貴人擇日，惟合吉時即可成立定局，縱日干凶煞，一被其時內吉神化解，兼被其威勢節制，凶煞自退，用之無妨。平常富貴人用之，終不能獲吉。而平民百姓用之，難免招非破財之事。故用日宜擇吉兼參照本命而行，無不獲善也。
 
 同一吉日，可能利甲某人而不利乙某人。如嫁娶需同參主人年歲合局、洞房花燭之吉時；移居需同參主人入宅、敬神時辰為吉。故嫁娶、開張、出行、起造、移居等事，除擇吉日之外，擇時亦十分重要。古雲：年吉不如月吉，月吉不如日吉，日吉不如時吉也。若吉日能合吉時，則萬事大吉利也。
 
 如遇煞入中宮或白虎入中宮之日，不可在庭院之中釘釘及鼓樂喧嘩之聲浪，凡此種日干，即使有煞貢、直星、人專、天德、月德星臨，似可化解、然已生疑及旁觀，故避用為上策。又或起造者雲有水星化解、嫁娶者雲有文星化解、或雲可用字元鎮壓化解，皆不可信，需知凡嫁娶、起造等事，如犯五鬼凶日、黑煞星臨，或白虎入中宮之日，速者百日內，緩者一年內外見官司、傷亡等凶禍之事。實不容忽視之。`;
+
+    // 貴人登天門時
+    const guiRenData = useMemo(() => {
+        if(!date) return null;
+        try {
+            const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+            return getGuiRenTimes(solar.getLunar());
+        } catch(e) { return null; }
+    }, [date]);
 
   return (
     <div style={{
@@ -721,7 +799,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
 
             {/* 擇日神煞 */}
             <AccordionSection title="擇日神煞" defaultOpen={true} color="#722ed1">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', alignItems: 'stretch' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', alignItems: 'stretch' }}>
                     
                     {/* 建除十二神 */}
                     {(() => {
@@ -730,7 +808,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         return (
                             <InfoItem 
                                 label="建除十二神" 
-                                value={info.jian}
+                                value={`${info.jian}日`}
                                 yi={data.yi}      // 傳入 宜
                                 ji={data.ji}      // 傳入 忌
                                 source={data.source} // 傳入 典故 (點擊顯示)
@@ -784,6 +862,30 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                     {info.dongGongText}
                 </div>
             </AccordionSection>
+
+            {/* 貴人登天門時 */}
+            {guiRenData && (
+                <AccordionSection title="貴人登天門時" defaultOpen={true} color="#eb2f96">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                            月將：<span style={{ fontWeight: 'bold', color: '#333' }}>{guiRenData.general}</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div style={{ background: '#fff0f6', padding: '10px', borderRadius: '8px', border: '1px solid #ffadd2' }}>
+                                <div style={{ fontSize: '12px', color: '#eb2f96', fontWeight: 'bold', marginBottom: '4px' }}>陽貴 (晝)</div>
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{guiRenData.yang}時</div>
+                            </div>
+                            <div style={{ background: '#f9f0ff', padding: '10px', borderRadius: '8px', border: '1px solid #d3adf7' }}>
+                                <div style={{ fontSize: '12px', color: '#722ed1', fontWeight: 'bold', marginBottom: '4px' }}>陰貴 (夜)</div>
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{guiRenData.yin}時</div>
+                            </div>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                            * 貴登天門時乃時之最吉者，能解諸凶。
+                        </div>
+                    </div>
+                </AccordionSection>
+            )}
           </div>
       </div>
     </div>
