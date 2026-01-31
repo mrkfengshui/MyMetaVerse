@@ -201,13 +201,17 @@ const getWuTuDetails = (lunar) => {
         // 太陽是第6顆 (索引+5)，太陰是第7顆 (索引+6)
         // 注意：九星飛佈通常不論冬夏皆順飛 (口訣：依次行)
         
-        const sunPalace = ((dayPalace - 1 + 5) % 9) + 1;
-        const moonPalace = ((dayPalace - 1 + 6) % 9) + 1;
+        const sunPalace = ((dayPalace - 1 + 5) % 9) + 1;     // 太陽到方
+        const moonPalace = ((dayPalace - 1 + 6) % 9) + 1;    // 太陰到方
+        const venusPalace = ((dayPalace - 1 + 1) % 9) + 1;   // 金星到方
+        const jupiterPalace = ((dayPalace - 1 + 8) % 9) + 1; // 木星到方
 
         return {
             ...timeInfo,
             sunPos: GUA_NAMES[sunPalace],
             moonPos: GUA_NAMES[moonPalace],
+            venusPos: GUA_NAMES[venusPalace],
+            jupiterPos: GUA_NAMES[jupiterPalace],
             jieQi: jieQiName,
             dayPalace: GUA_NAMES[dayPalace] // 除錯用，可顯示本日落宮
         };
@@ -1119,7 +1123,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                              </div>
                         </div>
 
-                        {/* 2. 太陽太陰吉時與方位 (新增區塊) */}
+                        {/* 2. 太陽太陰金木吉時與方位 */}
                         {wuTuDetail && (
                             <div style={{ 
                                 display: 'grid', 
@@ -1132,7 +1136,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             }}>
                                 {/* 太陽 */}
                                 <div>
-                                    <div style={{ fontSize: '12px', color: '#f5222d', fontWeight: 'bold', marginBottom: '4px' }}>☀ 太陽時方</div>
+                                    <div style={{ fontSize: '12px', color: THEME.orange, fontWeight: 'bold', marginBottom: '4px' }}>☀ 太陽時方</div>
                                     <div style={{ fontSize: '13px', color: '#333' }}>
                                         <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.sun}時
                                     </div>
@@ -1142,12 +1146,27 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                 </div>
                                 {/* 太陰 */}
                                 <div>
-                                    <div style={{ fontSize: '12px', color: '#fa8c16', fontWeight: 'bold', marginBottom: '4px' }}>🌙 太陰時方</div>
+                                    <div style={{ fontSize: '12px', color: THEME.purple, fontWeight: 'bold', marginBottom: '4px' }}>🌙 太陰時方</div>
                                     <div style={{ fontSize: '13px', color: '#333' }}>
                                         <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.moon}時
                                     </div>
                                     <div style={{ fontSize: '13px', color: '#333' }}>
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.moonPos}
+                                    </div>
+                                </div>
+                                {/* 金星 */}
+                                <div>
+                                    <div style={{ fontSize: '12px', color: COLORS.geng, fontWeight: 'bold', marginBottom: '2px' }}>🌟 金星到方</div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.venusPos}
+                                    </div>
+                                </div>
+
+                                {/* 木星 */}
+                                <div>
+                                    <div style={{ fontSize: '12px', color: THEME.green, fontWeight: 'bold', marginBottom: '2px' }}>🪵 木星到方</div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.jupiterPos}
                                     </div>
                                 </div>
                                 <div style={{ gridColumn: '1 / -1', fontSize: '11px', color: THEME.gray, marginTop: '2px' }}>
