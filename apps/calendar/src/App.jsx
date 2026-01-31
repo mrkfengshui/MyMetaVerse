@@ -1531,28 +1531,67 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
           {/* 右中二十八星宿 */}
           <div style={{ position: 'absolute', bottom: '16px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
-          {/* 左下角建除十二神 */}
-          <div style={{ position: 'absolute', bottom: '2px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorJian }}>{data.jian}</div>
-          {/* 中下烏兔太陽太陰日 */}
-            {data.wutu && (
+          {/* 底部資訊列：絕對定位三欄式 */}
+            <div style={{ 
+                position: 'absolute', 
+                bottom: '2px', 
+                left: '0', 
+                right: '0', 
+                height: '16px', // 設定固定高度，方便垂直對齊
+                pointerEvents: 'none' 
+            }}>
+                
+                {/* 左下角建除十二神 */}
                 <div style={{ 
-                    position: 'absolute', 
-                    bottom: '2px', 
-                    left: '50%', 
-                    transform: 'translateX(-50%)', 
+                    position: 'absolute',
+                    left: '4px',
+                    bottom: '0',
                     fontSize: '12px', 
                     fontWeight: 'bold', 
-                    color: data.wutu.color,
-                    zIndex: 5 
+                    color: data.colorJian,
+                    lineHeight: '1'
                 }}>
-                    {/* 優先使用簡稱，若無則顯示全名 */}
-                    {WUTU_ABBR[data.wutu.name] || data.wutu.name[0]}
+                    {data.jian}
                 </div>
-            )}
-          {/* 右下角董公 */}
-          {data.dongGongRating && (
-            <div style={{ position: 'absolute', bottom: '2px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('平') ? THEME.gray : THEME.red) }}>{data.dongGongRating}</div>
-          )}
+
+                {/* 中下烏兔太陽太陰日 */}
+                {data.wutu && (
+                    <div style={{ 
+                        position: 'absolute',
+                        left: '50%',
+                        bottom: '0',
+                        transform: 'translateX(-50%)', // 核心：確保它是以中心點對齊 50%
+                        fontSize: '12px', 
+                        fontWeight: 'bold', 
+                        color: data.wutu.color,
+                        lineHeight: '1',
+                        zIndex: 5,
+                        // 防止重疊的保護機制：限制最大寬度
+                        maxWidth: '30%', 
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center'
+                    }}>
+                        {WUTU_ABBR[data.wutu.name] || data.wutu.name[0]}
+                    </div>
+                )}
+
+                {/* 右下角董公 */}
+                {data.dongGongRating && (
+                    <div style={{ 
+                        position: 'absolute',
+                        right: '4px',
+                        bottom: '0',
+                        fontSize: '12px', 
+                        fontWeight: 'bold', 
+                        color: data.dongGongRating.includes('吉') ? THEME.blue : (data.dongGongRating.includes('平') ? THEME.gray : THEME.red),
+                        lineHeight: '1',
+                        textAlign: 'right'
+                    }}>
+                        {data.dongGongRating}
+                    </div>
+                )}
+            </div>
       </div>
       {isBookmarked && <div style={{ position: 'absolute', top: '4px', right: '28px', width: '6px', height: '6px', backgroundColor: THEME.red, borderRadius: '50%', zIndex: 3 }}></div>}
       {isSelected && <div style={{ position: 'absolute', inset: 0, border: `2px solid ${THEME.blue}`, pointerEvents: 'none', zIndex: 10 }}></div>}
