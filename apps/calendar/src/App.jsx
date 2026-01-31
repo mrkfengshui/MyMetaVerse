@@ -1543,13 +1543,13 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
           {/* 左上角西曆日 */}
           <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
           {/* 右上角干支 */}
-          <div style={{ position: 'absolute', top: '3px', right: '3px', fontSize: '14px', fontWeight: 'bold', color: THEME.orange, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
+          <div style={{ position: 'absolute', top: '3px', right: '2px', fontSize: '14px', fontWeight: 'bold', color: THEME.orange, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
           {/* 左中三娘煞 */}
           {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'bold' }}>三娘煞</div>)}
           {/* 左中節氣 */}
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
           {/* 右中二十八星宿 */}
-          <div style={{ position: 'absolute', bottom: '16px', right: '4px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
+          <div style={{ position: 'absolute', bottom: '16px', right: '2px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
           {/* 底部資訊列：絕對定位三欄式 */}
             <div style={{ 
                 position: 'absolute', 
@@ -1577,7 +1577,7 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                 {data.wutu && (
                     <div style={{ 
                         position: 'absolute',
-                        left: '24px',
+                        left: '18px',
                         bottom: '0',
                         transform: 'translateX(-50%)', // 核心：確保它是以中心點對齊 50%
                         fontSize: '12px', 
