@@ -6,12 +6,13 @@ import 'react-calendar/dist/Calendar.css';
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
-  COLORS, THEME, COMMON_STYLES,
-  DONG_GONG_RULES, XIU_INFO, JIAN_CHU_INFO
+  InstallGuide, WebBackupManager, useProtection,
+  COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
-import { useProtection } from '@my-meta/ui';
+import {
+  DONG_GONG_RULES, XIU_INFO, JIAN_CHU_INFO, WUTU_POEMS
+} from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
@@ -28,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博年月進氣萬年曆";
-const APP_VERSION = "v1.2 新增貴人登天門時";
+const APP_VERSION = "v1.3 新增太陽太陰日時方";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -50,15 +51,15 @@ const WUTU_YANG_STEMS = ['甲', '丁', '戊', '己', '壬', '癸']; // 陽干順
 // 索引 0-11 對應 子-亥
 const WUTU_BRANCH_MAP = [1, 8, 8, 3, 4, 4, 9, 2, 2, 7, 6, 6]; 
 const WUTU_STAR_MAP = {
-  8: { name: '太陽星', 吉: true, color: '#f5222d', desc: '光輝大吉' }, // 艮
-  2: { name: '太陰星', 吉: true, color: '#fa8c16', desc: '進益次吉' }, // 坤
-  1: { name: '水星', 吉: true, color: '#1890ff', desc: '聰明財運' },   // 坎
-  3: { name: '木星', 吉: true, color: '#52c41a', desc: '紫氣催官' },   // 震
-  7: { name: '金星', 吉: true, color: '#faad14', desc: '領袖英傑' },   // 兌
-  9: { name: '火星', 吉: false, color: '#8c8c8c', desc: '破財' },      // 離
-  5: { name: '土星', 吉: false, color: '#8c8c8c', desc: '災厄' },      // 中
-  6: { name: '羅睺', 吉: false, color: '#8c8c8c', desc: '口舌' },      // 乾
-  4: { name: '計都', 吉: false, color: '#8c8c8c', desc: '是非' }       // 巽
+  8: { name: '太陽', 吉: true, color: THEME.orange, desc: '富貴大吉' }, // 艮
+  2: { name: '太陰', 吉: true, color: THEME.purple, desc: '人發財興' }, // 坤
+  1: { name: '水星', 吉: true, color: COLORS.ren, desc: '福祿盈門' },   // 坎
+  3: { name: '木星', 吉: true, color: COLORS.jia, desc: '紫氣催官' },   // 震
+  7: { name: '金星', 吉: true, color: COLORS.geng, desc: '倉箱盈積' },  // 兌
+  9: { name: '火星', 吉: false, color: THEME.red, desc: '瘟疫火災' },   // 離
+  5: { name: '土星', 吉: false, color: COLORS.wu, desc: '禍事多端' },   // 中
+  6: { name: '羅喉', 吉: false, color: THEME.dark, desc: '官非鼎鑊' },  // 乾
+  4: { name: '計都', 吉: false, color: THEME.dark, desc: '財散人亡' }   // 巽
 };
 
 const getWuTuSolarStar = (lunar) => {
@@ -73,42 +74,40 @@ const getWuTuSolarStar = (lunar) => {
         let maoDayLunar = null;
         let offsetDays = 0;
         
-        // 往回找最多13天 (地支循環12)
+        // 往回找最多13天
         for (let i = 0; i < 13; i++) {
              const d = new Date(firstDaySolar.getYear(), firstDaySolar.getMonth() - 1, firstDaySolar.getDay());
              d.setDate(d.getDate() - i);
              const l = window.Solar.fromYmd(d.getFullYear(), d.getMonth()+1, d.getDate()).getLunar();
              if (l.getDayZhi() === '卯') {
                  maoDayLunar = l;
-                 offsetDays = i; // 初一 與 卯日 差幾天
+                 offsetDays = i; // 初一 與 卯日 的距離 (0=同天, 1=差1天...)
                  break;
              }
         }
         if (!maoDayLunar) return null;
 
-        // 3. 判斷順逆 (卯日天干)
+        // 3. 階段一：尋初一落宮 (依「卯日」天干定順逆)
         const maoGan = maoDayLunar.getDayGan();
-        const isYang = WUTU_YANG_STEMS.includes(maoGan);
-        const dir = isYang ? 1 : -1;
+        const isMaoYang = WUTU_YANG_STEMS.includes(maoGan);
+        const dir1 = isMaoYang ? 1 : -1;
 
-        // 4. 計算「初一」的起宮位置
-        // 規則：卯日從「子(坎1)」起算，一日一宮推至初一
-        // 卯日位置 = 子(索引0)
-        // 初一位置 = (0 + dir * offsetDays) % 12
-        let firstDayBranchIdx = (0 + dir * offsetDays) % 12;
+        // 卯日從「子(索引0)」起算，推至初一
+        let firstDayBranchIdx = (0 + dir1 * offsetDays) % 12;
         if (firstDayBranchIdx < 0) firstDayBranchIdx += 12;
         
-        // 轉換為九宮起始點 (截法圖)
+        // 查截法圖 (地支 -> 九宮起點)
         const startGua = WUTU_BRANCH_MAP[firstDayBranchIdx];
 
-        // 5. 計算「目標日」的星曜
-        // 從初一開始，一日一宮飛佈九宮
-        // 目標日 與 初一 的天數差
-        const currentDayDiff = lunar.getDay() - 1; // 初一為1, 差0
+        // 4. 階段二：推當日值星 (依「初一」天干定順逆) *修正處*
+        const l1Gan = firstDayLunar.getDayGan();
+        const isL1Yang = WUTU_YANG_STEMS.includes(l1Gan);
+        const dir2 = isL1Yang ? 1 : -1;
+
+        // 從初一(startGua)起，一日一宮飛佈
+        const currentDayDiff = lunar.getDay() - 1; // 初一為1 (diff=0)
         
-        // 九宮循環 (1-9)
-        // 公式：(起點 - 1 + 方向 * 天數) % 9 + 1
-        let finalGuaIdx = (startGua - 1 + dir * currentDayDiff) % 9;
+        let finalGuaIdx = (startGua - 1 + dir2 * currentDayDiff) % 9;
         if (finalGuaIdx < 0) finalGuaIdx += 9;
         const finalGua = finalGuaIdx + 1;
 
@@ -116,6 +115,100 @@ const getWuTuSolarStar = (lunar) => {
 
     } catch (e) {
         console.error("WuTu Error", e);
+        return null;
+    }
+};
+
+// 烏兔太陽太陰「時」對照表
+// 口訣：甲己未申，丁壬申寅，乙庚申巳，丙辛辰丑戌，戊癸卯午
+const WUTU_TIME_LOOKUP = {
+    '甲': { sun: '未', moon: '丑、戌' }, // 甲己未時停, 甲己丑戌求
+    '己': { sun: '未', moon: '丑、戌' },
+    '乙': { sun: '申', moon: '巳' },     // 乙庚申, 乙庚巳位任君遊
+    '庚': { sun: '申', moon: '巳' },
+    '丙': { sun: '辰', moon: '丑、戌' }, // 丙辛辰, 丙辛丑戌求
+    '辛': { sun: '辰', moon: '丑、戌' },
+    '丁': { sun: '申', moon: '寅' },     // 丁壬乙庚申(丁壬申), 丁壬虎(寅)上
+    '壬': { sun: '申', moon: '寅' },
+    '戊': { sun: '卯', moon: '午' },     // 戊癸卯, 戊癸逢馬(午)
+    '癸': { sun: '卯', moon: '午' }
+};
+
+// 烏兔太陽太陰「方位」計算
+// 節氣對應起宮與順逆 (順=1, 逆=-1)
+// 涵蓋三個節氣：該節氣本身 + 後兩個 (一卦管三山/三節氣之意)
+const WUTU_DIR_MAP = {
+    '冬至': { start: 1, dir: 1 }, '小寒': { start: 1, dir: 1 }, '大寒': { start: 1, dir: 1 }, // 坎一
+    '立春': { start: 8, dir: 1 }, '雨水': { start: 8, dir: 1 }, '驚蟄': { start: 8, dir: 1 }, // 艮八
+    '春分': { start: 3, dir: 1 }, '清明': { start: 3, dir: 1 }, '穀雨': { start: 3, dir: 1 }, // 震三
+    '立夏': { start: 4, dir: 1 }, '小滿': { start: 4, dir: 1 }, '芒種': { start: 4, dir: 1 }, // 巽四
+    '夏至': { start: 9, dir: -1 }, '小暑': { start: 9, dir: -1 }, '大暑': { start: 9, dir: -1 }, // 離九 (逆)
+    '立秋': { start: 2, dir: -1 }, '處暑': { start: 2, dir: -1 }, '白露': { start: 2, dir: -1 }, // 坤二 (逆)
+    '秋分': { start: 7, dir: -1 }, '寒露': { start: 7, dir: -1 }, '霜降': { start: 7, dir: -1 }, // 兌七 (逆)
+    '立冬': { start: 6, dir: -1 }, '小雪': { start: 6, dir: -1 }, '大雪': { start: 6, dir: -1 }  // 乾六 (逆)
+};
+
+const GUA_NAMES = {
+    1: '坎 (正北)', 2: '坤 (西南)', 3: '震 (正東)', 4: '巽 (東南)', 
+    5: '中宮', 6: '乾 (西北)', 7: '兌 (正西)', 8: '艮 (東北)', 9: '離 (正南)'
+};
+
+// 60甲子索引 (甲子=0, ... 癸亥=59)
+const getGanZhiIndex = (ganZhi) => {
+    // 簡單查表法或計算，這裡假設傳入的是字串如 "甲子"
+    const GANS = "甲乙丙丁戊己庚辛壬癸";
+    const ZHIS = "子丑寅卯辰巳午未申酉戌亥";
+    const ganIdx = GANS.indexOf(ganZhi[0]);
+    const zhiIdx = ZHIS.indexOf(ganZhi[1]);
+    // 公式: (ganIdx * 6 + zhiIdx * 5 + ?). 
+    // 更簡單: 暴力迴圈找
+    for(let i=0; i<60; i++) {
+        const g = GANS[i % 10];
+        const z = ZHIS[i % 12];
+        if (g+z === ganZhi) return i;
+    }
+    return 0;
+};
+
+const getWuTuDetails = (lunar) => {
+    try {
+        const gan = lunar.getDayGan();
+        const timeInfo = WUTU_TIME_LOOKUP[gan];
+
+        // 計算方位
+        // 1. 找最近的節氣
+        const prevJieQi = lunar.getPrevJieQi(true); // true=包含當天
+        const jieQiName = prevJieQi ? prevJieQi.getName() : '冬至';
+        const setting = WUTU_DIR_MAP[jieQiName] || { start: 1, dir: 1 }; // 預設坎一順
+
+        // 2. 計算「日」的宮位 (甲子起遁)
+        const dayGanZhi = lunar.getDayInGanZhi();
+        const dayIdx = getGanZhiIndex(dayGanZhi); // 0-59
+        
+        // 公式：(起點 - 1 + 方向 * 天數偏移) % 9
+        // 注意 JavaScript 的負數取餘數問題
+        let dayPalaceIdx = (setting.start - 1 + setting.dir * dayIdx) % 9;
+        if (dayPalaceIdx < 0) dayPalaceIdx += 9;
+        const dayPalace = dayPalaceIdx + 1; // 1-9
+
+        // 3. 起九星 (從本日宮位起土星，依次順行)
+        // 順序：土1 金2 火3 羅4 水5 日6 月7 計8 木9
+        // 太陽是第6顆 (索引+5)，太陰是第7顆 (索引+6)
+        // 注意：九星飛佈通常不論冬夏皆順飛 (口訣：依次行)
+        
+        const sunPalace = ((dayPalace - 1 + 5) % 9) + 1;
+        const moonPalace = ((dayPalace - 1 + 6) % 9) + 1;
+
+        return {
+            ...timeInfo,
+            sunPos: GUA_NAMES[sunPalace],
+            moonPos: GUA_NAMES[moonPalace],
+            jieQi: jieQiName,
+            dayPalace: GUA_NAMES[dayPalace] // 除錯用，可顯示本日落宮
+        };
+
+    } catch (e) {
+        console.error(e);
         return null;
     }
 };
@@ -827,11 +920,20 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
     }, [date]);
 
     // 烏兔太陽太陰日
+    const [showWuTuPoem, setShowWuTuPoem] = useState(false);
     const wuTuData = useMemo(() => {
     if(!date) return null;
     try {
         const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
         return getWuTuSolarStar(solar.getLunar());
+    } catch(e) { return null; }
+}, [date]);
+
+    const wuTuDetail = useMemo(() => {
+    if(!date) return null;
+    try {
+        const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+        return getWuTuDetails(solar.getLunar());
     } catch(e) { return null; }
 }, [date]);
 
@@ -966,37 +1068,122 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             </div>
                         </div>
                         <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                            * 貴登天門時乃時之最吉者，能解諸凶。
+                            * 貴登天門時乃時之最吉者，能解諸凶
                         </div>
                     </div>
                 </AccordionSection>
             )}
             {/* 烏兔太陽太陰日 */}
             {wuTuData && (
-                <div style={{ 
-                    marginTop: '10px', 
-                    padding: '12px', 
-                    borderRadius: '12px', 
-                    border: `1px solid ${wuTuData.吉 ? wuTuData.color : '#eee'}`,
-                    backgroundColor: wuTuData.吉 ? `${wuTuData.color}15` : '#f5f5f5', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center' 
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#555' }}>烏兔值日</span>
-                        <span style={{ 
-                            fontSize: '18px', 
-                            fontWeight: 'bold', 
-                            color: wuTuData.color 
-                        }}>
-                            {wuTuData.name}
-                        </span>
+                <AccordionSection 
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>烏兔太陽太陰日</span>
+                            <span style={{ 
+                                fontSize: '14px', 
+                                fontWeight: 'bold', 
+                                color: wuTuData.color,
+                                backgroundColor: `${wuTuData.color}15`,
+                                padding: '2px 8px',
+                                borderRadius: '4px'
+                            }}>
+                                {wuTuData.name}
+                            </span>
+                        </div>
+                    } 
+                    defaultOpen={true} 
+                    color={wuTuData.color}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        
+                        {/* 1. 簡述與吉凶 */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333' }}>
+                                 {wuTuData.name}
+                             </div>
+                             <div style={{ 
+                                 fontSize: '13px', 
+                                 color: wuTuData.吉 ? '#52c41a' : '#ff4d4f', 
+                                 fontWeight: 'bold',
+                                 backgroundColor: wuTuData.吉 ? '#f6ffed' : '#fff1f0',
+                                 padding: '4px 10px',
+                                 borderRadius: '20px',
+                                 border: `1px solid ${wuTuData.吉 ? '#b7eb8f' : '#ffa39e'}`
+                             }}>
+                                 {wuTuData.desc}
+                             </div>
+                        </div>
+
+                        {/* 2. 太陽太陰吉時與方位 (新增區塊) */}
+                        {wuTuDetail && (
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '1fr 1fr', 
+                                gap: '8px', 
+                                backgroundColor: '#f9f9f9', 
+                                padding: '10px', 
+                                borderRadius: '8px',
+                                border: '1px solid #eee'
+                            }}>
+                                {/* 太陽 */}
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#f5222d', fontWeight: 'bold', marginBottom: '4px' }}>☀ 太陽時方</div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.sun}時
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.sunPos}
+                                    </div>
+                                </div>
+                                {/* 太陰 */}
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#fa8c16', fontWeight: 'bold', marginBottom: '4px' }}>🌙 太陰時方</div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.moon}時
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                        <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.moonPos}
+                                    </div>
+                                </div>
+                                <div style={{ gridColumn: '1 / -1', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                    * 太陽到向、烏兔太陰到山最吉。太陽到山、太陰到向次吉
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ height: '1px', backgroundColor: '#eee', margin: '4px 0' }}></div>
+
+                        {/* 3. 歌訣內容 */}
+                        <div>
+                            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#999', marginBottom: '6px' }}>
+                                值日星曜歌訣
+                            </div>
+                            {(() => {
+                                const poems = WUTU_POEMS[wuTuData.name] || [];
+                                return poems.length > 0 ? (
+                                    poems.map((poem, idx) => (
+                                        <div key={idx} style={{ 
+                                            fontSize: '14px', 
+                                            color: '#555', 
+                                            lineHeight: '1.6', 
+                                            marginBottom: '6px',
+                                            textAlign: 'justify' 
+                                        }}>
+                                            {poem}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{ fontSize: '13px', color: '#ccc' }}>暫無歌訣</div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* 底部註解 */}
+                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '4px' }}>
+                            * 用鳥兔太陽方除五黃會力士，乃五黃會劫煞外，其餘一切神煞均不忌，若用太陽太陰日時（或其他吉星）可以助吉
+                        </div>
                     </div>
-                    <div style={{ fontSize: '13px', color: wuTuData.吉 ? wuTuData.color : '#999', fontWeight: '500' }}>
-                        {wuTuData.desc}
-                    </div>
-                </div>
+                </AccordionSection>
             )}
           </div>
       </div>
