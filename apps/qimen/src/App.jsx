@@ -264,45 +264,59 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         diShenMapResult[g] = GOD_ORDER[finalGodIdx];
     });
 
-    // 暗干 (時干飛宮)
-    const FLY_ORDER = [1, 8, 3, 4, 9, 2, 7, 6];
-
-    // 1. 取得「當前地盤」的天干順序
-    const tianPanOrder = FLY_ORDER.map(g => tianPanGanMap[g]);
-
-    // 2. 找出「時干」在這個地盤陣列中的位置 (作為起點)
-    let anStartGan = (timeGan === '甲') ? xunLeaderGan : timeGan;
-    let startGanIdx = tianPanOrder.indexOf(anStartGan);
-    // 防呆：如果找不到 (例如剛好是中宮寄宮的干)，回退到 0
-    if (startGanIdx === -1) startGanIdx = 0;
-
-    // 3. 找出「值使門」在飛宮路徑中的位置 (作為落點)
-    // 規則：時干 加臨 值使門
-    let startGong = (doorGong === 5) ? 2 : doorGong;
-    let startGongIdx = FLY_ORDER.indexOf(startGong);
-    if (startGongIdx === -1) startGongIdx = 0;
-
+// --- 暗干 (引干) 邏輯：旬首入中宮飛排 ---
     const anGanMap = {};
+    const FLY_PATH = [5, 6, 7, 8, 9, 1, 2, 3, 4]; // 九宮飛泊路徑
 
-    // 4. 進行排盤：雙指針同步移動
-    // 讓天盤干的鍊子 (tianPanOrder) 與 宮位路徑 (FLY_ORDER) 對齊
-    for (let i = 0; i < 8; i++) {
-        // 計算當前宮位 (從值使門宮位開始，順時針走)
-        const currentGongIdx = (startGongIdx + i) % 8;
-        const currentGong = FLY_ORDER[currentGongIdx];
+    // 1. 判定觸發條件
+    // A. 時干為甲 (例如甲午時)
+    // B. 時干與值使門宮位的天盤干相同 (時干受阻)
+    const startGong = (doorGong === 5) ? 2 : doorGong;
+    const tianAtDoor = tianPanGanMap[startGong] || "";
+    const isSpecialCase = (timeGan === '甲' || tianAtDoor.includes(timeGan === '甲' ? xunLeaderGan : timeGan));
 
-        // 計算當前天干 (從時干開始，依照天盤原本的鄰接順序取出)
-        const currentGanIdx = (startGanIdx + i) % 8;
-        const currentGan = tianPanOrder[currentGanIdx];
+    if (isSpecialCase) {
+        // 邏輯：旬首入中宮，按陽順陰逆飛泊
+        // 找到旬首天干在 GAN_ORDER 中的起始索引
+        let ganIdx = GAN_ORDER.indexOf(xunLeaderGan);
+        
+        FLY_PATH.forEach((gongNum) => {
+            anGanMap[gongNum] = GAN_ORDER[ganIdx];
+            
+            // 根據陰陽遁決定天干前進方向
+            if (isYangDun) {
+                ganIdx = (ganIdx + 1) % 9;
+            } else {
+                ganIdx = (ganIdx - 1 + 9) % 9;
+            }
+        });
 
-        anGanMap[currentGong] = currentGan;
+        // 特殊處理：將中宮 (5) 的引干併入坤二宮 (2)
+        const centerGan = anGanMap[5];
+        if (centerGan) {
+            // 如果二宮已有引干，則合併（如：戊辛）
+            anGanMap[2] = (anGanMap[2] && anGanMap[2] !== centerGan) 
+                ? anGanMap[2] + centerGan 
+                : centerGan;
+        }
+    } else {
+        // --- 原有的「時干加臨值使門」轉宮邏輯 ---
+        const ROTATE_PATH = [1, 8, 3, 4, 9, 2, 7, 6];
+        const tianPanOrder = ROTATE_PATH.map(g => tianPanGanMap[g]?.[0] || "");
+        let effectiveTimeGan = (timeGan === '甲') ? xunLeaderGan : timeGan;
+        
+        let startGanIdx = tianPanOrder.indexOf(effectiveTimeGan);
+        if (startGanIdx === -1) startGanIdx = 0;
+        let startGongIdx = ROTATE_PATH.indexOf(startGong);
 
-        // 中宮 (5) 處理：跟隨坤宮 (2)
-        if (currentGong === 2) {
-            anGanMap[5] = currentGan;
+        for (let i = 0; i < 8; i++) {
+            const curGong = ROTATE_PATH[(startGongIdx + i) % 8];
+            const curGan = tianPanOrder[(startGanIdx + i) % 8];
+            anGanMap[curGong] = curGan;
+            if (curGong === 2) anGanMap[5] = curGan;
         }
     }
-
+    
     // --- 轉宮邏輯 (Rotate) ---
     // 建立 "目前狀態" 的 Map
     const currentLayout = {};
@@ -651,7 +665,6 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                         ...leftStyle, 
                         fontSize: '18px',     // 恢復原大小
                         color: THEME.gray, 
-                        fontSize: anGan.length > 1 ? '18px' : '18px', // 如果是雙字，字體稍微縮小
                         letterSpacing: anGan.length > 1 ? '-1px' : '0', // 雙字時縮減字距，防止換行或溢出
                         lineHeight: '1.6',
                         fontWeight: 'bold',   // 保持粗體

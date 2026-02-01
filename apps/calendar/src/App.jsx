@@ -29,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博年月進氣萬年曆";
-const APP_VERSION = "v1.3 新增太陽太陰日時方";
+const APP_VERSION = "v1.4 新增斗首擇日法";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -46,53 +46,46 @@ const QI_RULES = {
 };
 
 // 斗首擇日法
-const DOU_SHOU_FAN_HUA = {
-    '甲': { el: '土', name: '土' }, '己': { el: '土', name: '土' },
-    '乙': { el: '金', name: '金' }, '庚': { el: '金', name: '金' },
-    '丙': { el: '水', name: '水' }, '辛': { el: '水', name: '水' },
-    '丁': { el: '木', name: '木' }, '壬': { el: '木', name: '木' },
-    '戊': { el: '火', name: '火' }, '癸': { el: '火', name: '火' }
+const DOU_SHOU_MOUNTAIN_MAP = {
+  '壬': '土', '子': '土', '癸': '火', '丑': '火',
+  '艮': '木', '寅': '木', '甲': '水', '卯': '水',
+  '乙': '金', '辰': '金', '巽': '土', '巳': '土',
+  '丙': '火', '午': '火', '丁': '木', '未': '木',
+  '坤': '水', '申': '水', '庚': '金', '酉': '金',
+  '辛': '土', '戌': '土', '乾': '火', '亥': '火'
 };
 
-const ELEMENTS = ['木', '火', '土', '金', '水'];
-const EL_RELATION = {
-    '木': { p: '火', c: '土' }, // 生火，剋土
-    '火': { p: '土', c: '金' },
-    '土': { p: '金', c: '水' },
-    '金': { p: '水', c: '木' },
-    '水': { p: '木', c: '火' }
+const MOUNTAIN_LIST = ['壬', '子', '癸', '丑', '艮', '寅', '甲', '卯', '乙', '辰', '巽', '巳', '丙', '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥'];
+
+// 斗首天干化氣
+const DOU_SHOU_STEM_MAP = {
+  '甲': '土', '己': '土',
+  '乙': '金', '庚': '金',
+  '丙': '水', '辛': '水',
+  '丁': '木', '壬': '木',
+  '戊': '火', '癸': '火'
 };
 
-const getDouShouRelations = (dayGan) => {
-    if (!dayGan) return null;
-    const dayEl = DOU_SHOU_FAN_HUA[dayGan].el; // 日辰番化五行 (客)
-    
-    // 遍歷五種坐山 (主)
-    const results = ELEMENTS.map(mountEl => {
-        let star = '';
-        let luck = '';
-        let desc = '';
+// 斗首關係判定 (Host=山, Guest=干)
+const getDouShouStar = (hostEl, guestEl) => {
+  if (hostEl === guestEl) return { star: '元辰', fan: '元辰', luck: '吉', desc: '山家比和' };
+  
+  // 生剋關係判定
+  const relations = {
+    '木': { produce: '火', overcome: '土', producedBy: '水', overcomeBy: '金' },
+    '火': { produce: '土', overcome: '金', producedBy: '木', overcomeBy: '水' },
+    '土': { produce: '金', overcome: '水', producedBy: '火', overcomeBy: '木' },
+    '金': { produce: '水', overcome: '木', producedBy: '土', overcomeBy: '火' },
+    '水': { produce: '木', overcome: '火', producedBy: '金', overcomeBy: '土' }
+  };
 
-        if (mountEl === dayEl) {
-            star = '元辰'; luck = '吉'; desc = '比和旺氣';
-        } else if (EL_RELATION[dayEl].p === mountEl) {
-            // 日(客) 生 山(主) -> 生入
-            star = '廉貞'; luck = '大吉'; desc = '生入進氣';
-        } else if (EL_RELATION[mountEl].p === dayEl) {
-            // 山(主) 生 日(客) -> 生出
-            star = '武曲'; luck = '次吉'; desc = '生出退氣';
-        } else if (EL_RELATION[dayEl].c === mountEl) {
-            // 日(客) 剋 山(主) -> 剋入
-            star = '貪狼'; luck = '凶'; desc = '剋入煞氣';
-        } else {
-            // 山(主) 剋 日(客) -> 剋出
-            star = '破軍'; luck = '凶'; desc = '剋出洩氣'; // 斗首中亦視為耗
-        }
+  const rel = relations[hostEl];
+  if (guestEl === rel.producedBy) return { star: '貪狼', fan: '鬼破', luck: '凶', desc: '剋入山家' };
+  if (guestEl === rel.overcomeBy) return { star: '鬼破', fan: '子孫', luck: '凶', desc: '山家生出' };
+  if (guestEl === rel.produce)    return { star: '廉子', fan: '武財', luck: '吉', desc: '山家剋出' };
+  if (guestEl === rel.overcome)   return { star: '武財', fan: '貪狼', luck: '吉', desc: '生入山家' };
 
-        return { mountEl, star, luck, desc };
-    });
-
-    return { dayEl, results };
+  return { star: '未知', fan: '未知', luck: '平', desc: '' };
 };
 
 // 烏兔太陽太陰日計算
@@ -981,38 +974,99 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
     // 烏兔太陽太陰日
     const [showWuTuPoem, setShowWuTuPoem] = useState(false);
     const wuTuData = useMemo(() => {
-    if(!date) return null;
-    try {
-        const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
-        return getWuTuSolarStar(solar.getLunar());
-    } catch(e) { return null; }
-}, [date]);
+        if(!date) return null;
+        try {
+            const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+            return getWuTuSolarStar(solar.getLunar());
+        } catch(e) { return null; }
+    }, [date]);
 
     const wuTuDetail = useMemo(() => {
-    if(!date) return null;
-    try {
-        const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
-        return getWuTuDetails(solar.getLunar());
-    } catch(e) { return null; }
-}, [date]);
+        if(!date) return null;
+        try {
+            const solar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate());
+            return getWuTuDetails(solar.getLunar());
+        } catch(e) { return null; }
+    }, [date]);
 
     // 斗首擇日法
-    const douShouData = useMemo(() => {
-        if (!info || !info.bazi) return null;
-        return getDouShouRelations(info.bazi.dayGan);
-    }, [info]);
+    const [selectedMtn, setSelectedMtn] = useState('壬'); // 預設壬山
 
-  return (
-    <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.6)', zIndex: 1200,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-    }} onClick={onClose}>
-      <div style={{
-          background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '20px',
-          height: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-      }} onClick={e => e.stopPropagation()}>
+    const selectedMtnRef = useRef(selectedMtn);
+    selectedMtnRef.current = selectedMtn;
+
+    const douShouAnalysis = useMemo(() => {
+        if (!info || !info.bazi) return null;
+        const hostEl = DOU_SHOU_MOUNTAIN_MAP[selectedMtn];
+        
+        // 計算四柱
+        const pillars = [
+            { label: '年', gan: info.bazi.yearGan, zhi: info.bazi.yearZhi },
+            { label: '月', gan: info.bazi.monthGan, zhi: info.bazi.monthZhi },
+            { label: '日', gan: info.bazi.dayGan, zhi: info.bazi.dayZhi },
+            { label: '時', gan: info.bazi.timeGan, zhi: info.bazi.timeZhi }
+        ].map(p => {
+            const guestEl = DOU_SHOU_STEM_MAP[p.gan];
+            return { ...p, guestEl, ...getDouShouStar(hostEl, guestEl) };
+        });
+
+        const lianZiCount = pillars.filter(p => p.star === '廉子').length;
+        const yunQiCount = pillars.filter(p => p.star === '元氣').length;
+        return { hostEl, pillars, lianZiCount, yunQiCount };
+    }, [info, selectedMtn]);
+
+    const mountainScrollRef = useRef(null);
+        const ITEM_HEIGHT = 30; // 每一行的高度 (px)
+
+        // 1. 初始化或 Modal 開啟時，滾動到目前選中的位置
+        const setScrollRef = useCallback((node) => {
+            mountainScrollRef.current = node;
+            if (node) {
+                const currentMtn = selectedMtnRef.current;
+                const index = MOUNTAIN_LIST.indexOf(currentMtn);
+                if (index !== -1) {
+                    // 直接設定 scrollTop (不需 smooth)，確保展開瞬間即在正確位置
+                    node.scrollTop = index * ITEM_HEIGHT;
+                }
+            }
+        }, []);
+
+        // 2. 處理滾動事件：計算目前停在哪一個項目
+        const handleWheelScroll = (e) => {
+            const scrollTop = e.target.scrollTop;
+            const index = Math.round(scrollTop / ITEM_HEIGHT);
+            
+            if (index >= 0 && index < MOUNTAIN_LIST.length) {
+                const newMtn = MOUNTAIN_LIST[index];
+                if (newMtn !== selectedMtn) {
+                    setSelectedMtn(newMtn);
+                }
+            }
+        };
+        
+        // 3. 點擊項目時直接滾動到位
+        const handleItemClick = (index) => {
+            if (mountainScrollRef.current) {
+                mountainScrollRef.current.scrollTo({
+                    top: index * ITEM_HEIGHT,
+                    behavior: 'smooth'
+                });
+            }
+        };
+
+        return (
+            <div style={{
+                // ... (Modal 外層樣式保持不變) ...
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.6)', zIndex: 1200,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+            }} onClick={onClose}>
+            <div style={{
+                // ... (Modal 內層樣式保持不變) ...
+                background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '20px',
+                height: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            }} onClick={e => e.stopPropagation()}>
         
         {/* Modal Header */}
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1265,110 +1319,128 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                     </div>
                 </AccordionSection>
             )}
-            {/* --- 新增：斗首擇日法 --- */}
-            {douShouData && (
-                <AccordionSection title="斗首擇日法" defaultOpen={true} color="#1890ff">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {/* 說明文字 */}
-                        <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.5' }}>
-                            <div style={{ marginBottom: '4px' }}>
-                                以「<b>坐山</b>」為主（體），「<b>日辰</b>」為客（用）。
-                            </div>
-                            <div style={{ marginBottom: '8px', color: '#999', fontSize: '12px' }}>
-                                * 番化五行：甲己土，乙庚金，丙辛水，丁壬木，戊癸火。
-                            </div>
-                        </div>
-
-                        {/* 本日番化五行 */}
+            {/* 斗首擇日法 */}
+            <AccordionSection title="斗首擇日法" defaultOpen={true} color="#1890ff">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    
+                    {/* --- 垂直滾輪選擇器 --- */}
+                    <div style={{ 
+                        position: 'relative', 
+                        height: '90px', // 容器總高度 (約顯示 5 行)
+                        background: '#f8f8f8', 
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center'
+                    }}>
+                        
+                        {/* 中間選取線 (Highlight Bar) */}
                         <div style={{ 
-                            background: '#e6f7ff', 
-                            border: '1px solid #91d5ff', 
-                            borderRadius: '8px', 
-                            padding: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                        }}>
-                            <span style={{ fontWeight: 'bold', color: '#0050b3' }}>本日斗首五行</span>
-                            <span style={{ 
-                                fontSize: '16px', 
-                                fontWeight: '800', 
-                                color: '#1890ff',
-                                background: '#fff',
-                                padding: '2px 12px',
-                                borderRadius: '12px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                            }}>
-                                {douShouData.dayEl}
-                            </span>
-                        </div>
+                            position: 'absolute', 
+                            top: '50%', 
+                            left: '0', 
+                            right: '0', 
+                            height: '30px', // ITEM_HEIGHT
+                            marginTop: '-15px', 
+                            borderTop: `1px solid ${THEME.blue}40`,
+                            borderBottom: `1px solid ${THEME.blue}40`,
+                            background: '#fff',
+                            pointerEvents: 'none',
+                            zIndex: 1
+                        }}></div>
 
-                        {/* 對照表 */}
+                        {/* 上下遮罩 (3D 效果) */}
                         <div style={{ 
-                            border: '1px solid #eee', 
-                            borderRadius: '8px', 
-                            overflow: 'hidden' 
-                        }}>
-                            {/* 表頭 */}
-                            <div style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                                background: '#fafafa', 
-                                padding: '8px',
-                                borderBottom: '1px solid #eee',
-                                fontSize: '12px',
-                                fontWeight: 'bold',
-                                color: '#888'
-                            }}>
-                                <div>若坐山</div>
-                                <div>關係</div>
-                                <div>吉凶</div>
-                                <div>性質</div>
-                            </div>
+                            position: 'absolute', top: 0, left: 0, right: 0, height: '30px', 
+                            background: 'linear-gradient(to bottom, rgba(248,248,248,1), rgba(248,248,248,0))', 
+                            pointerEvents: 'none', zIndex: 2 
+                        }}></div>
+                        <div style={{ 
+                            position: 'absolute', bottom: 0, left: 0, right: 0, height: '30px', 
+                            background: 'linear-gradient(to top, rgba(248,248,248,1), rgba(248,248,248,0))', 
+                            pointerEvents: 'none', zIndex: 2 
+                        }}></div>
+
+                        {/* 滾動容器 (綁定 setScrollRef) */}
+                        <div 
+                            ref={setScrollRef}
+                            onScroll={handleWheelScroll}
+                            style={{ 
+                                width: '100%',
+                                height: '100%',
+                                overflowY: 'auto',
+                                scrollSnapType: 'y mandatory', // 垂直吸附
+                                zIndex: 3,
+                                scrollbarWidth: 'none', // Firefox 隱藏捲軸
+                                msOverflowStyle: 'none' // IE/Edge 隱藏捲軸
+                            }}
+                        >
+                            {/* Chrome/Safari 隱藏捲軸 */}
+                            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                             
-                            {/* 內容 */}
-                            {douShouData.results.map((item, idx) => (
-                                <div key={idx} style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                                    padding: '10px 8px',
-                                    borderBottom: idx === douShouData.results.length - 1 ? 'none' : '1px solid #f0f0f0',
-                                    fontSize: '13px',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{ fontWeight: 'bold', color: '#333' }}>
-                                        {item.mountEl}山
+                            {/* 上方填充 (Padding Top) */}
+                            <div style={{ height: '30px', flexShrink: 0 }}></div>
+
+                            {/* 選項列表 */}
+                            {MOUNTAIN_LIST.map((m, idx) => {
+                                const isSelected = selectedMtn === m;
+                                return (
+                                    <div 
+                                        key={m}
+                                        onClick={() => handleItemClick(idx)}
+                                        style={{ 
+                                            height: '30px', // ITEM_HEIGHT
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            scrollSnapAlign: 'center', // 吸附至中間
+                                            fontSize: isSelected ? '16px' : '16px',
+                                            fontWeight: isSelected ? 'bold' : 'normal',
+                                            color: isSelected ? '#1890ff' : '#aaa',
+                                            transition: 'transform 0.2s, color 0.2s',
+                                            transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {m}山
                                     </div>
-                                    <div style={{ 
-                                        fontWeight: 'bold', 
-                                        color: item.star === '廉貞' || item.star === '元辰' ? '#cf1322' : 
-                                               (item.star === '武曲' ? '#389e0d' : '#555') 
-                                    }}>
-                                        {item.star}
-                                    </div>
-                                    <div>
-                                        <span style={{ 
-                                            fontSize: '11px', 
-                                            padding: '2px 6px', 
-                                            borderRadius: '4px',
-                                            background: item.luck === '大吉' || item.luck === '吉' ? '#f6ffed' : 
-                                                       (item.luck === '次吉' ? '#e6f7ff' : '#fff1f0'),
-                                            color: item.luck === '大吉' || item.luck === '吉' ? '#389e0d' : 
-                                                   (item.luck === '次吉' ? '#096dd9' : '#cf1322'),
-                                            border: `1px solid ${item.luck === '大吉' || item.luck === '吉' ? '#b7eb8f' : (item.luck === '次吉' ? '#91d5ff' : '#ffa39e')}`
-                                        }}>
-                                            {item.luck}
-                                        </span>
-                                    </div>
-                                    <div style={{ fontSize: '11px', color: '#999' }}>
-                                        {item.desc}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
+
+                            {/* 下方填充 (Padding Bottom) */}
+                            <div style={{ height: '30px', flexShrink: 0 }}></div>
                         </div>
                     </div>
-                </AccordionSection>
-            )}
+
+                    {/* 分析結果 (保持不變) */}
+                    <div style={{ border: '1px solid #eee', borderRadius: '12px', overflow: 'hidden' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1fr 1fr 1.2fr', padding: '10px', background: '#fafafa', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
+                            <div>四柱</div>
+                            <div>斗首星</div>
+                            <div>番化</div>
+                            <div>性質</div>
+                        </div>
+                        {douShouAnalysis.pillars.map((p, idx) => (
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '0.8fr 1fr 1fr 1.2fr', padding: '12px 10px', borderBottom: '1px solid #f0f0f0', alignItems: 'center', fontSize: '13px' }}>
+                                <div style={{ fontWeight: 'bold' }}>{p.gan}{p.zhi}</div>
+                                <div style={{ color: p.luck === '吉' ? '#389e0d' : '#cf1322', fontWeight: 'bold' }}>{p.star}</div>
+                                <div style={{ color: p.luck === '吉' ? '#389e0d' : '#cf1322' }}>
+                                    {p.fan} <span style={{ fontSize: '11px' }}>({p.luck})</span>
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#999' }}>{p.desc}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* 元辰廉子警告 (保持不變) */}
+                    {douShouAnalysis.lianZiCount > 1 && douShouAnalysis.yunQiCount > 0 && (
+                        <div style={{ padding: '8px 12px', background: '#fff7e6', border: '1px solid #ffe58f', borderRadius: '8px', fontSize: '12px', color: '#d46b08', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <Info size={14} /> 元辰強旺，宜用一位廉子，多則不吉。元辰哀弱不宜用廉子。
+                        </div>
+                    )}
+                </div>
+            </AccordionSection>
           </div>
       </div>
     </div>
