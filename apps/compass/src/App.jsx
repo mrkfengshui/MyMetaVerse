@@ -1395,6 +1395,24 @@ export default function FengShuiApp() {
         }
     }, [gregYear, gregMonth, libStatus]); // 當年或月改變時觸發
 
+    useEffect(() => {
+        const loadBookmarks = async () => {
+            try {
+                // 使用與存儲時相同的 Key: 'fengshui_bookmarks'
+                const { value } = await Preferences.get({ key: 'fengshui_bookmarks' });
+                if (value) {
+                    const parsed = JSON.parse(value);
+                    if (Array.isArray(parsed)) {
+                        setBookmarks(parsed);
+                    }
+                }
+            } catch (e) {
+                console.error("讀取書籤失敗:", e);
+            }
+        };
+        loadBookmarks();
+    }, []);
+    
     const handleAnalyze = () => {
         setView('result');
     };

@@ -1370,10 +1370,12 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                 width: '100%',
                                 height: '100%',
                                 overflowY: 'auto',
-                                scrollSnapType: 'y mandatory', // 垂直吸附
+                                overflowX: 'hidden', // 強制隱藏水平溢出
+                                scrollSnapType: 'y mandatory',
                                 zIndex: 3,
-                                scrollbarWidth: 'none', // Firefox 隱藏捲軸
-                                msOverflowStyle: 'none' // IE/Edge 隱藏捲軸
+                                scrollbarWidth: 'none',
+                                msOverflowStyle: 'none',
+                                WebkitOverflowScrolling: 'touch' // 增加 iOS 滾動流暢度
                             }}
                         >
                             {/* Chrome/Safari 隱藏捲軸 */}
@@ -1390,17 +1392,18 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                         key={m}
                                         onClick={() => handleItemClick(idx)}
                                         style={{ 
-                                            height: '30px', // ITEM_HEIGHT
+                                            height: '30px', // 必須與 ITEM_HEIGHT 一致
+                                            width: '100%',   // 確保寬度撐滿，防止左右飄移
                                             display: 'flex', 
                                             alignItems: 'center', 
                                             justifyContent: 'center',
-                                            scrollSnapAlign: 'center', // 吸附至中間
-                                            fontSize: isSelected ? '16px' : '16px',
-                                            fontWeight: isSelected ? 'bold' : 'normal',
+                                            scrollSnapAlign: 'center',
+                                            fontSize: '16px',
+                                            fontWeight: isSelected ? '800' : '400', // 使用粗細變化代替縮放
                                             color: isSelected ? '#1890ff' : '#aaa',
-                                            transition: 'transform 0.2s, color 0.2s',
-                                            transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                                            cursor: 'pointer'
+                                            cursor: 'pointer',
+                                            textAlign: 'center',
+                                            transition: 'color 0.2s' // 移除 scale 變換，避免手機端渲染抖動
                                         }}
                                     >
                                         {m}山
