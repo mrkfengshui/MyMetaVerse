@@ -45,6 +45,56 @@ const QI_RULES = {
   branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
 };
 
+// 斗首擇日法
+const DOU_SHOU_FAN_HUA = {
+    '甲': { el: '土', name: '土' }, '己': { el: '土', name: '土' },
+    '乙': { el: '金', name: '金' }, '庚': { el: '金', name: '金' },
+    '丙': { el: '水', name: '水' }, '辛': { el: '水', name: '水' },
+    '丁': { el: '木', name: '木' }, '壬': { el: '木', name: '木' },
+    '戊': { el: '火', name: '火' }, '癸': { el: '火', name: '火' }
+};
+
+const ELEMENTS = ['木', '火', '土', '金', '水'];
+const EL_RELATION = {
+    '木': { p: '火', c: '土' }, // 生火，剋土
+    '火': { p: '土', c: '金' },
+    '土': { p: '金', c: '水' },
+    '金': { p: '水', c: '木' },
+    '水': { p: '木', c: '火' }
+};
+
+const getDouShouRelations = (dayGan) => {
+    if (!dayGan) return null;
+    const dayEl = DOU_SHOU_FAN_HUA[dayGan].el; // 日辰番化五行 (客)
+    
+    // 遍歷五種坐山 (主)
+    const results = ELEMENTS.map(mountEl => {
+        let star = '';
+        let luck = '';
+        let desc = '';
+
+        if (mountEl === dayEl) {
+            star = '元辰'; luck = '吉'; desc = '比和旺氣';
+        } else if (EL_RELATION[dayEl].p === mountEl) {
+            // 日(客) 生 山(主) -> 生入
+            star = '廉貞'; luck = '大吉'; desc = '生入進氣';
+        } else if (EL_RELATION[mountEl].p === dayEl) {
+            // 山(主) 生 日(客) -> 生出
+            star = '武曲'; luck = '次吉'; desc = '生出退氣';
+        } else if (EL_RELATION[dayEl].c === mountEl) {
+            // 日(客) 剋 山(主) -> 剋入
+            star = '貪狼'; luck = '凶'; desc = '剋入煞氣';
+        } else {
+            // 山(主) 剋 日(客) -> 剋出
+            star = '破軍'; luck = '凶'; desc = '剋出洩氣'; // 斗首中亦視為耗
+        }
+
+        return { mountEl, star, luck, desc };
+    });
+
+    return { dayEl, results };
+};
+
 // 烏兔太陽太陰日計算
 const WUTU_YANG_STEMS = ['甲', '丁', '戊', '己', '壬', '癸']; // 陽干順行
 // 地支對應九宮起始點 (子1, 丑寅8, 卯3, 辰巳4, 午9, 未申2, 酉7, 戌亥6)
@@ -946,6 +996,12 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
     } catch(e) { return null; }
 }, [date]);
 
+    // 斗首擇日法
+    const douShouData = useMemo(() => {
+        if (!info || !info.bazi) return null;
+        return getDouShouRelations(info.bazi.dayGan);
+    }, [info]);
+
   return (
     <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -1205,6 +1261,110 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         {/* 底部註解 */}
                         <div style={{ fontSize: '11px', color: THEME.gray, marginTop: '4px' }}>
                             * 用鳥兔太陽方除五黃會力士，乃五黃會劫煞外，其餘一切神煞均不忌，若用太陽太陰日時（或其他吉星）可以助吉
+                        </div>
+                    </div>
+                </AccordionSection>
+            )}
+            {/* --- 新增：斗首擇日法 --- */}
+            {douShouData && (
+                <AccordionSection title="斗首擇日法" defaultOpen={true} color="#1890ff">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {/* 說明文字 */}
+                        <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.5' }}>
+                            <div style={{ marginBottom: '4px' }}>
+                                以「<b>坐山</b>」為主（體），「<b>日辰</b>」為客（用）。
+                            </div>
+                            <div style={{ marginBottom: '8px', color: '#999', fontSize: '12px' }}>
+                                * 番化五行：甲己土，乙庚金，丙辛水，丁壬木，戊癸火。
+                            </div>
+                        </div>
+
+                        {/* 本日番化五行 */}
+                        <div style={{ 
+                            background: '#e6f7ff', 
+                            border: '1px solid #91d5ff', 
+                            borderRadius: '8px', 
+                            padding: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}>
+                            <span style={{ fontWeight: 'bold', color: '#0050b3' }}>本日斗首五行</span>
+                            <span style={{ 
+                                fontSize: '16px', 
+                                fontWeight: '800', 
+                                color: '#1890ff',
+                                background: '#fff',
+                                padding: '2px 12px',
+                                borderRadius: '12px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                            }}>
+                                {douShouData.dayEl}
+                            </span>
+                        </div>
+
+                        {/* 對照表 */}
+                        <div style={{ 
+                            border: '1px solid #eee', 
+                            borderRadius: '8px', 
+                            overflow: 'hidden' 
+                        }}>
+                            {/* 表頭 */}
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '1fr 1fr 1fr 1fr', 
+                                background: '#fafafa', 
+                                padding: '8px',
+                                borderBottom: '1px solid #eee',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                color: '#888'
+                            }}>
+                                <div>若坐山</div>
+                                <div>關係</div>
+                                <div>吉凶</div>
+                                <div>性質</div>
+                            </div>
+                            
+                            {/* 內容 */}
+                            {douShouData.results.map((item, idx) => (
+                                <div key={idx} style={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: '1fr 1fr 1fr 1fr', 
+                                    padding: '10px 8px',
+                                    borderBottom: idx === douShouData.results.length - 1 ? 'none' : '1px solid #f0f0f0',
+                                    fontSize: '13px',
+                                    alignItems: 'center'
+                                }}>
+                                    <div style={{ fontWeight: 'bold', color: '#333' }}>
+                                        {item.mountEl}山
+                                    </div>
+                                    <div style={{ 
+                                        fontWeight: 'bold', 
+                                        color: item.star === '廉貞' || item.star === '元辰' ? '#cf1322' : 
+                                               (item.star === '武曲' ? '#389e0d' : '#555') 
+                                    }}>
+                                        {item.star}
+                                    </div>
+                                    <div>
+                                        <span style={{ 
+                                            fontSize: '11px', 
+                                            padding: '2px 6px', 
+                                            borderRadius: '4px',
+                                            background: item.luck === '大吉' || item.luck === '吉' ? '#f6ffed' : 
+                                                       (item.luck === '次吉' ? '#e6f7ff' : '#fff1f0'),
+                                            color: item.luck === '大吉' || item.luck === '吉' ? '#389e0d' : 
+                                                   (item.luck === '次吉' ? '#096dd9' : '#cf1322'),
+                                            border: `1px solid ${item.luck === '大吉' || item.luck === '吉' ? '#b7eb8f' : (item.luck === '次吉' ? '#91d5ff' : '#ffa39e')}`
+                                        }}>
+                                            {item.luck}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#999' }}>
+                                        {item.desc}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </AccordionSection>
