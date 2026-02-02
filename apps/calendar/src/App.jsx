@@ -36,6 +36,9 @@ const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', 
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 const SAN_NIANG_DAYS = [3, 7, 13, 18, 22, 27];
+const JIE_QI_FIX_MAP = {
+  '惊蛰': '驚蟄', '谷雨': '穀雨', '小满': '小滿', '芒种': '芒種', '处暑': '處暑'
+};
 
 const STEM_COLORS = [COLORS.jia, COLORS.yi, COLORS.bing, COLORS.ding, COLORS.wu, COLORS.ji, COLORS.geng, COLORS.xin, COLORS.ren, COLORS.gui];
 const BRANCH_COLORS = [COLORS.ren, COLORS.ji, COLORS.jia, COLORS.yi, COLORS.wu, COLORS.ding, COLORS.bing, COLORS.ji, COLORS.geng, COLORS.xin, COLORS.wu, COLORS.gui];
@@ -43,6 +46,32 @@ const BRANCH_COLORS = [COLORS.ren, COLORS.ji, COLORS.jia, COLORS.yi, COLORS.wu, 
 const QI_RULES = {
   stems: [[[-2, 4], [8, 14]], [[-3, 3], [7, 13]], [[-4, 2], [6, 12]], [[5, 11]], [[4, 10]], [[3, 9]], [[2, 8]], [[1, 7]], [[0, 6]], [[-1, 5], [9, 15]]],
   branches: [[[-2, 5], [10, 17]], [[-1, 5], [11, 17]], [[0, 6]], [[1, 7]], [[2, 8]], [[3, 9]], [[4, 10]], [[5, 11]], [[-6, 3], [6, 15]], [[-5, 4], [7, 16]], [[-4, 2], [8, 14]], [[-3, 5], [9, 17]]]
+};
+
+// 計算天赦日
+const getTianShe = (monthZhi, dayGanZhi) => {
+  // 春 (寅卯辰) -> 戊寅
+  if (['寅', '卯', '辰'].includes(monthZhi) && dayGanZhi === '戊寅') return true;
+  // 夏 (巳午未) -> 甲午
+  if (['巳', '午', '未'].includes(monthZhi) && dayGanZhi === '甲午') return true;
+  // 秋 (申酉戌) -> 戊申
+  if (['申', '酉', '戌'].includes(monthZhi) && dayGanZhi === '戊申') return true;
+  // 冬 (亥子丑) -> 甲子
+  if (['亥', '子', '丑'].includes(monthZhi) && dayGanZhi === '甲子') return true;
+  
+  return false;
+};
+
+// 計算謝灶日 (農曆十二月)
+const getXieZao = (lunarMonth, lunarDay) => {
+  // 檢查是否為臘月 (12月)
+  // 注意：lunar-javascript 的 getMonth() 回傳數字，正數為正常月，負數為閏月
+  // 謝灶通常只在正常臘月，若遇閏臘月(極罕見)依俗通常算第一個或依節氣，這裡簡化只看數字
+  if (Math.abs(lunarMonth) !== 12) return null;
+
+  if (lunarDay === 23) return '謝灶 (官祀)';
+  if (lunarDay === 24) return '謝灶 (民祀)';
+  return null;
 };
 
 // 斗首擇日法
@@ -915,8 +944,13 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
                     星宿：<b>{info.xiu}</b>
                   </span>
               </div>
-              <div style={{ fontSize: '13px', color: THEME.grey, marginTop: '2px' }}>
-                 董公：<span style={{ fontWeight: 'bold', color: dgColor }}>{info.dongGongRating}</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px', color: THEME.black }}>
+                    烏兔：<span style={{ fontWeight: 'bold', color: info.wutu?.color }}>{info.wutuStr}</span>
+                  </span>
+                  <span style={{ fontSize: '13px', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px', color: THEME.black }}>
+                    董公：<span style={{ fontWeight: 'bold', color: dgColor }}>{info.dongGongShort}</span>
+                  </span>
               </div>
           </div>
 
@@ -927,23 +961,23 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
                 style={{ background: '#e6f7ff', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer', border: `1px solid ${THEME.blue}` }}
               >
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>時</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey}}>{info.bazi.timeGan}</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.timeZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black}}>{info.bazi.timeGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.timeZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>日</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.dayGan}</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.dayZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.dayGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.dayZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>月</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.monthGan}</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.monthZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.monthGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.monthZhi}</div>
               </div>
               <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '4px 6px' }}>
                   <div style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>年</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.yearGan}</div>
-                  <div style={{ fontWeight: 'bold', color: THEME.grey }}>{info.bazi.yearZhi}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.yearGan}</div>
+                  <div style={{ fontWeight: 'bold', color: THEME.black }}>{info.bazi.yearZhi}</div>
               </div>
           </div>
       </div>
@@ -1074,7 +1108,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                 <div style={{ fontSize: '24px', fontWeight: '800', color: THEME.black }}>
                   {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#6666663f'}}>週{info.weekDay}</span>
                 </div>
-                <div style={{ fontSize: '13px', color: THEME.grey }}>
+                <div style={{ fontSize: '13px', color: THEME.black }}>
                     {info.ganZhiYear}年 {info.lunarStr}
                 </div>
             </div>
@@ -1106,7 +1140,42 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
             {/* 擇日神煞 */}
             <AccordionSection title="擇日神煞" defaultOpen={true} color="#722ed1">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', alignItems: 'stretch' }}>
-                    
+                    {/* 天赦日 */}
+                    {info.isTianShe && (
+                        <div style={{ 
+                            background: '#f6ffed', padding: '12px', borderRadius: '12px', 
+                            border: '1px solid #b7eb8f', display: 'flex', alignItems: 'center', gap: '12px'
+                        }}>
+                            <div style={{ 
+                                background: '#389e0d', color: '#fff', padding: '4px 8px', 
+                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold' 
+                            }}>
+                                天赦日
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#389e0d' }}>
+                                四季皇恩大赦，百事大吉，能解諸凶。
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 謝灶日 */}
+                    {info.xieZao && (
+                        <div style={{ 
+                            background: '#fff7e6', padding: '12px', borderRadius: '12px', 
+                            border: '1px solid #ffe58f', display: 'flex', alignItems: 'center', gap: '12px'
+                        }}>
+                            <div style={{ 
+                                background: '#fa8c16', color: '#fff', padding: '4px 8px', 
+                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold' 
+                            }}>
+                                {info.xieZao}
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#d46b08' }}>
+                                吉，宜祭祀灶神、大掃除、作灶。
+                            </div>
+                        </div>
+                    )}
+
                     {/* 建除十二神 */}
                     {(() => {
                         // 直接從 Constants 獲取對應物件
@@ -1550,7 +1619,7 @@ const CalendarToolbar = ({
       borderRadius: '16px',
       border: `1px solid ${isActive ? color : '#ddd'}`,
       background: isActive ? bgActive : 'white',
-      color: isActive ? color : THEME.grey,
+      color: isActive ? color : THEME.black,
       display: 'flex',
       alignItems: 'center',
       gap: '4px',
@@ -1642,7 +1711,24 @@ const CalendarToolbar = ({
 const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender, bookmarks, qiMode, showTuiQi }) => {
   if (!canRender || !date || isNaN(date.getTime())) return <div style={{ height: '75px', background: '#fff' }}></div>;
   
-  let data = { lunarDisplay: date.getDate(), ganZhi: '', jian: '', xiu: '', isSanNiang: false, colorJian: THEME.black, colorXiu: THEME.black, isJieQi: false, dongGongRating: '', isNewYear: false, wutu: null };
+  // 1. 在這裡初始化變數 (加入 isTianShe 和 xieZao)
+  let data = { 
+      lunarDisplay: date.getDate(), 
+      ganZhi: '', 
+      jian: '', 
+      xiu: '', 
+      isSanNiang: false, 
+      colorJian: THEME.black, 
+      colorXiu: THEME.black, 
+      isJieQi: false, 
+      dongGongRating: '', 
+      isNewYear: false, 
+      wutu: null,
+      wutuStr: '',
+      isTianShe: false,
+      xieZao: null
+  };
+  
   let activeColors = [null, null, null, null];
 
   try {
@@ -1659,7 +1745,8 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       const term = lunar.getJieQi();
       
       if (term) { 
-          data.lunarDisplay = term;
+          const fixTerm = JIE_QI_FIX_MAP[term] || term;
+          data.lunarDisplay = fixTerm;
           data.isJieQi = true;
       } else {
         if (lunar.getMonth() === 1 && d <= 3) {
@@ -1682,15 +1769,23 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       const fixXiu = XIU_FIX_MAP[rawXiu] || rawXiu;
       data.xiu = fixXiu; data.colorXiu = XIU_COLOR_MAP[rawXiu] || XIU_COLOR_MAP[fixXiu] || THEME.red;
       
-        if (SAN_NIANG_DAYS.includes(d)) data.isSanNiang = true;
+      if (SAN_NIANG_DAYS.includes(d)) data.isSanNiang = true;
+      
+      // --- 2. 修正賦值方式 (寫入 data 物件) ---
+      data.isTianShe = getTianShe(baziEnd.getMonthZhi(), lunar.getDayInGanZhi()); 
+      data.xieZao = getXieZao(lunar.getMonth(), lunar.getDay());
+      // -------------------------------------
+
       const monthNum = Math.abs(lunar.getMonth());
       const dayZhi = lunar.getDayZhi(); const dayGanZhi = lunar.getDayInGanZhi();
       const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
-        if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
+      if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
       const star = getWuTuSolarStar(lunar);
-        if (star) {
-            data.wutu = star;
-        }
+      if (star) {
+          data.wutu = star;
+          data.wutuStr = WUTU_ABBR[star.name] || star.name[0];
+      }
+
       // 進退氣邏輯
       if (qiMode) {
           let baseStemIdx = -1, baseBranchIdx = -1;
@@ -1730,28 +1825,21 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                   }
               });
           } else if (showTuiQi || qiMode === 'yue') {
-              // 流月進退氣邏輯 (包含天干與地支) ---
-              
-              // 1. 天干處理
               const stemStatus = getMonthlyStemQiStatus(date, lunar);
               if (stemStatus && stemStatus.isActive) {
-                  // 判斷陰陽：偶數為陽(甲丙戊...), 奇數為陰(乙丁己...)
                   if (stemStatus.stemIdx % 2 === 0) {
-                      activeColors[0] = stemStatus.color; // 陽天干 -> 第1行
+                      activeColors[0] = stemStatus.color; 
                   } else {
-                      activeColors[1] = stemStatus.color; // 陰天干 -> 第2行
+                      activeColors[1] = stemStatus.color; 
                   }
               }
 
-              // 2. 地支處理
               const branchStatus = getMonthlyBranchQiStatus(date, lunar);
               if (branchStatus && branchStatus.isActive) {
-                  // 判斷陰陽：偶數為陽(子寅辰...), 奇數為陰(丑卯巳...)
-                  // 注意：這裡是指排序上的陰陽 (UI顯示用)，非五行屬性
                   if (branchStatus.branchIdx % 2 === 0) {
-                      activeColors[2] = branchStatus.color; // 陽地支 -> 第3行
+                      activeColors[2] = branchStatus.color; 
                   } else {
-                      activeColors[3] = branchStatus.color; // 陰地支 -> 第4行
+                      activeColors[3] = branchStatus.color; 
                   }
               }
           }
@@ -1775,27 +1863,42 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       {activeColors[3] && <div style={{ position: 'absolute', left: '2px', right: '2px', top: '76%', height: '23%', borderRadius: '12px', backgroundColor: activeColors[3], opacity: 0.4, zIndex: 1 }} />}
       
       <div style={{ opacity: textOpacity, position: 'relative', height: '100%', zIndex: 2, fontWeight: qiMode ? 'bold' : 'normal' }}>
-          {/* 左上角西曆日 */}
           <div style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '20px', fontWeight: '800', color: numColor, lineHeight: 1 }}>{date.getDate()}</div>
-          {/* 右上角干支 */}
           <div style={{ position: 'absolute', top: '3px', right: '2px', fontSize: '14px', fontWeight: 'bold', color: THEME.orange, writingMode: 'vertical-rl', lineHeight: '1', letterSpacing: '1px' }}>{data.ganZhi}</div>
-          {/* 左中三娘煞 */}
           {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'bold' }}>三娘煞</div>)}
-          {/* 左中節氣 */}
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
-          {/* 右中二十八星宿 */}
+            
+            {/* --- 3. 修正讀取方式 (讀取 data.isTianShe) --- */}
+            {data.isTianShe && (
+                <div style={{ 
+                    position: 'absolute', top: '38px', left: '4px', fontSize: '9px', 
+                    color: '#fff', background: '#389e0d',
+                    borderRadius: '4px', padding: '1px 3px', fontWeight: 'bold', zIndex: 5 
+                }}>
+                    天赦
+                </div>
+            )}
+            
+            {/* --- 3. 修正讀取方式 (讀取 data.xieZao) --- */}
+            {data.xieZao && (
+                <div style={{ 
+                    position: 'absolute', top: '38px', left: data.isTianShe ? '38px' : '4px', 
+                    fontSize: '9px', color: '#fff', background: '#fa8c16',
+                    borderRadius: '4px', padding: '1px 3px', fontWeight: 'bold', zIndex: 5 
+                }}>
+                    謝灶
+                </div>
+            )}
+
           <div style={{ position: 'absolute', bottom: '16px', right: '2px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
-          {/* 底部資訊列：絕對定位三欄式 */}
             <div style={{ 
                 position: 'absolute', 
                 bottom: '2px', 
                 left: '0', 
                 right: '0', 
-                height: '16px', // 設定固定高度，方便垂直對齊
+                height: '16px', 
                 pointerEvents: 'none' 
             }}>
-                
-                {/* 左下角建除十二神 */}
                 <div style={{ 
                     position: 'absolute',
                     left: '2px',
@@ -1808,19 +1911,17 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                     {data.jian}
                 </div>
 
-                {/* 中下烏兔太陽太陰日 */}
                 {data.wutu && (
                     <div style={{ 
                         position: 'absolute',
                         left: '21px',
                         bottom: '0',
-                        transform: 'translateX(-50%)', // 核心：確保它是以中心點對齊 50%
+                        transform: 'translateX(-50%)', 
                         fontSize: '12px', 
                         fontWeight: 'bold', 
                         color: data.wutu.color,
                         lineHeight: '1',
                         zIndex: 5,
-                        // 防止重疊的保護機制：限制最大寬度
                         maxWidth: '30%', 
                         overflow: 'hidden',
                         whiteSpace: 'nowrap',
@@ -1830,7 +1931,6 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
                     </div>
                 )}
 
-                {/* 右下角董公 */}
                 {data.dongGongRating && (
                     <div style={{ 
                         position: 'absolute',
@@ -2041,7 +2141,8 @@ export default function CalendarApp() {
                     const m = String(jqSolar.getMinute()).padStart(2, '0');
                     timeStr = `${h}:${m}`;
                 }
-                days.push({ name: term, day: d, time: timeStr });
+                const fixName = JIE_QI_FIX_MAP[term] || term;
+                days.push({ name: fixName, day: d, time: timeStr });
             }
         }
         return days;
@@ -2068,46 +2169,49 @@ export default function CalendarApp() {
   // ==========================================
   // 計算當前選中日期的詳細資訊 (含動態宜忌)
   // ==========================================
-  const selectedInfo = useMemo(() => {
+const selectedInfo = useMemo(() => {
     if (libStatus !== 'ready' || !selectedDate) return null;
     try {
         const solar = window.Solar.fromYmd(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate());
         const lunar = solar.getLunar();
         
-        // --- 1. 計算選定時辰的時間對象 (lunarForTime) ---
         const mapping = GET_SHI_CHEN_MAPPING(ziHourRule);
         const safeTimeIndex = (timeIndex >= 0 && timeIndex < mapping.length) ? timeIndex : 0;
         const targetHour = mapping[safeTimeIndex].hour;
         let lunarForTime;
         
-        // 根據早子/夜子/一般時辰規則建立對象
         if (ziHourRule === 'ziZheng' && targetHour === 23) {
              lunarForTime = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), 23, 30, 0).getLunar();
         } else {
-             // 這裡使用時辰的起始點 (例如巳時用 09:00:00) 進行判斷
-             // 如果節氣在 09:40，用戶選巳時(09:00起)，則依然算上個月；若選午時(11:00起)，則算下個月。這是合理的區間判斷。
              lunarForTime = window.Solar.fromYmdHms(selectedDate.getFullYear(), selectedDate.getMonth()+1, selectedDate.getDate(), targetHour, 0, 0).getLunar();
         }
 
-        // --- 2. [核心修改] 使用含時辰的對象獲取八字 ---
-        // timeBazi 包含了精確時間點的八字資訊 (自動處理節氣換月、立春換年)
         const timeBazi = lunarForTime.getEightChar();
-
         const isSanNiang = SAN_NIANG_DAYS.includes(lunar.getDay()); 
+        
+        // 安全呼叫 getTianShe
+        let isTianShe = false;
+        try { isTianShe = getTianShe(timeBazi.getMonthZhi(), lunarForTime.getDayInGanZhi()); } catch(e) {}
+
+        // 安全呼叫 getXieZao
+        let xieZaoStr = null;
+        try { xieZaoStr = getXieZao(lunar.getMonth(), lunar.getDay()); } catch(e) {}
+        
         const monthNum = Math.abs(lunar.getMonth());
         const dayZhi = lunar.getDayZhi();
         const dayGanZhi = lunar.getDayInGanZhi();
         const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
-        let dgRating = '平'; let dgText = '暫無資料';
+        let dgRating = '平'; let dgShort = '平'; let dgText = '暫無資料';
         if (dgRule) {
             dgText = dgRule.t;
             if (dgRule.s && dgRule.s[dayGanZhi]) { 
-                // 特殊情況下，直接修改標題 (Rating)
                 const specialVal = dgRule.s[dayGanZhi];
                 dgRating = `本日${dayGanZhi}為${specialVal}`; 
+                dgShort = specialVal;
             } 
             else { 
                 dgRating = dgRule.r; 
+                dgShort = dgRule.r;
             }
         }
         const dgSummary = dgText.split('：')[1]?.split('。')[0] || dgRating;
@@ -2120,31 +2224,51 @@ export default function CalendarApp() {
         if (lunarMonthName === '冬') lunarMonthName = '十一';
         if (lunarMonthName === '腊' || lunarMonthName === '臘') lunarMonthName = '十二';
 
-        // --- 新增：動態獲取真實宜忌 ---
-        const yiList = lunar.getDayYi().map(toTraditionalYiJi); // 加入轉換函數
-        const jiList = lunar.getDayJi().map(toTraditionalYiJi); // 加入轉換函數
+        const yiList = lunar.getDayYi().map(toTraditionalYiJi); 
+        const jiList = lunar.getDayJi().map(toTraditionalYiJi); 
 
+        // --- 修正重點：烏兔部分 ---
+        const star = getWuTuSolarStar(lunar);
+        // 安全取得縮寫
+        const abbrMap = (typeof WUTU_ABBR !== 'undefined') ? WUTU_ABBR : {};
+        const wutuStr = star ? (abbrMap[star.name] || star.name) : '';
+        
+        // 【刪除錯誤代碼】：原本這裡有一行 data.wutu = star; 導致崩潰
+        
         return {
             dateStr: `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日`,
             weekDay: WEEKDAYS[selectedDate.getDay()],
-            // 這裡也建議改用 timeBazi，以防立春當天換年
             ganZhiYear: timeBazi.getYearGan() + timeBazi.getYearZhi(), 
             lunarStr: `${lunarMonthName}月${lunar.getDayInChinese()}`,
             
-            // [核心修改] 八字全部改用 timeBazi
             bazi: {
                 yearGan: timeBazi.getYearGan(), yearZhi: timeBazi.getYearZhi(),
                 monthGan: timeBazi.getMonthGan(), monthZhi: timeBazi.getMonthZhi(),
                 dayGan: timeBazi.getDayGan(), dayZhi: timeBazi.getDayZhi(),
                 timeGan: timeBazi.getTimeGan(), timeZhi: timeBazi.getTimeZhi()
             },
-            jian: fixJian, xiu: fixXiu, xiuFull: XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿'),
-            dongGongRating: dgRating, dongGongText: dgText, dongGongSummary: dgSummary,
+            jian: fixJian, 
+            xiu: fixXiu, 
+            xiuFull: XIU_FULL_NAME_MAP[fixXiu] || (fixXiu + '宿'),
+            
+            dongGongRating: dgRating, 
+            dongGongShort: dgShort, // 確保回傳簡短版
+            dongGongText: dgText, 
+            dongGongSummary: dgSummary,
+            
+            wutu: star, 
+            wutuStr: wutuStr, // 回傳縮寫
+            
             isSanNiang: isSanNiang,
+            isTianShe: isTianShe,
+            xieZao: xieZaoStr,
             yi: yiList.join(', '),
             ji: jiList.join(', ')
         };
-    } catch(e) { return null; }
+    } catch(e) { 
+        console.error("SelectedInfo Crash:", e);
+        return null; 
+    }
   }, [selectedDate, libStatus, timeIndex, ziHourRule]);
 
   const calendarDays = useMemo(() => {
