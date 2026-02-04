@@ -17,7 +17,7 @@ import {
   Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
   ChevronUp, ChevronDown, Circle, Compass,
   CloudUpload, DoorOpen, Download,
-  Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
+  Edit3, Eye, EyeOff, Info, Grid, Lock, Map, MapPin,
   RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
@@ -963,6 +963,14 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
     // ==========================================
     // 渲染單個宮位內容
     // ==========================================
+    const [floorPlan, setFloorPlan] = useState(null); 
+    const [imgConfig, setImgConfig] = useState({ opacity: 0.6, scale: 1, rotate: 0, x: 0, y: 0 });
+    const [showFloorPlanPanel, setShowFloorPlanPanel] = useState(false);
+    
+    // 處理背景色邏輯
+    const cellBgColor = floorPlan ? 'rgba(255, 252, 245, 0.4)' : '#fffcf5';
+    const gridBorderColor = '#8b4513';
+
     const renderCellContent = (idx, isCenter = false) => {
         const tags = getGridTags(idx);
         const yearly = getYearlyBadges(idx);
@@ -1082,7 +1090,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                         width: '100%', zIndex: 10, pointerEvents: 'none'
                     }}>
                         {yearly.map((y, i) => (
-                            <span key={i} style={{ ...tagStyle, background: y.c, fontSize: isRound ? '9px' : '9px', padding: '1px 2px' }}>{y.t}</span>
+                            <span key={i} style={{ ...tagStyle, background: y.c, fontSize: isRound ? '8px' : '9px', padding: '1px 2px' }}>{y.t}</span>
                         ))}
                     </div>
                 )}
@@ -1141,7 +1149,6 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                     transformOrigin: 'center top'
                                 }}>
                                     {`(${dir})`} 
-                                    {/* 圓盤模式去掉括號以節省空間 */}
                                 </span>
                             )}
                         </div>
@@ -1184,6 +1191,16 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
             </div>
         );
     };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setFloorPlan(reader.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
@@ -1207,25 +1224,111 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                     </label>
                 </div>
 
-                <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
-                     <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
-                     <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: THEME.orange}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
-                     <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto'}}><Briefcase size={12}/> 商戰</button>
-                     <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #333', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                {/* --- 按鈕工具列 --- */}
+                <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap', alignItems:'center'}}>
+                    <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1', cursor:'pointer'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
+                    <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: THEME.orange, cursor:'pointer'}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
+                    <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto', cursor:'pointer'}}><Briefcase size={12}/> 商戰</button>
+                    <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #333', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'}}>
                         {isRound ? <Circle size={12}/> : <Grid size={12}/>} {isRound ? '圓盤' : '方盤'}
-                     </button>
+                    </button>
+                    <button 
+                        onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} 
+                        style={{
+                            fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
+                            border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333', // 開啟時變藍色
+                            background: showFloorPlanPanel ? '#333' : 'white', // 開啟時變淺藍底
+                            color: showFloorPlanPanel ? 'white' : '#333',
+                            display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'
+                        }}
+                    >
+                        <Map size={12}/> 平面圖
+                    </button>
                 </div>
-            </div>
+
+                {/* --- 平面圖控制面板 (只在 showFloorPlanPanel 為 true 時顯示) --- */}
+                {showFloorPlanPanel && (
+                    <div style={{...cardStyle, backgroundColor: '#f0f2f5', marginTop: '10px', animation: 'fadeIn 0.3s'}}>
+                        <div style={sectionTitle}><Map size={16}/> 平面圖設置</div>
+                        
+                        <div style={{display:'flex', gap:'10px', flexWrap:'wrap', alignItems:'center'}}>
+                            <input type="file" accept="image/*" onChange={handleFileUpload} style={{fontSize:'12px'}} />
+                            {floorPlan && (
+                                <button onClick={() => setFloorPlan(null)} style={{...btnStyle, color: THEME.red}}>移除底圖</button>
+                            )}
+                        </div>
+                        
+                        {floorPlan && (
+                            <div style={{marginTop:'10px', display:'flex', flexDirection:'column', gap:'12px'}}>
+                                {/* 第一排：透明度與縮放 */}
+                                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
+                                    <label style={{fontSize:'12px'}}>透明度: 
+                                        <input type="range" min="0" max="1" step="0.1" value={imgConfig.opacity} 
+                                            onChange={e => setImgConfig({...imgConfig, opacity: parseFloat(e.target.value)})} 
+                                            style={{width:'100%'}} />
+                                    </label>
+                                    <label style={{fontSize:'12px'}}>縮放: 
+                                        <input type="range" min="0.2" max="3" step="0.05" value={imgConfig.scale} 
+                                            onChange={e => setImgConfig({...imgConfig, scale: parseFloat(e.target.value)})} 
+                                            style={{width:'100%'}} />
+                                    </label>
+                                </div>
+
+                                {/* 第二排：旋轉 */}
+                                <label style={{fontSize:'12px'}}>旋轉 ({imgConfig.rotate}°): 
+                                    <input type="range" min="-180" max="180" value={imgConfig.rotate} 
+                                        onChange={e => setImgConfig({...imgConfig, rotate: parseInt(e.target.value)})} 
+                                        style={{width:'100%'}} />
+                                </label>
+
+                                {/* 第三排：X / Y 位移 (XY軸調教) */}
+                                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', background:'#e6f7ff', padding:'8px', borderRadius:'8px'}}>
+                                    <label style={{fontSize:'12px'}}>↔ 水平 (X軸): 
+                                        <input type="range" min="-200" max="200" value={imgConfig.x} 
+                                            onChange={e => setImgConfig({...imgConfig, x: parseInt(e.target.value)})} 
+                                            style={{width:'100%'}} />
+                                    </label>
+                                    <label style={{fontSize:'12px'}}>↕ 垂直 (Y軸): 
+                                        <input type="range" min="-200" max="200" value={imgConfig.y} 
+                                            onChange={e => setImgConfig({...imgConfig, y: parseInt(e.target.value)})} 
+                                            style={{width:'100%'}} />
+                                    </label>
+                                </div>
+                                
+                                <div style={{display:'flex', justifyContent:'flex-end'}}>
+                                    <button onClick={() => setImgConfig({ opacity: 0.6, scale: 1, rotate: 0, x: 0, y: 0 })} 
+                                            style={{fontSize:'11px', color:THEME.blue, border:'none', background:'none', cursor:'pointer'}}>
+                                        ↺ 重置設定
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+                </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
                 {isRound ? (
                     // ================= 圓盤模式 (八線分隔版) =================
                     <div style={{
                         position: 'relative', width: '340px', height: '340px',
-                        background: '#fffcf5', borderRadius: '50%',
-                        border: '5px solid #8B4513', boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                        overflow: 'hidden' // 確保線條不超出圓盤
+                        background: floorPlan ? 'transparent' : '#fffcf5', // 若有圖，底圓變透明
+                        borderRadius: '50%',
+                        border: `3px solid ${gridBorderColor}`,
+                        overflow: 'hidden'
                     }}>
+                        {/* 底圖層 */}
+                        {floorPlan && (
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                zIndex: 0, opacity: imgConfig.opacity,
+                                // 修改這裡：加入 translate，並放在最前面以確保方向正確
+                                transform: `translate(${imgConfig.x}px, ${imgConfig.y}px) scale(${imgConfig.scale}) rotate(${imgConfig.rotate}deg)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <img src={floorPlan} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        )}
                         {/* 八宮分隔線 */}
                         {[0, 45, 90, 135].map(angle => (
                             <div key={angle} style={{
@@ -1293,15 +1396,44 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                         })}
                     </div>
                 ) : (
-                    // ================= 方盤模式 (維持原樣) =================
+                    // ================= 方盤模式 (已優化透明邏輯) =================
                     <div style={{
-                        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px',
-                        background: '#8B4513', padding: '4px', borderRadius: '4px',
-                        width: '100%', maxWidth: '350px', aspectRatio: '1/1'
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(3, 1fr)', 
+                        gap: floorPlan ? '0' : '2px', 
+                        background: floorPlan ? 'transparent' : gridBorderColor,
+                        border: `1px solid ${gridBorderColor}`,
+                        padding: '2px', 
+                        borderRadius: '4px',
+                        width: '100%', 
+                        maxWidth: '350px', 
+                        aspectRatio: '1/1',
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}>
+                        {/* 底圖層 */}
+                        {floorPlan && (
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                zIndex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                opacity: imgConfig.opacity,
+                                // 修改這裡：同樣加入 translate
+                                transform: `translate(${imgConfig.x}px, ${imgConfig.y}px) scale(${imgConfig.scale}) rotate(${imgConfig.rotate}deg)`,
+                                pointerEvents: 'none'
+                            }}>
+                                <img src={floorPlan} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                            </div>
+                        )}
+
+                        {/* 格子層 */}
                         {gridOrder.map((idx) => (
                             <div key={idx} onClick={() => handleSectorClick(idx)} style={{ 
-                                background: '#fffcf5', cursor: 'pointer', position: 'relative', overflow: 'hidden'
+                                background: floorPlan ? 'rgba(255, 252, 245, 0.4)' : '#fffcf5', 
+                                border: floorPlan ? `1px solid ${gridBorderColor}` : 'none',
+                                boxSizing: 'border-box',
+                                cursor: 'pointer', 
+                                position: 'relative', 
+                                zIndex: 1
                             }}>
                                 {renderCellContent(idx, idx === 4)}
                             </div>
