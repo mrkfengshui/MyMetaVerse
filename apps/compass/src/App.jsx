@@ -1324,9 +1324,9 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 zIndex: 0, opacity: imgConfig.opacity,
                                 // 修改這裡：加入 translate，並放在最前面以確保方向正確
                                 transform: `translate(${imgConfig.x}px, ${imgConfig.y}px) scale(${imgConfig.scale}) rotate(${imgConfig.rotate}deg)`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible'
                             }}>
-                                <img src={floorPlan} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={floorPlan} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                             </div>
                         )}
                         {/* 八宮分隔線 */}
@@ -1419,9 +1419,9 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 opacity: imgConfig.opacity,
                                 // 修改這裡：同樣加入 translate
                                 transform: `translate(${imgConfig.x}px, ${imgConfig.y}px) scale(${imgConfig.scale}) rotate(${imgConfig.rotate}deg)`,
-                                pointerEvents: 'none'
+                                pointerEvents: 'none', overflow: 'visible'
                             }}>
-                                <img src={floorPlan} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                <img src={floorPlan} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', width: 'auto', height: 'auto' }} />
                             </div>
                         )}
 
