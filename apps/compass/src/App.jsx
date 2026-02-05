@@ -26,7 +26,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博風水";
-const APP_VERSION = "v1.1 詳列雙星斷事";
+const APP_VERSION = "v1.2 增加圓盤/載入平面圖";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // 引入 Lunar 庫
@@ -1001,11 +1001,11 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
             tagBottom: isRound ? '26px' : '30px', 
             
             // 運星位置
-            baseBottom: isRound ? '6px' : '4px',
+            baseBottom: isRound ? '4px' : '4px',
 
             // 宮名位置 (圓盤改為置中底部，方盤維持左下角)
             guaPos: isRound 
-                ? { bottom: '58px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' } 
+                ? { bottom: '60px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' } 
                 : { bottom: '4px', left: '4px', textAlign: 'left' },
 
             // 八宅位置 (圓盤往內縮，方盤維持右下角)
@@ -1018,7 +1018,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
         // 修正：圓盤空間太小，八宅改為放在"向星"的下方稍微偏右，或者放在運星上面
         // 這裡採用：方盤不變，圓盤放在右側中間偏下，避開角落
         const roundBaZhaiStyle = isRound 
-            ? { top: '64px', right: '15px' } // 圓盤：放在向星下方
+            ? { top: '68px', right: '15px' } // 圓盤：放在向星下方
             : { bottom: '4px', right: '4px' }; // 方盤：右下角
 
         // 標籤容器樣式
@@ -1229,7 +1229,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                     <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1', cursor:'pointer'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
                     <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: THEME.orange, cursor:'pointer'}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
                     <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto', cursor:'pointer'}}><Briefcase size={12}/> 商戰</button>
-                    <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #333', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'}}>
+                    <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: 'none', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', cursor:'pointer'}}>
                         {isRound ? <Circle size={12}/> : <Grid size={12}/>} {isRound ? '圓盤' : '方盤'}
                     </button>
                     <button 
@@ -1239,7 +1239,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                             border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333', // 開啟時變藍色
                             background: showFloorPlanPanel ? '#333' : 'white', // 開啟時變淺藍底
                             color: showFloorPlanPanel ? 'white' : '#333',
-                            display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'
+                            display: 'flex', alignItems: 'center', cursor:'pointer'
                         }}
                     >
                         <Map size={12}/> 平面圖

@@ -27,7 +27,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v1.1 加強日干顯示";
+const APP_VERSION = "v1.2 修正立春後問題";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -39,7 +39,7 @@ const CHINESE_NUM = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六'
 const PALACE_BASE = {
     1: { name: '坎', star: '蓬', door: '休', element: '水', num: 1 },
     2: { name: '坤', star: '芮', door: '死', element: '土', num: 2 },
-    3: { name: '震', star: '衝', door: '傷', element: '木', num: 3 },
+    3: { name: '震', star: '沖', door: '傷', element: '木', num: 3 },
     4: { name: '巽', star: '輔', door: '杜', element: '木', num: 4 },
     5: { name: '中', star: '禽', door: '',   element: '土', num: 5 },
     6: { name: '乾', star: '心', door: '開', element: '金', num: 6 },
@@ -50,7 +50,7 @@ const PALACE_BASE = {
 
 // 原始星門神配置
 const ORIGINAL_CONFIG = {
-    1: { star: '蓬', door: '休' }, 2: { star: '芮', door: '死' }, 3: { star: '衝', door: '傷' },
+    1: { star: '蓬', door: '休' }, 2: { star: '芮', door: '死' }, 3: { star: '沖', door: '傷' },
     4: { star: '輔', door: '杜' }, 5: { star: '禽', door: '' },   6: { star: '心', door: '開' },
     7: { star: '柱', door: '驚' }, 8: { star: '任', door: '生' }, 9: { star: '英', door: '景' }
 };
@@ -62,7 +62,7 @@ const DOOR_ELEMENTS = {
 };
 
 const GAN_ORDER = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
-const STAR_ORDER = ['蓬', '任', '衝', '輔', '英', '芮', '柱', '心']; 
+const STAR_ORDER = ['蓬', '任', '沖', '輔', '英', '芮', '柱', '心']; 
 const DOOR_ORDER = ['休', '生', '傷', '杜', '景', '死', '驚', '開']; 
 const GOD_ORDER = ['符', '蛇', '陰', '合', '虎', '武', '九', '天'];
 
@@ -129,7 +129,20 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     const zhiNumMap = {};
     DIZHI.forEach((z, i) => zhiNumMap[z] = i + 1);
     const yNum = zhiNumMap[bazi.getYearZhi()] || 1;
-    const mNum = Math.abs(lunar.getMonth());
+    
+    // --- 修正開始：改用干支月序 (寅=1) 以匹配節氣換年邏輯 ---
+    // 原始代碼 (錯誤): const mNum = Math.abs(lunar.getMonth());
+    
+    const monthZhi = bazi.getMonthZhi(); // 獲取節氣月支 (如 '寅')
+    
+    // 定義道家陰盤的月份數 (寅月為1, 卯月為2 ... 丑月為12)
+    const YIN_PAN_MONTH_MAP = { 
+        '寅': 1, '卯': 2, '辰': 3, '巳': 4, '午': 5, '未': 6, 
+        '申': 7, '酉': 8, '戌': 9, '亥': 10, '子': 11, '丑': 12 
+    };
+    
+    // 如果找不到映射(防呆)，則回退到農曆月份
+    const mNum = YIN_PAN_MONTH_MAP[monthZhi] || Math.abs(lunar.getMonth());
     const dNum = lunar.getDay();
     const hNum = zhiNumMap[timeZhi] || 1;
     
@@ -170,6 +183,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     let xunLeaderGong = 0;
     Object.keys(diPanMap).forEach(g => { if (diPanMap[g] === xunLeaderGan) xunLeaderGong = parseInt(g); });
     if (xunLeaderGong === 0) xunLeaderGong = juNum; 
+    const realLeaderGong = xunLeaderGong;
     if (xunLeaderGong === 5) xunLeaderGong = 2; 
 
     const originStar = ORIGINAL_CONFIG[xunLeaderGong]?.star || '芮'; 
@@ -223,8 +237,13 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     if (diff < 0) diff += 12;
 
     let doorGong = xunLeaderGong;
+
+    if (originStar === '芮' && realLeaderGong === 5) {
+        doorGong = 5;
+    }
+
     for (let k = 0; k < diff; k++) {
-        if (isYangDun) { doorGong++; if (doorGong > 9) doorGong = 1; } 
+        if (isYangDun) { doorGong++; if (doorGong > 9) doorGong = 1; }
         else { doorGong--; if (doorGong < 1) doorGong = 9; }
     }
     if (doorGong === 5) doorGong = 2;
@@ -302,7 +321,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     } else {
         // --- 原有的「時干加臨值使門」轉宮邏輯 ---
         const ROTATE_PATH = [1, 8, 3, 4, 9, 2, 7, 6];
-        const tianPanOrder = ROTATE_PATH.map(g => tianPanGanMap[g]?.[0] || "");
+        const tianPanOrder = ROTATE_PATH.map(g => tianPanGanMap[g] || "");
         let effectiveTimeGan = (timeGan === '甲') ? xunLeaderGan : timeGan;
         
         let startGanIdx = tianPanOrder.indexOf(effectiveTimeGan);
@@ -419,7 +438,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
             return str.split('').some(g => rules.includes(g));
         }
         let isMu = checkMu(tianGanStr) || checkMu(diGanStr);
-        if (num === 2 && content.shen === '符') isMu = true;
+        if (num === 2 && (content.shen === '符' || content.diShen === '符')) isMu = true;
 
         const doorEle = DOOR_ELEMENTS[content.men] || '';
         const palaceEle = base.element;
@@ -603,7 +622,9 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                         </span>
                     )}
                 </div>
-                <div style={{ fontSize: '14px', color: '#555', marginBottom: '6px' }}>{extraInfo.xunInfo}旬</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#555', marginBottom: '6px' }}>
+                    <span>{extraInfo.xunInfo}旬 {extraInfo.timeStr}</span>
+                </div>
                 {/* 值符值使同行 */}
                 <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: THEME.blue, fontWeight: '500' }}>
                     <span>值符: {extraInfo.zhiFuStar}</span>
@@ -631,7 +652,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const rightStyle = { 
         position: 'absolute', 
         right: '4px',         // 統一靠右距離
-        width: '38px',        // 固定寬度 (容納雙字)
+        width: '42px',        // 固定寬度 (容納雙字)
         display: 'flex', 
         justifyContent: 'center', // 水平置中
         zIndex: 2 
@@ -668,7 +689,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
                         letterSpacing: anGan.length > 1 ? '-1px' : '0', // 雙字時縮減字距，防止換行或溢出
                         lineHeight: '1.6',
                         fontWeight: 'bold',   // 保持粗體
-                        whiteSpace: 'wrap'
+                        whiteSpace: 'nowrap'
                     }}>
                         {anGan}
                     </div>
@@ -743,7 +764,8 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
         xunInfo: currentData.xunInfo,
         zhiFuStar: currentData.zhiFuStar,
         zhiShiDoor: currentData.zhiShiDoor,
-        rotateStatus: rotateOffset !== 0 ? `轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}` : ''
+        rotateStatus: rotateOffset !== 0 ? `轉宮${rotateOffset > 0 ? '+' : ''}${rotateOffset}` : '',
+        timeStr: currentData.lunarDateStr.split(' ').pop()
     };
 
     const handleRotate = (val) => {
