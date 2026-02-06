@@ -7,7 +7,8 @@ import {
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
-  COLORS, THEME, COMMON_STYLES
+  COLORS, THEME, COMMON_STYLES,
+  QIMEN_STARS_INFO, QIMEN_DOORS_INFO, QIMEN_GODS_INFO, QIMEN_YONG_SHEN, TEN_STEM_COMBINATIONS, PATTERN_INFO
 } from '@my-meta/ui';
 
 import { useProtection } from '@my-meta/ui';
@@ -27,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v1.2 修正立春後問題";
+const APP_VERSION = "v1.3 增加宮位資訊";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -608,11 +609,14 @@ const InputView = ({ onCalculate, initialData }) => {
     );
 };
 
-const PalaceCell = ({ data, patterns, extraInfo }) => {
-    // 中宮
+const PalaceCell = ({ data, patterns, extraInfo, onClick }) => {
+    const combinedCellStyle = { ...cellStyle, cursor: 'pointer' };
     if (data.num === 5) {
         return (
-            <div style={{ ...cellStyle, backgroundColor: '#fffbe6', justifyContent: 'center' }}>
+            <div 
+                style={{ ...cellStyle, backgroundColor: '#fffbe6', justifyContent: 'center' }}
+                onClick={() => onClick({ ...data, patterns })}
+            >
                 {/* 局數 與 轉宮狀態 (顯示在同一行) */}
                 <div style={{ display: 'flex', justifyContent: 'left', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '16px', color: THEME.black, fontWeight: 'bold' }}>{extraInfo.juName}</span>
@@ -661,7 +665,7 @@ const PalaceCell = ({ data, patterns, extraInfo }) => {
     const anGan = data.an || '';
 
     return (
-        <div style={cellStyle}>
+        <div style={combinedCellStyle} onClick={() => onClick(data)}>
             <div style={{ position: 'absolute', top: 2, right: 4, fontSize: '12px', fontWeight: 'bold', color: THEME.black }}>
                 {data.name}
             </div>
@@ -739,8 +743,232 @@ const cellStyle = {
     backgroundColor: THEME.white, border: `1px solid ${THEME.border}`, position: 'relative', height: '100%', minHeight: '125px', padding: '2px', boxSizing: 'border-box'
 };
 
+const DetailModal = ({ data, onClose }) => {
+    if (!data) return null;
+
+    // 取得各項資訊
+    const starInfo = QIMEN_STARS_INFO[data.star] || { title: data.star, text: '暫無詳細定義' };
+    const doorInfo = QIMEN_DOORS_INFO[data.men] || { title: data.men, text: '暫無詳細定義' };
+    const godInfo = QIMEN_GODS_INFO[data.shen] || { title: data.shen, text: '暫無詳細定義' };
+    
+    // 從 data 中取出 patterns 與 extraInfo
+    const { patterns, extraInfo } = data;
+
+    // ================= 修改開始：處理多重天干組合 =================
+    // 邏輯：如果 天=A, 地=BC
+    // 組合應為：A+B (天地), A+C (天地), B+C (地盤內在/寄宮)
+    
+    const getStemCombinations = () => {
+        const combos = [];
+        // 將字串拆解為陣列 (防呆：確保是字串)
+        const tianStems = (data.tian || '').split(''); // e.g., ['乙'] 或 ['戊','癸']
+        const diStems = (data.di || '').split('');     // e.g., ['丙'] 或 ['辛','壬']
+
+        // 1. 天盤 vs 地盤 (主剋應)
+        // 迴圈：拿每一個天盤干 去配 每一個地盤干
+        tianStems.forEach(t => {
+            diStems.forEach(d => {
+                combos.push({
+                    top: t,
+                    bottom: d,
+                    type: '天盤 ⇄ 地盤' // 標記類型
+                });
+            });
+        });
+
+        // 2. 地盤內部雙干 (寄宮關係)
+        // 如果地盤有兩個字 (例如 BC)，則產生 B+C
+        if (diStems.length > 1) {
+            combos.push({
+                top: diStems[0],
+                bottom: diStems[1],
+                type: '地盤雙干 (寄宮)'
+            });
+        }
+
+        // 3. 天盤內部雙干 (雖然較少見，但若天禽星在天盤也可能出現雙干)
+        if (tianStems.length > 1) {
+            combos.push({
+                top: tianStems[0],
+                bottom: tianStems[1],
+                type: '天盤雙干 (寄宮)'
+            });
+        }
+
+        return combos;
+    };
+
+    const stemCombos = getStemCombinations();
+
+    return (
+        <div style={modalStyles.overlay} onClick={onClose}>
+            <div style={modalStyles.content} onClick={e => e.stopPropagation()}>
+                {/* 標題欄 */}
+                <div style={modalStyles.header}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ ...modalStyles.palaceTag, backgroundColor: data.num === 5 ? THEME.orange : THEME.blue }}>
+                            {data.num === 5 ? '中' : data.name}宮
+                        </div>
+                    </div>
+                    <X size={24} onClick={onClose} style={{ cursor: 'pointer', color: THEME.gray }} />
+                </div>
+
+                <div style={modalStyles.body}>
+                    
+                    {/* 1. 全局格局 (伏吟/反吟) */}
+                    {patterns && patterns.length > 0 ? (
+                        <section style={modalStyles.section}>
+                            <div style={{ ...modalStyles.label, color: THEME.red }}>
+                                <Info size={16} style={{ marginRight: '4px' }} />
+                                全局格局
+                            </div>
+                            {patterns.map((p, index) => {
+                                // 加入安全檢查，確保 PATTERN_INFO 有載入
+                                const info = PATTERN_INFO ? PATTERN_INFO[p] : null;
+                                if (!info) return (
+                                    <div key={index} style={{ marginBottom: '8px', color: 'red', fontSize: '12px' }}>
+                                        {p} (詳細解釋未載入)
+                                    </div>
+                                );
+                                return (
+                                    <div key={index} style={{ marginBottom: '12px', backgroundColor: '#fff5f5', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}` }}>
+                                        <div style={{ fontWeight: 'bold', color: '#c0392b', marginBottom: '4px' }}>{info.title}</div>
+                                        <div style={{ fontSize: '14px', color: '#555', lineHeight: '1.5' }}>{info.text}</div>
+                                    </div>
+                                );
+                            })}
+                        </section>
+                    ) : (
+                        // 如果是中宮且沒有伏吟反吟，顯示提示
+                        data.num === 5 && (
+                            <div style={{ padding: '10px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
+                                此局無伏吟或反吟格局
+                            </div>
+                        )
+                    )}
+
+                    {/* 2. 十干克應 (動態列表渲染) */}
+                    {data.num !== 5 && (
+                        <section style={modalStyles.section}>
+                            <div style={{ ...modalStyles.label, color: THEME.blue }}>
+                                <Sparkles size={16} style={{ marginRight: '4px' }} />
+                                十干克應 ({stemCombos.length}組)
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {stemCombos.map((combo, idx) => {
+                                    const stemKey = `${combo.top}${combo.bottom}`;
+                                    const info = TEN_STEM_COMBINATIONS[stemKey] || { title: `${combo.top}+${combo.bottom}`, text: '無特殊記載' };
+                                    
+                                    return (
+                                        <div key={idx} style={{ backgroundColor: '#f0f7ff', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.blue}44` }}>
+                                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom: '4px' }}>
+                                                <span style={{ fontWeight: 'bold', color: THEME.blue }}>
+                                                    {combo.top} + {combo.bottom} <span style={{fontSize:'0.8em', color:'#666'}}>({info.title})</span>
+                                                </span>
+                                                <span style={{ fontSize: '10px', backgroundColor: '#fff', padding: '2px 6px', borderRadius: '4px', color: '#888', border:'1px solid #eee' }}>
+                                                    {combo.type}
+                                                </span>
+                                            </div>
+                                            <p style={{ fontSize: '14px', color: '#444', margin: 0 }}>{info.text}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+                    
+                    {/* 3. 神、星、門資訊 (非中宮才顯示) */}
+                    {data.num !== 5 && (
+                        <>
+                             <section style={modalStyles.section}>
+                                <div style={{ ...modalStyles.label, color: '#8e44ad' }}>
+                                    <Compass size={16} style={{ marginRight: '4px' }} />
+                                    神：{godInfo.title}
+                                </div>
+                                <p style={modalStyles.text}>{godInfo.text}</p>
+                            </section>
+
+                            <section style={modalStyles.section}>
+                                <div style={{ ...modalStyles.label, color: '#d35400' }}>
+                                    <Grid size={16} style={{ marginRight: '4px' }} />
+                                    星：{starInfo.title}
+                                </div>
+                                <p style={modalStyles.text}>{starInfo.text}</p>
+                            </section>
+
+                            <section style={modalStyles.section}>
+                                <div style={{ ...modalStyles.label, color: '#27ae60' }}>
+                                    <DoorOpen size={16} style={{ marginRight: '4px' }} />
+                                    門：{doorInfo.title}
+                                </div>
+                                <p style={modalStyles.text}>{doorInfo.text}</p>
+                            </section>
+                            
+                            {(data.isKong || data.isMa || data.isXing || data.isMu || data.isPo) && (
+                                <div style={modalStyles.warningBox}>
+                                    {data.isKong && <span>空亡 </span>}
+                                    {data.isMa && <span>天馬 </span>}
+                                    {data.isXing && <span>擊刑 </span>}
+                                    {data.isMu && <span>入墓 </span>}
+                                    {data.isPo && <span>門迫 </span>}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 精美樣式定義
+const modalStyles = {
+    overlay: {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
+        justifyContent: 'center', alignItems: 'center', zIndex: 9999,
+        backdropFilter: 'blur(4px)'
+    },
+    content: {
+        backgroundColor: '#fff', width: '90%', maxWidth: '380px',
+        borderRadius: '20px', padding: '24px', position: 'relative',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        maxHeight: '70vh', overflowY: 'auto'
+    },
+    header: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px'
+    },
+    palaceTag: {
+        color: '#fff', padding: '2px 10px', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold'
+    },
+    section: {
+        marginBottom: '18px'
+    },
+    label: {
+        fontSize: '15px', fontWeight: 'bold', marginBottom: '6px',
+        display: 'flex', alignItems: 'center'
+    },
+    text: {
+        fontSize: '14px', color: '#444', lineHeight: '1.6', margin: 0,
+        backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '8px'
+    },
+    warningBox: {
+        marginTop: '10px', padding: '10px', borderRadius: '8px',
+        backgroundColor: '#fff5f5', color: '#c0392b', fontSize: '14px',
+        fontWeight: 'bold', textAlign: 'center', border: '1px solid #feb2b2'
+    },
+    closeBtn: {
+        width: '100%', marginTop: '10px', padding: '12px',
+        backgroundColor: THEME.black, color: '#fff', border: 'none',
+        borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer'
+    }
+};
+
 const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
     const [rotateOffset, setRotateOffset] = useState(0);
+    const [selectedPalace, setSelectedPalace] = useState(null);
     useEffect(() => { setRotateOffset(0); }, [data.id]);
 
     if (!data) return null;
@@ -802,8 +1030,15 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
             <RotateControlBar rotateOffset={rotateOffset} onRotate={handleRotate} />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '1px', backgroundColor: '#000', border: `2px solid ${THEME.black}`, borderRadius: '4px', aspectRatio: '1/1', marginBottom: '20px' }}>
-                {currentData.grid.map((cell, idx) => <PalaceCell key={idx} data={cell} patterns={currentData.patterns} extraInfo={extraInfo} />)}
+                {currentData.grid.map((cell, idx) => <PalaceCell key={idx} data={cell} patterns={currentData.patterns} extraInfo={extraInfo} onClick={(palaceData) => setSelectedPalace(palaceData)}/>)}
             </div>
+            {/* 彈窗組件 */}
+            {selectedPalace && (
+                <DetailModal 
+                    data={selectedPalace} 
+                    onClose={() => setSelectedPalace(null)} 
+                />
+            )}
             <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>道家陰盤奇門遁甲</div>
         </div>
     );
