@@ -771,7 +771,7 @@ const DetailModal = ({ data, onClose }) => {
                 combos.push({
                     top: t,
                     bottom: d,
-                    type: '天盤 ⇄ 地盤' // 標記類型
+                    type: '天盤地盤' // 標記類型
                 });
             });
         });
@@ -782,7 +782,7 @@ const DetailModal = ({ data, onClose }) => {
             combos.push({
                 top: diStems[0],
                 bottom: diStems[1],
-                type: '地盤雙干 (寄宮)'
+                type: '地盤'
             });
         }
 
@@ -791,7 +791,7 @@ const DetailModal = ({ data, onClose }) => {
             combos.push({
                 top: tianStems[0],
                 bottom: tianStems[1],
-                type: '天盤雙干 (寄宮)'
+                type: '天盤'
             });
         }
 
@@ -851,8 +851,7 @@ const DetailModal = ({ data, onClose }) => {
                     {data.num !== 5 && (
                         <section style={modalStyles.section}>
                             <div style={{ ...modalStyles.label, color: THEME.blue }}>
-                                <Sparkles size={16} style={{ marginRight: '4px' }} />
-                                十干克應 ({stemCombos.length}組)
+                                天干格局
                             </div>
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -883,24 +882,21 @@ const DetailModal = ({ data, onClose }) => {
                         <>
                              <section style={modalStyles.section}>
                                 <div style={{ ...modalStyles.label, color: '#8e44ad' }}>
-                                    <Compass size={16} style={{ marginRight: '4px' }} />
-                                    神：{godInfo.title}
+                                    八神：{godInfo.title}
                                 </div>
                                 <p style={modalStyles.text}>{godInfo.text}</p>
                             </section>
 
                             <section style={modalStyles.section}>
                                 <div style={{ ...modalStyles.label, color: '#d35400' }}>
-                                    <Grid size={16} style={{ marginRight: '4px' }} />
-                                    星：{starInfo.title}
+                                    九星：{starInfo.title}
                                 </div>
                                 <p style={modalStyles.text}>{starInfo.text}</p>
                             </section>
 
                             <section style={modalStyles.section}>
                                 <div style={{ ...modalStyles.label, color: '#27ae60' }}>
-                                    <DoorOpen size={16} style={{ marginRight: '4px' }} />
-                                    門：{doorInfo.title}
+                                    八門：{doorInfo.title}
                                 </div>
                                 <p style={modalStyles.text}>{doorInfo.text}</p>
                             </section>
@@ -934,7 +930,7 @@ const modalStyles = {
         backgroundColor: '#fff', width: '90%', maxWidth: '380px',
         borderRadius: '20px', padding: '24px', position: 'relative',
         boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-        maxHeight: '70vh', overflowY: 'auto'
+        maxHeight: '60vh', overflowY: 'auto'
     },
     header: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
