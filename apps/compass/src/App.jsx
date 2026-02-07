@@ -745,7 +745,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow: 'hidden', height: '100%', width: '100%'}}>
             
             {/* 羅庚與十字星 */}
-            <div style={{ position: 'relative', width: 'min(80vw, 25vh)', height: 'min(80vw, 25vh)', maxWidth: '350px', maxHeight: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px 0', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: 'min(80vw, 45vh)', height: 'min(80vw, 45vh)', maxWidth: '350px', maxHeight: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px 0', flexShrink: 0 }}>
                 <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', height: '20%', width: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
                 <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20%', height: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
                 <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', boxSizing: 'border-box' }}>
