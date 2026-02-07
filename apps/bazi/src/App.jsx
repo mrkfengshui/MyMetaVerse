@@ -962,7 +962,7 @@ const PillarCard = ({
         </div>
         
         {/* 地支區塊 */}
-        <div style={{ position: 'relative', width: '40px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
+        <div style={{ position: 'relative', width: '40px', height: '36px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: '800', color: zhiColor, lineHeight: 1.2 }}>{zhi}</span>
             <div style={{ position: 'absolute', top: 6, right: -11 }}>
                 
@@ -986,8 +986,8 @@ const PillarCard = ({
                     {kongWangStatus && (
                         <div style={{ 
                         position: 'absolute', 
-                        left: -50,             // 移至左側
-                        top: '30%',             // 垂直置中
+                        left: displayMode === 'shenSha' ? -64 : -50,
+                        top: displayMode === 'shenSha' ? '100%' : '1%',
                         transform: 'translateY(-50%)', 
                         fontSize: '11px', 
                         color: '#ffffff',       // 白字
@@ -1016,6 +1016,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
+   const [selectedLiuRi, setSelectedLiuRi] = useState(null);
    
    // [核心修改] 狀態改為三態字串: 'shiShen'(預設), 'zangGan'(藏干), 'shenSha'(神煞)
    const [displayMode, setDisplayMode] = useState('shiShen'); 
@@ -1023,6 +1024,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const safeTheme = colorTheme || 'elemental';
    useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
    useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
+   useEffect(() => { setSelectedLiuRi(null); }, [selectedLiuYue]);
    if (!data) return null;
 
    // 輔助：切換模式邏輯
@@ -1065,7 +1067,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
            const D = solarObj.getDay();
            const h = String(solarObj.getHour()).padStart(2, '0');
            const m = String(solarObj.getMinute()).padStart(2, '0');
-           return `${M}/${D} ${h}:${m}`;
+           return `${M}月${D}日 ${h}:${m}`;
        };
 
        for(let i=0; i<12; i++) {
@@ -1117,6 +1119,67 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
            });
        }
        return months;
+   };
+
+   const getLiuRiData = () => {
+       if (!selectedLiuYue || !selectedLiuNianYear || !window.Solar) return [];
+       const days = [];
+       
+       // 1. 定義節氣白名單 (只找「節」，跳過「氣」)
+       const JIE_NAMES_CN = ["立春", "惊蛰", "清明", "立夏", "芒种", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
+
+       try {
+           // 2. 推算流月參考時間點 (該月15號)
+           let searchMonth = selectedLiuYue.seq + 1;
+           let searchYear = parseInt(selectedLiuNianYear);
+           if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
+
+           const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
+           const lunar = solarCheck.getLunar();
+           
+           // 3. 獲取本月起點 (節)
+           const currentJie = lunar.getPrevJieQi(false); 
+
+           // 4. 尋找下一個真正的「節」 (排除中氣)
+           let nextJie = lunar.getNextJieQi(true); 
+           while (nextJie && !JIE_NAMES_CN.includes(nextJie.getName())) {
+               // 如果是中氣(如春分)，往後推 1 天繼續找，直到找到下一個節(如清明)
+               nextJie = nextJie.getSolar().next(1).getLunar().getNextJieQi(true);
+           }
+
+           if (currentJie && nextJie) {
+               let iterSolar = currentJie.getSolar();
+               
+               // 【核心修正】：將結束時間轉為單純的日期字串 "2026-04-05"
+               // 這樣可以完全忽略時分秒帶來的誤差
+               const endDateStr = nextJie.getSolar().toYmd();
+               
+               // 5. 執行迴圈：只要「當前日期」不等於「下個節氣日期」，就繼續
+               // 這樣 4/4 (不等於 4/5) 會被執行，而 4/5 (等於 4/5) 會停止
+               while (iterSolar.toYmd() !== endDateStr) {
+                   
+                   const iterLunar = iterSolar.getLunar();
+                   const dGanZhi = iterLunar.getDayInGanZhi();
+                   
+                   days.push({
+                       dateStr: `${iterSolar.getMonth()}/${iterSolar.getDay()}`,
+                       gan: dGanZhi.charAt(0),
+                       zhi: dGanZhi.charAt(1),
+                       ganGod: getShiShen(data.bazi.dayGan, dGanZhi.charAt(0)),
+                       zhiHidden: ZHI_HIDDEN[dGanZhi.charAt(1)] || [] 
+                   });
+                   
+                   // 往後推一天
+                   iterSolar = iterSolar.next(1);
+
+                   // 安全斷路器 (防止極端錯誤)
+                   if (days.length > 40) break;
+               }
+           }
+       } catch (e) {
+           console.error("流日計算錯誤", e);
+       }
+       return days;
    };
 
     // 1. 新增 State
@@ -1362,7 +1425,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                     {/* 顯示 日/月 */}
-                                    <div style={{ fontSize: '12px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
+                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
                                     <div style={{ fontSize: '10px', color: THEME.gray }}>{ly.name}</div>
                                 </div>
                             </div>
@@ -1372,6 +1435,109 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
            </div>
        );
    };
+
+    const renderLiuRiList = () => {
+       // 1. 建立 ref 以便控制捲動容器
+       const scrollRef = useRef(null);
+       
+       if (!selectedLiuYue) return null;
+       const liuRis = getLiuRiData();
+       if (liuRis.length === 0) return null;
+
+       // 2. 滑鼠滾輪事件處理：將垂直滾動轉換為水平滾動
+       const handleWheel = (e) => {
+           if (scrollRef.current) {
+               // 電腦端使用者捲動滾輪時，讓容器水平移動
+               // 減去 deltaY 是為了讓捲動方向更符合直覺
+               scrollRef.current.scrollLeft -= e.deltaY;
+           }
+       };
+
+       return (
+           <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+               {/* 標題與關閉按鈕 */}
+               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.green || '#4caf50'}`, paddingLeft: '8px', fontSize: '15px' }}>
+                       {selectedLiuYue.gan}{selectedLiuYue.zhi}月 - 流日
+                   </h4>
+                   <button onClick={() => setSelectedLiuYue(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px', cursor: 'pointer' }}>
+                       <X size={18} />
+                   </button>
+               </div>
+
+               {/* 橫向滑動容器 */}
+               <div 
+                   ref={scrollRef}
+                   onWheel={handleWheel} 
+                   style={{ 
+                       display: 'flex', 
+                       direction: 'rtl', // 八字由右往左排列
+                       overflowX: 'auto', // 確保捲軸出現           
+                       WebkitOverflowScrolling: 'touch', 
+                       width: '100%',                
+                       gap: '6px', 
+                       paddingBottom: '12px', // 給捲軸留一點空間，避免擋住日期
+                   }} 
+               >
+                   {liuRis.map((day, idx) => {
+                       const isSelected = selectedLiuRi === idx;
+                       const displayTopRight = getTopRightItem(day.gan);
+                       const displayBottomRight = getDisplayItems(day.gan, day.zhi);
+                       const gColor = getColor(day.gan, 'stem'); 
+                       const zColor = getColor(day.zhi, 'branch');
+
+                       return (
+                           <div key={idx} 
+                               onClick={() => setSelectedLiuRi(idx)}
+                               style={{ 
+                                   direction: 'ltr', // 卡片內部文字恢復左往右
+                                   flex: '0 0 auto', 
+                                   width: '64px',
+                                   display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                                   padding: '8px 4px', 
+                                   backgroundColor: isSelected ? '#f0fff4' : THEME.bgGray, 
+                                   borderRadius: '8px', 
+                                   border: isSelected ? `2px solid ${THEME.green || '#4caf50'}` : `2px solid ${THEME.border}`, 
+                                   position: 'relative', 
+                                   height: '110px',
+                                   cursor: 'pointer',
+                                   transition: 'all 0.2s'
+                               }}
+                           >
+                               <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
+                                   <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
+                                   {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '10px', color: THEME.gray }}>{displayTopRight}</div>}
+                               </div>
+
+                               <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
+                                   <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
+                                   <div style={{ position: 'absolute', top: 8, right: -10 }}>
+                                        {displayMode === 'shenSha' ? (
+                                            <ShenShaVerticalList 
+                                                items={displayBottomRight}
+                                                onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)}
+                                                fontSize="10px"
+                                            />
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                                {displayBottomRight.map((item, i) => (
+                                                    <span key={i} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                   </div>
+                               </div>
+
+                               <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{day.dateStr}</div>
+                               </div>
+                           </div>
+                       );
+                   })}
+               </div>
+           </div>
+       );
+    };
 
    const calculateWuXingStrength = () => {
        const counts = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
@@ -1521,6 +1687,7 @@ return (
        </div>
        {renderLiuNianGrid()}
        {renderLiuYueGrid()}
+       {renderLiuRiList()}
         {/* 五行強弱 */}
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
