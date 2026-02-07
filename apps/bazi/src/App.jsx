@@ -1402,12 +1402,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                             >
                                 <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '10px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -9, fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     
-                                    <div style={{ position: 'absolute', top: 8, right: -10 }}>
+                                    <div style={{ position: 'absolute', top: 8, right: -9 }}>
                                         {displayMode === 'shenSha' ? (
                                             <ShenShaVerticalList 
                                                 items={displayBottomRight}
@@ -1506,7 +1506,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                            >
                                <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
-                                   {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '10px', color: THEME.gray }}>{displayTopRight}</div>}
+                                   {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '11px', color: THEME.gray }}>{displayTopRight}</div>}
                                </div>
 
                                <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
@@ -1521,7 +1521,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                         ) : (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                                                 {displayBottomRight.map((item, i) => (
-                                                    <span key={i} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                                    <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>
                                                 ))}
                                             </div>
                                         )}
