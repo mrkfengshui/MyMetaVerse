@@ -27,7 +27,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博紫微斗數";
-const APP_VERSION = "v1.2 增加設定 - 小限/流年盤";
+const APP_VERSION = "v1.2";
 
 // --- 核心數據定義
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];

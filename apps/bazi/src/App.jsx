@@ -28,7 +28,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v1.1 改善面板資訊";
+const APP_VERSION = "v1.2 增加流日資訊";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
