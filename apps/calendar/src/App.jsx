@@ -1891,13 +1891,13 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
               <div style={{ 
                   position: 'absolute', 
                   top: '3px',              // 對齊天干
-                  right: '18px',           // 位於天干左側 (天干約佔 14px 寬 + 2px right)
-                  fontSize: '10px', 
+                  right: '16px',           // 位於天干左側 (天干約佔 14px 寬 + 2px right)
+                  fontSize: '9px', 
                   color: '#fff', 
                   background: '#389e0d',
                   borderRadius: '50%',     // 圓形
-                  width: '14px',           // 固定寬高
-                  height: '14px',
+                  width: '12px',           // 固定寬高
+                  height: '12px',
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
@@ -1913,13 +1913,13 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
               <div style={{ 
                   position: 'absolute', 
                   top: '20px',             // 位於地支下方 (天干+地支直書約 30~35px 高)
-                  right: '18px',            // 對齊干支欄
-                  fontSize: '10px', 
+                  right: '16px',            // 對齊干支欄
+                  fontSize: '9px', 
                   color: '#fff', 
                   background: '#fa8c16',
                   borderRadius: '50%',     // 圓形
-                  width: '14px',
-                  height: '14px',
+                  width: '12px',
+                  height: '12px',
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',

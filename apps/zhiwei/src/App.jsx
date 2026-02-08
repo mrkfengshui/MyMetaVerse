@@ -902,7 +902,7 @@ const PalaceGrid = ({
 
                         // 4. 定義容器樣式 (手機版 Grid 3欄，電腦版 Flex)
                         const starGroupStyle = isMobile 
-                            ? { display: 'flex', flexDirection: 'row', gap: '0px', marginBottom: '1px' } // 手機版：改為 Flex Column (垂直堆疊)
+                            ? { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0px', marginBottom: '1px' } // 手機版：改為 Flex Column (垂直堆疊)
                             : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' }; // 電腦版：維持 Flex Row Wrap
 
                         return (
