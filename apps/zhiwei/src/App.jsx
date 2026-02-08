@@ -733,12 +733,12 @@ const PalaceGrid = ({
     palace, onClick, highlightMode, siHuaMap, 
     layerMode, isDaXian, isXiaoXian, currentAge,
     daXianName, xiaoXianName, liuYueName, isLiuYue,
-    liuNianZhiIdx, liuRiName, flowingStars, customStyle
+    liuNianZhiIdx, liuRiName, flowingStars, isMobile, customStyle
 }) => {
     if (!palace) return <div style={{flex:1}}></div>;
 
     const { year = {}, daXian = {}, xiaoXian = {}, liuYue = {}, liuRi = {} } = siHuaMap || {};
-    const showDa = layerMode >= 1 && layerMode !== 4;
+    const showDa = layerMode >= 1;
     const showXiao = layerMode >= 2;
     const showLiuYue = layerMode >= 3;
     const showLiuRi = layerMode >= 4;
@@ -790,7 +790,7 @@ const PalaceGrid = ({
                     {showDa && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.blue, lineHeight: 1, display: huaDa ? 'block' : 'none' }}>{huaDa}</span>}
                     {showXiao && <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'green', lineHeight: 1, display: huaXiao ? 'block' : 'none' }}>{huaXiao}</span>}
                     {showLiuYue && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.purple, lineHeight: 1, display: huaYue ? 'block' : 'none' }}>{huaYue}</span>}
-                    {showLiuRi && <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#f5a122', lineHeight: 1, display: huaRi ? 'block' : 'none' }}>{huaRi}</span>}
+                    {showLiuRi && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.orange, lineHeight: 1, display: huaRi ? 'block' : 'none' }}>{huaRi}</span>}
                 </div>
             </div>
         );
@@ -846,29 +846,53 @@ const PalaceGrid = ({
                      <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginTop: '0px' }}>
                         {palace.gan}{palace.zhi}
                      </div>
-                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '30px' }}>
+                     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '36px' }}>   
+                     {(() => {
+                        // RWD 樣式定義
+                        const starGroupStyle = isMobile 
+                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', marginBottom: '1px' } 
+                            : { display: 'flex', flexDirection: 'row', gap: '1px', marginBottom: '1px' };
                         
-                        {/* 大限流曜 (已受控於上面的 showDa，Mode 4 會自動隱藏) */}
-                        {showDa && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.da.lu === palaceIdx && renderFlowStarTag('祿', THEME.blue, '大')} {fs.da.yang === palaceIdx && renderFlowStarTag('羊', THEME.blue, '大')} {fs.da.tuo === palaceIdx && renderFlowStarTag('陀', THEME.blue, '大')} {fs.da.ma === palaceIdx && renderFlowStarTag('馬', THEME.blue, '大')} {fs.da.kui === palaceIdx && renderFlowStarTag('魁', THEME.blue, '大')} {fs.da.yue === palaceIdx && renderFlowStarTag('鉞', THEME.blue, '大')} </div> )}
-                        
-                        {/* 流年流曜 */}
-                        {showXiao && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.liu.lu === palaceIdx && renderFlowStarTag('祿', 'green', '歲')} {fs.liu.yang === palaceIdx && renderFlowStarTag('羊', 'green', '歲')} {fs.liu.tuo === palaceIdx && renderFlowStarTag('陀', 'green', '歲')} {fs.liu.ma === palaceIdx && renderFlowStarTag('馬', 'green', '歲')} {fs.liu.kui === palaceIdx && renderFlowStarTag('魁', 'green', '歲')} {fs.liu.yue === palaceIdx && renderFlowStarTag('鉞', 'green', '歲')} </div> )}
-                        
-                        {/* 流月流曜 */}
-                        {showLiuYue && fs.yue && ( <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> {fs.yue.lu === palaceIdx && renderFlowStarTag('祿', THEME.purple, '月')} {fs.yue.yang === palaceIdx && renderFlowStarTag('羊', THEME.purple, '月')} {fs.yue.tuo === palaceIdx && renderFlowStarTag('陀', THEME.purple, '月')} {fs.yue.ma === palaceIdx && renderFlowStarTag('馬', THEME.purple, '月')} {fs.yue.kui === palaceIdx && renderFlowStarTag('魁', THEME.purple, '月')} {fs.yue.yue === palaceIdx && renderFlowStarTag('鉞', THEME.purple, '月')} </div> )}
-                        
-                        {/* 流日流曜 */}
-                        {showLiuRi && fs.ri && ( 
-                            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '1px' }}> 
-                                {fs.ri.lu === palaceIdx && renderFlowStarTag('祿', '#f5a122', '日')} 
-                                {fs.ri.yang === palaceIdx && renderFlowStarTag('羊', '#f5a122', '日')} 
-                                {fs.ri.tuo === palaceIdx && renderFlowStarTag('陀', '#f5a122', '日')} 
-                                {fs.ri.ma === palaceIdx && renderFlowStarTag('馬', '#f5a122', '日')}
-                                {fs.ri.kui === palaceIdx && renderFlowStarTag('魁', '#f5a122', '日')}
-                                {fs.ri.yue === palaceIdx && renderFlowStarTag('鉞', '#f5a122', '日')}
-                            </div> 
-                        )}
-                     </div>
+                        // ★ 定義一個輔助函式，負責檢查並渲染 (解決空 div 佔位問題)
+                        const renderStarGroup = (show, starsObj, prefix, color) => {
+                            if (!show || !starsObj) return null;
+                            
+                            // 收集所有要顯示的標籤
+                            const tags = [];
+                            if (starsObj.lu === palaceIdx) tags.push(renderFlowStarTag('祿', color, prefix));
+                            if (starsObj.yang === palaceIdx) tags.push(renderFlowStarTag('羊', color, prefix));
+                            if (starsObj.tuo === palaceIdx) tags.push(renderFlowStarTag('陀', color, prefix));
+                            if (starsObj.ma === palaceIdx) tags.push(renderFlowStarTag('馬', color, prefix));
+                            if (starsObj.kui === palaceIdx) tags.push(renderFlowStarTag('魁', color, prefix));
+                            if (starsObj.yue === palaceIdx) tags.push(renderFlowStarTag('鉞', color, prefix));
+
+                            // 如果沒有任何標籤，就不渲染 div
+                            if (tags.length === 0) return null;
+
+                            return (
+                                <div style={starGroupStyle}>
+                                    {tags}
+                                </div>
+                            );
+                        };
+
+                        return (
+                            <>
+                                {/* 大限流曜 */}
+                                {renderStarGroup(showDa, fs.da, '大', THEME.blue)}
+                                
+                                {/* 流年流曜 */}
+                                {renderStarGroup(showXiao, fs.liu, '歲', 'green')}
+                                
+                                {/* 流月流曜 */}
+                                {renderStarGroup(showLiuYue, fs.yue, '月', THEME.purple)}
+                                
+                                {/* 流日流曜 */}
+                                {renderStarGroup(showLiuRi, fs.ri, '日', THEME.orange)}
+                            </>
+                        );
+                    })()}
+                    </div>
                 </div>
 
                 {/* 下半部：宮名 + 限名 (這裡使用 column-reverse 讓宮名保持在最底，限名往上堆疊) */}
@@ -882,7 +906,7 @@ const PalaceGrid = ({
                     {showDa && daXianName && <div style={{ fontSize: '10px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
                     {showXiao && xiaoXianName && <div style={{ fontSize: '10px', color: 'green', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
                     {showLiuYue && liuYueName && <div style={{ fontSize: '10px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
-                    {showLiuRi && liuRiName && <div style={{ fontSize: '10px', color: '#f5222d', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: '#fff1f0' }}>{liuRiName}</div>}
+                    {showLiuRi && liuRiName && <div style={{ fontSize: '10px', color: THEME.orange, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: '#fff1f0' }}>{liuRiName}</div>}
                 </div>
 
             </div>
@@ -900,9 +924,19 @@ const PalaceGrid = ({
             </div>
             
             {/* 中間下方的小限年齡 */}
-            <div style={{ position: 'absolute', bottom: 2, left: '30px', right: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ position: 'absolute', bottom: 2, left: '32px', right: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
-                <div style={{ fontSize: '10px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px' }}>{palace.daXian || '\u00A0'}</div>
+                
+                {/* ▼▼▼ 修改這一行：加入 whiteSpace: 'nowrap' ▼▼▼ */}
+                <div style={{ 
+                    fontSize: '9px', 
+                    color: isDaXian ? THEME.red : THEME.black, 
+                    fontWeight: isDaXian ? 'bold' : 'normal', 
+                    marginTop: '1px',
+                    whiteSpace: 'nowrap'  // ★ 強制不換行
+                }}>
+                    {palace.daXian || '\u00A0'}
+                </div>
             </div>
         </div>
     );
@@ -917,6 +951,13 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
     const [layerMode, setLayerMode] = useState(0); 
     const [showScorePanel, setShowScorePanel] = useState(false);
+
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleHourAdjust = (delta) => {
         const current = chartData.rawDate;
@@ -1251,17 +1292,15 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 highlightMode={focusedIndex === idx ? 'target' : ([(focusedIndex+4)%12, (focusedIndex+8)%12, (focusedIndex+6)%12].includes(idx) ? 'related' : null)}
                 siHuaMap={activeSiHua} layerMode={layerMode} 
                 isDaXian={idx === daXianIdx}
-                
-                // 這裡保持 xiaoXianIdx，讓小限年齡數字(紅色數字)顯示在正確的小限宮位
-                isXiaoXian={idx === xiaoXianIdx} 
-                
+                isXiaoXian={idx === xiaoXianIdx}                 
                 currentAge={currentAge}
                 liuNianZhiIdx={liuNianZhiIdx}
-                daXianName={getDN(daXianIdx, idx, '大')}
-                xiaoXianName={getDN(activeSuiIdx, idx, '歲')} 
-                liuYueName={getDN(currentLiuYueIdx, idx, '月')} 
-                liuRiName={getDN(resultParams.currentLiuRiIdx, idx, '日')}
+                daXianName={getDN(daXianIdx, idx, '')}
+                xiaoXianName={getDN(activeSuiIdx, idx, '')} 
+                liuYueName={getDN(currentLiuYueIdx, idx, '')} 
+                liuRiName={getDN(resultParams.currentLiuRiIdx, idx, '')}
                 flowingStars={flowingStars}
+                isMobile={isMobile}
                 customStyle={cellStyle}
                 />
         );
@@ -1292,18 +1331,20 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 // 4欄均分
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
                 // 4列均分
-                gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', 
-                // 1. 設定 gap 為 1px
+                gridTemplateRows: 'repeat(4, 1fr)', 
+                
                 gap: '1px', 
-                // 2. 設定容器背景色
                 backgroundColor: THEME.border, 
-                // 3. 設定外框
                 border: `1px solid ${THEME.border}`, 
                 flex: 1,
 
-                width: '100%',           // 手機版佔滿
-                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
-                margin: '0 auto'         // 水平居中
+                width: '100%',
+                maxWidth: '900px',
+                margin: '0 auto',
+
+                // ▼▼▼ 新增這裡：鎖定長寬比與最小高度 ▼▼▼
+                aspectRatio: '1/1',   // 讓它保持正方形 (在電腦版很漂亮)
+                minHeight: '600px',
                 }}>
 
                 {/* 第一列 (巳 午 未 申) */}
