@@ -1331,20 +1331,18 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 // 4欄均分
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
                 // 4列均分
-                gridTemplateRows: 'repeat(4, 1fr)', 
-                
+                gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', 
+                // 1. 設定 gap 為 1px
                 gap: '1px', 
+                // 2. 設定容器背景色
                 backgroundColor: THEME.border, 
+                // 3. 設定外框
                 border: `1px solid ${THEME.border}`, 
                 flex: 1,
 
-                width: '100%',
-                maxWidth: '900px',
-                margin: '0 auto',
-
-                // ▼▼▼ 新增這裡：鎖定長寬比與最小高度 ▼▼▼
-                aspectRatio: '1/1',   // 讓它保持正方形 (在電腦版很漂亮)
-                minHeight: '600px',
+                width: '100%',           // 手機版佔滿
+                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                margin: '0 auto'         // 水平居中
                 }}>
 
                 {/* 第一列 (巳 午 未 申) */}
