@@ -902,7 +902,7 @@ const PalaceGrid = ({
 
                         // 4. 定義容器樣式 (手機版 Grid 3欄，電腦版 Flex)
                         const starGroupStyle = isMobile 
-                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', flexDirection: 'row', flexWrap: 'wrap', gap: '0px', marginBottom: '1px' }
+                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 10px)', flexWrap: 'wrap', gap: '0px', marginBottom: '1px', width: '33px' }
                             : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' }; // 電腦版：維持 Flex Row Wrap
 
                         return (
