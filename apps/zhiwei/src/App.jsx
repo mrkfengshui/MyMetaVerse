@@ -937,7 +937,7 @@ const PalaceGrid = ({
             </div>
 
             {/* 星曜顯示 (避開左側 31px) */}
-            <div style={{ position: 'absolute', top: 2, bottom: '36px', left: '31px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
+            <div style={{ position: 'absolute', top: 2, bottom: '48px', left: '31px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
                 {topStars.map((s, i) => renderStar(s, i, true))}
                 {bottomStars.map((s, i) => renderStar(s, i, false, bottomStarsFontSize))}
             </div>
