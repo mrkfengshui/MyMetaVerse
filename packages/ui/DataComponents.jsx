@@ -34,11 +34,20 @@ const RecordContent = ({ data }) => {
     // 2. 紫微斗數
     if (data.mingGongStars) {
         return (
-            <div style={rowStyle}>
-                <span>西曆 {data.solarDate}</span>
-                {safeLunarStr && <span>農曆 {safeLunarStr}</span>}
-                <span style={{ margin: '0 2px', color: '#ddd' }}></span>
-                <span style={highlightStyle}>{data.mingGongStars}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                {/* 第一行：日期資訊 */}
+                <div style={{ ...rowStyle, marginTop: 0 }}>
+                    <Calendar size={14} />
+                    <span>西曆 {data.solarDate}</span>
+                    {safeLunarStr && (
+                        <>
+                            <span>農曆 {safeLunarStr}</span>
+                        </>
+                    )}
+                </div>
+                    <div style={{ ...rowStyle, marginTop: '2px', paddingLeft: '2px' }}>
+                    <span style={{ ...highlightStyle, color: THEME.purple }}>{data.mingGongStars}</span>
+                </div>
             </div>
         );
     }

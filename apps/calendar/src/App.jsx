@@ -1139,7 +1139,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
 
             {/* 擇日神煞 */}
             <AccordionSection title="擇日神煞" defaultOpen={true} color="#722ed1">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', alignItems: 'stretch' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', alignItems: 'stretch' }}>                    
                     {/* 天赦日 */}
                     {info.isTianShe && (
                         <div style={{ 
@@ -1172,6 +1172,24 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             </div>
                             <div style={{ fontSize: '13px', color: '#d46b08' }}>
                                 吉，宜祭祀灶神、大掃除、作灶。
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 三娘煞 */}
+                    {info.isSanNiang && (
+                        <div style={{ 
+                            background: '#fff1f0', padding: '12px', borderRadius: '12px', 
+                            border: '1px solid #ffa39e', display: 'flex', alignItems: 'center', gap: '12px'
+                        }}>
+                            <div style={{ 
+                                background: '#cf1322', color: '#fff', padding: '4px 8px', 
+                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0
+                            }}>
+                                三娘煞
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#cf1322' }}>
+                                凶，忌嫁娶、出行、求財、上官赴任。
                             </div>
                         </div>
                     )}
@@ -1868,27 +1886,49 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
           {data.isSanNiang && (<div style={{ position: 'absolute', top: '38px', left: '4px', fontSize: '8px', color: THEME.red, border: `1px solid ${THEME.red}`, borderRadius: '4px', padding: '1px 0px', fontWeight: 'bold' }}>三娘煞</div>)}
           <div style={{ position: 'absolute', top: '22px', left: '4px', fontSize: '12px', fontWeight: 'bold', color: data.isNewYear ? THEME.red : (data.isJieQi ? THEME.purple : THEME.black), whiteSpace: 'nowrap' }}>{data.lunarDisplay}</div>
             
-            {/* --- 3. 修正讀取方式 (讀取 data.isTianShe) --- */}
+            {/* 天赦日 */}
             {data.isTianShe && (
-                <div style={{ 
-                    position: 'absolute', top: '38px', left: '4px', fontSize: '9px', 
-                    color: '#fff', background: '#389e0d',
-                    borderRadius: '4px', padding: '1px 3px', fontWeight: 'bold', zIndex: 5 
-                }}>
-                    天赦
-                </div>
-            )}
-            
-            {/* --- 3. 修正讀取方式 (讀取 data.xieZao) --- */}
-            {data.xieZao && (
-                <div style={{ 
-                    position: 'absolute', top: '38px', left: data.isTianShe ? '38px' : '4px', 
-                    fontSize: '9px', color: '#fff', background: '#fa8c16',
-                    borderRadius: '4px', padding: '1px 3px', fontWeight: 'bold', zIndex: 5 
-                }}>
-                    謝灶
-                </div>
-            )}
+              <div style={{ 
+                  position: 'absolute', 
+                  top: '3px',              // 對齊天干
+                  right: '18px',           // 位於天干左側 (天干約佔 14px 寬 + 2px right)
+                  fontSize: '10px', 
+                  color: '#fff', 
+                  background: '#389e0d',
+                  borderRadius: '50%',     // 圓形
+                  width: '14px',           // 固定寬高
+                  height: '14px',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontWeight: 'bold', 
+                  zIndex: 5 
+              }}>
+                  赦
+              </div>
+          )}
+          
+          {/* 謝灶日 */}
+          {data.xieZao && (
+              <div style={{ 
+                  position: 'absolute', 
+                  top: '20px',             // 位於地支下方 (天干+地支直書約 30~35px 高)
+                  right: '18px',            // 對齊干支欄
+                  fontSize: '10px', 
+                  color: '#fff', 
+                  background: '#fa8c16',
+                  borderRadius: '50%',     // 圓形
+                  width: '14px',
+                  height: '14px',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontWeight: 'bold', 
+                  zIndex: 5 
+              }}>
+                  灶
+              </div>
+          )}
 
           <div style={{ position: 'absolute', bottom: '16px', right: '2px', fontSize: '12px', fontWeight: 'bold', color: data.colorXiu, textAlign: 'right' }}>{data.xiu}</div>
             <div style={{ 
@@ -2017,13 +2057,58 @@ export default function CalendarApp() {
   const touchStartRef = useRef(null);
   const touchEndRef = useRef(null);
 
+  // 捲動到指定日期的輔助函式
+  const scrollToActiveDate = (targetDate) => {
+      // 確保 DOM 與日期有效
+      if (!scrollRef.current || isNaN(targetDate.getTime())) return;
+      
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+      const firstDayOfMonth = new Date(year, month, 1);
+      const startDayOfWeek = firstDayOfMonth.getDay(); 
+      const day = targetDate.getDate();
+      
+      // 計算格子索引 (0-based)
+      const gridIndex = startDayOfWeek + (day - 1);
+      // 計算行數
+      const row = Math.floor(gridIndex / 7);
+      const ROW_HEIGHT = 75; // DayCell 的固定高度
+      
+      setTimeout(() => {
+          if (scrollRef.current) {
+              scrollRef.current.scrollTo({
+                  top: row * ROW_HEIGHT,
+                  behavior: 'smooth'
+              });
+          }
+      }, 100); // 延遲執行以確保畫面渲染完成
+  };
+
   useEffect(() => {
     const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
     lockOrientation();
     const savedRule = localStorage.getItem('zi_hour_rule');
     if (savedRule) setZiHourRule(savedRule);
+    
+    // 讀取儲存日期或預設為今天
     const savedDateStr = localStorage.getItem('selected_date');
-    if (savedDateStr) { const d = new Date(savedDateStr); if (!isNaN(d.getTime())) { setSelectedDate(d); setCurrentDate(d); } }
+    let initialDate = new Date();
+    if (savedDateStr) { 
+        const d = new Date(savedDateStr); 
+        if (!isNaN(d.getTime())) { 
+            initialDate = d;
+        } 
+    }
+    
+    // 設定狀態
+    setSelectedDate(initialDate); 
+    setCurrentDate(initialDate);
+
+    // --- 新增：初始化時自動捲動到當天位置 ---
+    if (view === 'calendar') {
+        scrollToActiveDate(initialDate);
+    }
+    
     const savedBk = localStorage.getItem('calendar_bookmarks');
     if (savedBk) { try { setBookmarks(JSON.parse(savedBk)); } catch(e) {} }
     const currentHour = new Date().getHours();

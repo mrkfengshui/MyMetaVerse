@@ -713,9 +713,13 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>
+                    {hours.map(h => <option key={h} value={h}>{String(h).padStart(2, '0')}</option>)}
+                </select> </div>
               <span>:</span>
-              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select> </div>
+              <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>
+                    {minutes.map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
+                </select> </div>
               </div>
           </div>
 
@@ -898,8 +902,8 @@ const PalaceGrid = ({
 
                         // 4. 定義容器樣式 (手機版 Grid 3欄，電腦版 Flex)
                         const starGroupStyle = isMobile 
-                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', marginBottom: '1px' } 
-                            : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' };
+                            ? { display: 'flex', flexDirection: 'column', gap: '0px', marginBottom: '1px' } // 手機版：改為 Flex Column (垂直堆疊)
+                            : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' }; // 電腦版：維持 Flex Row Wrap
 
                         return (
                             <div style={starGroupStyle}>
@@ -1356,7 +1360,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 flex: 1,
 
                 width: '100%',           // 手機版佔滿
-                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                maxWidth: '500px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
                 margin: '0 auto'         // 水平居中
                 }}>
 
