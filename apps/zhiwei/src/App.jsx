@@ -822,7 +822,12 @@ const PalaceGrid = ({
         ));
     };
 
-    let bottomStarsFontSize = '12px';
+    let topStarsFontSize = '12px';
+    if (topStars.length > 4) {
+        topStarsFontSize = '11px';
+    }
+
+    let bottomStarsFontSize = '11px';
     if (bottomStars.length > 6) bottomStarsFontSize = '10px';
     if (bottomStars.length > 8) bottomStarsFontSize = '9px';
 
@@ -936,9 +941,38 @@ const PalaceGrid = ({
                 {palace.doctor12 && <span style={{ fontSize: '12px', color: COLORS.jia, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1 }}>{palace.doctor12}</span>}
             </div>
 
-            {/* 星曜顯示 (避開左側 31px) */}
-            <div style={{ position: 'absolute', top: 2, bottom: '48px', left: '31px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', alignItems: 'flex-start', gap: '0px' }}>
-                {topStars.map((s, i) => renderStar(s, i, true))}
+            {/* --- 1. 主星區域 (Top) --- */}
+            <div style={{ 
+                position: 'absolute', 
+                top: 2, 
+                left: '31px', 
+                right: 2, 
+                display: 'flex', 
+                flexDirection: 'row-reverse', 
+                flexWrap: 'wrap', 
+                alignContent: 'flex-start', 
+                gap: '0px',
+                pointerEvents: 'none' 
+            }}>
+                {/* 傳入計算好的 topStarsFontSize */}
+                {topStars.map((s, i) => renderStar(s, i, true, topStarsFontSize))}
+            </div>
+
+            {/* --- 2. 雜曜區域 (Bottom) --- */}
+            <div style={{ 
+                position: 'absolute', 
+                bottom: '50px', // ★ 固定底部位置，避開長生十二神
+                left: '31px', 
+                right: 2, 
+                display: 'flex', 
+                flexDirection: 'row-reverse', 
+                flexWrap: 'wrap-reverse', // ★ 讓多出的星星往上長
+                alignContent: 'flex-end', 
+                alignItems: 'flex-end',   
+                gap: '0px',
+                pointerEvents: 'none'
+            }}>
+                {/* 傳入計算好的 bottomStarsFontSize */}
                 {bottomStars.map((s, i) => renderStar(s, i, false, bottomStarsFontSize))}
             </div>
             
@@ -1360,7 +1394,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 flex: 1,
 
                 width: '100%',           // 手機版佔滿
-                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                maxWidth: '500px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
                 margin: '0 auto'         // 水平居中
                 }}>
 
