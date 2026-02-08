@@ -822,14 +822,14 @@ const PalaceGrid = ({
         ));
     };
 
-    let topStarsFontSize = '12px';
+    let topStarsFontSize = '11px';
     if (topStars.length > 5) {
-        topStarsFontSize = '11px';
+        topStarsFontSize = '10px';
     }
 
-    let bottomStarsFontSize = '11px';
-    if (bottomStars.length > 6) bottomStarsFontSize = '10px';
-    if (bottomStars.length > 8) bottomStarsFontSize = '9px';
+    let bottomStarsFontSize = '10px';
+    if (bottomStars.length > 6) bottomStarsFontSize = '9px';
+    if (bottomStars.length > 8) bottomStarsFontSize = '8px';
 
     const getBackgroundColor = () => {
             if (highlightMode === 'target') {
@@ -1394,7 +1394,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 flex: 1,
 
                 width: '100%',           // 手機版佔滿
-                maxWidth: '400px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                maxWidth: '375px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
                 margin: '0 auto'         // 水平居中
                 }}>
 
@@ -1418,19 +1418,19 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 }}>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '1px' }}>{birthDetails.bazi}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '4px' }}>
+                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
                         </div>
                     </div>
                         <div>西曆 {birthDetails.solarStr}</div>
                         <div>農曆 {birthDetails.lunarStr}</div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 48px', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
                         <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
-                        <span style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
+                        <span style={{ fontSize: '14px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
                         <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
                     </div>
                     <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
