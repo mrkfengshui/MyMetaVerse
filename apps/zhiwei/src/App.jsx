@@ -857,48 +857,54 @@ const PalaceGrid = ({
                      </div>
                      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '36px' }}>   
                      {(() => {
-                        // RWD 樣式定義
-                        const starGroupStyle = isMobile 
-                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', marginBottom: '1px' } 
-                            : { display: 'flex', flexDirection: 'row', gap: '1px', marginBottom: '1px' };
+                        // 1. 收集所有要顯示的流曜到一個陣列中 (扁平化)
+                        const allStars = [];
                         
-                        // ★ 定義一個輔助函式，負責檢查並渲染 (解決空 div 佔位問題)
-                        const renderStarGroup = (show, starsObj, prefix, color) => {
-                            if (!show || !starsObj) return null;
-                            
-                            // 收集所有要顯示的標籤
-                            const tags = [];
-                            if (starsObj.lu === palaceIdx) tags.push(renderFlowStarTag('祿', color, prefix));
-                            if (starsObj.yang === palaceIdx) tags.push(renderFlowStarTag('羊', color, prefix));
-                            if (starsObj.tuo === palaceIdx) tags.push(renderFlowStarTag('陀', color, prefix));
-                            if (starsObj.ma === palaceIdx) tags.push(renderFlowStarTag('馬', color, prefix));
-                            if (starsObj.kui === palaceIdx) tags.push(renderFlowStarTag('魁', color, prefix));
-                            if (starsObj.yue === palaceIdx) tags.push(renderFlowStarTag('鉞', color, prefix));
-
-                            // 如果沒有任何標籤，就不渲染 div
-                            if (tags.length === 0) return null;
-
-                            return (
-                                <div style={starGroupStyle}>
-                                    {tags}
-                                </div>
-                            );
+                        // 定義推入函式
+                        const pushStar = (show, starsObj, prefix, color, keyPrefix) => {
+                            if (!show || !starsObj) return;
+                            const map = [
+                                { k: 'lu', n: '祿' }, { k: 'yang', n: '羊' }, { k: 'tuo', n: '陀' },
+                                { k: 'ma', n: '馬' }, { k: 'kui', n: '魁' }, { k: 'yue', n: '鉞' }
+                            ];
+                            map.forEach(item => {
+                                if (starsObj[item.k] === palaceIdx) {
+                                    allStars.push(
+                                        <span key={`${keyPrefix}_${item.k}`} style={{ 
+                                            writingMode: 'vertical-rl', 
+                                            textOrientation: 'upright', 
+                                            display: 'inline-block', 
+                                            fontSize: '9px', 
+                                            color, 
+                                            fontWeight: 'bold', 
+                                            lineHeight: 1, 
+                                            margin: '1px 0' 
+                                        }}>
+                                            {prefix}{item.n}
+                                        </span>
+                                    );
+                                }
+                            });
                         };
 
+                        // 2. 依序推入：大限 -> 流年 -> 流月 -> 流日 (這樣就會混排在一起)
+                        pushStar(showDa, fs.da, '大', THEME.blue, 'da');
+                        pushStar(showXiao, fs.liu, '歲', 'green', 'liu');
+                        pushStar(showLiuYue, fs.yue, '月', THEME.purple, 'yue');
+                        pushStar(showLiuRi, fs.ri, '日', THEME.orange, 'ri');
+
+                        // 3. 如果沒有任何流曜，就不渲染容器
+                        if (allStars.length === 0) return null;
+
+                        // 4. 定義容器樣式 (手機版 Grid 3欄，電腦版 Flex)
+                        const starGroupStyle = isMobile 
+                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', marginBottom: '1px' } 
+                            : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' };
+
                         return (
-                            <>
-                                {/* 大限流曜 */}
-                                {renderStarGroup(showDa, fs.da, '大', THEME.blue)}
-                                
-                                {/* 流年流曜 */}
-                                {renderStarGroup(showXiao, fs.liu, '歲', 'green')}
-                                
-                                {/* 流月流曜 */}
-                                {renderStarGroup(showLiuYue, fs.yue, '月', THEME.purple)}
-                                
-                                {/* 流日流曜 */}
-                                {renderStarGroup(showLiuRi, fs.ri, '日', THEME.orange)}
-                            </>
+                            <div style={starGroupStyle}>
+                                {allStars}
+                            </div>
                         );
                     })()}
                     </div>
