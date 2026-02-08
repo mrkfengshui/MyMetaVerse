@@ -760,8 +760,8 @@ const PalaceGrid = ({
     const renderFlowStarTag = (name, color, prefix) => (
         <span style={{ 
             writingMode: 'vertical-rl', 
-            textOrientation: 'upright',   // ★ 強制字體正立 (直書標準屬性)
-            display: 'inline-block',      // ★ 確保元素擁有區塊特性以正確套用直書
+            textOrientation: 'upright', // ★ 強制直書正立
+            display: 'inline-block',    // ★ 必須是區塊才能正確計算寬高
             fontSize: '9px', 
             color, 
             fontWeight: 'bold', 
