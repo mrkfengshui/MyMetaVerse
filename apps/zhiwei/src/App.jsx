@@ -786,12 +786,12 @@ const PalaceGrid = ({
         const starBrightness = STAR_BRIGHTNESS[s.name] ? STAR_BRIGHTNESS[s.name][brightnessIndex] : '';
         const huaYear = year[s.name], huaDa = daXian[s.name], huaXiao = xiaoXian[s.name], huaYue = liuYue[s.name], huaRi = liuRi[s.name];
 
-        const defaultSize = isTop ? '13px' : '11px'; 
+        const defaultSize = isTop ? '12px' : '11px'; 
         const fontSize = customFontSize ? customFontSize : defaultSize;
         const showBrightness = (isMajor || FORCE_TOP_STARS.includes(s.name));
 
         return (
-            <div key={`${isTop?'t':'b'}-${idx}`} style={{ writingMode: 'vertical-rl', textOrientation: 'upright', display: 'flex', alignItems: 'right', margin: '0 0.5px' }}>
+            <div key={`${isTop?'t':'b'}-${idx}`} style={{ writingMode: 'vertical-rl', textOrientation: 'upright', display: 'flex', alignItems: 'right', margin: '0 -0.5px', lineHeight: 1 }}>
                 <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px' }}>
                     {starBrightness || ' '}
                 </span>
@@ -816,14 +816,14 @@ const PalaceGrid = ({
         return rows.map((row, ridx) => (
             <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '1px', marginBottom: '1px' }}>
                 {row.map(age => (
-                    <span key={age} style={{ color: age === currentAge ? THEME.red : '#888', border: age === currentAge ? `1px solid ${THEME.red}` : 'none', borderRadius: '50%', minWidth: '12px', fontSize: '10px', textAlign: 'center', lineHeight: '12px' }}>{age}</span>
+                    <span key={age} style={{ color: age === currentAge ? THEME.red : '#888', border: age === currentAge ? `1px solid ${THEME.red}` : 'none', borderRadius: '50%', minWidth: '13px', fontSize: '10px', textAlign: 'center', lineHeight: '13px' }}>{age}</span>
                 ))}
             </div>
         ));
     };
 
     let topStarsFontSize = '12px';
-    if (topStars.length > 4) {
+    if (topStars.length > 5) {
         topStarsFontSize = '11px';
     }
 
@@ -945,13 +945,13 @@ const PalaceGrid = ({
             <div style={{ 
                 position: 'absolute', 
                 top: 2, 
-                left: '31px', 
+                left: '24px', 
                 right: 2, 
                 display: 'flex', 
                 flexDirection: 'row-reverse', 
                 flexWrap: 'wrap', 
                 alignContent: 'flex-start', 
-                gap: '0px',
+                gap: '1px',
                 pointerEvents: 'none' 
             }}>
                 {/* 傳入計算好的 topStarsFontSize */}
@@ -962,10 +962,10 @@ const PalaceGrid = ({
             <div style={{ 
                 position: 'absolute', 
                 bottom: '50px', // ★ 固定底部位置，避開長生十二神
-                left: '31px', 
+                left: '18px', 
                 right: 2, 
                 display: 'flex', 
-                flexDirection: 'row-reverse', 
+                flexDirection: 'row', 
                 flexWrap: 'wrap-reverse', // ★ 讓多出的星星往上長
                 alignContent: 'flex-end', 
                 alignItems: 'flex-end',   
@@ -1394,7 +1394,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 flex: 1,
 
                 width: '100%',           // 手機版佔滿
-                maxWidth: '500px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                maxWidth: '400px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
                 margin: '0 auto'         // 水平居中
                 }}>
 
