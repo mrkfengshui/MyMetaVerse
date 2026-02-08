@@ -1025,7 +1025,19 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
             <QuickAdjustBar currentDate={currentDateObj} onDateChange={handleDateChange} />
             <RotateControlBar rotateOffset={rotateOffset} onRotate={handleRotate} />
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '1px', backgroundColor: '#000', border: `2px solid ${THEME.black}`, borderRadius: '4px', aspectRatio: '1/1', marginBottom: '20px' }}>
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 1fr)', 
+                gridTemplateRows: 'repeat(3, 1fr)', 
+                gap: '1px', 
+                backgroundColor: '#000', 
+                border: `2px solid ${THEME.black}`, 
+                borderRadius: '4px', 
+                aspectRatio: '1/1', 
+                marginBottom: '20px',
+                maxWidth: '500px',       // 1. 限制最大寬度 (電腦版不會超過 600px)
+                margin: '0 auto 20px',   // 2. 上0、左右自動(居中)、下20px
+            }}>
                 {currentData.grid.map((cell, idx) => <PalaceCell key={idx} data={cell} patterns={currentData.patterns} extraInfo={extraInfo} onClick={(palaceData) => setSelectedPalace(palaceData)}/>)}
             </div>
             {/* 彈窗組件 */}
