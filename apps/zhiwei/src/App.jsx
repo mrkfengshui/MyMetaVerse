@@ -816,7 +816,7 @@ const PalaceGrid = ({
         return rows.map((row, ridx) => (
             <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '1px', marginBottom: '1px' }}>
                 {row.map(age => (
-                    <span key={age} style={{ color: age === currentAge ? THEME.red : '#888', border: age === currentAge ? `1px solid ${THEME.red}` : 'none', borderRadius: '50%', minWidth: '15px', fontSize: '9px', textAlign: 'center', lineHeight: '13px' }}>{age}</span>
+                    <span key={age} style={{ color: age === currentAge ? THEME.red : '#888', border: age === currentAge ? `1px solid ${THEME.red}` : 'none', borderRadius: '50%', minWidth: '12px', fontSize: '10px', textAlign: 'center', lineHeight: '12px' }}>{age}</span>
                 ))}
             </div>
         ));
@@ -902,7 +902,7 @@ const PalaceGrid = ({
 
                         // 4. 定義容器樣式 (手機版 Grid 3欄，電腦版 Flex)
                         const starGroupStyle = isMobile 
-                            ? { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0px', marginBottom: '1px' } // 手機版：改為 Flex Column (垂直堆疊)
+                            ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', flexDirection: 'row', flexWrap: 'wrap', gap: '0px', marginBottom: '1px' }
                             : { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1px', marginBottom: '1px' }; // 電腦版：維持 Flex Row Wrap
 
                         return (
