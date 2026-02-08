@@ -755,10 +755,19 @@ const PalaceGrid = ({
 
     const fontStyle = { fontSize: '13px', color: THEME.black, lineHeight: 1.1 };
     const palaceIdx = palace.zhiIdx;
-    const fs = flowingStars || { da: {}, liu: {}, yue: {} };
+    const fs = flowingStars || { da: {}, liu: {}, yue: {}, ri: {} };
 
     const renderFlowStarTag = (name, color, prefix) => (
-        <span style={{ writingMode: 'vertical-rl', fontSize: '9px', color, fontWeight: 'bold', lineHeight: 1, margin: '1px 0' }}>{prefix}{name}</span>
+        <span style={{ 
+            writingMode: 'vertical-rl', 
+            textOrientation: 'upright',   // ★ 強制字體正立 (直書標準屬性)
+            display: 'inline-block',      // ★ 確保元素擁有區塊特性以正確套用直書
+            fontSize: '9px', 
+            color, 
+            fontWeight: 'bold', 
+            lineHeight: 1, 
+            margin: '1px 0' 
+        }}>{prefix}{name}</span>
     );
 
     const renderStar = (s, idx, isTop, customFontSize = null) => {
