@@ -1419,7 +1419,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '4px' }}>
-                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
+                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '0px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
                             <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
