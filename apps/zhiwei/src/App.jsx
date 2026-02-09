@@ -1394,7 +1394,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 flex: 1,
 
                 width: '100%',           // 手機版佔滿
-                maxWidth: '375px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
+                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
                 margin: '0 auto'         // 水平居中
                 }}>
 
