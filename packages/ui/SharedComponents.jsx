@@ -44,9 +44,50 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
     };
     document.addEventListener('gesturestart', preventGesture);
 
+    // 自動刷新邏輯 (Auto Reload on Return)
+    const checkAutoReload = () => {
+      const STORAGE_KEY = 'app_last_active_timestamp';
+      // 設定過期時間：24 小時 (單位毫秒)
+      // 測試時可以改成 10000 (10秒) 來試試看效果
+      // const THRESHOLD = 24 * 60 * 60 * 1000; 
+      const THRESHOLD = 10000; 
+      
+      const now = Date.now();
+      const lastActive = localStorage.getItem(STORAGE_KEY);
+
+      // 如果有上次紀錄，且時間差超過設定值
+      if (lastActive && (now - parseInt(lastActive, 10) > THRESHOLD)) {
+        console.log('App has been in background for too long. Reloading...');
+        // 更新時間戳記，避免無線迴圈 (雖然後面會 reload，但以防萬一)
+        localStorage.setItem(STORAGE_KEY, now.toString());
+        // 強制刷新頁面以獲取最新版本
+        window.location.reload();
+      } else {
+        // 沒過期，單純更新時間
+        localStorage.setItem(STORAGE_KEY, now.toString());
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      // 當頁面變為「可見」時 (使用者打開 App)
+      if (document.visibilityState === 'visible') {
+        checkAutoReload();
+      } else {
+        // 當頁面變為「隱藏」時 (使用者跳出/鎖屏)，記錄當下時間
+        localStorage.setItem('app_last_active_timestamp', Date.now().toString());
+      }
+    };
+
+    // 監聽可見度變化
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // 初始化：剛打開 App 時也記錄一次時間
+    localStorage.setItem('app_last_active_timestamp', Date.now().toString());
+
     return () => {
       document.removeEventListener('touchstart', preventDoubleTap);
       document.removeEventListener('gesturestart', preventGesture);
+      document.removeEventListener('visibilitychange', handleVisibilityChange); // 清除監聽
     };
   }, []);
 
