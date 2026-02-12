@@ -49,8 +49,7 @@ export const AppHeader = ({ title, logoChar = { main: '甯', sub: '博' } }) => 
       const STORAGE_KEY = 'app_last_active_timestamp';
       // 設定過期時間：24 小時 (單位毫秒)
       // 測試時可以改成 10000 (10秒) 來試試看效果
-      // const THRESHOLD = 24 * 60 * 60 * 1000; 
-      const THRESHOLD = 10000; 
+      const THRESHOLD = 24 * 60 * 60 * 1000; 
       
       const now = Date.now();
       const lastActive = localStorage.getItem(STORAGE_KEY);
