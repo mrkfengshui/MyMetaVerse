@@ -27,7 +27,7 @@ import {
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const APP_NAME = "甯博陰盤奇門遁甲";
+const APP_NAME = "甯博奇門遁甲";
 const APP_VERSION = "v1.3 增加宮位資訊";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
@@ -1047,7 +1047,7 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
                     onClose={() => setSelectedPalace(null)} 
                 />
             )}
-            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>道家陰盤奇門遁甲</div>
+            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>十陰盤奇門遁甲</div>
         </div>
     );
 };
