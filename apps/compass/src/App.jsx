@@ -26,7 +26,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博風水";
-const APP_VERSION = "v1.2 增加圓盤/載入平面圖";
+const APP_VERSION = "v1.3 增加防盜水印";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // 引入 Lunar 庫
@@ -1062,10 +1062,19 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                     left: POS.starSide,
                     display:'flex', flexDirection:'column', alignItems:'center'
                 }}>
-                    <div style={{fontSize: FONT.mtFace, fontWeight:'900', color:'#ff0000ff', lineHeight:'1'}}>
+                    <div style={{
+                        fontSize: FONT.mtFace, fontWeight:'900', color:THEME.red, lineHeight:'1', 
+                        // 改用 textShadow 創造完美的 1px 白邊 + 微光暈
+                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff'
+                    }}>
                         {data.mtGrid[idx]}
                     </div>
-                    {showAnnual && <div style={{fontSize: FONT.subStar, fontWeight:'bold', color:'#722ed1'}}>{data.annualGrid[idx]}</div>}
+                    {showAnnual && <div style={{
+                        fontSize: FONT.subStar, fontWeight:'bold', color:'#722ed1',
+                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
+                    }}>
+                        {data.annualGrid[idx]}
+                    </div>}
                 </div>
 
                 <div style={{
@@ -1074,10 +1083,19 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                     right: POS.starSide,
                     display:'flex', flexDirection:'column', alignItems:'center'
                 }}>
-                    <div style={{fontSize: FONT.mtFace, fontWeight:'900', color:'#1500ffff', lineHeight:'1'}}>
+                    <div style={{
+                        fontSize: FONT.mtFace, fontWeight:'900', color:THEME.blue, lineHeight:'1',
+                        // 同樣改用 textShadow
+                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff'
+                    }}>
                         {data.faceGrid[idx]}
                     </div>
-                    {showMonthly && <div style={{fontSize: FONT.subStar, fontWeight:'bold', color:THEME.orange}}>{data.monthlyGrid[idx]}</div>}
+                    {showMonthly && <div style={{
+                        fontSize: FONT.subStar, fontWeight:'bold', color:THEME.orange,
+                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
+                    }}>
+                        {data.monthlyGrid[idx]}
+                    </div>}
                 </div>
 
                 {/* 2. 歲煞 (中上) */}
@@ -1394,6 +1412,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 </div>
                             );
                         })}
+                        <Watermark />
                     </div>
                 ) : (
                     // ================= 方盤模式 (已優化透明邏輯) =================
@@ -1438,6 +1457,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 {renderCellContent(idx, idx === 4)}
                             </div>
                         ))}
+                        <Watermark />
                     </div>
                 )}
             </div>
@@ -1731,3 +1751,86 @@ export default function FengShuiApp() {
         </div>
     );
 }
+
+// =========================================================================
+// 水印樣式定義
+// =========================================================================
+const watermarkStyle = {
+    // 1. 定位：絕對定位，填滿父容器
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    
+    // 2. 層疊：必須在最上方 (蓋過底圖、格線、文字)
+    zIndex: 100, 
+    
+    // 3. 佈局：置中顯示
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    
+    // 4. 屬性：不擋點擊事件 (非常重要：否則用戶無法點擊宮位看詳情)
+    pointerEvents: 'none', 
+    
+    // 5. 內容樣式
+    color: 'rgba(0, 0, 0, 0.13)', // 非常淺的黑色 (主色)
+    fontSize: '48px',
+    fontWeight: '900',
+    fontFamily: 'STHeiti, "Microsoft JhengHei", sans-serif', // 粗體字型
+    lineHeight: '1.3',
+    letterSpacing: '2px',
+    textAlign: 'center',
+    
+    // 6. 白邊文字效果 (Text Stroke) 
+    // 使用 `-webkit-text-stroke` 實現，兼容大部份現代瀏覽器
+    WebkitTextStroke: '2px rgba(255, 255, 255, 0.8)', // 半透明白邊
+};
+
+const Watermark = () => (
+    <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        // 旋轉 -45 度 (從左下到右上，這是最經典的水印方向。若要左上到右下可改為 45deg)
+        transform: 'translate(-50%, -50%) rotate(-25deg)', 
+        zIndex: 100, // 確保在最上層
+        pointerEvents: 'none', // 絕對不能擋住下方宮位的點擊
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        
+        // --- 顏色與邊框設定 ---
+        color: 'rgba(0, 0, 0, 0.2)', // 極淺的黑色，幾乎透明
+        WebkitTextStroke: '2px rgba(255, 255, 255, 0.5)', // 明顯的半透明白邊
+        
+        // --- 字體設定 (涵蓋各平台的標楷體) ---
+        fontFamily: '"LiSu", "隸書", "STLiti", "華文隸書", "BiauKai", "DFKai-SB", "KaiTi", "標楷體", serif', 
+        whiteSpace: 'nowrap', // 確保不換行
+    }}>
+        {/* 主標題：字體放大以橫跨排盤 */}
+        <div style={{ 
+            fontSize: '48px', 
+            fontWeight: 'bold', 
+            letterSpacing: '16px', 
+            marginLeft: '16px', // 抵銷 letter-spacing 造成的視覺偏移，確保絕對置中
+            lineHeight: '1.1'
+        }}>
+            許甯博
+        </div>
+        
+        {/* 副標題 */}
+        <div style={{ 
+            fontSize: '36px', 
+            fontWeight: 'bold', 
+            letterSpacing: '32px', 
+            marginLeft: '32px', // 同樣抵銷偏移
+            marginTop: '4px' 
+        }}>
+            版權所有
+        </div>
+    </div>
+);

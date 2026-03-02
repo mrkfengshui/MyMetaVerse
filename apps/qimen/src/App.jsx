@@ -1047,7 +1047,7 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
                     onClose={() => setSelectedPalace(null)} 
                 />
             )}
-            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>十陰盤奇門遁甲</div>
+            <div style={{ textAlign: 'center', fontSize: '12px', color: THEME.gray }}>道家陰盤奇門遁甲</div>
         </div>
     );
 };
