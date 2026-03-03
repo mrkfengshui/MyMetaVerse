@@ -1913,7 +1913,7 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
           {data.xieZao && (
               <div style={{ 
                   position: 'absolute', 
-                  top: data.isTianShe ? '17px' : '3px',
+                  top: data.isTianShe ? '20px' : '3px',
                   right: '16px',            // 對齊干支欄
                   fontSize: '9px', 
                   color: '#fff', 

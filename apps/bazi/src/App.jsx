@@ -1760,6 +1760,11 @@ export default function BaziApp() {
 
   // 4. 資料讀取 Effect
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'booking') {
+      setView('booking'); // 如果網址有 ?tab=booking，就切換到預約畫面
+    }
+    
     const loadData = async () => {
       try {
         const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
