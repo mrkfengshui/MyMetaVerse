@@ -816,7 +816,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 };
 
 // 4. 排盤視圖 (ChartView) - 圓盤佈局優化 (凶煞在上，雜項在下)
-const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional' }) => {
+const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
     const [showAnnual, setShowAnnual] = useState(true);
@@ -1412,7 +1412,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 </div>
                             );
                         })}
-                        <Watermark />
+                        {!isLoggedIn && <Watermark />}
                     </div>
                 ) : (
                     // ================= 方盤模式 (已優化透明邏輯) =================
@@ -1457,7 +1457,7 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 {renderCellContent(idx, idx === 4)}
                             </div>
                         ))}
-                        <Watermark />
+                        {!isLoggedIn && <Watermark />}
                     </div>
                 )}
             </div>
@@ -1498,8 +1498,9 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
 };
 
 // 5. 設定頁 (SettingsView) - 更新版
-const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode }) => {
-    const APP_INFO = { 
+const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLoggedIn, setIsLoggedIn }) => {
+    const [password, setPassword] = useState('');
+        const APP_INFO = { 
         appName: APP_NAME, 
         version: APP_VERSION, 
         about: "本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地堪察。" 
@@ -1569,6 +1570,7 @@ export default function FengShuiApp() {
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
     const [chartMode, setChartMode] = useState('traditional');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const tabs = [
         { id: 'input', label: '羅庚', icon: Compass },
@@ -1576,6 +1578,38 @@ export default function FengShuiApp() {
         { id: 'booking', label: '預約', icon: CalendarCheck },
         { id: 'settings', label: '設定', icon: Settings },
     ];
+
+    useEffect(() => {
+        const checkUnlockStatus = async () => {
+            try {
+                const { value } = await Preferences.get({ key: 'fs_unlocked' });
+                if (value === 'true') {
+                    setIsLoggedIn(true);
+                }
+            } catch (e) {
+                console.error("讀取解鎖狀態失敗:", e);
+            }
+        };
+        checkUnlockStatus();
+    }, []);
+
+    // ★ 3. 處理點擊鎖頭的邏輯
+    const handleUnlock = async () => {
+        if (isLoggedIn) {
+            // 如果已解鎖，詢問是否要重新鎖定
+                setIsLoggedIn(false);
+                await Preferences.set({ key: 'fs_unlocked', value: 'false' });
+        } else {
+            // 如果未解鎖，彈出密碼輸入框
+            const pwd = window.prompt("請登入", "");
+            if (pwd === "mrk888") { // 密碼可以自己改
+                setIsLoggedIn(true);
+                await Preferences.set({ key: 'fs_unlocked', value: 'true' });
+            } else if (pwd !== null) {
+                alert('密碼錯誤！');
+            }
+        }
+    };
 
     // 3. 監聽 Library 狀態，載入完成後自動計算當下時間的元運
     useEffect(() => {
@@ -1586,7 +1620,7 @@ export default function FengShuiApp() {
         }
     }, [libStatus]);
 
-    // ★★★ 新增：監聽流年變化，自動更新元運 ★★★
+    // 監聽流年變化，自動更新元運
     useEffect(() => {
         if (libStatus === 'ready') {
             // 計算選定日期的元運
@@ -1716,6 +1750,15 @@ export default function FengShuiApp() {
                                 <ChevronLeft size={20}/>
                             </button>
                             <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>排盤分析</span>
+
+                            {/* 在標題列右側加入解鎖 Icon */}
+                            <button onClick={handleUnlock} style={{
+                                position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                                background:'none', border:'none', display:'flex', alignItems:'center', cursor:'pointer', 
+                                color: isLoggedIn ? THEME.lightGray : THEME.lightGray, zIndex: 1
+                            }}>
+                                {isLoggedIn ? <Unlock size={16}/> : <Lock size={16}/>}
+                            </button>
                         </div>
 
                         <ChartView 
@@ -1725,6 +1768,7 @@ export default function FengShuiApp() {
                             gregMonth={gregMonth} setGregMonth={setGregMonth}
                             onSave={saveBookmark}
                             chartMode={chartMode} 
+                            isLoggedIn={isLoggedIn}
                         />
                     </>
                 )}
@@ -1743,6 +1787,7 @@ export default function FengShuiApp() {
                     <SettingsView 
                         bookmarks={bookmarks} setBookmarks={setBookmarks}
                         chartMode={chartMode} setChartMode={setChartMode} 
+                        isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}
                     />
                 )}
             </div>
