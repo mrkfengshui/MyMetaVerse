@@ -320,11 +320,11 @@ export const BuyMeCoffee = () => {
       <h3 style={{ fontSize: '14px', color: '#888', margin: '0 0 4px 4px' }}>支持開發者</h3>
       
       {/* 1. Buy Me a Coffee */}
-      <a href="https://buymeacoffee.com/kanekyosan" target="_blank" rel="noreferrer" 
+      <a href="https://ko-fi.com/mrkfengshui" target="_blank" rel="noreferrer" 
         style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
           width: 'auto', padding: '14px',
-          backgroundColor: '#FFDD00', color: '#000000', 
+          backgroundColor: '#fcbf47', color: '#323842', 
           borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px', 
           boxShadow: '0 4px 10px rgba(255, 221, 0, 0.3)',
           transition: 'transform 0.1s'
