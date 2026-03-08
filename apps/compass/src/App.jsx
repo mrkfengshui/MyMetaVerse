@@ -711,33 +711,74 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     const isFrozenRef = React.useRef(isFrozen);
     useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
 
+    // 新增：校正偏移量 (用來微調手機硬體磁偏角與真實羅庚的誤差)
+    const [offset, setOffset] = useState(0);
+
     const handleOrientation = React.useCallback((e) => {
         if (isFrozenRef.current) return;
-        let compass = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
+        
+        let compass;
+        
+        // 1. 優先取用 iOS 特有的絕對指南針方位 (需嚴謹判斷)
+        if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+            compass = e.webkitCompassHeading;
+        } 
+        // 2. 針對 Android 的絕對方向，或無硬體支援時的相對方向降級
+        else if (e.alpha !== null) {
+            compass = 360 - e.alpha;
+        } else {
+            return;
+        }
+
+        // 3. 加入螢幕轉向補償 (解決手機橫放或倒放時造成的偏差)
+        const screenOrientation = window.screen?.orientation?.angle || window.orientation || 0;
+        compass = (compass + screenOrientation) % 360;
+        if (compass < 0) compass += 360;
+
         setHeading(prev => Math.abs(compass - prev) > 0.2 ? compass : prev);
     }, [setHeading]);
 
     const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // iOS 13+ 必須主動請求權限
             DeviceOrientationEvent.requestPermission()
-                .then(response => { if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
+                .then(response => { 
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation, true); 
+                    } else {
+                        alert("需允許取用方向權限，羅庚才能獲取真正的絕對方位！");
+                    }
+                })
                 .catch(console.error);
         } else {
-            window.addEventListener('deviceorientation', handleOrientation);
+            // Android 優先監聽 deviceorientationabsolute (真北/磁北)
+            if ('ondeviceorientationabsolute' in window) {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
         }
     };
 
-    useEffect(() => { return () => window.removeEventListener('deviceorientation', handleOrientation); }, [handleOrientation]);
+    useEffect(() => { 
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+            window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+        };
+    }, [handleOrientation]);
     
-    const facingMt = getMountain(heading);
-    const sittingMt = getMountain(heading + 180);
+    // 將硬體度數加上手動微調的偏移量
+    const finalHeading = normalizeAngle(heading + offset);
+    
+    const facingMt = getMountain(finalHeading);
+    const sittingMt = getMountain(finalHeading + 180);
     const sitDirName = GUA_TO_DIR[sittingMt.gua];
     const faceDirName = GUA_TO_DIR[facingMt.gua];
 
     const CARDINALS = [
         { text: '北', angle: 0, color: THEME.teal },
         { text: '東', angle: 90, color: '#333' },
-        { text: '南', angle: 180, color: THEME.red }, // 南方為火，傳統用紅色標示 (或配合風水習慣)
+        { text: '南', angle: 180, color: THEME.red },
         { text: '西', angle: 270, color: '#333' }
     ];
 
@@ -748,7 +789,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
             <div style={{ position: 'relative', width: 'min(80vw, 45vh)', height: 'min(80vw, 45vh)', maxWidth: '350px', maxHeight: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px 0', flexShrink: 0 }}>
                 <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', height: '20%', width: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
                 <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20%', height: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
-                <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', transform: `rotate(${-heading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', boxSizing: 'border-box' }}>
+                <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', transform: `rotate(${-finalHeading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', boxSizing: 'border-box' }}>
                      {MOUNTAINS.map((m, i) => (
                         <div key={i} style={{ position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px', transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)` }}>
                             <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)', whiteSpace:'nowrap'}}>{m.name}</span>
@@ -758,17 +799,16 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                         <div key={`card-${i}`} style={{ 
                             position: 'absolute', 
                             top: '50%', left: '50%', 
-                            height: '28%', // 控制離中心的距離 (半徑)
+                            height: '28%', 
                             width: '0px', 
-                            transformOrigin: 'top center', // 從中心點旋轉
-                            transform: `rotate(${c.angle + 180}deg)` // +180 是為了讓文字方向朝內，如果不加則文字在上方
+                            transformOrigin: 'top center', 
+                            transform: `rotate(${c.angle + 180}deg)` 
                         }}>
-                             {/* 文字容器，將文字推到線條末端 */}
                              <div style={{
                                  position: 'absolute',
                                  bottom: '0', 
                                  left: '50%',
-                                 transform: 'translateX(-50%) rotate(0deg)', // 文字轉正 (字底朝向圓心)
+                                 transform: 'translateX(-50%) rotate(0deg)',
                                  fontSize: '18px',
                                  fontWeight: '900',
                                  color: c.color,
@@ -784,8 +824,8 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 
             {/* 底部數據與控制 */}
             <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
-                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿對準方位'}</div>
-                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{heading.toFixed(1)}°</div>
+                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿微調'}</div>
+                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{finalHeading.toFixed(1)}°</div>
                 <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'5px'}}>
                     {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向 <span style={{fontSize: '15px', fontWeight: 'normal', color: '#ccc'}}>(坐{sitDirName}向{faceDirName})</span>
                 </div>
@@ -793,10 +833,9 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 {/* 按鈕區 */}
                 <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
                     <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
-                        {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
+                        {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖羅庚" : "定格方位"}
                     </button>
                     
-                    {/* 啟用羅庚按鈕 */}
                     {!isFrozen && (
                         <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
                             <Compass size={18}/> 啟用羅庚
@@ -804,12 +843,27 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                     )}
 
                     {isFrozen && (
-                        <button onClick={onAnalyze} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
-                            <RefreshCw size={18}/> 排盤
+                        <button onClick={() => {
+                            setHeading(finalHeading); // 排盤前確保寫入加上 offset 後的結果
+                            onAnalyze();
+                        }} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
+                            <RefreshCw size={18}/> 進入排盤
                         </button>
                     )}
                 </div>
-                {!isFrozen && <input type="range" min="0" max="360" value={heading} onChange={e=>setHeading(Number(e.target.value))} style={{marginTop:'20px', width:'200px', opacity: 0.5}}/>}
+                
+                {/* 增加手動微調偏移量的拉桿 (風水師必備功能) */}
+                {!isFrozen && (
+                    <div style={{marginTop:'20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: '8px'}}>
+                            <span style={{fontSize: '13px', color: '#ccc', width: '90px', textAlign: 'left'}}>
+                                磁偏校正: {offset > 0 ? '+' : ''}{offset}°
+                            </span>
+                            <input type="range" min="-30" max="30" value={offset} onChange={e=>setOffset(Number(e.target.value))} style={{width:'120px'}}/>
+                            <button onClick={()=>setOffset(0)} style={{background: 'none', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer'}}>重設</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
