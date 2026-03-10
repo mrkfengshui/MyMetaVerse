@@ -864,6 +864,23 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                         </div>
                     </div>
                 )}
+
+                {/* ★ 加入的免責聲明與提示 ★ */}
+                <div style={{
+                    marginTop: '10px', 
+                    padding: '6px', 
+                    background: 'rgba(255, 69, 0, 0.1)', 
+                    border: '1px solid rgba(255, 69, 0, 0.2)', 
+                    borderRadius: '8px',
+                    fontSize: '13px', 
+                    color: '#ffcca8', 
+                    lineHeight: '1.2',
+                    textAlign: 'center'
+                }}>
+                    ⚠️ 電子羅庚並不保證坐向真確<br/>
+                    如有疑慮，請找甯博師傅作專業風水勘察
+                </div>
+
             </div>
         </div>
     );
