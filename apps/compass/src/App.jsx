@@ -725,7 +725,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         } 
         // 2. 針對 Android 的絕對方向，或無硬體支援時的相對方向降級
         else if (e.alpha !== null) {
-            compass = 360 - e.alpha;
+            compass = 360 - e.alpha + 15; // 觀察得知偏移約15-20度
         } else {
             return;
         }
