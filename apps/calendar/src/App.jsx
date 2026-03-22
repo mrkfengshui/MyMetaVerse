@@ -455,7 +455,7 @@ const YI_JI_MAP = {
   '涂': '塗', '厕': '廁', '临': '臨', '启': '啟', '殡': '殯', '殓': '殮', 
   '谢': '謝', '设': '設', '驾': '駕', '筑': '築', '坟': '墳', '绘': '繪', 
   '产': '產', '馀': '餘', '丧': '喪', '问': '問', '车': '車', '诸': '諸',
-  '坏': '壞', '机': '機', '梁': '樑',
+  '坏': '壞', '机': '機', '梁': '樑', '货': '貨',
 };
 
 const toTraditionalYiJi = (str) => {
@@ -1275,12 +1275,12 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         }}>
                             <div style={{ 
                                 background: '#389e0d', color: '#fff', padding: '4px 8px', 
-                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold' 
+                                borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' 
                             }}>
                                 天赦日
                             </div>
-                            <div style={{ fontSize: '13px', color: '#389e0d' }}>
-                                四季皇恩大赦，百事大吉，能解諸凶。
+                            <div style={{ fontSize: '12px', color: '#389e0d' }}>
+                                四季皇恩大赦，百事大吉，能解諸凶
                             </div>
                         </div>
                     )}
@@ -1293,12 +1293,12 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         }}>
                             <div style={{ 
                                 background: '#fa8c16', color: '#fff', padding: '4px 8px', 
-                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold' 
+                                borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' 
                             }}>
                                 {info.xieZao}
                             </div>
-                            <div style={{ fontSize: '13px', color: '#d46b08' }}>
-                                吉，宜祭祀灶神、大掃除、作灶。
+                            <div style={{ fontSize: '12px', color: '#d46b08' }}>
+                                吉，宜祭祀灶神、大掃除、作灶
                             </div>
                         </div>
                     )}
@@ -1311,13 +1311,50 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         }}>
                             <div style={{ 
                                 background: '#cf1322', color: '#fff', padding: '4px 8px', 
-                                borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0
+                                borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', flexShrink: 0
                             }}>
                                 三娘煞
                             </div>
-                            <div style={{ fontSize: '13px', color: '#cf1322' }}>
-                                凶，忌嫁娶、出行、求財、上官赴任。
+                            <div style={{ fontSize: '12px', color: '#cf1322' }}>
+                                凶，忌嫁娶、出行、求財、上官赴任
                             </div>
+                        </div>
+                    )}
+
+                    {/* 凶煞 */}
+                    {info.badStars && info.badStars.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+                            {info.badStars.map((star, idx) => {
+                                // 凶煞簡述對照表
+                                const BAD_STAR_DESC = {
+                                    '歲破': '大凶，為太歲相沖之日，諸事不宜',
+                                    '月破': '大凶，與流月相沖，忌祈福、嫁娶、開市',
+                                    '四廢': '凶，為五行無氣之日，百事皆忌',
+                                    '四離': '凶，四季交替前夕，忌出行、動土、結婚',
+                                    '無祿': '凶，吉氣受阻，不利求財、開市、上官赴任',
+                                    '復喪': '凶，忌安葬、入殮、探病，防重喪',
+                                    '三喪': '凶，忌安葬、探病等事',
+                                    '債𣎴': '凶，忌借貸、出資、簽約交易'
+                                };
+
+                                return (
+                                    <div key={idx} style={{ 
+                                        background: '#fff1f0', padding: '12px', borderRadius: '12px', 
+                                        border: '1px solid #ffa39e', display: 'flex', alignItems: 'center', gap: '12px'
+                                    }}>
+                                        <div style={{ 
+                                            background: '#cf1322', color: '#fff', padding: '4px 8px', 
+                                            borderRadius: '6px', fontSize: '12px', fontWeight: 'bold',
+                                            flexShrink: 0 
+                                        }}>
+                                            {star}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#cf1322', lineHeight: '1.4' }}>
+                                            {BAD_STAR_DESC[star] || '凶，諸事宜避'}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
 
@@ -2462,10 +2499,17 @@ const selectedInfo = useMemo(() => {
         // 安全取得縮寫
         const abbrMap = (typeof WUTU_ABBR !== 'undefined') ? WUTU_ABBR : {};
         const wutuStr = star ? (abbrMap[star.name] || star.name) : '';
-        
-        // 【刪除錯誤代碼】：原本這裡有一行 data.wutu = star; 導致崩潰
-        
+                
+        // 取得本日所有凶煞
+        const allXiongSha = lunar.getDayXiongSha();
+        const targetBadStars = ['復喪', '三喪', '債𣎴', '月破', '歲破', '四廢', '四離', '無祿'];
+        // 過濾出本日有的特定凶煞
+        const badStars = allXiongSha.filter(star => targetBadStars.includes(star));
+
+        // 然後在 return 物件裡加上這兩個：
         return {
+            fullDate: selectedDate, // 給加入日曆用
+            badStars: badStars,     // 給 Modal 顯示用
             dateStr: `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日`,
             weekDay: WEEKDAYS[selectedDate.getDay()],
             ganZhiYear: timeBazi.getYearGan() + timeBazi.getYearZhi(), 
