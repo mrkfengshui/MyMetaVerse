@@ -894,7 +894,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
-            <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
+            <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
             <BookmarkBtn />
          </div>
          <div style={{ color: THEME.blue }}>
@@ -922,7 +922,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
-            <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr}</span>
+            <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
             <BookmarkBtn />
          </div>
          
@@ -1104,13 +1104,14 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
             }} onClick={e => e.stopPropagation()}>
         
         {/* Modal Header */}
-        <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+<div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
                 <div style={{ fontSize: '24px', fontWeight: '800', color: THEME.black }}>
                   {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#6666663f'}}>週{info.weekDay}</span>
                 </div>
                 <div style={{ fontSize: '13px', color: THEME.black }}>
-                    {info.ganZhiYear}年 {info.lunarStr}
+                    {/* 修改處：增加 info.bazi.dayGan + info.bazi.dayZhi + "日" */}
+                    {info.ganZhiYear}年 {info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日
                 </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1866,8 +1867,11 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
 
   } catch (e) { console.error(e); }
 
-  const isBookmarked = bookmarks.includes(getLocalDateString(date));
-  const dayOfWeek = date.getDay();
+  const dateKey = getLocalDateString(date);
+  const isBookmarked = bookmarks.some(b => 
+      (typeof b === 'string' ? b : (b.targetDate || b.name || b.id)) === dateKey
+  );
+    const dayOfWeek = date.getDay();
   const numColor = (dayOfWeek === 0) ? THEME.red : THEME.black;
   let bg = THEME.white;
   let textOpacity = 1;
@@ -2130,10 +2134,25 @@ export default function CalendarApp() {
   }, [showJinQi, showTuiQi]);
 
   const toggleBookmark = (date) => {
-    const s = getLocalDateString(date);
-    let newBookmarks;
-    if (bookmarks.includes(s)) newBookmarks = bookmarks.filter(b => b !== s);
-    else newBookmarks = [s, ...bookmarks];
+    const targetDateStr = getLocalDateString(date);
+    
+    // 檢查該日期是否已經被收藏 (相容舊版的字串格式)
+    const existingIdx = bookmarks.findIndex(b => 
+        (typeof b === 'string' ? b : (b.targetDate || b.name || b.id)) === targetDateStr
+    );
+
+    let newBookmarks = [...bookmarks];
+    if (existingIdx >= 0) {
+        // 如果存在，就移除
+        newBookmarks.splice(existingIdx, 1);
+    } else {
+        // 如果不存在，新增一筆 (id 放時間戳供 DataComponents 讀取，targetDate 放日曆日期)
+        const newItem = {
+            id: new Date().toISOString(), // 這裡給 getSavedDate 使用
+            targetDate: targetDateStr     // 紀錄這是哪一天的書籤
+        };
+        newBookmarks = [newItem, ...newBookmarks];
+    }
     setBookmarks(newBookmarks);
     localStorage.setItem('calendar_bookmarks', JSON.stringify(newBookmarks));
   };
@@ -2371,31 +2390,44 @@ const selectedInfo = useMemo(() => {
   }, [currentDate]);
 
   const formattedBookmarks = useMemo(() => {
-    return bookmarks
-      .map(dateStr => {
+    return bookmarks.map(item => {
+        // 取得當初存入的時間戳 ID (傳給 DataComponents 右側顯示)
+        const recordId = typeof item === 'string' ? item : item.id;
+        // 取得該書籤實際對應的萬年曆日期
+        const targetDateStr = typeof item === 'string' ? item : (item.targetDate || item.name || item.id.slice(0, 10));
+
         try {
             if(window.Solar) {
-                const d = new Date(dateStr);
-                const solar = window.Solar.fromYmd(d.getFullYear(), d.getMonth()+1, d.getDate());
-                const lunar = solar.getLunar();
-                const rawJian = lunar.getZhiXing();
-                let monthNum = Math.abs(lunar.getMonth());
-                const dayZhi = lunar.getDayZhi();
-                const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
-                let dg = dgRule ? (dgRule.s?.[lunar.getDayInGanZhi()] || dgRule.r) : '';
+                const d = new Date(targetDateStr);
+                if (!isNaN(d.getTime())) {
+                    const solar = window.Solar.fromYmd(d.getFullYear(), d.getMonth()+1, d.getDate());
+                    const lunar = solar.getLunar();
+                    const dayGanZhi = lunar.getDayInGanZhi();
+                    const rawJian = lunar.getZhiXing();
+                    const monthNum = Math.abs(lunar.getMonth());
+                    const dgRule = DONG_GONG_RULES[monthNum]?.[lunar.getDayZhi()];
+                    const dg = dgRule ? (dgRule.s?.[dayGanZhi] || dgRule.r) : '';
 
-                return {
-                    id: dateStr, name: dateStr, 
-                    lunarDateStr: `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
-                    jianChu: JIAN_FIX_MAP[rawJian] || rawJian, dongGong: dg, solarDate: dateStr
-                };
+                    return {
+                        id: recordId,              // 交給 DataComponents 解析「保存於」
+                        targetDate: targetDateStr, // 供點擊跳轉回萬年曆用
+                        
+                        // 【左側顯示設定】
+                        // 標題 (Title)：西曆 + 干支日
+                        name: `${targetDateStr}`, 
+                        // 副標題 (農曆)：加上年干支，DataComponents 會自動加上「農曆」前綴
+                        lunarDateStr: `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${dayGanZhi}日`,
+                        
+                        jianChu: JIAN_FIX_MAP[rawJian] || rawJian,
+                        dongGong: dg
+                    };
+                }
             }
         } catch(e) {}
-        return { id: dateStr, name: dateStr, solarDate: dateStr };
-      })
-      .sort((a, b) => new Date(b.id).getTime() - new Date(a.id).getTime());
+        
+        return { id: recordId, targetDate: targetDateStr, name: targetDateStr };
+    });
   }, [bookmarks, libStatus]);
-
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入中...</div>;
   if (libStatus === 'error') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入失敗</div>;
@@ -2458,13 +2490,13 @@ const selectedInfo = useMemo(() => {
             </div>
 
             <BottomSummaryPanel 
-                info={selectedInfo} 
-                // 當面板展開並被點擊時，開啟詳情 Modal
-                onDetailClick={() => setIsDetailModalOpen(true)}
-                // 當點擊時柱時，開啟時辰選擇器
-                onTimeClick={() => setShowTimeModal(true)}
-                isBookmarked={selectedDate ? bookmarks.includes(getLocalDateString(selectedDate)) : false}
-                onToggleBookmark={() => selectedDate && toggleBookmark(selectedDate)}
+                    info={selectedInfo} 
+                    onDetailClick={() => setIsDetailModalOpen(true)}
+                    onTimeClick={() => setShowTimeModal(true)}
+                    isBookmarked={selectedDate ? bookmarks.some(b => 
+                        (typeof b === 'string' ? b : (b.targetDate || b.name || b.id)) === getLocalDateString(selectedDate)
+                    ) : false}
+                    onToggleBookmark={() => selectedDate && toggleBookmark(selectedDate)}
             />
           </>
         )}
@@ -2479,12 +2511,20 @@ const selectedInfo = useMemo(() => {
                     <BookmarkList 
                         bookmarks={formattedBookmarks} 
                         onSelect={(b) => {
-                            const d = new Date(b.id);
+                            // 點擊書籤時，依照 targetDate 跳轉回正確的日曆格子
+                            const d = new Date(b.targetDate);
                             if(!isNaN(d.getTime())) {
                                 setCurrentDate(d); setSelectedDate(d); setView('calendar');
                             }
                         }}
-                        onDelete={(id) => { if(window.confirm('確定刪除此書籤？')) toggleBookmark(new Date(id)); }}
+                        onDelete={(id) => { 
+                            // 這裡傳回來的 id 是時間戳，直接過濾掉即可
+                            if(window.confirm('確定刪除此書籤？')) { 
+                                const newBookmarks = bookmarks.filter(b => (typeof b === 'string' ? b : b.id) !== id);
+                                setBookmarks(newBookmarks);
+                                localStorage.setItem('calendar_bookmarks', JSON.stringify(newBookmarks));
+                            }
+                        }}
                     />
                     <div style={{ marginTop: '20px' }}>
                         <Adsterra />
@@ -2493,7 +2533,7 @@ const selectedInfo = useMemo(() => {
              </div>
           </div>
         )}
-        
+
         {view === 'settings' && (
             <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', backgroundColor: THEME.bg }}>
                 <SettingsView 
@@ -2516,7 +2556,9 @@ const selectedInfo = useMemo(() => {
          date={selectedDate}
          info={selectedInfo}
          toggleBookmark={toggleBookmark}
-         isBookmarked={selectedDate ? bookmarks.includes(getLocalDateString(selectedDate)) : false}
+         isBookmarked={selectedDate ? bookmarks.some(b => 
+              (typeof b === 'string' ? b : (b.targetDate || b.name || b.id)) === getLocalDateString(selectedDate)
+         ) : false}
       />
 
       <TimePickerModal 
