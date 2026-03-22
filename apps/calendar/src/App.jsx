@@ -974,30 +974,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* 原本的書籤按鈕 */}
-                <BookmarkBtn />
-                
-                {/* 新增的加入系統日曆按鈕 */}
-                {isBookmarked && (
-                    <button 
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            // 傳入需要的標題資訊
-                            downloadICS(info.dateStr, info.lunarStr, info.bazi.dayGan + info.bazi.dayZhi); 
-                        }}
-                        style={{ 
-                            background: '#fff8f0', border: `1px solid ${THEME.orange}`, 
-                            padding: '4px 8px', borderRadius: '12px', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '4px',
-                            color: THEME.orange, fontSize: '11px', fontWeight: 'bold'
-                        }}
-                    >
-                        <CalendarPlus size={14} />
-                        日曆
-                    </button>
-                )}
-            </div>
+            <BookmarkBtn />
          </div>
          <div style={{ color: THEME.blue }}>
             <ChevronUp size={24} />
@@ -1025,30 +1002,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* 原本的書籤按鈕 */}
-                <BookmarkBtn />
-                
-                {/* 新增的加入系統日曆按鈕 */}
-                {isBookmarked && (
-                    <button 
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            // 傳入需要的標題資訊
-                            downloadICS(info.dateStr, info.lunarStr, info.bazi.dayGan + info.bazi.dayZhi); 
-                        }}
-                        style={{ 
-                            background: '#fff8f0', border: `1px solid ${THEME.orange}`, 
-                            padding: '4px 8px', borderRadius: '12px', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '4px',
-                            color: THEME.orange, fontSize: '11px', fontWeight: 'bold'
-                        }}
-                    >
-                        <CalendarPlus size={14} />
-                        日曆
-                    </button>
-                )}
-            </div>
+            <BookmarkBtn />
          </div>
          
          {/* 這裡改為收合按鈕，阻止冒泡以免觸發 onDetailClick */}
