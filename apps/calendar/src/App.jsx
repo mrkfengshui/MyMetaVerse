@@ -363,7 +363,7 @@ const getGuiRenTimes = (lunar) => {
 };
 
 // 產生並下載 ICS 日曆檔案
-const downloadICSFile = async (date, lunarStr, ganZhiStr) => {
+const downloadICS = async (date, lunarStr, ganZhiStr) => {
     if (!date || isNaN(date.getTime())) return;
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
