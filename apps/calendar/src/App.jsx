@@ -17,7 +17,7 @@ import {
 // 2. 引入 Icon
 import { 
   Bookmark, BookOpen, Briefcase,
-  Calendar, CalendarCheck, ChevronLeft, ChevronRight, 
+  Calendar, CalendarCheck, CalendarPlus, ChevronLeft, ChevronRight, 
   ChevronUp, ChevronDown, Circle, Compass,
   CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
@@ -29,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博進氣萬年曆";
-const APP_VERSION = "v1.5 修正部份繁簡字";
+const APP_VERSION = "v2.0 增加加入擇日書籤日期至日曆App";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -360,6 +360,51 @@ const getGuiRenTimes = (lunar) => {
         console.error(e);
         return null;
     }
+};
+
+// 產生並下載 ICS 日曆檔案
+const downloadICS = (date, lunarStr, ganZhiStr) => {
+    // 格式化日期為 YYYYMMDD
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateString = `${year}${month}${day}`;
+
+    // 隔天 (全天事件需要結束日期是隔天)
+    const nextDay = new Date(d);
+    nextDay.setDate(d.getDate() + 1);
+    const nYear = nextDay.getFullYear();
+    const nMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
+    const nDay = String(nextDay.getDate()).padStart(2, '0');
+    const nextDateString = `${nYear}${nMonth}${nDay}`;
+
+    // ICS 內容格式
+    // TRIGGER:-P1D 代表提前 1 天提醒 (若要 3 天就是 -P3D)
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//MrkFengshui//CalendarApp//TW
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:${dateString}
+DTEND;VALUE=DATE:${nextDateString}
+SUMMARY:擇日提醒: ${lunarStr} ${ganZhiStr}日
+DESCRIPTION:您在「甯博進氣萬年曆」中儲存的日子
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:明日是您預定的擇日日子
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+    // 建立 Blob 並觸發下載
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', `擇日書籤_${dateString}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
 const YI_JI_MAP = {
@@ -895,7 +940,30 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
-            <BookmarkBtn />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* 原本的書籤按鈕 */}
+                <BookmarkBtn />
+                
+                {/* 新增的加入系統日曆按鈕 */}
+                {isBookmarked && (
+                    <button 
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            // 傳入需要的標題資訊
+                            downloadICS(info.dateStr, info.lunarStr, info.bazi.dayGan + info.bazi.dayZhi); 
+                        }}
+                        style={{ 
+                            background: '#fff8f0', border: `1px solid ${THEME.orange}`, 
+                            padding: '4px 8px', borderRadius: '12px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            color: THEME.orange, fontSize: '11px', fontWeight: 'bold'
+                        }}
+                    >
+                        <CalendarPlus size={14} />
+                        加入日曆
+                    </button>
+                )}
+            </div>
          </div>
          <div style={{ color: THEME.blue }}>
             <ChevronUp size={24} />
@@ -923,7 +991,30 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{info.dateStr}</span>
             <span style={{ fontSize: '14px', color: THEME.gray }}>週{info.weekDay}</span>
             <span style={{ fontSize: '14px', color: THEME.primary, fontWeight: '500' }}>{info.lunarStr} {info.bazi.dayGan}{info.bazi.dayZhi}日</span>
-            <BookmarkBtn />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* 原本的書籤按鈕 */}
+                <BookmarkBtn />
+                
+                {/* 新增的加入系統日曆按鈕 */}
+                {isBookmarked && (
+                    <button 
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            // 傳入需要的標題資訊
+                            downloadICS(info.dateStr, info.lunarStr, info.bazi.dayGan + info.bazi.dayZhi); 
+                        }}
+                        style={{ 
+                            background: '#fff8f0', border: `1px solid ${THEME.orange}`, 
+                            padding: '4px 8px', borderRadius: '12px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            color: THEME.orange, fontSize: '11px', fontWeight: 'bold'
+                        }}
+                    >
+                        <CalendarPlus size={14} />
+                        加入日曆
+                    </button>
+                )}
+            </div>
          </div>
          
          {/* 這裡改為收合按鈕，阻止冒泡以免觸發 onDetailClick */}
