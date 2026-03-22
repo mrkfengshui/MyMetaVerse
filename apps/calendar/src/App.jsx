@@ -363,24 +363,21 @@ const getGuiRenTimes = (lunar) => {
 };
 
 // 產生並下載 ICS 日曆檔案
-const downloadICS = (date, lunarStr, ganZhiStr) => {
-    // 格式化日期為 YYYYMMDD
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+const downloadICSFile = async (date, lunarStr, ganZhiStr) => {
+    if (!date || isNaN(date.getTime())) return;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}${month}${day}`;
 
-    // 隔天 (全天事件需要結束日期是隔天)
-    const nextDay = new Date(d);
-    nextDay.setDate(d.getDate() + 1);
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
     const nYear = nextDay.getFullYear();
     const nMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
     const nDay = String(nextDay.getDate()).padStart(2, '0');
     const nextDateString = `${nYear}${nMonth}${nDay}`;
 
     // ICS 內容格式
-    // TRIGGER:-P1D 代表提前 1 天提醒 (若要 3 天就是 -P3D)
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//MrkFengshui//CalendarApp//TW
@@ -388,23 +385,60 @@ BEGIN:VEVENT
 DTSTART;VALUE=DATE:${dateString}
 DTEND;VALUE=DATE:${nextDateString}
 SUMMARY:擇日提醒: ${lunarStr} ${ganZhiStr}日
-DESCRIPTION:您在「甯博進氣萬年曆」中儲存的日子
+DESCRIPTION:您在「甯博進氣萬年曆」中儲存的擇日書籤。
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY
-DESCRIPTION:明日是您預定的擇日日子
+DESCRIPTION:明日是您預定的擇日書籤
 END:VALARM
 END:VEVENT
 END:VCALENDAR`;
 
-    // 建立 Blob 並觸發下載
+    const fileName = `擇日提醒_${dateString}.ics`;
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', `擇日書籤_${dateString}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    // 1. 優先嘗試 Web Share API (iOS/Android 手機原生分享彈窗)
+    // 這樣可以讓 iOS 直接顯示「加入行事曆」的選項，完美繞過 Safari 下載限制
+    const file = new File([blob], fileName, { type: 'text/calendar' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: '加入日曆',
+                text: '將擇日書籤加入您的手機日曆',
+                files: [file],
+            });
+            return; // 成功呼叫分享選單就結束
+        } catch (error) {
+            // 用戶取消分享不算是錯誤，忽略 AbortError
+            if (error.name !== 'AbortError') {
+                console.error('分享失敗，嘗試備用方法:', error);
+            } else {
+                return; 
+            }
+        }
+    }
+
+    // 2. 備用方法 (給電腦版或是無法 Share 的舊瀏覽器)
+    try {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        // iOS 如果走到這裡 (通常是不支援 Share 的極舊版)，改用 Data URI 強制跳轉
+        if (isIOS) {
+            window.location.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+            return;
+        }
+
+        // 一般 Android / 電腦版下載方式
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch(e) {
+        console.error("產生日曆檔失敗", e);
+        alert("產生日曆檔失敗，請確認瀏覽器權限。");
+    }
 };
 
 const YI_JI_MAP = {
@@ -960,7 +994,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
                         }}
                     >
                         <CalendarPlus size={14} />
-                        加入日曆
+                        日曆
                     </button>
                 )}
             </div>
@@ -1011,7 +1045,7 @@ const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, on
                         }}
                     >
                         <CalendarPlus size={14} />
-                        加入日曆
+                        日曆
                     </button>
                 )}
             </div>
