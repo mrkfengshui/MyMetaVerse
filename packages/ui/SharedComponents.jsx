@@ -360,7 +360,7 @@ export const BuyMeCoffee = () => {
 const COMMON_INFO = {
   agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。\n開發者不對因使用本程式而產生的任何直接或間接後果負責。",
   contactEmail: "mail@mrkfengshui.com",
-  website: "https://mrkfengshui.com"
+  website: "https://mrkfengshui.com",
 };
 
 // --- 5. 應用程式資訊卡 (關於、條款、聯絡) ---
@@ -371,9 +371,15 @@ export const AppInfoCard = ({ info }) => {
     emailSubject: info.emailSubject || `關於 ${info.appName || '應用程式'} 的建議`
   };  
 
-const handleContactClick = () => { 
+  const handleContactClick = () => { 
     if (finalInfo.contactEmail) {
         window.location.href = `mailto:${finalInfo.contactEmail}?subject=${encodeURIComponent(finalInfo.emailSubject)}`; 
+    }
+  };
+
+  const handleWebsiteClick = () => {
+    if (finalInfo.website) {
+      window.open(finalInfo.website, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -406,6 +412,14 @@ const handleContactClick = () => {
         
         {/* 服務協議 (來自共用預設值) */}
         <InfoRow label="服務協議" content={finalInfo.agreement} />
+
+        <InfoRow 
+            label="官方網站" 
+            content={finalInfo.website.replace('https://', '')} 
+            onClick={handleWebsiteClick}
+            showArrow={true}
+            color={THEME.blue}
+        />
         
         {/* 版本資訊 (來自 App 傳入) */}
         <div style={{ padding: '16px', borderBottom: `1px solid ${THEME.bg}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
