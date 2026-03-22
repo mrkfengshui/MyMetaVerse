@@ -1274,7 +1274,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             border: '1px solid #b7eb8f', display: 'flex', alignItems: 'center', gap: '12px'
                         }}>
                             <div style={{ 
-                                background: '#389e0d', color: '#fff', padding: '4px 8px', 
+                                background: '#389e0d', color: '#fff', padding: '2px 4px', 
                                 borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' 
                             }}>
                                 天赦日
@@ -1292,7 +1292,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             border: '1px solid #ffe58f', display: 'flex', alignItems: 'center', gap: '12px'
                         }}>
                             <div style={{ 
-                                background: '#fa8c16', color: '#fff', padding: '4px 8px', 
+                                background: '#fa8c16', color: '#fff', padding: '2px 4px', 
                                 borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' 
                             }}>
                                 {info.xieZao}
@@ -1310,7 +1310,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                             border: '1px solid #ffa39e', display: 'flex', alignItems: 'center', gap: '12px'
                         }}>
                             <div style={{ 
-                                background: '#cf1322', color: '#fff', padding: '4px 8px', 
+                                background: '#cf1322', color: '#fff', padding: '2px 4px', 
                                 borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', flexShrink: 0
                             }}>
                                 三娘煞
