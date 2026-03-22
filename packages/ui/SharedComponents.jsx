@@ -360,6 +360,7 @@ export const BuyMeCoffee = () => {
 const COMMON_INFO = {
   agreement: "本程式提供的資訊僅供參考，使用者應自行判斷吉凶。\n開發者不對因使用本程式而產生的任何直接或間接後果負責。",
   contactEmail: "mail@mrkfengshui.com",
+  website: "https://mrkfengshui.com"
 };
 
 // --- 5. 應用程式資訊卡 (關於、條款、聯絡) ---
