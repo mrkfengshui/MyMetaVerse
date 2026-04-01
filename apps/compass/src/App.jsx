@@ -26,7 +26,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博風水";
-const APP_VERSION = "v1.3 增加防盜水印";
+const APP_VERSION = "v2 增加平面圖紀錄及修正UI";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // 引入 Lunar 庫
@@ -711,9 +711,6 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     const isFrozenRef = React.useRef(isFrozen);
     useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
 
-    // 新增：校正偏移量 (用來微調手機硬體磁偏角與真實羅庚的誤差)
-    const [offset, setOffset] = useState(0);
-
     const handleOrientation = React.useCallback((e) => {
         if (isFrozenRef.current) return;
         
@@ -768,7 +765,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     }, [handleOrientation]);
     
     // 將硬體度數加上手動微調的偏移量
-    const finalHeading = normalizeAngle(heading + offset);
+    const finalHeading = normalizeAngle(heading);
     
     const facingMt = getMountain(finalHeading);
     const sittingMt = getMountain(finalHeading + 180);
@@ -783,7 +780,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     ];
 
     return (
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#fff', position: 'relative', overflow: 'hidden', height: '100%', width: '100%'}}>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', background: '#222', color: '#fff', position: 'relative', overflowY: 'auto', overflowX: 'hidden', height: '100%', width: '100%', paddingTop: '40px', paddingBottom: '120px'}}>
             
             {/* 羅庚與十字星 */}
             <div style={{ position: 'relative', width: 'min(80vw, 45vh)', height: 'min(80vw, 45vh)', maxWidth: '350px', maxHeight: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px 0', flexShrink: 0 }}>
@@ -823,54 +820,94 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
             </div>
 
             {/* 底部數據與控制 */}
-            <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
-                <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿微調'}</div>
-                <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{finalHeading.toFixed(1)}°</div>
-                <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'5px'}}>
-                    {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向 <span style={{fontSize: '15px', fontWeight: 'normal', color: '#ccc'}}>(坐{sitDirName}向{faceDirName})</span>
-                </div>
+                <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
+                    <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿微調'}</div>
+                    <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{finalHeading.toFixed(1)}°</div>
+                    <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'5px'}}>
+                        {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向 <span style={{fontSize: '15px', fontWeight: 'normal', color: '#ccc'}}>(坐{sitDirName}向{faceDirName})</span>
+                    </div>
 
-                {/* 按鈕區 */}
-                <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
-                    <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
-                        {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖羅庚" : "定格方位"}
-                    </button>
+                    {/* --- 1. 按鈕區 (保持水平並排) --- */}
+                    <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
+                        <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
+                            {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖羅庚" : "定格方位"}
+                        </button>
+                        
+                        {!isFrozen && (
+                            <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
+                                <Compass size={18}/> 啟用羅庚
+                            </button>
+                        )}
+
+                        {isFrozen && (
+                            <button onClick={() => {
+                                setHeading(finalHeading); 
+                                onAnalyze();
+                            }} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
+                                <RefreshCw size={18}/> 進入排盤
+                            </button>
+                        )}
+                    </div>
                     
-                    {!isFrozen && (
-                        <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
-                            <Compass size={18}/> 啟用羅庚
-                        </button>
-                    )}
-
-                    {isFrozen && (
-                        <button onClick={() => {
-                            setHeading(finalHeading); // 排盤前確保寫入加上 offset 後的結果
-                            onAnalyze();
-                        }} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
-                            <RefreshCw size={18}/> 進入排盤
-                        </button>
-                    )}
-                </div>
-                
-                {/* 增加手動微調偏移量的拉桿 (風水師必備功能) */}
-                {!isFrozen && (
-                    <div style={{marginTop:'20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'}}>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: '8px'}}>
-                            <span style={{fontSize: '13px', color: '#ccc', width: '90px', textAlign: 'left'}}>
-                                磁偏校正: {offset > 0 ? '+' : ''}{offset}°
-                            </span>
-                            <input type="range" min="-30" max="30" value={offset} onChange={e=>setOffset(Number(e.target.value))} style={{width:'120px'}}/>
-                            <button onClick={()=>setOffset(0)} style={{background: 'none', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer'}}>重設</button>
+                    {/* --- 2. 🚀 全新自訂度數控制區 (放在按鈕區下方，置中顯示) --- */}
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <div style={{marginTop:'20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '12px 20px', borderRadius: '12px', width: '85%', maxWidth: '320px'}}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
+                                <span style={{fontSize: '13px', color: '#ccc'}}>自訂度數:</span>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                    {/* 微調按鈕 (-) */}
+                                    <button 
+                                        onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h - 0.5)); }} 
+                                        style={{background: '#444', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                    >-</button>
+                                    
+                                    {/* 直接輸入框 */}
+                                    <input 
+                                        type="number" 
+                                        value={Number(Math.round(finalHeading * 10) / 10).toString()} 
+                                        onFocus={() => setIsFrozen(true)}
+                                        onChange={(e) => {
+                                            setIsFrozen(true);
+                                            // 強制轉換為浮點數，如果輸入為空則預設為 0
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 0;
+                                            setHeading(normalizeAngle(val));
+                                        }} 
+                                        style={{width:'65px', textAlign: 'center', fontSize: '15px', fontWeight: 'bold', padding: '4px', borderRadius: '4px', border: 'none'}}
+                                    />
+                                    
+                                    {/* 微調按鈕 (+) */}
+                                    <button 
+                                        onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h + 0.5)); }} 
+                                        style={{background: '#444', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                    >+</button>
+                                </div>
+                            </div>
+                            
+                            {/* 360度全範圍拉桿 */}
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="360" 
+                                step="0.1" 
+                                value={finalHeading} 
+                                onTouchStart={() => setIsFrozen(true)} // 觸控時自動定格
+                                onMouseDown={() => setIsFrozen(true)}  // 滑鼠點擊時自動定格
+                                onChange={(e) => {
+                                    setIsFrozen(true);
+                                    setHeading(Number(e.target.value));
+                                }} 
+                                style={{width:'100%', marginTop: '4px'}} 
+                            />
                         </div>
                     </div>
-                )}
+                </div>
             </div>
-        </div>
     );
 };
 
 // 4. 排盤視圖 (ChartView) - 圓盤佈局優化 (凶煞在上，雜項在下)
-const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn }) => {
+const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn, floorPlan, setFloorPlan, imgConfig, setImgConfig }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
     const [showAnnual, setShowAnnual] = useState(true);
@@ -1017,8 +1054,6 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
     // ==========================================
     // 渲染單個宮位內容
     // ==========================================
-    const [floorPlan, setFloorPlan] = useState(null); 
-    const [imgConfig, setImgConfig] = useState({ opacity: 0.6, scale: 1, rotate: 0, x: 0, y: 0 });
     const [showFloorPlanPanel, setShowFloorPlanPanel] = useState(false);
     
     // 處理背景色邏輯
@@ -1268,11 +1303,35 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => setFloorPlan(reader.result);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 自動壓縮圖片避免 localStorage 爆滿
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // 限制最大寬度為 800px
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 轉為 jpeg 格式，並將品質設為 0.7 (大幅度減少檔案大小)
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    setFloorPlan(compressedDataUrl);
+                };
+                img.src = event.target.result;
+            };
             reader.readAsDataURL(file);
         }
     };
-
+const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4]; // dirNames[4] 為 "中"
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
@@ -1402,14 +1461,18 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                             </div>
                         )}
                         {/* 八宮分隔線 */}
-                        {[0, 45, 90, 135].map(angle => (
+                        {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
                             <div key={angle} style={{
                                 position: 'absolute',
-                                top: '50%', left: '0',
-                                width: '100%', height: '1px',
-                                background: '#8B4513', // 深棕色線條，像羅庚的格線
+                                top: '50%', 
+                                left: '50%', // 從正中心出發
+                                width: '150px', // 線段長度 (超出外圈的部分會被圓盤的 overflow:hidden 切掉)
+                                height: '1.5px',
+                                background: '#8B4513', // 深棕色線條
                                 opacity: 0.6,
-                                transform: `translateY(-50%) rotate(${angle + 22.5}deg)`, // 偏移 22.5 度以避開正中方位，形成分隔
+                                transformOrigin: 'left center', // 以線段最左側為旋轉軸心
+                                // 先旋轉角度，再往 X 軸外推 40px (剛好是中宮 80px 的半徑)，完美避開中宮內部！
+                                transform: `rotate(${angle + 22.5}deg) translateX(40px)`, 
                                 zIndex: 0
                             }} />
                         ))}
@@ -1422,11 +1485,10 @@ const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMont
                                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                                 width: '80px', height: '80px', // 稍微加大一點點以完美遮蓋線頭
                                 borderRadius: '50%',
-                                background: 'radial-gradient(circle, #fff 40%, #f7e6d4 100%)', 
-                                border: '2px solid #bfa07a',
+                                backgroundColor: isCenterSelected ? 'rgba(255,255,255,0.6)' : 'transparent',
+                                border: isCenterSelected ? `2px solid ${THEME.blue}` : `1.5px solid ${gridBorderColor}`,
                                 zIndex: 20, // 確保蓋過分隔線
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                boxShadow: '0 0 10px rgba(0,0,0,0.1)'
                             }}
                         >
                             {renderCellContent(4, true)}
@@ -1625,6 +1687,8 @@ export default function FengShuiApp() {
     const [isFrozen, setIsFrozen] = useState(false);
     const [chartMode, setChartMode] = useState('traditional');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [floorPlan, setFloorPlan] = useState(null);
+    const [imgConfig, setImgConfig] = useState({ opacity: 0.6, scale: 1, rotate: 0, x: 0, y: 0 });
 
     const tabs = [
         { id: 'input', label: '羅庚', icon: Compass },
@@ -1731,7 +1795,9 @@ export default function FengShuiApp() {
                 year: data.year, // 這裡是西曆
                 month: data.month, // 這裡是西曆
                 sitting: data.sitting, 
-                facing: data.facing 
+                facing: data.facing, 
+                floorPlan: floorPlan, // 【新增】儲存平面圖
+                imgConfig: imgConfig  // 【新增】儲存圖片設定
             }
         };
 
@@ -1766,6 +1832,8 @@ export default function FengShuiApp() {
             setPeriod(raw.period);
             setGregYear(raw.year || new Date().getFullYear()); // 兼容舊數據
             setGregMonth(raw.month || 1); // 兼容舊數據
+            setFloorPlan(raw.floorPlan || null);
+            setImgConfig(raw.imgConfig || { opacity: 0.6, scale: 1, rotate: 0, x: 0, y: 0 });
             setView('result');
         } else {
             alert('無法讀取舊格式資料');
@@ -1823,6 +1891,8 @@ export default function FengShuiApp() {
                             onSave={saveBookmark}
                             chartMode={chartMode} 
                             isLoggedIn={isLoggedIn}
+                            floorPlan={floorPlan} setFloorPlan={setFloorPlan}
+                            imgConfig={imgConfig} setImgConfig={setImgConfig}
                         />
                     </>
                 )}

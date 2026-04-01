@@ -1,7 +1,7 @@
 // packages/ui/DataComponents.jsx
 import React, { useMemo } from 'react'; // 引入 useMemo
 import { THEME } from './theme';
-import { Trash2, Edit3, User, Calendar, MapPin, Sparkles, Compass, BookOpen } from 'lucide-react';
+import { Trash2, Edit3, User, Calendar, MapPin, Sparkles, Compass, BookOpen, Image as ImageIcon } from 'lucide-react';
 
 // 數字轉中文大寫對照表
 const PERIOD_MAP = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
@@ -55,12 +55,18 @@ const RecordContent = ({ data }) => {
     // 3. 風水
     if (data.facing || data.mountain) {
         const periodStr = PERIOD_MAP[data.period] || data.period;
+        const hasFloorPlan = data.rawConfig && data.rawConfig.floorPlan;
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
                 <div style={{ ...rowStyle, marginTop: 0 }}>
                     <Compass size={14} />
                     <span style={highlightStyle}>{periodStr}運{data.mountain}山{data.facing}向下卦</span>
+                    {hasFloorPlan && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#e6f7ff', padding: '2px 6px', borderRadius: '4px', color: THEME.blue, fontSize: '11px', marginLeft: '6px' }}>
+                            <ImageIcon size={12} /> 附圖
+                        </span>
+                    )}
                 </div>
             </div>
         );
