@@ -29,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博進氣萬年曆";
-const APP_VERSION = "v1.6 修正小Bug";
+const APP_VERSION = "v1.7 增加凶煞警示";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -455,7 +455,9 @@ const YI_JI_MAP = {
   '涂': '塗', '厕': '廁', '临': '臨', '启': '啟', '殡': '殯', '殓': '殮', 
   '谢': '謝', '设': '設', '驾': '駕', '筑': '築', '坟': '墳', '绘': '繪', 
   '产': '產', '馀': '餘', '丧': '喪', '问': '問', '车': '車', '诸': '諸',
-  '坏': '壞', '机': '機', '梁': '樑', '货': '貨',
+  '坏': '壞', '机': '機', '梁': '樑', '货': '貨', '债': '債', '渔': '漁',
+  '复': '復', '岁': '歲', '废': '廢', '离': '離', '无': '無', '禄': '祿',
+  '结': '結', '桥': '橋', '庙': '廟',
 };
 
 const toTraditionalYiJi = (str) => {
@@ -1285,10 +1287,15 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                     '月破': '大凶，與流月相沖，忌祈福、嫁娶、開市',
                                     '四廢': '凶，為五行無氣之日，百事皆忌',
                                     '四離': '凶，四季交替前夕，忌出行、動土、結婚',
+                                    '四絕': '凶，立春、立夏、立秋、立冬前夕，五行之氣絕滅，百事忌用',
                                     '無祿': '凶，吉氣受阻，不利求財、開市、上官赴任',
                                     '復喪': '凶，忌安葬、入殮、探病，防重喪',
                                     '三喪': '凶，忌安葬、探病等事',
-                                    '債𣎴': '凶，忌借貸、出資、簽約交易'
+                                    '債𣎴': '凶，忌借貸、出資、簽約交易',
+                                    '楊公忌': '大凶，為楊公十三忌日，諸事皆忌',
+                                    '紅沙': '大凶，為擇日大忌，犯之主破財傷人，極忌嫁娶、動土',
+                                    '受死': '大凶，為極惡之日，百事皆忌，尤忌療病、出行',
+                                    '往亡': '凶，主去而無返，極忌出行、搬家、赴任、嫁娶'
                                 };
 
                                 return (
@@ -1912,7 +1919,8 @@ const DayCell = ({ date, isCurrentMonth, isToday, isSelected, onClick, canRender
       data.xieZao = getXieZao(lunar.getMonth(), lunar.getDay());
       // -------------------------------------
 
-      const monthNum = Math.abs(lunar.getMonth());
+      const ZHI_MONTH_MAP = { '寅':1, '卯':2, '辰':3, '巳':4, '午':5, '未':6, '申':7, '酉':8, '戌':9, '亥':10, '子':11, '丑':12 };
+      const monthNum = ZHI_MONTH_MAP[baziEnd.getMonthZhi()] || Math.abs(lunar.getMonth());
       const dayZhi = lunar.getDayZhi(); const dayGanZhi = lunar.getDayInGanZhi();
       const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
       if (dgRule) data.dongGongRating = (dgRule.s && dgRule.s[dayGanZhi]) ? dgRule.s[dayGanZhi] : dgRule.r;
@@ -2418,7 +2426,8 @@ const selectedInfo = useMemo(() => {
         let xieZaoStr = null;
         try { xieZaoStr = getXieZao(lunar.getMonth(), lunar.getDay()); } catch(e) {}
         
-        const monthNum = Math.abs(lunar.getMonth());
+        const ZHI_MONTH_MAP = { '寅':1, '卯':2, '辰':3, '巳':4, '午':5, '未':6, '申':7, '酉':8, '戌':9, '亥':10, '子':11, '丑':12 };
+        const monthNum = ZHI_MONTH_MAP[timeBazi.getMonthZhi()] || Math.abs(lunar.getMonth());
         const dayZhi = lunar.getDayZhi();
         const dayGanZhi = lunar.getDayInGanZhi();
         const dgRule = DONG_GONG_RULES[monthNum]?.[dayZhi];
@@ -2454,11 +2463,109 @@ const selectedInfo = useMemo(() => {
         const abbrMap = (typeof WUTU_ABBR !== 'undefined') ? WUTU_ABBR : {};
         const wutuStr = star ? (abbrMap[star.name] || star.name) : '';
                 
-        // 取得本日所有凶煞
-        const allXiongSha = lunar.getDayXiongSha();
-        const targetBadStars = ['復喪', '三喪', '債𣎴', '月破', '歲破', '四廢', '四離', '無祿'];
-        // 過濾出本日有的特定凶煞
-        const badStars = allXiongSha.filter(star => targetBadStars.includes(star));
+        // --- 計算凶煞 ---
+        const badStars = [];
+
+        const dZhi = timeBazi.getDayZhi();
+        const dGan = timeBazi.getDayGan();
+        const dGanZhi = dGan + dZhi;
+        const mZhi = timeBazi.getMonthZhi();
+        const yZhi = timeBazi.getYearZhi();
+
+        const zhiArr = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const dZhiIdx = zhiArr.indexOf(dZhi);
+
+        // 1. 歲破 (日支沖年支)
+        const yZhiIdx = zhiArr.indexOf(yZhi);
+        if (Math.abs(yZhiIdx - dZhiIdx) === 6) badStars.push('歲破');
+
+        // 2. 月破 (日支沖月支)
+        const mZhiIdx = zhiArr.indexOf(mZhi);
+        if (Math.abs(mZhiIdx - dZhiIdx) === 6) badStars.push('月破');
+
+        // 3. 四廢 (春夏秋冬，干支無氣之日)
+        const SI_FEI_MAP = {
+            '寅': ['庚申', '辛酉'], '卯': ['庚申', '辛酉'], '辰': ['庚申', '辛酉'], // 春
+            '巳': ['壬子', '癸亥'], '午': ['壬子', '癸亥'], '未': ['壬子', '癸亥'], // 夏
+            '申': ['甲寅', '乙卯'], '酉': ['甲寅', '乙卯'], '戌': ['甲寅', '乙卯'], // 秋
+            '亥': ['丙午', '丁巳'], '子': ['丙午', '丁巳'], '丑': ['丙午', '丁巳']  // 冬
+        };
+        if (SI_FEI_MAP[mZhi]?.includes(dGanZhi)) badStars.push('四廢');
+
+        // 4. 三喪 (春辰、夏未、秋戌、冬丑)
+        const SAN_SANG_MAP = {
+            '寅': '辰', '卯': '辰', '辰': '辰',
+            '巳': '未', '午': '未', '未': '未',
+            '申': '戌', '酉': '戌', '戌': '戌',
+            '亥': '丑', '子': '丑', '丑': '丑'
+        };
+        if (SAN_SANG_MAP[mZhi] === dZhi) badStars.push('三喪');
+
+        // 5. 復喪 (即重喪日：寅月甲日、卯月乙日...)
+        const FU_SANG_MAP = {
+            '寅': '甲', '卯': '乙', '辰': '戊',
+            '巳': '丙', '午': '丁', '未': '己',
+            '申': '庚', '酉': '辛', '戌': '戊',
+            '亥': '壬', '子': '癸', '丑': '己'
+        };
+        if (FU_SANG_MAP[mZhi] === dGan) badStars.push('復喪');
+
+        // 6. 四離 與 四絕 
+        // 判斷邏輯：取「明天」的日期，看明天的節氣是什麼
+        const tomorrow = new Date(selectedDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tmrSolar = window.Solar.fromYmd(tomorrow.getFullYear(), tomorrow.getMonth() + 1, tomorrow.getDate());
+        const tmrJieQi = tmrSolar.getLunar().getJieQi(); 
+
+        // 四離：春分、夏至、秋分、冬至的前一日
+        if (['春分', '夏至', '秋分', '冬至'].includes(tmrJieQi)) badStars.push('四離');
+
+        // 四絕：立春、立夏、立秋、立冬的前一日
+        if (['立春', '立夏', '立秋', '立冬'].includes(tmrJieQi)) badStars.push('四絕');
+
+        // 7. 無祿 (即十惡大敗日)
+        const WU_LU_DAYS = ['甲辰', '乙巳', '丙申', '丁亥', '戊戌', '己丑', '庚辰', '辛巳', '壬申', '癸亥'];
+        if (WU_LU_DAYS.includes(dGanZhi)) badStars.push('無祿');
+
+        // 8. 債𣎴 (債木星：寅月戊戌起，依序遞推)
+        const ZHAI_BU_MAP = {
+            '寅': '戊戌', '卯': '己亥', '辰': '庚子', '巳': '辛丑',
+            '午': '壬寅', '未': '癸卯', '申': '甲辰', '酉': '乙巳',
+            '戌': '丙午', '亥': '丁未', '子': '戊申', '丑': '己酉'
+        };
+        if (ZHAI_BU_MAP[mZhi] === dGanZhi) badStars.push('債𣎴');
+
+        // 9. 楊公十三忌 (基於農曆固定月份與日期)
+        // 取絕對值防閏月干擾 (例如閏4月也算4月)
+        const lMonthNum = Math.abs(lunar.getMonth()); 
+        const lDayNum = lunar.getDay();
+        const YANG_GONG_DAYS = {
+            1: [13], 2: [11], 3: [9], 4: [7], 5: [5], 6: [3],
+            7: [1, 29], 8: [27], 9: [25], 10: [23], 11: [21], 12: [19]
+        };
+        if (YANG_GONG_DAYS[lMonthNum]?.includes(lDayNum)) badStars.push('楊公忌');
+
+        // 10. 紅沙大煞 (依節氣月支與日支對應)
+        // 孟月忌酉，仲月忌巳，季月忌丑
+        if (['寅', '巳', '申', '亥'].includes(mZhi) && dZhi === '酉') badStars.push('紅沙');
+        if (['卯', '午', '酉', '子'].includes(mZhi) && dZhi === '巳') badStars.push('紅沙');
+        if (['辰', '未', '戌', '丑'].includes(mZhi) && dZhi === '丑') badStars.push('紅沙');
+
+        // 11. 受死日 (依節氣月支與日支對應)
+        const SHOU_SI_MAP = {
+            '寅': '戌', '卯': '辰', '辰': '亥', '巳': '巳',
+            '午': '子', '未': '午', '申': '丑', '酉': '未',
+            '戌': '寅', '亥': '申', '子': '卯', '丑': '酉'
+        };
+        if (SHOU_SI_MAP[mZhi] === dZhi) badStars.push('受死');
+
+        // 12. 往亡日 (依節氣月支與日支對應)
+        const WANG_WANG_MAP = {
+            '寅': '寅', '卯': '巳', '辰': '申', '巳': '亥',
+            '午': '卯', '未': '午', '申': '酉', '酉': '子',
+            '戌': '辰', '亥': '未', '子': '戌', '丑': '丑'
+        };
+        if (WANG_WANG_MAP[mZhi] === dZhi) badStars.push('往亡');
 
         // 然後在 return 物件裡加上這兩個：
         return {
