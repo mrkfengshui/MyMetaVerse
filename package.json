@@ -9,10 +9,12 @@
     "dev": "echo '請進入各個 app 資料夾執行 npm run dev'"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.1.0",
     "firebase": "^12.8.0",
     "lucide-react": "^0.562.0",
     "react-helmet-async": "^2.0.5",
-    "react-router-dom": "^7.12.0"
+    "react-router-dom": "^7.12.0",
+    "stripe": "^22.0.1"
   },
   "overrides": {
     "react-helmet-async": {

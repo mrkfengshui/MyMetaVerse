@@ -1,11 +1,16 @@
-// packages/ui/BookingSystem.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css'; // 引入日曆樣式
+import 'react-calendar/dist/Calendar.css'; 
 import { THEME } from './theme';
 import { 
   ChevronLeft, Search, Check, Home, LampDesk, Sparkles, Grid, Calendar as CalendarIcon 
 } from 'lucide-react';
+// 加入 Stripe 核心套件
+import { loadStripe } from '@stripe/stripe-js';
+
+// 🌟 直接在這裡寫死您的設定 (請確認金鑰格式正確，這裡以 live 為例)
+const STRIPE_PUB_KEY = "pk_test_51T7ccADBgMCgO6dLGUsQvxJQpzMack3iZxzKaecS0D3vRUEJMedXUDiueUC3BPGd4fFcJEEhiAjalWYK86n2UFFn00fRj8St9D";
+const CHECKOUT_API_URL = "/api/create-checkout-session";
 
 // --- 輔助函式 ---
 const getLocalDateString = (date) => {
@@ -26,11 +31,12 @@ const generateBookingId = () => {
 };
 
 // --- 主組件 ---
-export const BookingSystem = ({ apiUrl, onNavigate }) => {
+// 新增了 stripePubKey (公鑰) 和 checkoutApiUrl (後端API網址)
+export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl }) => {
   const [viewMode, setViewMode] = useState('book'); 
   const [step, setStep] = useState(1);
 
-  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '852', email: '', notes: '' });
+  const [bookingData, setBookingData] = useState({ service: null, date: null, time: null, name: '', phone: '852', email: '', notes: '', currentBookingId: '' });
   const [searchPhone, setSearchPhone] = useState('852');
   const [searchId, setSearchId] = useState('');
   const [myBookings, setMyBookings] = useState([]);
@@ -40,13 +46,26 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
   const [availableTimesForSelectedDate, setAvailableTimesForSelectedDate] = useState([]); 
   const [loadingData, setLoadingData] = useState(true);
   
-  // 日期範圍設定 (未來 3 天 ~ 2 個月)
+  // 日期範圍設定
   const { minDate, maxDate } = useMemo(() => {
      const now = new Date();
      const min = new Date(); min.setDate(now.getDate() + 3);
      const max = new Date(); max.setMonth(now.getMonth() + 2); 
      max.setDate(new Date(max.getFullYear(), max.getMonth() + 1, 0).getDate()); 
      return { minDate: min, maxDate: max };
+  }, []);
+
+  // 檢查是否從 Stripe 付款後返回
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("success")) {
+      setStep(5); // 直接顯示成功畫面
+      const bId = query.get("booking_id");
+      if (bId) setBookingData(prev => ({ ...prev, currentBookingId: bId }));
+    } else if (query.get("canceled")) {
+      alert("⚠️ 您取消了付款流程。剛才保留的時段將會被釋出，請重新預約。");
+      setStep(1);
+    }
   }, []);
 
   // 讀取遠端資料
@@ -57,8 +76,7 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
       const data = await response.json();
       
       if (data.services) {
-         // 根據 ID 分配圖示
-         const COLORS = { yi: '#90EE90', wu: '#8B4513', geng: '#FFA500' }; // 簡單定義顏色
+         const COLORS = { yi: '#90EE90', wu: '#8B4513', geng: '#FFA500' }; 
          const mappedServices = data.services.map(s => ({
              ...s,
              icon: s.id === 'fs_home' ? <Home size={24} color={COLORS.yi} /> : 
@@ -129,12 +147,13 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
           : "【預約須知】\n\n確認提交預約嗎？我們將盡快聯絡您確認細節。";
 
       const isConfirmed = window.confirm(confirmMsg);
-            if (isConfirmed) handlePayment();
+      if (isConfirmed) handlePayment();
   };
 
+  // 整合了 Stripe 的付款與預約流程
   const handlePayment = async () => {
-        setStep(4);
-        try {
+    setStep(4);
+    try {
         const bId = generateBookingId();
         const payload = {
             bookingId: bId,
@@ -144,8 +163,12 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
             service: bookingData.service.name, 
             date: getLocalDateString(bookingData.date), 
             time: bookingData.time, 
-            notes: bookingData.notes
+            notes: bookingData.notes,
+            // 標記狀態：如果需要付款，先標為 Pending
+            status: bookingData.service.deposit > 0 ? 'Pending Payment' : 'Confirmed'
         };
+
+        // 1. 先將資料寫入 Google Sheet 佔據時段
         const response = await fetch(apiUrl, { 
             method: "POST", 
             headers: { "Content-Type": "text/plain;charset=utf-8" }, 
@@ -153,13 +176,63 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
         });
         
         const resultData = await response.json();
+        
         if (resultData.result === 'success') {
             setBookingData(prev => ({ ...prev, currentBookingId: bId }));
-            setTimeout(() => { setStep(5); }, 500);
+
+            // 2. 判斷是否需要 Stripe 結帳
+            if (bookingData.service.deposit > 0) {
+                // 如果沒有提供 API，則提示錯誤
+                if (!STRIPE_PUB_KEY || !CHECKOUT_API_URL) {
+                    alert('系統尚未設定付款閘道，請聯絡管理員。');
+                    setStep(2);
+                    return;
+                }
+
+                const stripe = await loadStripe(STRIPE_PUB_KEY);
+
+                const sessionRes = await fetch(CHECKOUT_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        itemName: bookingData.service.name,
+                        amount: bookingData.service.deposit,
+                        bookingId: bId, 
+                        email: bookingData.email,
+                        currentUrl: window.location.href 
+                    }),
+                });
+
+                const session = await sessionRes.json();
+
+                // 導向 Stripe 官方結帳頁面
+                const { error } = await stripe.redirectToCheckout({
+                    sessionId: session.id,
+                });
+
+                if (error) {
+                    console.error("Stripe 跳轉錯誤:", error);
+                    alert("無法導向付款頁面，請稍後再試。");
+                    setStep(2);
+                }
+            } else {
+                // 不需要按金，直接進入成功畫面
+                setTimeout(() => { setStep(5); }, 500);
+            }
         }
-      else if (resultData.message === 'occupied') { alert("❌ 預約失敗\n\n哎呀！該時段剛剛被其他客人預約走了。"); setBookingData(prev => ({ ...prev, time: null })); await fetchLatestData(); setStep(2); } 
-      else { throw new Error(resultData.message || "Unknown error"); }
-    } catch (error) { console.error("預約請求錯誤:", error); alert("⚠️ 連線異常或時段已滿，正在更新最新資料..."); await fetchLatestData(); setStep(2); }
+        else if (resultData.message === 'occupied') { 
+            alert("❌ 預約失敗\n\n哎呀！該時段剛剛被其他客人預約走了。"); 
+            setBookingData(prev => ({ ...prev, time: null })); 
+            await fetchLatestData(); 
+            setStep(2); 
+        } 
+        else { throw new Error(resultData.message || "Unknown error"); }
+    } catch (error) { 
+        console.error("預約請求錯誤:", error); 
+        alert("⚠️ 連線異常或時段已滿，正在更新最新資料..."); 
+        await fetchLatestData(); 
+        setStep(2); 
+    }
   };
 
   const handleCheckBooking = async () => {
@@ -182,7 +255,6 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
   };
 
   // --- Render Functions (UI) ---
-
   const renderCheckBookingView = () => (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
         <div style={{ backgroundColor: THEME.white, padding: '20px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '20px' }}>
@@ -277,7 +349,13 @@ export const BookingSystem = ({ apiUrl, onNavigate }) => {
   );
 
   const renderPaymentLoading = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}><div style={{ width: '40px', height: '40px', border: `4px solid ${THEME.bgBlue}`, borderTop: `4px solid ${THEME.blue}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div><style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style><div style={{ marginTop: '20px', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>正在傳送預約資料...</div></div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div style={{ width: '40px', height: '40px', border: `4px solid ${THEME.bgBlue}`, borderTop: `4px solid ${THEME.blue}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      <div style={{ marginTop: '20px', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>
+        {bookingData.service?.deposit > 0 ? '正在保留時段並導向付款頁面...' : '正在傳送預約資料...'}
+      </div>
+    </div>
   );
 
   const renderSuccess = () => (
