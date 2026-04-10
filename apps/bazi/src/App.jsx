@@ -28,7 +28,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v2 增加命書批斷";
+const APP_VERSION = "v2.1 命書系統更新";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -1335,7 +1335,7 @@ const AiBaziAnalysis = ({ data }) => {
         }
     } catch (err) {
         console.error(err);
-        alert("系統連線異常，請稍後再試。");
+        alert("系統更新中，敬請期待。");
         setIsAnalyzing(false);
     }
     };
