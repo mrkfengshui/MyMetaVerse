@@ -1407,7 +1407,7 @@ const AiBaziAnalysis = ({ data }) => {
             onClick={handleUnlock} 
             style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
           >
-            <Unlock size={18} /> 單次付費$198解鎖 (支援信用卡/PayMe/支付寶)
+            <Unlock size={18} /> 單次付費$198解鎖 (支援Credit Card/Wallet Pay)
           </button>
         </div>
       )}
