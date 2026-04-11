@@ -6,7 +6,7 @@ import 'react-calendar/dist/Calendar.css';
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
+  InstallGuide, WebBackupManager, loadStripe,
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
