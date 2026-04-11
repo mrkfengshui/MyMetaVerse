@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
+import { loadStripe } from '@stripe/stripe-js';
 
 import { 
   AdBanner, AppHeader, AppInfoCard, 
