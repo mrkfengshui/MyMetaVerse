@@ -154,7 +154,7 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
   };
 
   // 整合了 Stripe 的付款與預約流程
-  const handlePayment = async () => {
+const handlePayment = async () => {
     setStep(4);
     try {
         const bId = generateBookingId();
@@ -167,30 +167,24 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
             date: getLocalDateString(bookingData.date), 
             time: bookingData.time, 
             notes: bookingData.notes,
-            // 標記狀態：如果需要付款，先標為 Pending
             status: bookingData.service.deposit > 0 ? 'Pending Payment' : 'Confirmed'
         };
 
-        // 1. 先將資料寫入 Google Sheet 佔據時段
+        // 1. 寫入 Google Sheet
         const response = await fetch(apiUrl, { 
             method: "POST", 
             headers: { "Content-Type": "text/plain;charset=utf-8" }, 
             body: JSON.stringify(payload) 
         });
         
+        if (!response.ok) throw new Error("Google Sheet 連線失敗");
         const resultData = await response.json();
         
         if (resultData.result === 'success') {
             setBookingData(prev => ({ ...prev, currentBookingId: bId }));
 
-            // 2. 判斷是否需要 Stripe 結帳
             if (bookingData.service.deposit > 0) {
-                // 如果沒有提供 API，則提示錯誤
-                if (!STRIPE_PUB_KEY || !CHECKOUT_API_URL) {
-                    alert('系統尚未設定付款閘道，請聯絡管理員。');
-                    setStep(2);
-                    return;
-                }
+                // 2. 呼叫 Stripe API
                 const sessionRes = await fetch(CHECKOUT_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -199,41 +193,46 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
                         amount: bookingData.service.deposit,
                         bookingId: bId, 
                         email: bookingData.email,
-                        currentUrl: window.location.href 
+                        // 🌟 確保網址是乾淨的，不帶舊的參數
+                        currentUrl: window.location.origin + window.location.pathname 
                     }),
                 });
 
+                if (!sessionRes.ok) {
+                    const errTxt = await sessionRes.text();
+                    throw new Error(`Stripe 發生錯誤: ${errTxt}`);
+                }
+
                 const session = await sessionRes.json();
 
-                // 導向 Stripe 官方結帳頁面
                 if (session.url) {
-                        sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
-                        window.location.href = session.url;
-                    } else {
-                        console.error("Stripe 跳轉錯誤: 沒有回傳 URL");
-                        alert("無法導向付款頁面，請稍後再試。");
-                        setStep(2);
-                    }
+                    sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
+                    window.location.href = session.url;
                 } else {
-                // 不需要按金，直接進入成功畫面
+                    throw new Error("無法取得 Stripe 結帳網址");
+                }
+            } else {
                 setTimeout(() => { setStep(5); }, 500);
             }
-        }
+        } 
         else if (resultData.message === 'occupied') { 
             alert("❌ 預約失敗\n\n哎呀！該時段剛剛被其他客人預約走了。"); 
             setBookingData(prev => ({ ...prev, time: null })); 
             await fetchLatestData(); 
             setStep(2); 
         } 
-        else { throw new Error(resultData.message || "Unknown error"); }
+        else { 
+            throw new Error(`Google API 回傳錯誤: ${resultData.message || '未知錯誤'}`); 
+        }
     } catch (error) { 
         console.error("預約請求錯誤:", error); 
-        alert("⚠️ 連線異常或時段已滿，正在更新最新資料..."); 
+        // 🌟 這裡改成顯示真正的錯誤訊息，這樣我們才知道錯在哪！
+        alert("❌ 系統發生錯誤：\n" + error.message); 
         await fetchLatestData(); 
         setStep(2); 
     }
   };
-
+  
   const handleCheckBooking = async () => {
         if (!searchPhone || !searchId) return alert("請輸入電話號碼及預約代碼");
         setIsSearching(true);

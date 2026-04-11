@@ -547,6 +547,7 @@ const calculateBaziResult = (formData, ziHourRule) => {
         genderText: formData.gender === '1' ? '元男' : '元女',
         isManual: false, 
         rawDate: formData, 
+        isPaid: formData.isPaid || false,
         solarDate: `${rawYear}-${pad(rawMonth)}-${pad(rawDay)} ${pad(rawHour)}:${pad(rawMinute)}`,
         lunarDate: lunarString,
         jieQiSpan: jieQiSpan,           // 計算節氣天數
@@ -1006,17 +1007,14 @@ const PillarCard = ({
 const AiBaziAnalysis = ({ data }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [isPaid, setIsPaid] = useState(false);
+  const [isPaid, setIsPaid] = useState(data.isPaid || false);
 
   useEffect(() => {
-    if (sessionStorage.getItem('bazi_is_paid') === 'true') {
-      setIsPaid(true);
-      const reportContent = generateLongReport();
-      setAnalysisResult(reportContent);
-      // 清除標記，避免重整一直觸發
-      sessionStorage.removeItem('bazi_is_paid'); 
-    }
-  }, []);
+      if (data.isPaid && !analysisResult) {
+          setIsPaid(true);
+          setAnalysisResult(generateLongReport());
+      }
+  }, [data, analysisResult]);
 
   // --- 內部知識庫：滴天髓古文佐證 ---
   const DI_TIAN_SUI = {
@@ -2177,17 +2175,72 @@ export default function BaziApp() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('tab') === 'booking') {
-      setView('booking'); // 如果網址有 ?tab=booking，就切換到預約畫面
+      setView('booking'); 
     }
+    
     if (params.get('success') === 'true') {
-    // 付款成功了！
-    // 這裡呼叫原本生成報告的 function
-       const savedResult = sessionStorage.getItem('bazi_paid_result');
-       if (savedResult) {
-           setBaziData(JSON.parse(savedResult)); // 恢復八字盤資料
-           setView('result'); // 自動切換到命書結果頁
+       if (!params.get('booking_id')) {
+           const savedResult = sessionStorage.getItem('bazi_paid_result');
+           if (savedResult) {
+               const parsedData = JSON.parse(savedResult);
+               // 1. 打上已付費標籤
+               parsedData.isPaid = true;
+               if (parsedData.rawDate) parsedData.rawDate.isPaid = true;
+
+               setBaziData(parsedData); 
+               setView('result'); 
+
+               // 🌟 2. 執行自動保存/更新邏輯
+               const autoSave = async () => {
+                   try {
+                       // 先從手機儲存空間拿最新的紀錄 (避免覆蓋原本的)
+                       const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
+                       let currentBookmarks = savedBk ? JSON.parse(savedBk) : [];
+
+                       // 整理要存入的資料格式
+                       const baziSource = parsedData.bazi || {};
+                       const dm = baziSource.dayGan || '';
+                       const dmElement = WUXING_MAP[dm] || '';
+
+                       const dataToSave = {
+                           id: parsedData.id,
+                           name: parsedData.name,
+                           genderText: parsedData.genderText || (parsedData.gender === '1' ? '男' : '女'),
+                           solarDate: parsedData.solarDate,
+                           lunarDate: parsedData.lunarDate,
+                           dayMaster: dm + dmElement,
+                           monthBranch: baziSource.monthZhi || '', 
+                           rawDate: parsedData.rawDate 
+                       };
+
+                       // 檢查是否已經存過這個命盤 (比對 ID)
+                       const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
+                       
+                       if (existingIndex >= 0) { 
+                           // 如果本來就存過，就更新它 (這樣就把 isPaid: true 寫進去了)
+                           currentBookmarks[existingIndex] = dataToSave; 
+                       } else { 
+                           // 如果是第一次排盤就直接買，就新增到最前面
+                           currentBookmarks = [dataToSave, ...currentBookmarks]; 
+                       }
+                       
+                       // 更新畫面狀態，並正式寫入手機儲存空間
+                       setBookmarks(currentBookmarks); 
+                       await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
+
+                       // 彈出更貼心的提示
+                       setTimeout(() => {
+                           alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
+                       }, 600);
+
+                   } catch (e) {
+                       console.error("自動保存失敗:", e);
+                   }
+               };
+               
+               autoSave();
+           }
        }
-       // 靜默清理網址上的 ?success=true，讓網址變乾淨
        window.history.replaceState(null, '', window.location.pathname);
     }
     

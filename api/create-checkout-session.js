@@ -13,7 +13,14 @@ module.exports = async function handler(req, res) {
     const { itemName, amount, bookingId, currentUrl } = req.body;
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'alipay'],
+      payment_method_types: ['card', 'alipay', 'wechat_pay'], 
+      
+      // 微信支付在網頁端跳轉必須加上這個 options 設定，否則會報錯
+      payment_method_options: {
+        wechat_pay: {
+          client: 'web', 
+        },
+      },
       line_items: [
         {
           price_data: {
