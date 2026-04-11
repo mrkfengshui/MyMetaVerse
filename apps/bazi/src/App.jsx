@@ -1306,24 +1306,27 @@ const AiBaziAnalysis = ({ data }) => {
     setIsAnalyzing(true);
 
     try {
-        // 1. 載入 Stripe 前端 SDK
         const stripe = await loadStripe('pk_test_51T7ccADBgMCgO6dLGUsQvxJQpzMack3iZxzKaecS0D3vRUEJMedXUDiueUC3BPGd4fFcJEEhiAjalWYK86n2UFFn00fRj8St9D');
 
-        // 2. 向您的後端 API 請求建立 Session
         const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             itemName: "千字深度批命書",
-            amount: 198, // 假設命書費用是 HK$198
-            bookingId: "REPORT_" + Date.now(), // 隨機生成一個編號
+            amount: 198,
+            bookingId: "REPORT_" + Date.now(),
             currentUrl: window.location.href, 
         }),
         });
 
+        // 🌟 加入這段：如果 API 回傳錯誤（例如 404 或 500），直接拋出錯誤
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`後端 API 發生錯誤 (代碼 ${response.status}): ${errorText}`);
+        }
+
         const session = await response.json();
 
-        // 3. 跳轉到 Stripe 付款頁面
         const { error } = await stripe.redirectToCheckout({
         sessionId: session.id,
         });
@@ -1333,8 +1336,9 @@ const AiBaziAnalysis = ({ data }) => {
         setIsAnalyzing(false);
         }
     } catch (err) {
-        console.error(err);
-        alert("系統更新中，敬請期待。");
+        // 🌟 把真正的錯誤印在 Console 並用 Alert 顯示出來
+        console.error("詳細錯誤訊息:", err);
+        alert("系統發生錯誤：\n" + err.message);
         setIsAnalyzing(false);
     }
     };
