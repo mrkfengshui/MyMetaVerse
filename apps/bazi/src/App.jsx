@@ -1306,42 +1306,36 @@ const AiBaziAnalysis = ({ data }) => {
     setIsAnalyzing(true);
 
     try {
-        const stripe = await loadStripe('pk_test_51T7ccADBgMCgO6dLGUsQvxJQpzMack3iZxzKaecS0D3vRUEJMedXUDiueUC3BPGd4fFcJEEhiAjalWYK86n2UFFn00fRj8St9D');
-
         const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            itemName: "千字深度批命書",
-            amount: 198,
-            bookingId: "REPORT_" + Date.now(),
-            currentUrl: window.location.href, 
-        }),
-        });
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                itemName: "千字深度批命書",
+                amount: 198,
+                bookingId: "REPORT_" + Date.now(),
+                currentUrl: window.location.href, 
+            }),
+            });
 
-        // 🌟 加入這段：如果 API 回傳錯誤（例如 404 或 500），直接拋出錯誤
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`後端 API 發生錯誤 (代碼 ${response.status}): ${errorText}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`後端 API 發生錯誤: ${errorText}`);
+            }
+
+            const session = await response.json();
+
+            if (session.url) {
+            window.location.href = session.url;
+            } else {
+            throw new Error("無法取得 Stripe 結帳網址");
+            }
+
+        } catch (err) {
+            console.error("詳細錯誤訊息:", err);
+            alert("系統發生錯誤：\n" + err.message);
+            setIsAnalyzing(false);
         }
-
-        const session = await response.json();
-
-        const { error } = await stripe.redirectToCheckout({
-        sessionId: session.id,
-        });
-
-        if (error) {
-        alert("跳轉失敗: " + error.message);
-        setIsAnalyzing(false);
-        }
-    } catch (err) {
-        // 🌟 把真正的錯誤印在 Console 並用 Alert 顯示出來
-        console.error("詳細錯誤訊息:", err);
-        alert("系統發生錯誤：\n" + err.message);
-        setIsAnalyzing(false);
-    }
-    };
+        };
 
   // 給 UI 畫面用的動態年份與文案
   const uiDate = new Date();

@@ -188,9 +188,6 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
                     setStep(2);
                     return;
                 }
-
-                const stripe = await loadStripe(STRIPE_PUB_KEY);
-
                 const sessionRes = await fetch(CHECKOUT_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -206,16 +203,14 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
                 const session = await sessionRes.json();
 
                 // 導向 Stripe 官方結帳頁面
-                const { error } = await stripe.redirectToCheckout({
-                    sessionId: session.id,
-                });
-
-                if (error) {
-                    console.error("Stripe 跳轉錯誤:", error);
-                    alert("無法導向付款頁面，請稍後再試。");
-                    setStep(2);
-                }
-            } else {
+                if (session.url) {
+                        window.location.href = session.url;
+                    } else {
+                        console.error("Stripe 跳轉錯誤: 沒有回傳 URL");
+                        alert("無法導向付款頁面，請稍後再試。");
+                        setStep(2);
+                    }
+                } else {
                 // 不需要按金，直接進入成功畫面
                 setTimeout(() => { setStep(5); }, 500);
             }

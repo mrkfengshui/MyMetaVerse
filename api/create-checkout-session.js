@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
       metadata: { bookingId },
     });
 
-    res.status(200).json({ id: session.id });
+    res.status(200).json({ id: session.id, url: session.url });
   } catch (err) {
     console.error("Stripe API 錯誤:", err);
     res.status(500).json({ error: err.message });
