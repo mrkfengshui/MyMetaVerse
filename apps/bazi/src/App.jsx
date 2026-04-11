@@ -1008,6 +1008,16 @@ const AiBaziAnalysis = ({ data }) => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
 
+  useEffect(() => {
+    if (sessionStorage.getItem('bazi_is_paid') === 'true') {
+      setIsPaid(true);
+      const reportContent = generateLongReport();
+      setAnalysisResult(reportContent);
+      // 清除標記，避免重整一直觸發
+      sessionStorage.removeItem('bazi_is_paid'); 
+    }
+  }, []);
+
   // --- 內部知識庫：滴天髓古文佐證 ---
   const DI_TIAN_SUI = {
     '甲': '《滴天髓》云：「甲木參天，脫胎要火。春不容金，秋不容土。火熾乘龍，水宕騎虎。地潤天和，植立千古。」',
@@ -1324,6 +1334,8 @@ const AiBaziAnalysis = ({ data }) => {
             const session = await response.json();
 
             if (session.url) {
+            sessionStorage.setItem('bazi_paid_result', JSON.stringify(data));
+            sessionStorage.setItem('bazi_is_paid', 'true');
             window.location.href = session.url;
             } else {
             throw new Error("無法取得 Stripe 結帳網址");
@@ -2170,10 +2182,13 @@ export default function BaziApp() {
     if (params.get('success') === 'true') {
     // 付款成功了！
     // 這裡呼叫原本生成報告的 function
-    const reportContent = generateLongReport(); 
-    setAnalysisResult(reportContent);
-    setIsPaid(true); // 標記為已解鎖
-    setIsAnalyzing(false);
+       const savedResult = sessionStorage.getItem('bazi_paid_result');
+       if (savedResult) {
+           setBaziData(JSON.parse(savedResult)); // 恢復八字盤資料
+           setView('result'); // 自動切換到命書結果頁
+       }
+       // 靜默清理網址上的 ?success=true，讓網址變乾淨
+       window.history.replaceState(null, '', window.location.pathname);
     }
     
     const loadData = async () => {

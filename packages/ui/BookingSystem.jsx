@@ -58,8 +58,13 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
     const query = new URLSearchParams(window.location.search);
     if (query.get("success")) {
       setStep(5); // 直接顯示成功畫面
+
+      const savedBooking = sessionStorage.getItem('pending_booking');
+      if (savedBooking) setBookingData(JSON.parse(savedBooking));
+
       const bId = query.get("booking_id");
       if (bId) setBookingData(prev => ({ ...prev, currentBookingId: bId }));
+      window.history.replaceState(null, '', window.location.pathname);
     } else if (query.get("canceled")) {
       alert("⚠️ 您取消了付款流程。剛才保留的時段將會被釋出，請重新預約。");
       setStep(1);
@@ -202,6 +207,7 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
 
                 // 導向 Stripe 官方結帳頁面
                 if (session.url) {
+                        sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
                         window.location.href = session.url;
                     } else {
                         console.error("Stripe 跳轉錯誤: 沒有回傳 URL");
