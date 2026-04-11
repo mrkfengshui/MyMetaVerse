@@ -2,15 +2,14 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
+import { loadStripe } from '@stripe/stripe-js';
 
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, loadStripe,
+  InstallGuide, WebBackupManager, useProtection,
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
-
-import { useProtection } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
