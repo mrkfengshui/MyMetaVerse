@@ -6,10 +6,8 @@ import {
   ChevronLeft, Search, Check, Home, LampDesk, Sparkles, Grid, Calendar as CalendarIcon 
 } from 'lucide-react';
 // 加入 Stripe 核心套件
-import { loadStripe } from '@stripe/stripe-js';
 
 // 🌟 直接在這裡寫死您的設定 (請確認金鑰格式正確，這裡以 live 為例)
-const STRIPE_PUB_KEY = "pk_test_51T7ccADBgMCgO6dLGUsQvxJQpzMack3iZxzKaecS0D3vRUEJMedXUDiueUC3BPGd4fFcJEEhiAjalWYK86n2UFFn00fRj8St9D";
 const CHECKOUT_API_URL = "/api/create-checkout-session";
 
 // --- 輔助函式 ---

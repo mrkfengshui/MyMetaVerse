@@ -9,7 +9,6 @@
     "dev": "echo '請進入各個 app 資料夾執行 npm run dev'"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^9.1.0",
     "firebase": "^12.8.0",
     "lucide-react": "^0.562.0",
     "react-helmet-async": "^2.0.5",
