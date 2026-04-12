@@ -90,9 +90,12 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
              ...s,
              icon: s.id === 'fs_home' ? <Home size={24} color={COLORS.yi} /> : 
                    s.id === 'fs_biz' ? <LampDesk size={24} color={THEME.red} /> : 
-                   s.id === 'bz' ? <Sparkles size={24} color={COLORS.wu} /> :
-                   s.id === 'qm' ? <Grid size={24} color={COLORS.geng} /> :
-                   <CalendarIcon size={24} color={THEME.blue} />
+                   s.id === 'bazi' ? <Sparkles size={24} color={COLORS.wu} /> :
+                   s.id === 'qimen' ? <Grid size={24} color={COLORS.geng} /> :
+                   s.id === 'daypick' ? <CalendarIcon size={24} color={THEME.blue} /> :
+                   s.id === 'tarot' ? <Star size={24} color={THEME.purple} /> :
+                   s.id === 'name' ? <SquareCode size={24} color={THEME.vermillion} /> :
+                   <HandHeart size={24} color={THEME.orange} />
          }));
          setOnlineServices(mappedServices);
       }
