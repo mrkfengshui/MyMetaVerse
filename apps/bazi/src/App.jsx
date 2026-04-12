@@ -2212,7 +2212,8 @@ export default function BaziApp() {
                             dayMaster: dm + dmElement,
                             monthBranch: baziSource.monthZhi || '', 
                             rawDate: parsedData.rawDate,
-                            isPaid: true // 確保寫入付費狀態
+                            isPaid: true, // 確保寫入付費狀態
+                            paidAt: Date.now()
                         };
 
                         const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
@@ -2272,7 +2273,7 @@ export default function BaziApp() {
     
     loadData();
   }, []);
-  
+
   useEffect(() => { const saveRule = async () => { await Preferences.set({ key: 'bazi_zi_rule', value: ziHourRule }); }; saveRule(); }, [ziHourRule]);
   useEffect(() => { const saveTheme = async () => { await Preferences.set({ key: 'bazi_color_theme', value: colorTheme }); }; saveTheme(); }, [colorTheme]);
 
@@ -2301,7 +2302,8 @@ export default function BaziApp() {
           dayMaster: dm + dmElement,
           monthBranch: baziSource.monthZhi || '', 
           rawDate: data.rawDate || data,
-          isPaid: data.isPaid || false 
+          isPaid: data.isPaid || false,
+          paidAt: data.paidAt || (data.isPaid ? Date.now() : null)
       };
 
       const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
@@ -2331,13 +2333,26 @@ export default function BaziApp() {
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('此書籤資料版本過舊，無法重新排盤'); return; }
       try {
-          const freshResult = calculateBaziResult(savedItem.rawDate, ziHourRule);
+          // 🌟 1. 攔截原始資料，強制確認它有沒有付過錢
+          const raw = { 
+              ...savedItem.rawDate, 
+              // 只要紀錄上有寫付過錢，或者是原始資料裡有付過錢，就一律判定為已付費！
+              isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true 
+          };
+          
+          // 🌟 2. 把帶有付費印記的 raw 資料丟進去重新排盤
+          const freshResult = calculateBaziResult(raw, ziHourRule);
           freshResult.id = savedItem.id; 
-          freshResult.isPaid = savedItem.isPaid || savedItem.rawDate.isPaid || false;
+          
+          // 🌟 3. 再幫結果蓋一次印章，確保萬無一失
+          freshResult.isPaid = raw.isPaid; 
 
           setBaziData(freshResult); 
           setView('result');
-      } catch (e) { console.error("Failed to recalulate bookmark:", e); alert('讀取失敗，資料可能已損壞'); }
+      } catch (e) { 
+          console.error("Failed to recalulate bookmark:", e); 
+          alert('讀取失敗，資料可能已損壞'); 
+      }
   };
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入命理數據庫...</div>;

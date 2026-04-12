@@ -1,7 +1,7 @@
 // packages/ui/DataComponents.jsx
 import React, { useMemo } from 'react'; // 引入 useMemo
 import { THEME } from './theme';
-import { Trash2, Edit3, User, Calendar, MapPin, Sparkles, Compass, BookOpen, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Edit3, User, Calendar, MapPin, Sparkles, Compass, BookOpen, Image as ImageIcon, Unlock } from 'lucide-react';
 
 // 數字轉中文大寫對照表
 const PERIOD_MAP = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
@@ -149,6 +149,14 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
         return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : timestamp;
     };
 
+    const getDaysLeft = (paidAt) => {
+        if (!paidAt) return 0;
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const daysPassed = Math.floor((Date.now() - paidAt) / msPerDay);
+        const daysLeft = 365 - daysPassed;
+        return daysLeft > 0 ? daysLeft : 0;
+    };
+
     return (
         <div style={{ paddingBottom: '20px' }}>
             <div style={{ padding: '8px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: THEME.gray, fontSize: '12px' }}>
@@ -159,6 +167,7 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                 const TitleIcon = (b.facing || b.mountain) ? MapPin : User; 
                 const titleText = b.name || b.title || '未命名紀錄';
                 const subText = b.genderText ? `(${b.genderText})` : '';
+                const daysLeft = getDaysLeft(b.paidAt);
 
                 return (
                     <div key={b.id || i} onClick={() => onSelect(b)} style={{ 
@@ -172,6 +181,18 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                             <TitleIcon size={16} color={THEME.blue} />
                             {titleText} 
                             <span style={{ fontSize: '12px', color: THEME.gray, fontWeight: 'normal' }}>{subText}</span>
+                            {b.isPaid && (
+                                <span style={{ 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    backgroundColor: daysLeft > 30 ? '#f0fdf4' : '#fef2f2',
+                                    color: daysLeft > 30 ? '#16a34a' : '#dc2626',
+                                    padding: '2px 6px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold',
+                                    border: `1px solid ${daysLeft > 30 ? '#bbf7d0' : '#fecaca'}`
+                                }}>
+                                    <Unlock size={10} />
+                                    {daysLeft > 0 ? `命書解鎖 (尚餘 ${daysLeft} 天)` : '命書已過期'}
+                                </span>
+                            )}
                         </div>
                         
                         <RecordContent data={b} />
