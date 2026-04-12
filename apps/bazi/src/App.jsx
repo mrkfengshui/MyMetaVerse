@@ -1318,7 +1318,7 @@ const AiBaziAnalysis = ({ data }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     itemName: "千字深度批命書",
-                    amount: 198,
+                    amount: 10,
                     bookingId: "REPORT_" + Date.now(),
                     currentUrl: window.location.origin + window.location.pathname,
                 }),
@@ -1430,7 +1430,7 @@ const AiBaziAnalysis = ({ data }) => {
             >
                 {/* 第一行：圖示 + 主標題 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px' }}>
-                    <Unlock size={18} /> 單次付費$198解鎖
+                    <Unlock size={18} /> 單次付費$10解鎖(大優惠)
                 </div>
                 
                 {/* 第二行：付款方式說明 (字體調小、稍微透明，增加層次感) */}
