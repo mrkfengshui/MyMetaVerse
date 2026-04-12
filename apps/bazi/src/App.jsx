@@ -1310,116 +1310,116 @@ const AiBaziAnalysis = ({ data }) => {
   };
 
     const handleUnlock = async () => {
-    setIsAnalyzing(true);
+        setIsAnalyzing(true);
 
-    try {
-        const response = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                itemName: "千字深度批命書",
-                amount: 198,
-                bookingId: "REPORT_" + Date.now(),
-                currentUrl: window.location.href, 
-            }),
-            });
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    itemName: "千字深度批命書",
+                    amount: 198,
+                    bookingId: "REPORT_" + Date.now(),
+                    currentUrl: window.location.href, 
+                }),
+                });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`後端 API 發生錯誤: ${errorText}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`後端 API 發生錯誤: ${errorText}`);
+                }
+
+                const session = await response.json();
+
+                if (session.url) {
+                sessionStorage.setItem('bazi_paid_result', JSON.stringify(data));
+
+                window.location.href = session.url;
+                } else {
+                throw new Error("無法取得 Stripe 結帳網址");
+                }
+
+            } catch (err) {
+                console.error("詳細錯誤訊息:", err);
+                alert("系統發生錯誤：\n" + err.message);
+                setIsAnalyzing(false);
             }
+            };
 
-            const session = await response.json();
+    // 給 UI 畫面用的動態年份與文案
+    const uiDate = new Date();
+    const uiYear = uiDate.getFullYear();
+    const uiMonth = uiDate.getMonth(); // 0=1月, 7=8月, 8=9月
+    
+    // 動態設定 <li> 的文案
+    const uiFortuneText = uiMonth < 8 
+        ? `預測 ${uiYear}年流年吉凶大勢` 
+        : `超前部署！一次解鎖 ${uiYear}年歲末運勢與 ${uiYear + 1}年流年大勢`;
 
-            if (session.url) {
-            sessionStorage.setItem('bazi_paid_result', JSON.stringify(data));
-            sessionStorage.setItem('bazi_is_paid', 'true');
-            window.location.href = session.url;
-            } else {
-            throw new Error("無法取得 Stripe 結帳網址");
-            }
-
-        } catch (err) {
-            console.error("詳細錯誤訊息:", err);
-            alert("系統發生錯誤：\n" + err.message);
-            setIsAnalyzing(false);
-        }
-        };
-
-  // 給 UI 畫面用的動態年份與文案
-  const uiDate = new Date();
-  const uiYear = uiDate.getFullYear();
-  const uiMonth = uiDate.getMonth(); // 0=1月, 7=8月, 8=9月
-  
-  // 動態設定 <li> 的文案
-  const uiFortuneText = uiMonth < 8 
-    ? `預測 ${uiYear}年流年吉凶大勢` 
-    : `超前部署！一次解鎖 ${uiYear}年歲末運勢與 ${uiYear + 1}年流年大勢`;
-
-  return (
-    <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          千字深度批命書
-        </h4>
-        {isPaid && <span style={{ fontSize: '11px', color: '#fff', backgroundColor: THEME.green || '#52c41a', padding: '2px 6px', borderRadius: '4px' }}>已解鎖</span>}
-      </div>
-
-      {isAnalyzing ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-          <RefreshCw size={36} color={THEME.teal} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto' }} />
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>正在融合古文解析...</div>
-          <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '8px' }}>推演中醫五行、近年大勢，即將生成千字報告</div>
+    return (
+        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            千字深度批命書
+            </h4>
+            {isPaid && <span style={{ fontSize: '11px', color: '#fff', backgroundColor: THEME.green || '#52c41a', padding: '2px 6px', borderRadius: '4px' }}>已解鎖</span>}
         </div>
-      ) : analysisResult ? (
-        <div style={{ animation: 'fadeIn 0.5s ease' }}>
-          <div style={{ 
-            backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px', 
-            fontSize: '15px', lineHeight: '1.8', color: '#222', textAlign: 'justify',
-            border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
-          }}>
-            {analysisResult.split('\n').map((line, i) => {
-              if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace('### ', '')}</h3>;
-              if (line.startsWith('- **')) {
-                const parts = line.split('**');
-                return <div key={i} style={{ marginLeft: '12px', marginBottom: '6px' }}>• <b>{parts[1]}</b>{parts[2]}</div>;
-              }
-              if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
-              const boldParts = line.split('**');
-              if (boldParts.length > 1) {
-                  return <p key={i} style={{ marginBottom: '14px' }}>
-                      {boldParts.map((part, idx) => idx % 2 === 1 ? <strong key={idx} style={{ color: THEME.red || '#d9363e' }}>{part}</strong> : part)}
-                  </p>;
-              }
-              return <p key={i} style={{ marginBottom: '14px' }}>{line}</p>;
-            })}
-          </div>
+
+        {isAnalyzing ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <RefreshCw size={36} color={THEME.teal} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto' }} />
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>正在融合古文解析...</div>
+            <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '8px' }}>推演中醫五行、近年大勢，即將生成千字報告</div>
+            </div>
+        ) : analysisResult ? (
+            <div style={{ animation: 'fadeIn 0.5s ease' }}>
+            <div style={{ 
+                backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px', 
+                fontSize: '15px', lineHeight: '1.8', color: '#222', textAlign: 'justify',
+                border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
+            }}>
+                {analysisResult.split('\n').map((line, i) => {
+                if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace('### ', '')}</h3>;
+                if (line.startsWith('- **')) {
+                    const parts = line.split('**');
+                    return <div key={i} style={{ marginLeft: '12px', marginBottom: '6px' }}>• <b>{parts[1]}</b>{parts[2]}</div>;
+                }
+                if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
+                const boldParts = line.split('**');
+                if (boldParts.length > 1) {
+                    return <p key={i} style={{ marginBottom: '14px' }}>
+                        {boldParts.map((part, idx) => idx % 2 === 1 ? <strong key={idx} style={{ color: THEME.red || '#d9363e' }}>{part}</strong> : part)}
+                    </p>;
+                }
+                return <p key={i} style={{ marginBottom: '14px' }}>{line}</p>;
+                })}
+            </div>
+            </div>
+        ) : (
+            <div style={{ padding: '10px 0' }}>
+            <div style={{ backgroundColor: '#fafafa', border: '1px dashed #ccc', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖千字深度命書，您將獲得：</div>
+                <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
+                <li>引述古文印證，剖析日主核心靈魂</li>
+                <li>透視六親宮位，判斷原局「用神」與「大運喜神」的精確干支</li>
+                <li>深度財富格局分析，量身打造 **投資避險指南**</li>
+                <li>結合《黃帝內經》，揭示身體臟腑弱點與養生宜忌</li>
+                <li>{uiFortuneText}</li>
+                <li>**只要在付費後一年內預約任何玄學項目，本次解鎖的費用即可在完成服務後全額抵銷**</li>
+                </ul>
+            </div>
+            
+            <button 
+                onClick={handleUnlock} 
+                style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
+            >
+                <Unlock size={18} /> 單次付費$198解鎖 (支援Credit Card/Wallet Pay)
+            </button>
+            </div>
+        )}
+        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
         </div>
-      ) : (
-        <div style={{ padding: '10px 0' }}>
-          <div style={{ backgroundColor: '#fafafa', border: '1px dashed #ccc', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-            <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖千字深度命書，您將獲得：</div>
-              <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
-              <li>引述古文印證，剖析日主核心靈魂</li>
-              <li>透視六親宮位，判斷原局「用神」與「大運喜神」的精確干支</li>
-              <li>深度財富格局分析，量身打造 **投資避險指南**</li>
-              <li>結合《黃帝內經》，揭示身體臟腑弱點與養生宜忌</li>
-              <li>{uiFortuneText}</li>
-              <li>**只要在付費後一年內預約任何玄學項目，本次解鎖的費用即可在完成服務後全額抵銷**</li>
-            </ul>
-          </div>
-          
-          <button 
-            onClick={handleUnlock} 
-            style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
-          >
-            <Unlock size={18} /> 單次付費$198解鎖 (支援Credit Card/Wallet Pay)
-          </button>
-        </div>
-      )}
-      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-    </div>
-  );
+    );
 };
 
 // --- BaziResult (八字結果) ---
@@ -2242,6 +2242,12 @@ export default function BaziApp() {
            }
        }
        window.history.replaceState(null, '', window.location.pathname);
+    }
+    if (params.get('canceled') === 'true') {
+    // 清除暫存的資料，防止作弊
+        sessionStorage.removeItem('bazi_paid_result');
+        // 把網址上的 ?canceled=true 清掉，保持網址乾淨
+        window.history.replaceState(null, '', window.location.pathname);
     }
     
     const loadData = async () => {
