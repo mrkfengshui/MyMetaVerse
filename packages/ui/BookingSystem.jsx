@@ -60,7 +60,13 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
       setStep(5); // 直接顯示成功畫面
 
       const savedBooking = sessionStorage.getItem('pending_booking');
-      if (savedBooking) setBookingData(JSON.parse(savedBooking));
+      if (savedBooking) {
+          const parsed = JSON.parse(savedBooking);
+          // 🌟 【關鍵修復】把字串復活成 Date 物件，防止畫面崩潰！
+          if (parsed.date) parsed.date = new Date(parsed.date);
+          
+          setBookingData(parsed);
+      }
 
       const bId = query.get("booking_id");
       if (bId) setBookingData(prev => ({ ...prev, currentBookingId: bId }));

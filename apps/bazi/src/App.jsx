@@ -2178,100 +2178,93 @@ export default function BaziApp() {
     const isCanceled = params.get('canceled') === 'true';
     const bookingId = params.get('booking_id');
 
-    if (isSuccess) {
-        // 🌟 1. 判斷這筆付款是「千字命書」 (帶有 REPORT_ 開頭)
-        if (bookingId && bookingId.startsWith('REPORT_')) {
-            const savedResult = sessionStorage.getItem('bazi_paid_result');
-            
-            if (savedResult) {
-                const parsedData = JSON.parse(savedResult);
-                // 打上鐵證如山的已付費標籤
-                parsedData.isPaid = true;
-                if (parsedData.rawDate) parsedData.rawDate.isPaid = true;
+    // 🌟 把它包在一個大函數裡，讓讀取和存檔「乖乖排隊」，解決覆蓋問題
+    const initializeApp = async () => {
+        let currentBookmarks = [];
+        try {
+            // 先讀取最新的所有紀錄
+            const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
+            if (savedBk) currentBookmarks = JSON.parse(savedBk);
 
-                // 🌟 強制切換畫面到命書結果頁！
-                setBaziData(parsedData); 
-                setView('result'); 
+            const { value: savedRule } = await Preferences.get({ key: 'bazi_zi_rule' });
+            if (savedRule) setZiHourRule(savedRule);
 
-                // 執行自動保存
-                const autoSave = async () => {
-                    try {
-                        const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-                        let currentBookmarks = savedBk ? JSON.parse(savedBk) : [];
+            const { value: savedTheme } = await Preferences.get({ key: 'bazi_color_theme' });
+            if (savedTheme) setColorTheme(savedTheme);
+        } catch (e) { console.error("讀取儲存資料失敗:", e); }
 
-                        const baziSource = parsedData.bazi || {};
-                        const dm = baziSource.dayGan || '';
-                        const dmElement = WUXING_MAP[dm] || '';
-
-                        const dataToSave = {
-                            id: parsedData.id,
-                            name: parsedData.name,
-                            genderText: parsedData.genderText || (parsedData.gender === '1' ? '男' : '女'),
-                            solarDate: parsedData.solarDate,
-                            lunarDate: parsedData.lunarDate,
-                            dayMaster: dm + dmElement,
-                            monthBranch: baziSource.monthZhi || '', 
-                            rawDate: parsedData.rawDate,
-                            isPaid: true, // 確保寫入付費狀態
-                            paidAt: Date.now()
-                        };
-
-                        const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
-                        if (existingIndex >= 0) { 
-                            currentBookmarks[existingIndex] = dataToSave; 
-                        } else { 
-                            currentBookmarks = [dataToSave, ...currentBookmarks]; 
-                        }
-                        
-                        setBookmarks(currentBookmarks); 
-                        await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
-
-                        setTimeout(() => {
-                            alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
-                        }, 600);
-                    } catch (e) {
-                        console.error("自動保存失敗:", e);
+        if (isSuccess) {
+            if (bookingId && bookingId.startsWith('REPORT_')) {
+                const savedResult = sessionStorage.getItem('bazi_paid_result');
+                if (savedResult) {
+                    const parsedData = JSON.parse(savedResult);
+                    const nowTime = Date.now();
+                    
+                    // 🌟 確實把狀態跟時間寫進當前的資料中
+                    parsedData.isPaid = true;
+                    parsedData.paidAt = nowTime;
+                    if (parsedData.rawDate) {
+                        parsedData.rawDate.isPaid = true;
+                        parsedData.rawDate.paidAt = nowTime;
                     }
-                };
-                autoSave();
+
+                    setBaziData(parsedData); 
+                    setView('result'); 
+
+                    // 執行自動保存
+                    const baziSource = parsedData.bazi || {};
+                    const dm = baziSource.dayGan || '';
+                    const dmElement = WUXING_MAP[dm] || '';
+
+                    const dataToSave = {
+                        id: parsedData.id,
+                        name: parsedData.name,
+                        genderText: parsedData.genderText || (parsedData.gender === '1' ? '男' : '女'),
+                        solarDate: parsedData.solarDate,
+                        lunarDate: parsedData.lunarDate,
+                        dayMaster: dm + dmElement,
+                        monthBranch: baziSource.monthZhi || '', 
+                        rawDate: parsedData.rawDate,
+                        isPaid: true, 
+                        paidAt: nowTime 
+                    };
+
+                    const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
+                    if (existingIndex >= 0) { 
+                        currentBookmarks[existingIndex] = dataToSave; 
+                    } else { 
+                        currentBookmarks = [dataToSave, ...currentBookmarks]; 
+                    }
+                    
+                    // 正式寫入手機儲存空間
+                    setBookmarks(currentBookmarks); 
+                    await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
+
+                    setTimeout(() => {
+                        alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
+                    }, 600);
+                }
+                window.history.replaceState(null, '', window.location.pathname);
+            } 
+            else if (bookingId) {
+                setBookmarks(currentBookmarks); 
+                setView('booking'); 
             }
-            // 清理網址，避免重新整理又觸發一次
-            window.history.replaceState(null, '', window.location.pathname);
-
         } 
-        // 🌟 2. 判斷這筆付款是「預約系統」
-        else if (bookingId) {
-            // 強制切換到預約畫面，讓 BookingSystem 的程式去接手處理
-            setView('booking'); 
-            // ⚠️ 注意：這裡絕對不能清空網址，否則 BookingSystem 會抓不到參數
+        else if (isCanceled) {
+            setBookmarks(currentBookmarks); 
+            sessionStorage.removeItem('bazi_paid_result');
+            window.history.replaceState(null, '', window.location.pathname);
+        } 
+        else {
+            setBookmarks(currentBookmarks); 
+            if (params.get('tab') === 'booking') {
+                setView('booking'); 
+            }
         }
-
-    } 
-    // 處理取消付款
-    else if (isCanceled) {
-        sessionStorage.removeItem('bazi_paid_result');
-        window.history.replaceState(null, '', window.location.pathname);
-    } 
-    // 一般切換 Tab
-    else if (params.get('tab') === 'booking') {
-        setView('booking'); 
-    }
-    
-    // 讀取本地端設定與紀錄
-    const loadData = async () => {
-      try {
-        const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-        if (savedBk) setBookmarks(JSON.parse(savedBk));
-
-        const { value: savedRule } = await Preferences.get({ key: 'bazi_zi_rule' });
-        if (savedRule) setZiHourRule(savedRule);
-
-        const { value: savedTheme } = await Preferences.get({ key: 'bazi_color_theme' });
-        if (savedTheme) setColorTheme(savedTheme);
-      } catch (e) { console.error("讀取儲存資料失敗:", e); }
     };
-    
-    loadData();
+
+    initializeApp();
   }, []);
 
   useEffect(() => { const saveRule = async () => { await Preferences.set({ key: 'bazi_zi_rule', value: ziHourRule }); }; saveRule(); }, [ziHourRule]);
@@ -2333,19 +2326,19 @@ export default function BaziApp() {
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('此書籤資料版本過舊，無法重新排盤'); return; }
       try {
-          // 🌟 1. 攔截原始資料，強制確認它有沒有付過錢
           const raw = { 
               ...savedItem.rawDate, 
-              // 只要紀錄上有寫付過錢，或者是原始資料裡有付過錢，就一律判定為已付費！
-              isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true 
+              isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true,
+              // 🌟 【新增】讓原始資料也繼承付款時間
+              paidAt: savedItem.paidAt || savedItem.rawDate?.paidAt || null 
           };
           
-          // 🌟 2. 把帶有付費印記的 raw 資料丟進去重新排盤
           const freshResult = calculateBaziResult(raw, ziHourRule);
           freshResult.id = savedItem.id; 
           
-          // 🌟 3. 再幫結果蓋一次印章，確保萬無一失
           freshResult.isPaid = raw.isPaid; 
+          // 🌟 【新增】讓新排好的盤也繼承付款時間
+          freshResult.paidAt = raw.paidAt; 
 
           setBaziData(freshResult); 
           setView('result');
