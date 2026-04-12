@@ -94,9 +94,9 @@ export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl
                    s.id === 'bazi' ? <Sparkles size={24} color={COLORS.wu} /> :
                    s.id === 'qimen' ? <Grid size={24} color={COLORS.geng} /> :
                    s.id === 'daypick' ? <CalendarIcon size={24} color={THEME.blue} /> :
-                   s.id === 'tarot' ? <Star size={24} color={THEME.purple} /> :
                    s.id === 'name' ? <SquareCode size={24} color={THEME.vermillion} /> :
-                   <HandHeart size={24} color={THEME.orange} />
+                   s.id === 'tarot' ? <Star size={24} color={THEME.purple} /> :
+                   <HandHeart size={24} color={COLORS.yi} />
          }));
          setOnlineServices(mappedServices);
       }

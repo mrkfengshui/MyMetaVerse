@@ -1411,9 +1411,32 @@ const AiBaziAnalysis = ({ data }) => {
             
             <button 
                 onClick={handleUnlock} 
-                style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
+                style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    backgroundColor: THEME.black, 
+                    color: '#FFD700', 
+                    border: 'none', 
+                    borderRadius: '30px', 
+                    cursor: 'pointer', 
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+                    // 🌟 關鍵修改：改成垂直排列，讓兩段內容上下分佈
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: '4px' 
+                }}
             >
-                <Unlock size={18} /> 單次付費$198解鎖 (測試中不會扣款)
+                {/* 第一行：圖示 + 主標題 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px' }}>
+                    <Unlock size={18} /> 單次付費$198解鎖
+                </div>
+                
+                {/* 第二行：付款方式說明 (字體調小、稍微透明，增加層次感) */}
+                <div style={{ fontSize: '12px', fontWeight: 'normal', opacity: 0.8 }}>
+                    (支援信用卡 / Apple Pay / Google Pay / 支付寶等)
+                </div>
             </button>
             </div>
         )}
