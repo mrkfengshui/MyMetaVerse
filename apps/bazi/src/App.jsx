@@ -1320,7 +1320,7 @@ const AiBaziAnalysis = ({ data }) => {
                     itemName: "千字深度批命書",
                     amount: 198,
                     bookingId: "REPORT_" + Date.now(),
-                    currentUrl: window.location.href, 
+                    currentUrl: window.location.origin + window.location.pathname,
                 }),
                 });
 
@@ -1413,7 +1413,7 @@ const AiBaziAnalysis = ({ data }) => {
                 onClick={handleUnlock} 
                 style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
             >
-                <Unlock size={18} /> 單次付費$198解鎖 (支援Credit Card/Wallet Pay)
+                <Unlock size={18} /> 單次付費$198解鎖 (測試中)
             </button>
             </div>
         )}
@@ -2210,7 +2210,8 @@ export default function BaziApp() {
                            lunarDate: parsedData.lunarDate,
                            dayMaster: dm + dmElement,
                            monthBranch: baziSource.monthZhi || '', 
-                           rawDate: parsedData.rawDate 
+                           rawDate: parsedData.rawDate,
+                           isPaid: true 
                        };
 
                        // 檢查是否已經存過這個命盤 (比對 ID)
@@ -2292,7 +2293,8 @@ export default function BaziApp() {
           lunarDate: data.lunarDate || `${data.year}-${data.month}-${data.day}`,
           dayMaster: dm + dmElement,
           monthBranch: baziSource.monthZhi || '', 
-          rawDate: data.rawDate || data 
+          rawDate: data.rawDate || data,
+          isPaid: data.isPaid || false 
       };
 
       const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
@@ -2324,6 +2326,8 @@ export default function BaziApp() {
       try {
           const freshResult = calculateBaziResult(savedItem.rawDate, ziHourRule);
           freshResult.id = savedItem.id; 
+          freshResult.isPaid = savedItem.isPaid || savedItem.rawDate.isPaid || false;
+
           setBaziData(freshResult); 
           setView('result');
       } catch (e) { console.error("Failed to recalulate bookmark:", e); alert('讀取失敗，資料可能已損壞'); }
