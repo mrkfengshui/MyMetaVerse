@@ -3,7 +3,8 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; 
 import { THEME } from './theme';
 import { 
-  ChevronLeft, Search, Check, Home, LampDesk, Sparkles, Grid, Calendar as CalendarIcon, Unlock 
+  ChevronLeft, Search, Check, Home, LampDesk, Sparkles, 
+  Grid, Calendar as CalendarIcon, Star, SquareCode, HandHeart
 } from 'lucide-react';
 // 加入 Stripe 核心套件
 
