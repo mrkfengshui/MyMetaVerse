@@ -1413,7 +1413,7 @@ const AiBaziAnalysis = ({ data }) => {
                 onClick={handleUnlock} 
                 style={{ width: '100%', padding: '14px', backgroundColor: THEME.black, color: '#FFD700', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)' }}
             >
-                <Unlock size={18} /> 單次付費$198解鎖 (測試中)
+                <Unlock size={18} /> 單次付費$198解鎖 (測試中不會扣款)
             </button>
             </div>
         )}
@@ -2171,86 +2171,92 @@ export default function BaziApp() {
     { id: 'settings', label: '設定', icon: Settings },
   ];
 
-  // 4. 資料讀取 Effect
+// 4. 資料讀取 Effect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('tab') === 'booking') {
-      setView('booking'); 
-    }
-    
-    if (params.get('success') === 'true') {
-       if (!params.get('booking_id')) {
-           const savedResult = sessionStorage.getItem('bazi_paid_result');
-           if (savedResult) {
-               const parsedData = JSON.parse(savedResult);
-               // 1. 打上已付費標籤
-               parsedData.isPaid = true;
-               if (parsedData.rawDate) parsedData.rawDate.isPaid = true;
+    const isSuccess = params.get('success') === 'true';
+    const isCanceled = params.get('canceled') === 'true';
+    const bookingId = params.get('booking_id');
 
-               setBaziData(parsedData); 
-               setView('result'); 
+    if (isSuccess) {
+        // 🌟 1. 判斷這筆付款是「千字命書」 (帶有 REPORT_ 開頭)
+        if (bookingId && bookingId.startsWith('REPORT_')) {
+            const savedResult = sessionStorage.getItem('bazi_paid_result');
+            
+            if (savedResult) {
+                const parsedData = JSON.parse(savedResult);
+                // 打上鐵證如山的已付費標籤
+                parsedData.isPaid = true;
+                if (parsedData.rawDate) parsedData.rawDate.isPaid = true;
 
-               // 🌟 2. 執行自動保存/更新邏輯
-               const autoSave = async () => {
-                   try {
-                       // 先從手機儲存空間拿最新的紀錄 (避免覆蓋原本的)
-                       const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-                       let currentBookmarks = savedBk ? JSON.parse(savedBk) : [];
+                // 🌟 強制切換畫面到命書結果頁！
+                setBaziData(parsedData); 
+                setView('result'); 
 
-                       // 整理要存入的資料格式
-                       const baziSource = parsedData.bazi || {};
-                       const dm = baziSource.dayGan || '';
-                       const dmElement = WUXING_MAP[dm] || '';
+                // 執行自動保存
+                const autoSave = async () => {
+                    try {
+                        const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
+                        let currentBookmarks = savedBk ? JSON.parse(savedBk) : [];
 
-                       const dataToSave = {
-                           id: parsedData.id,
-                           name: parsedData.name,
-                           genderText: parsedData.genderText || (parsedData.gender === '1' ? '男' : '女'),
-                           solarDate: parsedData.solarDate,
-                           lunarDate: parsedData.lunarDate,
-                           dayMaster: dm + dmElement,
-                           monthBranch: baziSource.monthZhi || '', 
-                           rawDate: parsedData.rawDate,
-                           isPaid: true 
-                       };
+                        const baziSource = parsedData.bazi || {};
+                        const dm = baziSource.dayGan || '';
+                        const dmElement = WUXING_MAP[dm] || '';
 
-                       // 檢查是否已經存過這個命盤 (比對 ID)
-                       const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
-                       
-                       if (existingIndex >= 0) { 
-                           // 如果本來就存過，就更新它 (這樣就把 isPaid: true 寫進去了)
-                           currentBookmarks[existingIndex] = dataToSave; 
-                       } else { 
-                           // 如果是第一次排盤就直接買，就新增到最前面
-                           currentBookmarks = [dataToSave, ...currentBookmarks]; 
-                       }
-                       
-                       // 更新畫面狀態，並正式寫入手機儲存空間
-                       setBookmarks(currentBookmarks); 
-                       await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
+                        const dataToSave = {
+                            id: parsedData.id,
+                            name: parsedData.name,
+                            genderText: parsedData.genderText || (parsedData.gender === '1' ? '男' : '女'),
+                            solarDate: parsedData.solarDate,
+                            lunarDate: parsedData.lunarDate,
+                            dayMaster: dm + dmElement,
+                            monthBranch: baziSource.monthZhi || '', 
+                            rawDate: parsedData.rawDate,
+                            isPaid: true // 確保寫入付費狀態
+                        };
 
-                       // 彈出更貼心的提示
-                       setTimeout(() => {
-                           alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
-                       }, 600);
+                        const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
+                        if (existingIndex >= 0) { 
+                            currentBookmarks[existingIndex] = dataToSave; 
+                        } else { 
+                            currentBookmarks = [dataToSave, ...currentBookmarks]; 
+                        }
+                        
+                        setBookmarks(currentBookmarks); 
+                        await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
 
-                   } catch (e) {
-                       console.error("自動保存失敗:", e);
-                   }
-               };
-               
-               autoSave();
-           }
-       }
-       window.history.replaceState(null, '', window.location.pathname);
-    }
-    if (params.get('canceled') === 'true') {
-    // 清除暫存的資料，防止作弊
+                        setTimeout(() => {
+                            alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
+                        }, 600);
+                    } catch (e) {
+                        console.error("自動保存失敗:", e);
+                    }
+                };
+                autoSave();
+            }
+            // 清理網址，避免重新整理又觸發一次
+            window.history.replaceState(null, '', window.location.pathname);
+
+        } 
+        // 🌟 2. 判斷這筆付款是「預約系統」
+        else if (bookingId) {
+            // 強制切換到預約畫面，讓 BookingSystem 的程式去接手處理
+            setView('booking'); 
+            // ⚠️ 注意：這裡絕對不能清空網址，否則 BookingSystem 會抓不到參數
+        }
+
+    } 
+    // 處理取消付款
+    else if (isCanceled) {
         sessionStorage.removeItem('bazi_paid_result');
-        // 把網址上的 ?canceled=true 清掉，保持網址乾淨
         window.history.replaceState(null, '', window.location.pathname);
+    } 
+    // 一般切換 Tab
+    else if (params.get('tab') === 'booking') {
+        setView('booking'); 
     }
     
+    // 讀取本地端設定與紀錄
     const loadData = async () => {
       try {
         const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
@@ -2263,9 +2269,10 @@ export default function BaziApp() {
         if (savedTheme) setColorTheme(savedTheme);
       } catch (e) { console.error("讀取儲存資料失敗:", e); }
     };
+    
     loadData();
   }, []);
-
+  
   useEffect(() => { const saveRule = async () => { await Preferences.set({ key: 'bazi_zi_rule', value: ziHourRule }); }; saveRule(); }, [ziHourRule]);
   useEffect(() => { const saveTheme = async () => { await Preferences.set({ key: 'bazi_color_theme', value: colorTheme }); }; saveTheme(); }, [colorTheme]);
 

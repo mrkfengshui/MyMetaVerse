@@ -226,8 +226,10 @@ const handlePayment = async () => {
         }
     } catch (error) { 
         console.error("預約請求錯誤:", error); 
-        // 🌟 這裡改成顯示真正的錯誤訊息，這樣我們才知道錯在哪！
+        
+        // 🌟 把舊的提醒換成這行，讓兇手現形！
         alert("❌ 系統發生錯誤：\n" + error.message); 
+        
         await fetchLatestData(); 
         setStep(2); 
     }
