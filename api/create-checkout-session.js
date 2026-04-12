@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     const { itemName, amount, bookingId, currentUrl } = req.body;
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'alipay'], 
+      payment_method_types: ['card'], 
       
       line_items: [
         {
