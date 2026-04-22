@@ -446,7 +446,7 @@ const downloadAllICS = async (bookmarksData) => {
     // 紀錄已經輸出的日期，防止重複
     const processedDates = new Set();
     const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    
+
     bookmarksData.forEach(b => {
         const targetDateStr = typeof b === 'string' ? b : (b.targetDate || b.name || b.id.slice(0, 10));
         const d = new Date(targetDateStr);
@@ -2823,19 +2823,24 @@ const selectedInfo = useMemo(() => {
 
                 {/* 同步全部書籤按鈕 */}
                 {bookmarks.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
                     <button
                         onClick={() => downloadAllICS(bookmarks)}
                         style={{ 
                             width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', 
                             borderRadius: '12px', border: 'none', fontWeight: 'bold', 
                             display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                            gap: '8px', cursor: 'pointer', marginBottom: '16px', 
+                            gap: '8px', cursor: 'pointer', 
                             boxShadow: '0 4px 10px rgba(0,0,0,0.1)' 
                         }}
                     >
-                        <CalendarPlus size={20} /> 同步全部書籤至原生日曆
+                        <CalendarPlus size={20} /> 同步全部書籤至日曆
                     </button>
-                )}
+                    <div style={{ fontSize: '14px', color: THEME.gray, textAlign: 'center', marginTop: '8px' }}>
+                        ** 建議選擇「自訂」**
+                    </div>
+                </div>
+            )}
 
                 <div style={{ marginTop: '20px' }}>
                     <BookmarkList 
