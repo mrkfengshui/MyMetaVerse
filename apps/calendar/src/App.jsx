@@ -29,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博進氣萬年曆";
-const APP_VERSION = "v1.7 增加凶煞警示";
+const APP_VERSION = "v1.8 增加加入原生日曆功能";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -437,6 +437,86 @@ END:VCALENDAR`;
         document.body.removeChild(link);
     } catch(e) {
         console.error("產生日曆檔失敗", e);
+        alert("產生日曆檔失敗，請確認瀏覽器權限。");
+    }
+};
+
+// 產生並下載包含「所有書籤」的 ICS 日曆檔案 (批次匯出)
+const downloadAllICS = async (bookmarksData) => {
+    if (!bookmarksData || bookmarksData.length === 0) return alert('目前沒有書籤可供匯出');
+
+    let icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MrkFengshui//CalendarApp//TW\n`;
+
+    bookmarksData.forEach(b => {
+        const targetDateStr = typeof b === 'string' ? b : (b.targetDate || b.name || b.id.slice(0, 10));
+        const d = new Date(targetDateStr);
+        if (isNaN(d.getTime())) return;
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dateString = `${year}${month}${day}`;
+
+        const nextDay = new Date(d);
+        nextDay.setDate(d.getDate() + 1);
+        const nYear = nextDay.getFullYear();
+        const nMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
+        const nDay = String(nextDay.getDate()).padStart(2, '0');
+        const nextDateString = `${nYear}${nMonth}${nDay}`;
+
+        // 嘗試取得農曆資訊作為標題
+        let summary = `擇日提醒: ${targetDateStr}`;
+        try {
+            if (window.Solar) {
+                const solar = window.Solar.fromYmd(year, parseInt(month, 10), parseInt(day, 10));
+                const lunar = solar.getLunar();
+                summary = `擇日: ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${lunar.getDayInGanZhi()}日`;
+            }
+        } catch(e) {}
+
+        icsContent += `BEGIN:VEVENT\n`;
+        icsContent += `DTSTART;VALUE=DATE:${dateString}\n`;
+        icsContent += `DTEND;VALUE=DATE:${nextDateString}\n`;
+        icsContent += `SUMMARY:${summary}\n`;
+        icsContent += `DESCRIPTION:您在「甯博進氣萬年曆」中儲存的擇日書籤。\n`;
+        icsContent += `BEGIN:VALARM\nTRIGGER:-P1D\nACTION:DISPLAY\nDESCRIPTION:明日是您預定的擇日書籤\nEND:VALARM\n`;
+        icsContent += `END:VEVENT\n`;
+    });
+
+    icsContent += `END:VCALENDAR`;
+
+    const fileName = `所有擇日書籤_${new Date().toISOString().slice(0, 10)}.ics`;
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const file = new File([blob], fileName, { type: 'text/calendar' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: '加入日曆',
+                text: '將所有擇日書籤加入您的手機日曆',
+                files: [file],
+            });
+            return;
+        } catch (error) {
+            if (error.name !== 'AbortError') console.error('分享失敗', error);
+            return;
+        }
+    }
+
+    // 備用下載方式
+    try {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+            window.location.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch(e) {
         alert("產生日曆檔失敗，請確認瀏覽器權限。");
     }
 };
@@ -1185,7 +1265,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
             }} onClick={e => e.stopPropagation()}>
         
         {/* Modal Header */}
-<div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
                 <div style={{ fontSize: '24px', fontWeight: '800', color: THEME.black }}>
                   {date.getMonth()+1}月{date.getDate()}日 <span style={{fontSize:'16px', color:'#6666663f'}}>週{info.weekDay}</span>
@@ -1199,7 +1279,13 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
               <button onClick={() => toggleBookmark(date)} style={{ border: 'none', background: 'none', padding: '8px', cursor: 'pointer' }}>
                  <Bookmark size={24} fill={isBookmarked ? THEME.red : 'none'} color={isBookmarked ? THEME.red : '#ccc'} />
               </button>
-              {/* --- 修改：右上角關閉按鈕樣式 (無背景圓形) --- */}
+
+              {/* 日曆按鈕 */}
+              <button onClick={() => downloadICS(date, info.lunarStr, info.bazi.dayGan + info.bazi.dayZhi)} style={{ border: 'none', background: 'none', padding: '8px', cursor: 'pointer' }}>
+                    <CalendarPlus size={24} color={THEME.blue} />
+              </button>
+
+              {/* 關閉按鈕樣式 */}
               <button onClick={onClose} style={{ background: 'transparent', border: 'none', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor:'pointer' }}>
                   <X size={26} color="#666"/>
               </button>
@@ -2737,6 +2823,23 @@ const selectedInfo = useMemo(() => {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                   <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的書籤紀錄</h2>
                 </div>
+
+                {/* 同步全部書籤按鈕 */}
+                {bookmarks.length > 0 && (
+                    <button
+                        onClick={() => downloadAllICS(bookmarks)}
+                        style={{ 
+                            width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', 
+                            borderRadius: '12px', border: 'none', fontWeight: 'bold', 
+                            display: 'flex', justifyContent: 'center', alignItems: 'center', 
+                            gap: '8px', cursor: 'pointer', marginBottom: '16px', 
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)' 
+                        }}
+                    >
+                        <CalendarPlus size={20} /> 同步全部書籤至原生日曆
+                    </button>
+                )}
+
                 <div style={{ marginTop: '20px' }}>
                     <BookmarkList 
                         bookmarks={formattedBookmarks} 
