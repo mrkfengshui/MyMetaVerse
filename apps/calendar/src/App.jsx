@@ -398,6 +398,7 @@ END:VCALENDAR`;
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
     if (isIOS) {
         // iOS 專用解法：不使用分享選單，直接將 Blob 轉為網址並跳轉，這會強制 Safari 喚醒「加入行事曆」彈窗
         const url = window.URL.createObjectURL(blob);
@@ -483,6 +484,7 @@ const downloadAllICS = async (bookmarksData) => {
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
     if (isIOS) {
         // iOS 專用解法：不使用分享選單，直接將 Blob 轉為網址並跳轉，這會強制 Safari 喚醒「加入行事曆」彈窗
         const url = window.URL.createObjectURL(blob);
@@ -516,7 +518,6 @@ const downloadAllICS = async (bookmarksData) => {
     } catch(e) {
         alert("產生日曆檔失敗，請確認瀏覽器權限。");
     }
-
 };
 
 const YI_JI_MAP = {
