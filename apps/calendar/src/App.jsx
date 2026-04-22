@@ -397,8 +397,14 @@ END:VCALENDAR`;
     const fileName = `擇日提醒_${dateString}.ics`;
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
 
-    // 1. 優先嘗試 Web Share API (iOS/Android 手機原生分享彈窗)
-    // 這樣可以讓 iOS 直接顯示「加入行事曆」的選項，完美繞過 Safari 下載限制
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+        // iOS 專用解法：不使用分享選單，直接將 Blob 轉為網址並跳轉，這會強制 Safari 喚醒「加入行事曆」彈窗
+        const url = window.URL.createObjectURL(blob);
+        window.location.href = url;
+        return; // 結束執行
+    }
+
     const file = new File([blob], fileName, { type: 'text/calendar' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
@@ -407,28 +413,15 @@ END:VCALENDAR`;
                 text: '將擇日書籤加入您的手機日曆',
                 files: [file],
             });
-            return; // 成功呼叫分享選單就結束
+            return;
         } catch (error) {
-            // 用戶取消分享不算是錯誤，忽略 AbortError
-            if (error.name !== 'AbortError') {
-                console.error('分享失敗，嘗試備用方法:', error);
-            } else {
-                return; 
-            }
+            if (error.name !== 'AbortError') console.error('分享失敗', error);
+            return;
         }
     }
 
-    // 2. 備用方法 (給電腦版或是無法 Share 的舊瀏覽器)
+    // 備用下載方式 (PC端等)
     try {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        
-        // iOS 如果走到這裡 (通常是不支援 Share 的極舊版)，改用 Data URI 強制跳轉
-        if (isIOS) {
-            window.location.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
-            return;
-        }
-
-        // 一般 Android / 電腦版下載方式
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
         link.setAttribute('download', fileName);
@@ -436,7 +429,6 @@ END:VCALENDAR`;
         link.click();
         document.body.removeChild(link);
     } catch(e) {
-        console.error("產生日曆檔失敗", e);
         alert("產生日曆檔失敗，請確認瀏覽器權限。");
     }
 };
@@ -487,13 +479,21 @@ const downloadAllICS = async (bookmarksData) => {
 
     const fileName = `所有擇日書籤_${new Date().toISOString().slice(0, 10)}.ics`;
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const file = new File([blob], fileName, { type: 'text/calendar' });
 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+        // iOS 專用解法：不使用分享選單，直接將 Blob 轉為網址並跳轉，這會強制 Safari 喚醒「加入行事曆」彈窗
+        const url = window.URL.createObjectURL(blob);
+        window.location.href = url;
+        return; // 結束執行
+    }
+
+    const file = new File([blob], fileName, { type: 'text/calendar' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
             await navigator.share({
                 title: '加入日曆',
-                text: '將所有擇日書籤加入您的手機日曆',
+                text: '將擇日書籤加入您的手機日曆',
                 files: [file],
             });
             return;
@@ -503,13 +503,8 @@ const downloadAllICS = async (bookmarksData) => {
         }
     }
 
-    // 備用下載方式
+    // 備用下載方式 (PC端等)
     try {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIOS) {
-            window.location.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
-            return;
-        }
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
         link.setAttribute('download', fileName);
@@ -519,6 +514,7 @@ const downloadAllICS = async (bookmarksData) => {
     } catch(e) {
         alert("產生日曆檔失敗，請確認瀏覽器權限。");
     }
+
 };
 
 const YI_JI_MAP = {
