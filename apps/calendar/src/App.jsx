@@ -445,6 +445,8 @@ const downloadAllICS = async (bookmarksData) => {
 
     // 紀錄已經輸出的日期，防止重複
     const processedDates = new Set();
+    const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    
     bookmarksData.forEach(b => {
         const targetDateStr = typeof b === 'string' ? b : (b.targetDate || b.name || b.id.slice(0, 10));
         const d = new Date(targetDateStr);
@@ -532,7 +534,7 @@ const YI_JI_MAP = {
   '产': '產', '馀': '餘', '丧': '喪', '问': '問', '车': '車', '诸': '諸',
   '坏': '壞', '机': '機', '梁': '樑', '货': '貨', '债': '債', '渔': '漁',
   '复': '復', '岁': '歲', '废': '廢', '离': '離', '无': '無', '禄': '祿',
-  '结': '結', '桥': '橋', '庙': '廟',
+  '结': '結', '桥': '橋', '庙': '廟', '腊': '臘',
 };
 
 const toTraditionalYiJi = (str) => {
