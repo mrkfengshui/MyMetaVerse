@@ -384,7 +384,7 @@ PRODID:-//MrkFengshui//CalendarApp//TW
 BEGIN:VEVENT
 DTSTART;VALUE=DATE:${dateString}
 DTEND;VALUE=DATE:${nextDateString}
-SUMMARY:擇日提醒: ${lunarStr} ${ganZhiStr}日
+SUMMARY:擇日: ${lunarStr} ${ganZhiStr}日
 DESCRIPTION:您在「甯博進氣萬年曆」中儲存的擇日書籤。
 BEGIN:VALARM
 TRIGGER:-P1D
@@ -439,6 +439,8 @@ const downloadAllICS = async (bookmarksData) => {
 
     let icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MrkFengshui//CalendarApp//TW\n`;
 
+    // 紀錄已經輸出的日期，防止重複
+    const processedDates = new Set();
     bookmarksData.forEach(b => {
         const targetDateStr = typeof b === 'string' ? b : (b.targetDate || b.name || b.id.slice(0, 10));
         const d = new Date(targetDateStr);
@@ -457,7 +459,7 @@ const downloadAllICS = async (bookmarksData) => {
         const nextDateString = `${nYear}${nMonth}${nDay}`;
 
         // 嘗試取得農曆資訊作為標題
-        let summary = `擇日提醒: ${targetDateStr}`;
+        let summary = `擇日: ${targetDateStr}`;
         try {
             if (window.Solar) {
                 const solar = window.Solar.fromYmd(year, parseInt(month, 10), parseInt(day, 10));
