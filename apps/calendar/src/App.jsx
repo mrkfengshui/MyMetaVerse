@@ -377,6 +377,9 @@ const downloadICS = async (date, lunarStr, ganZhiStr) => {
     const nDay = String(nextDay.getDate()).padStart(2, '0');
     const nextDateString = `${nYear}${nMonth}${nDay}`;
 
+    const uid = `${dateString}-mrkfengshui-calendar`;
+    const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
     // ICS 內容格式
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -469,7 +472,11 @@ const downloadAllICS = async (bookmarksData) => {
             }
         } catch(e) {}
 
+        const uid = `${dateString}-mrkfengshui-calendar`;
+
         icsContent += `BEGIN:VEVENT\n`;
+        icsContent += `UID:${uid}\n`;           // 加入身分證
+        icsContent += `DTSTAMP:${dtStamp}\n`;   // 加入時間戳
         icsContent += `DTSTART;VALUE=DATE:${dateString}\n`;
         icsContent += `DTEND;VALUE=DATE:${nextDateString}\n`;
         icsContent += `SUMMARY:${summary}\n`;
@@ -486,38 +493,27 @@ const downloadAllICS = async (bookmarksData) => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if (isIOS) {
-        // iOS 專用解法：不使用分享選單，直接將 Blob 轉為網址並跳轉，這會強制 Safari 喚醒「加入行事曆」彈窗
-        const url = window.URL.createObjectURL(blob);
-        window.location.href = url;
-        return; // 結束執行
+        window.location.href = window.URL.createObjectURL(blob);
+        return;
     }
 
     const file = new File([blob], fileName, { type: 'text/calendar' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-            await navigator.share({
-                title: '加入日曆',
-                text: '將擇日書籤加入您的手機日曆',
-                files: [file],
-            });
+            await navigator.share({ title: '加入日曆', files: [file] });
             return;
         } catch (error) {
-            if (error.name !== 'AbortError') console.error('分享失敗', error);
+            if (error.name !== 'AbortError') console.error(error);
             return;
         }
     }
 
-    // 備用下載方式 (PC端等)
-    try {
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch(e) {
-        alert("產生日曆檔失敗，請確認瀏覽器權限。");
-    }
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
 const YI_JI_MAP = {
