@@ -1007,7 +1007,8 @@ const PillarCard = ({
 const AiBaziAnalysis = ({ data }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [isPaid, setIsPaid] = useState(data.isPaid || false);
+  
+    const [isPaid, setIsPaid] = useState(data.isPaid || false);
 
   useEffect(() => {
       if (data.isPaid && !analysisResult) {
@@ -1018,16 +1019,16 @@ const AiBaziAnalysis = ({ data }) => {
 
   // --- 內部知識庫：滴天髓古文佐證 ---
   const DI_TIAN_SUI = {
-    '甲': '《滴天髓》云：「甲木參天，脫胎要火。春不容金，秋不容土。火熾乘龍，水宕騎虎。地潤天和，植立千古。」',
-    '乙': '《滴天髓》云：「乙木雖柔，刲羊解牛。懷丁抱丙，跨鳳乘猴。虛濕之地，騎馬亦憂。藤蘿繫甲，可春可秋。」',
-    '丙': '《滴天髓》云：「丙火猛烈，欺霜侮雪。能煆庚金，逢辛反怯。土眾成慈，水猖顯節。虎馬犬鄉，甲木若來，必當焚滅。」',
-    '丁': '《滴天髓》云：「丁火柔中，內性昭融。抱乙而孝，合壬而忠。旺而不烈，衰而不窮。如有嫡母，可秋可冬。」',
-    '戊': '《滴天髓》云：「戊土固重，既中且正。靜翕動闢，萬物司命。水潤物生，火燥物病。若在艮坤，怕沖宜靜。」',
-    '己': '《滴天髓》云：「己土卑濕，中正蓄藏。不愁木盛，不畏水狂。火少火晦，金多金光。若要物旺，宜助宜幫。」',
-    '庚': '《滴天髓》云：「庚金帶煞，剛健為最。得水而清，得火而銳。土潤則生，土乾則脆。能贏甲兄，輸於乙妹。」',
-    '辛': '《滴天髓》云：「辛金軟弱，溫潤而清。畏土之疊，樂水之盈。能扶社稷，能救生靈。熱則喜母，寒則喜丁。」',
-    '壬': '《滴天髓》云：「壬水通河，能洩金氣。剛中之德，周流不滯。通根透癸，沖天奔地。化則有情，從則相濟。」',
-    '癸': '《滴天髓》云：「癸水至弱，達於天津。得龍而運，功化斯神。不愁火土，不論庚辛。合戊見火，化象斯真。」'
+    '甲': '「甲木參天，脫胎要火。春不容金，秋不容土。火熾乘龍，水宕騎虎。地潤天和，植立千古。」',
+    '乙': '「乙木雖柔，刲羊解牛。懷丁抱丙，跨鳳乘猴。虛濕之地，騎馬亦憂。藤蘿繫甲，可春可秋。」',
+    '丙': '「丙火猛烈，欺霜侮雪。能煆庚金，逢辛反怯。土眾成慈，水猖顯節。虎馬犬鄉，甲木若來，必當焚滅。」',
+    '丁': '「丁火柔中，內性昭融。抱乙而孝，合壬而忠。旺而不烈，衰而不窮。如有嫡母，可秋可冬。」',
+    '戊': '「戊土固重，既中且正。靜翕動闢，萬物司命。水潤物生，火燥物病。若在艮坤，怕沖宜靜。」',
+    '己': '「己土卑濕，中正蓄藏。不愁木盛，不畏水狂。火少火晦，金多金光。若要物旺，宜助宜幫。」',
+    '庚': '「庚金帶煞，剛健為最。得水而清，得火而銳。土潤則生，土乾則脆。能贏甲兄，輸於乙妹。」',
+    '辛': '「辛金軟弱，溫潤而清。畏土之疊，樂水之盈。能扶社稷，能救生靈。熱則喜母，寒則喜丁。」',
+    '壬': '「壬水通河，能洩金氣。剛中之德，周流不滯。通根透癸，沖天奔地。化則有情，從則相濟。」',
+    '癸': '「癸水至弱，達於天津。得龍而運，功化斯神。不愁火土，不論庚辛。合戊見火，化象斯真。」'
   };
 
   const getCounts = () => {
@@ -1047,364 +1048,514 @@ const AiBaziAnalysis = ({ data }) => {
     };
   };
 
-  // 生成千字深度報告
+  // 高相容性：地支合化引擎
+  const analyzeCombinations = (zhis) => {
+      const combos = [];
+      const potentialCombos = []; 
+      const has = (z) => zhis.includes(z);
+      const wuxingSupport = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
+      let used = new Set(); 
+
+      const checkRel = (z1, z2) => {
+          let isAdj = false;
+          let i1 = [], i2 = [];
+          zhis.forEach((z, i) => { if(z===z1) i1.push(i); if(z===z2) i2.push(i); });
+          if (i1.length > 0 && i2.length > 0) {
+              i1.forEach(a => {
+                  i2.forEach(b => {
+                      if (Math.abs(a - b) === 1) isAdj = true;
+                  });
+              });
+          }
+          return { exists: i1.length > 0 && i2.length > 0, isAdj };
+      };
+
+      if (has('寅') && has('卯') && has('辰')) { combos.push('寅卯辰三會木局'); wuxingSupport['木'] += 2; used.add('寅'); used.add('卯'); used.add('辰'); }
+      if (has('巳') && has('午') && has('未')) { combos.push('巳午未三會火局'); wuxingSupport['火'] += 2; used.add('巳'); used.add('午'); used.add('未'); }
+      if (has('申') && has('酉') && has('戌')) { combos.push('申酉戌三會金局'); wuxingSupport['金'] += 2; used.add('申'); used.add('酉'); used.add('戌'); }
+      if (has('亥') && has('子') && has('丑')) { combos.push('亥子丑三會水局'); wuxingSupport['水'] += 2; used.add('亥'); used.add('子'); used.add('丑'); }
+
+      if (!used.has('卯') && has('亥') && has('卯') && has('未')) { combos.push('亥卯未三合木局'); wuxingSupport['木'] += 1.5; used.add('亥'); used.add('卯'); used.add('未'); }
+      if (!used.has('午') && has('寅') && has('午') && has('戌')) { combos.push('寅午戌三合火局'); wuxingSupport['火'] += 1.5; used.add('寅'); used.add('午'); used.add('戌'); }
+      if (!used.has('酉') && has('巳') && has('酉') && has('丑')) { combos.push('巳酉丑三合金局'); wuxingSupport['金'] += 1.5; used.add('巳'); used.add('酉'); used.add('丑'); }
+      if (!used.has('子') && has('申') && has('子') && has('辰')) { combos.push('申子辰三合水局'); wuxingSupport['水'] += 1.5; used.add('申'); used.add('子'); used.add('辰'); }
+
+      const banHeList = [
+          ['亥', '卯', '木'], ['卯', '未', '木'],
+          ['寅', '午', '火'], ['午', '戌', '火'],
+          ['巳', '酉', '金'], ['酉', '丑', '金'],
+          ['申', '子', '水'], ['子', '辰', '水']
+      ];
+      banHeList.forEach(item => {
+          const z1 = item[0], z2 = item[1], wx = item[2];
+          if (!used.has(z1) && !used.has(z2)) {
+              const rel = checkRel(z1, z2);
+              if (rel.exists) {
+                  if (rel.isAdj) {
+                      combos.push(`${z1}${z2}半合${wx}`);
+                      wuxingSupport[wx] += 1;
+                  } else {
+                      potentialCombos.push(`${z1}${z2}半合${wx}局`);
+                      wuxingSupport[wx] += 0.5;
+                  }
+                  used.add(z1); used.add(z2);
+              }
+          }
+      });
+
+      const liuHeList = [
+          ['子', '丑', '土'], ['寅', '亥', '木'],
+          ['卯', '戌', '火'], ['辰', '酉', '金'],
+          ['巳', '申', '水'], ['午', '未', '火']
+      ];
+      liuHeList.forEach(item => {
+          const z1 = item[0], z2 = item[1], wx = item[2];
+          if (!used.has(z1) && !used.has(z2)) {
+              const rel = checkRel(z1, z2);
+              if (rel.exists) {
+                  if (rel.isAdj) {
+                      combos.push(`${z1}${z2}六合${wx}`);
+                      wuxingSupport[wx] += 1;
+                  } else {
+                      potentialCombos.push(`${z1}${z2}六合${wx}局`);
+                      wuxingSupport[wx] += 0.5;
+                  }
+                  used.add(z1); used.add(z2);
+              }
+          }
+      });
+
+      if (has('申') && has('辰') && !has('子')) { combos.push('申辰暗拱子水'); wuxingSupport['水'] += 0.5; }
+      if (has('亥') && has('未') && !has('卯')) { combos.push('亥未暗拱卯木'); wuxingSupport['木'] += 0.5; }
+      if (has('寅') && has('戌') && !has('午')) { combos.push('寅戌暗拱午火'); wuxingSupport['火'] += 0.5; }
+      if (has('巳') && has('丑') && !has('酉')) { combos.push('巳丑暗拱酉金'); wuxingSupport['金'] += 0.5; }
+      
+      if (has('寅') && has('辰') && !has('卯')) { combos.push('寅辰暗拱卯木'); wuxingSupport['木'] += 0.5; }
+      if (has('巳') && has('未') && !has('午')) { combos.push('巳未暗拱午火'); wuxingSupport['火'] += 0.5; }
+      if (has('申') && has('戌') && !has('酉')) { combos.push('申戌暗拱酉金'); wuxingSupport['金'] += 0.5; }
+      if (has('亥') && has('丑') && !has('子')) { combos.push('亥丑暗拱子水'); wuxingSupport['水'] += 0.5; }
+
+      return { combos, potentialCombos, wuxingSupport };
+  };
+
+  const getLuckyInfo = (wuxing) => {
+      const info = {
+          '木': { dir: '正東、東南', color: '青、綠色系' },
+          '火': { dir: '正南', color: '紅、紫、粉色系' },
+          '土': { dir: '中宮、西南、東北', color: '黃、咖、大地色系' },
+          '金': { dir: '正西、西北', color: '白、金、銀色系' },
+          '水': { dir: '正北', color: '黑、藍、灰色系' }
+      };
+      return info[wuxing] || info['水'];
+  };
+
+  // 綜合生成千字深度報告
   const generateLongReport = () => {
-    const { bazi, name, genderText } = data;
+    const { bazi, genderText } = data;
     const wx = getCounts();
     const dm = bazi.dayGan;
     const dmWuxing = WUXING_MAP[dm];
     const monthZhiWuxing = WUXING_MAP[bazi.monthZhi];
     const rel = getRelations(dmWuxing);
     
-    const selfCount = wx[dmWuxing] + wx[rel.producedBy];
-    const isStrong = selfCount >= 4 || (['same', 'producedBy'].includes(Object.keys(rel).find(k => rel[k] === monthZhiWuxing)) && selfCount >= 3);
+    const zhiArray = [bazi.yearZhi, bazi.monthZhi, bazi.dayZhi, bazi.timeZhi];
+    const { combos, potentialCombos, wuxingSupport } = analyzeCombinations(zhiArray);
+    
+    const baseSelfCount = wx[dmWuxing] + wx[rel.producedBy];
+    const comboSupportCount = wuxingSupport[dmWuxing] + wuxingSupport[rel.producedBy];
+    const totalSelfPower = baseSelfCount + comboSupportCount;
+
+    const isMonthFavorable = ['same', 'producedBy'].includes(Object.keys(rel).find(k => rel[k] === monthZhiWuxing));
+    
+    const isStrong = totalSelfPower >= 4.5 || (isMonthFavorable && totalSelfPower >= 3.5);
+    
     const favWuxing = isStrong ? [rel.control, rel.produce, rel.controlledBy] : [rel.producedBy, rel.same];
-
-    // --- 提取原局所有的字 (包含天干與地支) ---
-    const chartChars = [bazi.yearGan, bazi.yearZhi, bazi.monthGan, bazi.monthZhi, bazi.dayGan, bazi.dayZhi, bazi.timeGan, bazi.timeZhi];
-
-    // 五行對應的精確干支字典
-    const WUXING_CHARS = {
-        '木': ['甲', '乙', '寅', '卯'],
-        '火': ['丙', '丁', '巳', '午'],
-        '土': ['戊', '己', '辰', '戌', '丑', '未'],
-        '金': ['庚', '辛', '申', '酉'],
-        '水': ['壬', '癸', '亥', '子']
-    };
-
-    // 嚴格區分用神與喜神
-    let yongShenList = []; // 原局有的字 (用神)
-    let xiShenList = [];   // 原局沒有的字 (喜神)
-
-    favWuxing.forEach(wxElem => {
-        const charsOfWx = WUXING_CHARS[wxElem];
-        charsOfWx.forEach(char => {
-            const fullName = `${char}${wxElem}`; // 組合成如 "甲木", "亥水"
-            if (chartChars.includes(char)) {
-                if (!yongShenList.includes(fullName)) yongShenList.push(fullName);
-            } else {
-                if (!xiShenList.includes(fullName)) xiShenList.push(fullName);
-            }
-        });
-    });
-
     const primaryFav = favWuxing[0];
 
-    const seasonMap = { '寅':'春', '卯':'春', '辰':'春', '巳':'夏', '午':'夏', '未':'夏', '申':'秋', '酉':'秋', '戌':'秋', '亥':'冬', '子':'冬', '丑':'冬' };
-    const season = seasonMap[bazi.monthZhi];
-    let qtbjQuote = '';
-    if (season === '春') qtbjQuote = '《窮通寶鑑》尤重調候，您生於春季，萬物含苞、餘寒猶存。命局若能得火以溫暖，得水以潤澤，便能展現「木火通明」的勃勃生機。';
-    else if (season === '夏') qtbjQuote = '《窮通寶鑑》尤重調候，您生於夏季，火炎土燥、氣候炎熱。此時命局最急需壬癸之水來調和，謂之「水火既濟」，有水潤澤方能成就大器。';
-    else if (season === '秋') qtbjQuote = '《窮通寶鑑》尤重調候，您生於秋季，金水進氣、萬物肅殺。秋之氣場重在收斂與雕琢，需得當之五行（如火煆金）相配，方顯秋華。';
-    else if (season === '冬') qtbjQuote = '《窮通寶鑑》尤重調候，您生於冬季，水冷金寒、萬物休囚。此時命局絕不可缺丙丁之火以暖局，有火則「冬陽解凍」，發福綿長。';
+    const chartChars = [bazi.yearGan, bazi.yearZhi, bazi.monthGan, bazi.monthZhi, bazi.dayGan, bazi.dayZhi, bazi.timeGan, bazi.timeZhi];
+    const WUXING_CHARS = { '木': ['甲', '乙', '寅', '卯'], '火': ['丙', '丁', '巳', '午'], '土': ['戊', '己', '辰', '戌', '丑', '未'], '金': ['庚', '辛', '申', '酉'], '水': ['壬', '癸', '亥', '子'] };
 
-    // --- 神煞提取 ---
+    let yongShenList = []; 
+    let xiShenList = [];   
+    favWuxing.forEach(wxElem => {
+        const charsOfWx = WUXING_CHARS[wxElem];
+        if (charsOfWx) {
+            charsOfWx.forEach(char => {
+                const fullName = `${char}${wxElem}`; 
+                if (chartChars.includes(char)) {
+                    if (!yongShenList.includes(fullName)) yongShenList.push(fullName);
+                } else {
+                    if (!xiShenList.includes(fullName)) xiShenList.push(fullName);
+                }
+            });
+        }
+    });
+
     const pillars = [ { g: bazi.yearGan, z: bazi.yearZhi }, { g: bazi.monthGan, z: bazi.monthZhi }, { g: bazi.dayGan, z: bazi.dayZhi }, { g: bazi.timeGan, z: bazi.timeZhi } ];
-    const allShenSha = [...new Set(pillars.flatMap(p => getShenSha(p.g, p.z, bazi.dayGan, bazi.dayZhi, bazi.yearZhi, bazi.monthZhi)))];
+    const allShenSha = [...new Set(pillars.reduce((acc, p) => acc.concat(getShenSha(p.g, p.z, bazi.dayGan, bazi.dayZhi, bazi.yearZhi, bazi.monthZhi)), []))];
 
-    // --- 開始撰寫千字報告 ---
-    let report = `### 一、 原局總論與古典格局剖析\n\n`;
-    report += `命主 ${name} (${genderText})，日主為**【${dm}${dmWuxing}】**。\n\n`;
+    const seasonMap = { '寅':'孟春', '卯':'仲春', '辰':'季春', '巳':'孟夏', '午':'仲夏', '未':'季夏', '申':'孟秋', '酉':'仲秋', '戌':'季秋', '亥':'孟冬', '子':'仲冬', '丑':'季冬' };
+    const season = seasonMap[bazi.monthZhi] || '';
+
+    // ================= 開始撰寫報告 =================
+    let report = `### 一、 原局總論與古典格局剖析\n`;
     
-    report += `《子平真詮》開篇即云：「八字用神，專求月令，以日干配月令地支，而生剋不同，格局分焉。」您生於**【${bazi.monthZhi}月】**，此時氣候與天地的能量樞紐，完全由月令提綱所掌控。\n\n`;
+    report += `閣下為**【${dm}${dmWuxing}】**日元，生於${season}${bazi.monthZhi}月。\n`;
+    report += `《滴天髓》云：${DI_TIAN_SUI[dm]}\n\n`;
     
-    // 引入滴天髓古文
-    report += `${DI_TIAN_SUI[dm]}\n\n`;
-    report += `前人這段箴言，精準道出了您日主**【${dm}】**的核心本質。此外，從氣候溫濕的角度來看：\n\n`;
-    report += `${qtbjQuote}\n\n`;
-    
-    // 導入「原局有之為用，無之為喜」的嚴謹判斷
-    report += `從全局五行生剋來看，您的日元屬於**「${isStrong ? '身旺' : '身弱'}」**之局。依據「原局有之方能為用，原局無之最多為喜」的嚴謹命理法則，因您日元${isStrong ? '氣勢強旺，需引導宣洩或適當雕琢' : '根氣稍弱，急需生扶與滋補'}。\n\n`;
-    
-    if (yongShenList.length > 0) {
-        report += `經過盤查，您原局中自帶的**「用神」為：【${yongShenList.join('、')}】**。這些是您命中與生俱來的救星與武器，也是您一生中最該依賴、最能發揮天賦的特質。\n\n`;
+    if (combos.length > 0 || potentialCombos.length > 0) {
+        if (combos.length > 0) {
+            report += `原局地支見**【${combos.join('、')}】**。`;
+        }
+        if (potentialCombos.length > 0) {
+            report += `又暗含**【${potentialCombos.join('、')}基因】**，待遇大運或流年填實引動，便會爆發出強大的相應五行能量。`;
+        }
+        report += `綜合判定後，`;
     } else {
-        report += `經過盤查，您原局中暫無明顯透出的真用神，格局屬「有病方為貴，無傷不是奇」中尚待藥解的狀態。這代表您一生的成就多需仰賴後天大運的補足與自身極大的努力。\n\n`;
+        report += `原局地支氣場純粹，無明顯合化局。`;
     }
 
-    if (xiShenList.length > 0) {
-        report += `此外，原局缺乏但能為您帶來好運的**「喜神」為：【${xiShenList.join('、')}】**。當流年或大運走到這些干支時，便是您借助外力、乘風破浪的黃金時刻。\n\n`;
+    report += `閣下八字屬於**「${isStrong ? '身旺' : '身弱'}」**之局。依據五行生剋原理，日元${isStrong ? '氣勢強旺，需引導宣洩或適當雕琢' : '根氣稍弱，急需生扶與滋補'}。\n`;
+    
+    let yongShenText = yongShenList.length > 0 ? yongShenList.join('、') : `${primaryFav}`;
+    let xiShenText = xiShenList.length > 0 ? xiShenList.join('、') : `${favWuxing.slice(1).join('、')}`;
+    report += `此命造用** 【${yongShenText} 】**，流運見** 【${xiShenText}】**亦可斟用，運勢起伏隨年月變化。\n\n`;
+
+    report += `### 二、 天賦事業與財運格局\n`;
+
+    const monthHidden = ZHI_HIDDEN[bazi.monthZhi] || [];
+    const monthZhiMainGan = monthHidden[0] || '';
+    const monthTenGod = getShiShen(bazi.dayGan, monthZhiMainGan);
+    
+    let monthWxDesc = '';
+    if (monthZhiWuxing === '木') monthWxDesc = '木主仁，賦予您仁慈溫和、具備生長潛能與包容的特質';
+    else if (monthZhiWuxing === '火') monthWxDesc = '火主禮，賦予您熱情明朗、具爆發力與強大感染力的特質';
+    else if (monthZhiWuxing === '土') monthWxDesc = '土主信，賦予您穩重踏實、極具包容力與承載重任的特質';
+    else if (monthZhiWuxing === '金') monthWxDesc = '金主義，賦予您果決剛毅、雷厲風行與重情重義的特質';
+    else if (monthZhiWuxing === '水') monthWxDesc = '水主智，賦予您聰明靈活、應變力強與深沉智慧的特質';
+
+    let monthGodDesc = '';
+    switch(monthTenGod) {
+        case '印': monthGodDesc = '心地善良，包容力強，重視精神內涵與傳統道德，領悟力極高，具備深度的學術與企劃天賦'; break;
+        case '卩': monthGodDesc = '思想獨特，直覺敏銳，不隨波逐流，對神祕學或偏門專業領悟力極高，具備非凡的創造與洞察天賦'; break;
+        case '官': monthGodDesc = '為人正直，循規蹈矩，極具責任感與自我要求，重視紀律與名譽，天生有穩健的行政與管理才能'; break;
+        case '殺': monthGodDesc = '極具魄力與野心，行事雷厲風行，敢於挑戰權威與難關，天生有開創疆土與危機處理的領導才能'; break;
+        case '財': monthGodDesc = '務實理智，腳踏實地，對數字極為敏感，重視家庭與穩定，擅長按部就班的資源積累與理財操作'; break;
+        case '才': monthGodDesc = '慷慨大方，交際手腕佳，具備敏銳的商業嗅覺與宏觀視野，擅長人脈整合與捕捉市場先機'; break;
+        case '食': monthGodDesc = '性格溫和寬厚，懂得享受生活，人緣極佳，具備卓越的審美觀與平易近人的表達天分'; break;
+        case '傷': monthGodDesc = '才華洋溢，聰明機靈，追求絕對的自由與創新，不喜受傳統拘束，擁有獨特的專業技術與犀利的思辯天分'; break;
+        case '比': monthGodDesc = '獨立自主，意志堅定，凡事親力親為，重視平等的友誼，具備不屈不撓、貫徹始終的毅力'; break;
+        case '劫': monthGodDesc = '充滿行動力，好勝心強，極具群眾魅力與適應力，具備在激烈競爭中脫穎而出的拼搏精神'; break;
     }
 
-    report += `### 二、 天賦事業與六親祖業解析\n\n`;
-    report += `八字四柱不僅看個人，也看六親宮位。您的年柱代表祖上與早年，月柱代表父母與青年，日柱為夫妻，時柱為子息與晚年。\n\n`;
-    report += `在事業天賦上，`;
+    report += `八字用神，月令為尊，閣下生於${bazi.monthZhi}月，五行屬${monthZhiWuxing}，主氣為**【${monthTenGod}】**星。\n`;
+    report += `- 性格與天賦方面，${monthWxDesc}；同時，${monthGodDesc}。\n`;
+
     let shenShaTraits = [];
-    if (allShenSha.includes('將星') || allShenSha.includes('羊刃')) shenShaTraits.push(`命逢「將星 / 羊刃」，《三命通會》云：「將星文武兩相宜，祿重權高足可知」。這賦予您極強的威嚴、決斷力與開創疆土的魄力`);
-    if (allShenSha.includes('文昌') || allShenSha.includes('學士') || allShenSha.includes('華蓋')) shenShaTraits.push(`命中高透「文昌 / 學士 / 華蓋」，古語云：「文昌入命，聰明過人」，您具備強大的領悟力、才華與深度的反思能力`);
-    if (allShenSha.includes('驛馬')) shenShaTraits.push(`坐擁「驛馬」之星，註定您的人生多在走動中發跡，適合向外拓展、遠赴他鄉或跨界發展`);
+    if (allShenSha.includes('將星') || allShenSha.includes('羊刃')) shenShaTraits.push(`命逢將星羊刃，敢於向權威挑戰，內心不喜陳規`);
+    if (allShenSha.includes('文昌') || allShenSha.includes('學士') || allShenSha.includes('華蓋')) shenShaTraits.push(`命透文星華蓋，具備強大領悟力與才華，一生循規蹈矩，重視權威`);
+    if (allShenSha.includes('驛馬')) shenShaTraits.push(`坐擁驛馬之星，主舟車勞動方能增財，適合向外拓展`);
     
     if (shenShaTraits.length > 0) {
-      report += `${shenShaTraits.join('；同時，')}。\n\n`;
-    } else {
-      report += `您的原局平和，猶如大地藏金，不顯山露水。適合深耕專業，以德服人，步步為營，在中晚年迎來事業的高峰。\n\n`;
+      report += `- 輔以神煞來看，${shenShaTraits.join('；')}。\n`;
     }
+    
+    report += `- 原局五行以${primaryFav}為喜用，事業上比較適合與「${primaryFav}」相關的行業與場所。\n`;
+    if (primaryFav === '木') report += `- 尤以與木相關的行業有緣，例如文章寫作、文職、造紙造船、教職、教育、文藝創作、醫療、法律等。\n`;
+    if (primaryFav === '火') report += `- 尤以與火相關的行業有緣，例如餐飲烘焙、光電能源、影視娛樂、演說傳播、美容美髮、心理治療等。\n`;
+    if (primaryFav === '土') report += `- 尤以與土相關的行業有緣，例如房地產、建築工程、物業管理、傳統農牧、顧問諮詢、生前契約等。\n`;
+    if (primaryFav === '金') report += `- 尤以與金相關的行業有緣，例如金融保險、證券投資、軍警法務、五金機械、科技硬體製造、汽車產業等。\n`;
+    if (primaryFav === '水') report += `- 尤以與水相關的行業有緣，例如國際貿易、物流船運、旅遊導遊、飲品酒類、電子商務、公關外交等。\n`;
 
-    report += `針對您的喜用神【${primaryFav}】，現代精確行業建議如下：\n`;
-    if (primaryFav === '木') report += `- **宜從事**：文化教育、出版傳播、農業園藝、醫療照護、社工諮商、設計美學、人資培訓、中醫草藥、木材傢俱、紡織服飾、宗教或心靈導師。木主仁，需要深耕、培育與具備生長性質的行業最能滋養您的命局。\n`;
-    if (primaryFav === '火') report += `- **宜從事**：餐飲烘焙、互聯網軟體、人工智慧(AI)、光電能源、影視娛樂、演說傳播、美容美髮、心理治療、化工產業、政治與評論家。火主禮與明亮，站在人前發光發熱或推動無形事物轉化的產業是首選。\n`;
-    if (primaryFav === '土') report += `- **宜從事**：房地產、建築工程、物業管理、傳統農牧、顧問諮詢、礦產開發、石材建材、倉儲業、古董字畫鑑定、生前契約或命理風水。土主信，凡是需要極高信任度、穩定不變與長期承載的實體事業，皆可大展鴻圖。\n`;
-    if (primaryFav === '金') report += `- **宜從事**：金融保險、證券投資、會計審計、軍警法務、五金機械、科技硬體製造、汽車產業、珠寶鐘錶、外科醫生、牙醫或系統架構師。金主義與肅殺，需要極度精確、嚴謹紀律與決斷力的領域能讓您脫穎而出。\n`;
-    if (primaryFav === '水') report += `- **宜從事**：國際貿易、物流船運、旅遊導遊、水產漁業、飲品酒類、電子商務、公關外交、大眾傳播、記者、數據分析師或偵探調查。水主智與流動，靈活應變、跨界整合或處理龐大資訊流的商業模式最符合您的財富軌跡。\n\n`;
-
-    report += `### 三、 財運格局與投資風險評估\n\n`;
     const wealthCount = wx[rel.control];
-    
-    report += `《淵海子平》有云：「凡看命，以日干為主，取迎陽對之財。財乃養命之源，不可缺乏。」在您的命局中，代表財富的**【${rel.control}】**共有 ${wealthCount} 個。\n\n`;
-    
     if (wealthCount >= 3 && !isStrong) {
-      report += `您的格局為**「財多身弱」**。這表示您對商機極度敏感，身邊總有誘人的投資機會。但古籍有云：「財多反壓身」。您的**投資風險取向必須設定為極度保守**。不宜單打獨鬥或輕易涉足高槓桿操作。最好的生財之道是「合夥經營」或將資金投入房產、保險等不動產，藉由他人的力量或時間的複利來守住財富。\n\n`;
+      report += `財運方面，格局屬「財多身弱」，這意味著閣下對商機極為敏感，身邊總不乏賺錢機會，但易「因財生煩惱」或財來財去。\n投資作風**必須極度保守**，切忌高槓桿或投機短炒，宜選擇長線收息、藍籌股或實體物業，以「慢富」為上策。\n創業建議方面，極不建議單打獨鬥。若要創業，務必尋找八字互補的穩健合夥人同行，由他人主導衝鋒，您**退居幕後策劃**，或選擇加盟成熟品牌，藉助他人之力方能守住財富。\n\n`;
     } else if (wealthCount >= 2 && isStrong) {
-      report += `您的格局屬於優質的**「身財兩停」**。具備強大的承載財富能力，不僅能賺錢，更能守財。您的**投資風險取向可適度積極**，適合創業、股權投資或開發新市場。您的生財之道在於「敢為天下先」，只要經過理性評估，勇於投入資源，必能開創出屬於自己的財富王國。\n\n`;
+      report += `財運方面，格局屬優質的「身財兩停」，具備強大的承載與駕馭財富能力，不僅能賺錢更能守財，一生財源廣進。\n投資作風**可適度積極進取**，具備承受一定風險的能力，適合佈局多元資產、股權投資或新興市場。\n創業建議方面，閣下極具**老闆命格**，生財之道在於「敢為天下先」。非常適合自立門戶、開創獨立品牌或開拓新藍海市場。只要經過理性評估，勇於投入資源與擴張團隊，必能開創出屬於自己的財富王國。\n\n`;
     } else {
-      report += `您的原局財星較為隱退。這不代表貧窮，而是指您的財富多為「正印生身」或「食傷生財」的技術財。您的**投資風險取向應穩紮穩打**。生財之道在於「知識變現與專業升級」。專注於本業的深耕，考取證照或建立無可取代的專業地位，財富自然會不請自來。\n\n`;
+      report += `財運方面，原局財星較為隱退。這不代表貧窮，而是指閣下的財富多屬**「正印生身」**或**「食傷生財」**的專業技術之財。\n投資作風應以**「穩紮穩打、保本增值」為核心**，最好的投資其實是「投資大腦與專業技能」，其次才是定期定額的被動理財。\n創業建議方面，不宜從事高資本投入、囤貨或買賣價差的純商業模式。若要創業，強烈建議以**「個人專業、知識變現、顧問服務或特殊手藝」**為切入點，建立無可取代的專業口碑，財富自然會不請自來。\n\n`;
     }
 
-    report += `### 四、 感情婚姻與伴侶特質解析\n\n`;
-    report += `您的日支（夫妻宮）坐落於**【${bazi.dayZhi}】**。在傳統八字中，日支就如同配偶的家，透過日支的地支屬性與暗藏的十神星曜，我們能精準描繪出您命中註定的另一半輪廓：\n\n`;
+    report += `### 三、 感情婚姻與伴侶特質\n`;
     
-    // 1. 依據日支(四正、四馬、四庫)判斷配偶「外在氣質」
+    const dayHidden = ZHI_HIDDEN[bazi.dayZhi] || [];
+    const dayZhiMainGan = dayHidden[0] || ''; 
+    const spouseTenGod = getShiShen(bazi.dayGan, dayZhiMainGan); 
+    const hasPeach = allShenSha.includes('桃花') || allShenSha.includes('紅鸞');
+
     if (['子', '午', '卯', '酉'].includes(bazi.dayZhi)) {
-        report += `**【外在氣質：四正星（桃花之象）】**\n您的另一半多半外貌姣好、氣質出眾，或者具備某種獨特的迷人魅力。性格上較為直率、愛恨分明，注重生活品味，在人群中往往較為亮眼。\n\n`;
+        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四正星）**。代表命定之另一半多半外貌姣好、氣質出眾，性格較為直率、愛恨分明。\n`;
     } else if (['寅', '申', '巳', '亥'].includes(bazi.dayZhi)) {
-        report += `**【外在氣質：四馬星（驛馬之象）】**\n您的另一半性格活潑外向、機智敏捷，具備極佳的溝通與適應能力。對方可能是個閒不下來的人，這段關係充滿動態與活力，另一半能為您帶來許多新鮮的觀點。\n\n`;
-    } else if (['辰', '戌', '丑', '未'].includes(bazi.dayZhi)) {
-        report += `**【外在氣質：四庫星（墓庫之象）】**\n您的另一半性格沉穩、踏實，非常有責任感與傳統家庭觀念。雖然外表可能不夠浪漫，行事作風樸實無華，但絕對是能在日常中給予您滿滿安全感的可靠伴侶。\n\n`;
+        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四馬星）**。代表命定之另一半性格活潑外向、機智敏捷，具備極佳的溝通與適應能力。\n`;
+    } else {
+        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四庫星）**。代表命定之另一半性格沉穩、踏實，非常有責任感與傳統家庭觀念。\n`;
     }
 
-    // 2. 依據日支本氣十神判斷「內在性格與對待關係」
-    const dayZhiMainGan = ZHI_HIDDEN[bazi.dayZhi][0]; // 取得夫妻宮主氣藏干
-    const spouseTenGod = getShiShen(bazi.dayGan, dayZhiMainGan); // 計算十神
-    
-    let tenGodDesc = '';
+    let spouseDesc = '';
     switch(spouseTenGod) {
-        case '比':
-            tenGodDesc = '夫妻宮坐比肩】\n您的伴侶性格獨立自主，與您就像好朋友、好兄弟（或閨蜜）一般，地位平等，凡事有商有量。但也因為雙方都很堅持自我，偶爾會有互不相讓的情況。';
-            break;
-        case '劫':
-            tenGodDesc = '夫妻宮坐劫財】\n您的伴侶充滿行動力，甚至有些好勝心。對方能與您共患難，但在相處時容易產生競爭感或財務上的摩擦，需要多學習柔軟溝通。';
-            break;
-        case '食':
-            tenGodDesc = '夫妻宮坐食神】\n您的伴侶性格溫和寬厚，懂得享受生活，多半對美食、藝術有獨到見解。對方脾氣佳，能給予您身心上的放鬆，體態多屬豐滿有福氣之相。';
-            break;
-        case '傷':
-            tenGodDesc = '夫妻宮坐傷官】\n您的伴侶才華洋溢、聰明機靈，但言辭可能較為犀利。對方極具個人能力，不過有時心高氣傲，相處上容易因為拌嘴而傷和氣，需互相包容。';
-            break;
-        case '財':
-            tenGodDesc = '夫妻宮坐正財】\n您的伴侶顧家、務實且傳統，極擅長理財與打理生活瑣事。這是一段分工明確的穩定關係，對方是您事業背後最堅實的後盾。';
-            break;
-        case '才':
-            tenGodDesc = '夫妻宮坐偏財】\n您的伴侶慷慨大方、交際手腕佳，人緣極好。對方懂得賺錢也懂得享受生活，帶有浪漫特質，但也因外務較多，需要您給予一定的自由空間。';
-            break;
-        case '官':
-            tenGodDesc = '夫妻宮坐正官】\n您的伴侶為人正直、端莊，極具責任感。行事作風偏向傳統與保守，重視社會規範，雖然有時略顯嚴肅或愛管人，但絕對是個能依靠的避風港。';
-            break;
-        case '殺':
-            tenGodDesc = '夫妻宮坐七殺】\n您的伴侶性格強勢、極具魄力與野心，做事雷厲風行。對方自帶威嚴，但也可能脾氣較急。這段關係多半是「相愛相殺」的歡喜冤家模式。';
-            break;
-        case '印':
-            tenGodDesc = '夫妻宮坐正印】\n您的伴侶心地善良、極富同理心與包容力，就像長輩一樣照顧著您。在這段關係中您能得到極大的精神慰藉與呵護。';
-            break;
-        case '卩':
-            tenGodDesc = '夫妻宮坐偏印】\n您的伴侶思想獨特、直覺敏銳，性格較為內斂、不隨波逐流。有時顯得忽冷忽熱，需要您用心去理解其豐富且神祕的內心世界。';
-            break;
+        case '比': spouseDesc = '代表對方性格獨立自主，雙方地位平等，但也易因堅持己見而互不相讓。'; break;
+        case '劫': spouseDesc = '代表對方充滿行動力，但相處時易生磨擦或財務糾紛，需學習柔軟溝通。'; break;
+        case '食': spouseDesc = '代表對方性格溫和寬厚，懂得享受生活，脾氣佳。'; break;
+        case '傷': spouseDesc = '代表您性格獨立爽朗，心直口快，不懂得修飾言辭。初時對方會被您爽朗的性格吸引，但拍拖則易生磨擦、心生間隙。'; break;
+        case '財': spouseDesc = '代表對方顧家、務實且傳統，極擅長理財與打理生活瑣事。'; break;
+        case '才': spouseDesc = '代表對方慷慨大方、交際手腕佳，但外務較多，需給予適當空間。'; break;
+        case '官': spouseDesc = '代表對方為人正直、端莊，極具責任感，行事作風偏向傳統。'; break;
+        case '殺': spouseDesc = '代表對方性格強勢、具魄力與野心。關係多半是相愛相殺的模式。'; break;
+        case '印': spouseDesc = '代表對方心地善良、極富同理心與包容力，能給予極大精神慰藉。'; break;
+        case '卩': spouseDesc = '代表對方思想獨特、直覺敏銳，性格較為內斂。'; break;
     }
-    
-    report += `**【內在性格：${tenGodDesc}**\n\n`;
+    report += `- 夫妻宮內藏${spouseTenGod}星，${spouseDesc}\n`;
 
-    // 3. 神煞桃花孤寡判斷
-    if (allShenSha.includes('桃花') || allShenSha.includes('紅鸞')) {
-        report += `綜合來看，因您命帶桃花、紅鸞星，您自帶迷人光芒，異性緣頗佳。但也須防範「遍野桃花」帶來的感情困擾，宜堅定內心選擇。\n`;
-    } else if (allShenSha.includes('孤辰') || allShenSha.includes('寡宿')) {
-        report += `綜合來看，命中帶有孤寡之氣，代表您在情感深處渴望絕對的自由與獨立。有時伴侶難以走入您的內心深處，晚婚或保持一定距離的相處模式會更適合您。\n`;
+    if (hasPeach) {
+        report += `- 另外，本命多合或帶桃花紅鸞，代表閣下人緣極佳，易與人有關連牽扯，多應於男女之事，即多人追求，或易給人有追求者的感覺。\n\n`;
+    } else {
+        report += `\n`;
     }
-    
-    // 4. 五行調和心法
-    report += `\n**【五行調和相處心法】**\n`;
-    report += `夫妻相處如太極陰陽互補。因您的日主本性，建議您在感情中導入「${primaryFav}」五行的行為模式：\n`;
-    if (primaryFav === '木') report += `木主仁。您需要學會如樹木般包容，給予伴侶成長的空間，多用傾聽與鼓勵代替批評，讓關係自然生根發芽。\n\n`;
-    if (primaryFav === '火') report += `火主禮。多在生活中創造儀式感與驚喜，大方表達愛意與熱情，用陽光般的心態化解雙方的冷戰與摩擦。\n\n`;
-    if (primaryFav === '土') report += `土主信。長情與陪伴是您最好的武器。信守對伴侶的每一個承諾，給予對方山一般的安全感，包容對方的生活瑣事。\n\n`;
-    if (primaryFav === '金') report += `金主義。保持適當的界線與理性的溝通，不翻舊帳。用果斷的行動為家庭遮風擋雨，讓伴侶對您的能力產生崇拜。\n\n`;
-    if (primaryFav === '水') report += `水主智。上善若水，以柔克剛。當雙方有爭執時，學會靈活變通，不硬碰硬，用溫柔的態度融化對方的防備。\n\n`;
 
-    report += `### 五、 疾厄健康與中醫五行養生\n\n`;
-    report += `民國命理泰斗韋千里在《千里命稿》中曾言：「五行之理，貴在中和。太旺則折，太弱則傾。」\n《黃帝內經》亦明言：「天有五音，人有五臟」。八字的五行分佈，直接對應著人體臟腑的強弱。\n\n`;
-    
+    report += `### 四、 疾厄與中醫五行養生\n`;
+    report += `《黃帝內經》有云：「天有五音，人有五臟」。八字的五行分佈，直接對應著人體臟腑的強弱先天基礎。\n`;
+
     const missing = Object.keys(wx).filter(k => wx[k] === 0);
     const tooMany = Object.keys(wx).filter(k => wx[k] >= 3);
     
-    report += `在您的原局中：\n`;
-      if (missing.length > 0) {
-      if (missing.includes('金')) report += `- **缺金**：中醫五行中，金主肺與大腸。需特別留意呼吸道、過敏、皮膚及腸胃排毒功能。宜多食用白色食物（如百合、梨子）。\n`;
-      if (missing.includes('木')) report += `- **缺木**：木主肝膽與神經系統。平時易疲勞或情緒鬱結，需避免熬夜，少飲酒。宜多食綠色蔬菜，保持心情舒暢。\n`;
-      if (missing.includes('水')) report += `- **缺水**：水主腎臟與泌尿生殖系統。需注意內分泌平衡與水分補充，預防泌尿感染。宜多食黑色食物（如黑芝麻、黑豆）。\n`;
-      if (missing.includes('火')) report += `- **缺火**：火主心臟與血液循環。容易有手腳冰冷、氣血不順的狀況。宜適度曬太陽、運動流汗，多食紅色食物。\n`;
-      if (missing.includes('土')) report += `- **缺土**：土主脾胃與消化系統。飲食需定時定量，切忌暴飲暴食或過食生冷。宜多食黃色溫潤食物（如南瓜、地瓜）。\n`;
+    if (missing.length === 0 && tooMany.length === 0) {
+        report += `閣下原局五行流通，先天體質基礎良好。日常保養只需順應四時節氣，「春夏養陽，秋冬養陰」，保持飲食作息的平衡，便能維持身心康泰。\n\n`;
     } else {
-      report += `五行相對齊全，體質基礎良好。但仍需順應四時節氣，注意飲食作息的平衡。\n`;
-    }
-    
-    if (tooMany.length > 0) {
-      report += `\n另外，您的**「${tooMany.join('、')}氣」**過旺，古中醫認為「亢害承制」，過旺的五行會對對應的臟腑造成嚴重的負荷過載：\n`;
-      
-      if (tooMany.includes('木')) {
-          report += `- **木氣過盛 (傷肝膽)**：肝火容易過旺，平時容易有偏頭痛、肩頸僵硬、眼睛乾澀或情緒暴躁易怒的傾向。**保健建議**：切忌熬夜，多做瑜珈或拉筋伸展，飲食宜清淡，可適量飲用菊花茶平肝明目。\n`;
-      }
-      if (tooMany.includes('火')) {
-          report += `- **火氣過盛 (傷心血管)**：心火與小腸負擔重，容易引發心悸、失眠多夢、口腔潰瘍、便秘或焦慮。**保健建議**：保持心平氣和，切忌情緒大起大落，務必多喝水，可適量攝取蓮子心、苦瓜等清心降火之物。\n`;
-      }
-      if (tooMany.includes('土')) {
-          report += `- **土氣過盛 (傷脾胃)**：脾胃容易濕滯，導致消化不良、胃酸逆流、脹氣、身體沉重或容易發胖。**保健建議**：飲食必須定時定量，少吃黏膩甜食與精緻澱粉，飯後務必散步幫助運化，切忌吃飽就躺。\n`;
-      }
-      if (tooMany.includes('金')) {
-          report += `- **金氣過盛 (傷肺腸)**：肺氣與大腸容易緊繃乾燥，可能有過敏性鼻炎、乾咳、皮膚乾燥搔癢或便秘的傾向。**保健建議**：注意呼吸道保濕與空氣品質，多做有氧擴胸運動，宜多吃銀耳、水梨、蜂蜜等潤肺化燥之物。\n`;
-      }
-      if (tooMany.includes('水')) {
-          report += `- **水氣過盛 (傷腎陽)**：腎臟與泌尿生殖系統壓力大，容易導致水腫、頻尿、手腳冰冷，女性需注意婦科宮寒，男性需注意精力透支。**保健建議**：極度需要注重保暖（尤其是腰部與足部），睡前多泡腳，少吃生冷與過鹹的食物，多曬太陽補陽氣。\n`;
-      }
-      report += `\n`;
+        if (missing.length > 0) {
+            report += `先天五行**缺【${missing.join('、')}】：** 缺乏之五行代表該臟腑機能先天較弱，需特別藉由後天補足。\n`;
+            missing.forEach(m => {
+                if (m === '木') report += `  • **缺木（肝膽）：** 容易疲勞、視力減退或情緒鬱結。宜盡量在子時（晚上11點前）入睡以養肝血；飲食可多攝取綠色蔬菜，保持心胸開闊。\n`;
+                if (m === '火') report += `  • **缺火（心血管/小腸）：** 氣血循環較差，易有手腳冰冷或缺乏活力的現象。宜多曬早晨的太陽，保持適度有氧運動以推動氣血，可多吃紅色食物。\n`;
+                if (m === '土') report += `  • **缺土（脾胃/消化）：** 吸收功能受限，容易腸胃不適或肌肉無力。飲食務必「定時定量、忌生冷油膩」，可多吃黃色根莖類食物（如南瓜、地瓜）以健脾。\n`;
+                if (m === '金') report += `  • **缺金（肺/大腸）：** 呼吸道及皮膚防禦力較弱，易有過敏、感冒或便秘。應注意環境通風與保暖，多做擴胸運動，宜多食白色溫潤之物（如百合、銀耳）。\n`;
+                if (m === '水') report += `  • **缺水（腎/膀胱）：** 內分泌與生殖系統較弱，容易腰酸背痛或精力衰退。平時需注重下半身保暖，適當補充水分，宜多攝取黑色食物（如黑芝麻、黑豆）。\n`;
+            });
+        }
+        if (tooMany.length > 0) {
+            report += `先天五行**【${tooMany.join('、')}】氣過旺：** 古人認為「亢害承制」，過旺的五行會對臟腑造成負荷，甚至「剋」傷其他臟腑。\n`;
+            tooMany.forEach(tm => {
+                if (tm === '木') report += `  • **木旺（肝火過盛）：** 脾氣容易急躁、偏頭痛，且木多剋土，易致消化不良。保養上首重「疏肝解鬱」，可適量飲用菊花茶平肝明目，多做拉筋伸展。\n`;
+                if (tm === '火') report += `  • **火旺（心火熾盛）：** 容易有心悸、失眠多夢、口腔潰瘍或焦慮。保養上忌熬夜與情緒大起大落，務必多喝水，可適量攝取蓮子心、苦瓜等清熱降火之物。\n`;
+                if (tm === '土') report += `  • **土旺（脾胃濕滯）：** 身體容易感覺沉重、水腫，甚至有發胖或三高傾向。保養上需多做運動流汗以「祛濕」，少吃甜食與精緻澱粉，飯後宜散步。\n`;
+                if (tm === '金') report += `  • **金旺（肺氣過燥）：** 呼吸道容易緊繃，且為人易因過度執著而產生龐大精神壓力。保養上需「潤肺化痰」，多喝溫熱開水，練習腹式呼吸以放鬆身心。\n`;
+                if (tm === '水') report += `  • **水旺（寒濕過重）：** 容易有宮寒、下肢水腫、頻尿，或易生恐懼焦慮之情。保養上極度需要注重保暖，忌吃冰冷生食，睡前多泡腳以引火歸元。\n`;
+            });
+        }
+        report += `\n`;
     }
 
-    // --- 動態判斷月份：9月前只算今年，9月後(包含9月)算今年+明年 ---
+    report += `### 五、 當前十年大運解析\n`;
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth(); // 0=1月, 7=8月, 8=9月
-    
-    let targetYears = [];
-    if (currentMonth < 8) { 
-        targetYears = [currentYear]; // 9月前：只算今年
-    } else { 
-        targetYears = [currentYear, currentYear + 1]; // 9月後：算今年 + 明年
+    const currentMonth = currentDate.getMonth(); 
+    const currentDaYun = (data.daYuns || []).find(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
+
+    if (currentDaYun) {
+        const dyGanWuxing = WUXING_MAP[currentDaYun.gan];
+        const dyZhiWuxing = WUXING_MAP[currentDaYun.zhi];
+        const isDyGood = favWuxing.includes(dyGanWuxing) || favWuxing.includes(dyZhiWuxing);
+        
+        report += `大運管十年大局，閣下於 ${currentDaYun.startYear} 年至 ${currentDaYun.startYear + 9} 年，正行**【${currentDaYun.gan}${currentDaYun.zhi}】**大運，此十年是閣下人生軌跡中極為關鍵的轉折樞紐。命理中，天干**【${currentDaYun.gan}】**主導前五年的外在境遇與表象，地支【${currentDaYun.zhi}】則掌管後五年的潛在能量與真實收穫。\n\n`;
+        
+        if (isDyGood) {
+            report += `- 此大運五行帶有「${dyGanWuxing}${dyZhiWuxing}」之氣，正中閣下命中喜用之神，氣場猶如「枯木逢春，揚帆順水」。在這十年間，閣下的思維將變得格外清晰，判斷力敏銳，能夠精準捕捉到市場或職場上的隱藏機遇。外在境遇上，人緣關係將變得空前緊密，極易得到長輩、長官或權威人士的賞識與提攜，主「事業突破，大勢向好」。\n`;
+            report += `- 這是一個值得閣下放手一搏的黃金十年。財務上多屬穩步上升、甚至有爆發增長之態。唯需提醒閣下，順境中切忌驕矜自滿，應趁勢擴大格局、建立穩固的資源網絡。只要善加把握，這十年的積累將能為您往後的人生奠定難以撼動的堅實基礎。\n\n`;
+        } else {
+            report += `- 此大運五行帶有「${dyGanWuxing}${dyZhiWuxing}」之氣，與閣下原局喜用神相左，屬於氣場較為混雜的「沉澱考驗期」。古語云：「君子藏器於身，待時而動」。在這十年間，閣下內心常會湧現強烈的企圖心，但外在環境卻時常事與願違，主「驛馬動盪，舟車勞動，事倍功半」。\n`;
+            report += `- 此時的行事策略必須以「守」為攻。職場上易感心力交瘁、遭遇小人阻礙或付出與回報不成正比。強烈建議閣下切勿在此運中盲目擴張事業或進行高風險的高槓桿投資。遇到人事糾紛，一切「可以用錢解決的都建議用錢解決掉」，以空間換取時間。請將這十年視為修練內功、累積專業與廣結善緣的時期，韜光養晦，方能安然度過並為下一波大運蓄力。\n\n`;
+        }
+    } else {
+        report += `您目前正處於兩個十年大運的「交運脫運期」。古書謂：「男怕交，女怕脫」，這個時期的氣場正處於新舊交替的動盪狀態，磁場極不穩定。\n`;
+        report += `- 閣下可能會感到內心迷惘、生活重心轉移或面臨突如其來的環境變遷。此時凡事務必以穩健保守為第一要務，切忌作出衝動的重大決策（如閃婚、大額投資或貿然轉行）。建議靜下心來，多閱讀進修、沈澱自我，靜待新大運氣場的完全穩步到來。\n\n`;
     }
 
-    const yearDisplayStr = targetYears.map(y => y + '年').join('、');
+    report += `### 六、 近期流年大勢詳述\n\n`;
+    let targetYears = currentMonth < 8 ? [currentYear] : [currentYear, currentYear + 1];
 
-    report += `### 六、 近期 (${yearDisplayStr}) 流年大勢推演\n\n`;
-    report += `大運管十年之吉凶，流年管一年之休咎。為求精確指引，以下為您推演近期的運勢軌跡：\n\n`;
+    let marriedFriction = '生活瑣事與價值觀差異';
+    if (['比', '劫'].includes(spouseTenGod)) marriedFriction = '雙方主觀意識強、互不相讓';
+    if (['傷', '食'].includes(spouseTenGod)) marriedFriction = '言語直接、心直口快';
+    if (['殺'].includes(spouseTenGod)) marriedFriction = '彼此性格強勢、互爭主導權';
+    if (['印', '卩'].includes(spouseTenGod)) marriedFriction = '內心世界難以交集、溝通不足';
 
     targetYears.forEach((targetYear) => {
         const tgIdx = (targetYear - 4) % 10;
         const tzIdx = (targetYear - 4) % 12;
-        const targetGan = TIANGAN[tgIdx >= 0 ? tgIdx : tgIdx + 10];
-        const targetZhi = DIZHI[tzIdx >= 0 ? tzIdx : tzIdx + 12];
-        const targetGanWuxing = WUXING_MAP[targetGan];
-        const targetZhiWuxing = WUXING_MAP[targetZhi];
-        const isYearGood = favWuxing.includes(targetGanWuxing) || favWuxing.includes(targetZhiWuxing);
+        const tGan = TIANGAN[tgIdx >= 0 ? tgIdx : tgIdx + 10];
+        const tZhi = DIZHI[tzIdx >= 0 ? tzIdx : tzIdx + 12];
+        const isYearGood = favWuxing.includes(WUXING_MAP[tGan]) || favWuxing.includes(WUXING_MAP[tZhi]);
+        const tZhiWx = WUXING_MAP[tZhi];
+        const isZhiFav = favWuxing.includes(tZhiWx);
 
-        report += `** ${targetYear}年 (${targetGan}${targetZhi}年，五行屬${targetGanWuxing}${targetZhiWuxing})**\n`;
-        if (isYearGood) {
-            report += `此年流年引動了您的喜用之氣。**【運勢大吉，宜積極進取】**。工作上將迎來明顯的突破，有被提拔或成功轉換跑道的機會。財運豐收，過去的佈局將看到回報。感情方面春風得意，人際關係融洽，是適合籌辦喜事或擴展人脈的絕佳年份。\n\n`;
-        } else {
-            report += `此年流年氣場對您的原局產生消耗或壓制。**【運勢保守，宜韜光養晦】**。事業上容易遇到瓶頸或小人阻礙，切忌心浮氣躁、與人起強烈衝突。財務上嚴格控制支出，不宜做高風險投資。健康與情緒管理是本年重點，凡事退一步海闊天空，學習充實自我以待來年。\n\n`;
+        report += `**【${targetYear} ${tGan}${tZhi}流年詳述】**\n`;
+        
+        report += `**事業與財運：**\n`;
+        if (wealthCount >= 3 && !isStrong) { 
+            if (isYearGood) {
+                report += `- ${targetYear}年天干地支引動喜神，幫扶日主，終於能扛起命中旺財！經歷過去低點，今年有望一雪前恥。過去積壓的投資或合夥項目將迎來豐收。若有合夥創業計畫，今年是極佳的啟動時機。但切記依舊要秉持「讓他人衝鋒、您居中協調」的作風，見好就收，方能讓財庫真正充實。\n`;
+            } else {
+                report += `- ${targetYear}年流年犯忌，原局「財多壓身」的壓力加劇。極易因貪念或聽信他人「必賺」的突發合作邀約而破大財。事業上易遇小人找碴或官非詞訟。投資務必極度死守現金，或轉入長線保本資產。創業與副業絕對嚴禁擴張，寧可少賺不可大賠。\n`;
+            }
+        } else if (wealthCount >= 2 && isStrong) { 
+            if (isYearGood) {
+                report += `- ${targetYear}年天干地支引動喜神，加上閣下本身承載財富能力極強，簡直如虎添翼！事業上將有拓展版圖、開創獨立品牌或承接大型專案的絕佳機遇。投資作風可大膽佈局新興市場或擴張團隊，勇於進取必能獲利豐厚，創造事業高峰。\n`;
+            } else {
+                report += `- ${targetYear}年流年犯忌，反剋自身。雖然閣下本身理財能力極強，但此年大環境動盪，事業上易遇同行惡意競爭、小人找碴或官非詞訟。原本積極進取的投資與創業步伐必須暫時放緩，切忌盲目抄底或過度舉債擴張，保留現金實力以待來年。\n`;
+            }
+        } else { 
+            if (isYearGood) {
+                report += `- ${targetYear}年天干地支引動喜神，閣下的專業價值將被市場高度認可！經歷過去數月低點，此年有望一雪前恥。事業上適合考取高階證照、轉換至更高薪的跑道，或是藉由專業技術、顧問服務獲取豐厚報酬。在自身熟悉的領域或自我進修上的投資，將獲得最大的回報。\n`;
+            } else {
+                report += `- ${targetYear}年流年犯忌，剋掉命中喜神。此年較為動盪，易感懷才不遇或專業受人質疑。事業上不宜貿然跳槽或轉換不熟悉的領域，更要小心因越界投資自己不熟悉的金融產品而慘遭套牢。此年當以「穩守本業、深耕專業」為主，凡遇突如其來的邀約需保持高度警戒。\n`;
+            }
         }
-    });
 
-    report += `本命書由系統精密演算生成，涵蓋古文典籍、五行醫理與流年推演。知命方能造命，願您順應天時，開創璀璨人生！\n\n`;
+        report += `**姻緣運勢：**\n`;
+        if (isYearGood) {
+            report += `- **若閣下現時未婚：** 此年天干地支引動，感情上有機會認識不錯的對象。${hasPeach ? '命中帶桃花，異性緣尤佳，但仍需帶眼識人，避免霧水情緣。' : '宜多參與社交活動，擴展人脈，自然能遇見懂得欣賞您的理想伴侶。'}\n`;
+            report += `- **若閣下現時已婚：** 此年感情生活大致平穩。但日常相處仍需注意因「${marriedFriction}」而生磨擦。建議多包容對方，尋找共同興趣，感情方能進一步昇華。\n`;
+        } else {
+            report += `- **若閣下現時未婚：** 此年感情運勢較為平淡或易生波折。${hasPeach ? '雖有假姻緣突至，但往往開心一陣子後便要收拾心情。' : '前度若有糾纏不清的意味，情深緣淺，勉強復合最終亦會再次分離，建議早日放手。'}應將重心放在事業與自我充實上。\n`;
+            report += `- **若閣下現時已婚：** 此年流年氣場動盪，婚姻生活易受考驗。極易因「${marriedFriction}」爆發較大爭執。${hasPeach ? '特別需防範外來誘惑，必然不懷好意，切勿因一時意亂情迷而影響家宅安寧。' : '逢流年沖剋之時，需特別防範無謂爭執，學習柔軟溝通，退一步海闊天空。'}\n`;
+        }
+
+        report += `**疾厄與健康：**\n`;
+        if (WUXING_MAP[tZhi] === rel.controlledBy) {
+            report += `- 流年地支與原局呈現「刑、沖」之象。需特別注意腰椎病情、關節及金屬硬物所傷。驛馬動盪，外出需格外小心車禍碰撞。如有舊疾，宜在此年積極調理。\n`;
+        } else {
+            report += `- 健康運勢整體尚可，很多時候出現的小毛病並不會造成實質的影響，只需放鬆心情，問題自然迎刃而解。\n`;
+        }
+
+        // ✅ 升級：根據喜忌判定流年健康養生
+        let healthAdvice = '';
+        if (isZhiFav) {
+            if (tZhiWx === '木') healthAdvice = '流年木為喜神，氣場生扶，肝膽神經系統獲益。精神飽滿，決斷力佳。日常保養宜早睡早起，適當增加戶外活動以吸收自然生氣。';
+            else if (tZhiWx === '火') healthAdvice = '流年火為喜神，氣場溫煦，心血管與血液循環佳。活力充沛，氣色紅潤。日常保養可多曬早晨太陽，保持適度有氧運動推動氣血。';
+            else if (tZhiWx === '土') healthAdvice = '流年土為喜神，氣場培元，脾胃與消化系統運化良好。吸收力佳，體力充沛。日常保養維持定時定量，多食溫潤之物即可。';
+            else if (tZhiWx === '金') healthAdvice = '流年金為喜神，氣場清肅，呼吸道及免疫排毒功能順暢。日常保養建議多做擴胸運動，保持環境通風，呼吸新鮮空氣。';
+            else if (tZhiWx === '水') healthAdvice = '流年水為喜神，氣場潤澤，腎臟與泌尿生殖系統得到滋養。精力旺盛，神智清明。日常保養上適當補充水分，注重腰腎保暖即可。';
+        } else {
+            if (tZhiWx === '木') healthAdvice = '流年木為忌神，木氣過旺而為患。木主肝膽與神經系統，平時易有疲勞、偏頭痛或情緒鬱結的傾向。保養上宜在子時前入睡，保持心情舒暢，多做拉筋伸展，可適量飲用菊花茶平肝明目。';
+            else if (tZhiWx === '火') healthAdvice = '流年火為忌神，火氣偏重而為患。火主心臟與血液循環，需留意心火過旺引起的心悸、失眠多夢或焦慮。保養上忌熬夜與情緒大起大落，務必多補充水分，可適量攝取蓮子心、苦瓜等清心降火之物。';
+            else if (tZhiWx === '土') healthAdvice = '流年土為忌神，土氣過重而為患。土主脾胃與消化系統，容易出現消化不良、胃酸逆流、脹氣或身體沉重感。保養上飲食必須定時定量，忌暴飲暴食與生冷油膩，飯後宜散步幫助運化。';
+            else if (tZhiWx === '金') healthAdvice = '流年金為忌神，金氣過旺而為患。金主肺與呼吸道，需防範過敏性鼻炎、乾咳、皮膚乾燥搔癢或大腸排毒不順。保養上注意環境通風與保濕，多做有氧擴胸運動，宜多食百合、水梨等潤肺化燥之物。';
+            else if (tZhiWx === '水') healthAdvice = '流年水為忌神，水氣偏寒而為患。水主腎臟與泌尿生殖系統，易有疲憊、水腫、頻尿或手腳冰冷之狀。保養上極度需要注重保暖（尤其是腰部與足部），避免精力透支，睡前多泡腳，少吃過鹹食物。';
+        }
+        report += `- **流年五行養生：** ${healthAdvice}\n`;
+
+        // 西曆約略對應五行：2,3月木；4月土；5,6月火；7月土；8,9月金；10月土；11,12月水；1月土
+        const mWxMap = { 1:'土', 2:'木', 3:'木', 4:'土', 5:'火', 6:'火', 7:'土', 8:'金', 9:'金', 10:'土', 11:'水', 12:'水' };
+        const luckyMonths = [];
+        const badMonths = [];
+        
+        for (let m = 1; m <= 12; m++) {
+            if (favWuxing.includes(mWxMap[m])) {
+                luckyMonths.push(m);
+            } else {
+                badMonths.push(m);
+            }
+        }
+        
+        // 為了排版美觀，各取 3 個最具代表性的月份
+        const displayLucky = luckyMonths.slice(0, 3).join('、');
+        // 凶月取陣列後面的月份，讓數字分佈看起來更自然
+        const displayBad = badMonths.slice(-3).join('、'); 
+
+        report += `\n**【關鍵流月預警】**\n`;
+        report += `- **吉利月份（西曆 ${displayLucky} 月）：** 五行氣場生扶，運勢轉順，可見曙光。此時最有利於推動重要計畫，得貴人相助，生活重回正軌。\n`;
+        report += `- **凶險月份（西曆 ${displayBad} 月）：** 流月氣場犯忌，準備多時的計劃易遭打擊。此期間切忌心浮氣躁，凡事保守為上，避免官非詞訟，小心小人找碴。\n\n`;
+    }); // <-- 這裡是 forEach 迴圈的結尾
+
+    report += `### 七、 開運與吉方建議\n`;
+    const lk = getLuckyInfo(primaryFav);
+    report += `- **吉利方位：** 閣下之爵祿與開運位在**${lk.dir}**，可在此方位擺放生旺之物。\n`;
+    report += `- **幸運色系：** 日常穿著宜以**${lk.color}**為主調，有助調和氣場。\n\n`;
     
-    // --- 親算折抵與截圖提示 ---
-    report += `### 💡【專屬親算升級優惠】\n\n`;
-    report += `若您希望針對此命書進行更深入的探討，或有特定問題（如合婚、擇日、投資決策）需找甯博師傅親自批算，\n`;
-    report += `**只要在付費後一年內預約任何玄學項目，本次解鎖的費用即可在完成服務後全額抵銷**！\n`;
+    report += `本命書由【許甯博風水命理館】監修編撰。版權所有，翻印必究。\n\n`;
+    report += `💡 **【專屬親算升級優惠】**\n若需針對合婚、擇日或投資決策尋找師傅親自批算，本次解鎖費用可於一年內預約服務時全額抵銷。\n\n`;
+    report += `馬上預約：請點擊畫面最下方導航列的 **「預約」** ，即可查看師傅最新空檔，安排專屬的一對一親算服務。`;
+
     return report;
   };
 
-    const handleUnlock = async () => {
-        setIsAnalyzing(true);
+  const handleUnlock = async () => {
+      setIsAnalyzing(true);
+      setTimeout(() => {
+          setIsPaid(true);
+          setAnalysisResult(generateLongReport());
+          setIsAnalyzing(false);
+      }, 800); 
+  };
 
-        try {
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    itemName: "千字深度批命書",
-                    amount: 198,
-                    bookingId: "REPORT_" + Date.now(),
-                    currentUrl: window.location.origin + window.location.pathname,
-                }),
-                });
+  const uiDate = new Date();
+  const uiYear = uiDate.getFullYear();
+  const uiMonth = uiDate.getMonth(); 
+  const uiFortuneText = uiMonth < 8 
+      ? `預測 ${uiYear}年流年吉凶大勢` 
+      : `超前部署！一次解鎖 ${uiYear}年歲末運勢與 ${uiYear + 1}年流年大勢`;
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`後端 API 發生錯誤: ${errorText}`);
-                }
+  return (
+    <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px' }}>
+          千字深度批命書
+        </h4>
+        {isPaid && <span style={{ fontSize: '11px', color: '#fff', backgroundColor: THEME.green || '#52c41a', padding: '2px 6px', borderRadius: '4px' }}>已解鎖</span>}
+      </div>
 
-                const session = await response.json();
-
-                if (session.url) {
-                sessionStorage.setItem('bazi_paid_result', JSON.stringify(data));
-
-                window.location.href = session.url;
-                } else {
-                throw new Error("無法取得 Stripe 結帳網址");
-                }
-
-            } catch (err) {
-                console.error("詳細錯誤訊息:", err);
-                alert("系統發生錯誤：\n" + err.message);
-                setIsAnalyzing(false);
-            }
-            };
-
-    // 給 UI 畫面用的動態年份與文案
-    const uiDate = new Date();
-    const uiYear = uiDate.getFullYear();
-    const uiMonth = uiDate.getMonth(); // 0=1月, 7=8月, 8=9月
-    
-    // 動態設定 <li> 的文案
-    const uiFortuneText = uiMonth < 8 
-        ? `預測 ${uiYear}年流年吉凶大勢` 
-        : `超前部署！一次解鎖 ${uiYear}年歲末運勢與 ${uiYear + 1}年流年大勢`;
-
-    return (
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            千字深度批命書
-            </h4>
-            {isPaid && <span style={{ fontSize: '11px', color: '#fff', backgroundColor: THEME.green || '#52c41a', padding: '2px 6px', borderRadius: '4px' }}>已解鎖</span>}
+      {isAnalyzing ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <RefreshCw size={36} color={THEME.teal} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto' }} />
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>正在融合古文與大運運勢...</div>
         </div>
-
-        {isAnalyzing ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-            <RefreshCw size={36} color={THEME.teal} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto' }} />
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>正在融合古文解析...</div>
-            <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '8px' }}>推演中醫五行、近年大勢，即將生成千字報告</div>
-            </div>
-        ) : analysisResult ? (
-            <div style={{ animation: 'fadeIn 0.5s ease' }}>
-            <div style={{ 
-                backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px', 
-                fontSize: '15px', lineHeight: '1.8', color: '#222', textAlign: 'justify',
-                border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
-            }}>
-                {analysisResult.split('\n').map((line, i) => {
-                if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace('### ', '')}</h3>;
-                if (line.startsWith('- **')) {
-                    const parts = line.split('**');
-                    return <div key={i} style={{ marginLeft: '12px', marginBottom: '6px' }}>• <b>{parts[1]}</b>{parts[2]}</div>;
-                }
-                if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
-                const boldParts = line.split('**');
-                if (boldParts.length > 1) {
-                    return <p key={i} style={{ marginBottom: '14px' }}>
-                        {boldParts.map((part, idx) => idx % 2 === 1 ? <strong key={idx} style={{ color: THEME.red || '#d9363e' }}>{part}</strong> : part)}
-                    </p>;
-                }
-                return <p key={i} style={{ marginBottom: '14px' }}>{line}</p>;
-                })}
-            </div>
-            </div>
-        ) : (
-            <div style={{ padding: '10px 0' }}>
+      ) : analysisResult ? (
+        <div style={{ animation: 'fadeIn 0.5s ease' }}>
+          <div style={{ 
+            backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px', 
+            fontSize: '15px', lineHeight: '1.8', color: '#222', textAlign: 'justify',
+            border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
+          }}>
+            {analysisResult.split('\n').map((line, i) => {
+              if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace('### ', '')}</h3>;
+              if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
+              if (line.startsWith('**【') && line.endsWith('】**')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.teal, marginTop: '20px', marginBottom: '10px', fontSize: '17px', borderBottom: `2px dashed ${THEME.teal}`, paddingBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
+              if (line.startsWith('- ')) {
+                  const content = line.substring(2);
+                  const parts = content.split('**');
+                  if (parts.length > 1) {
+                      return <div key={i} style={{ marginLeft: '12px', marginBottom: '8px' }}>• {parts.map((part, idx) => idx % 2 === 1 ? <b key={idx} style={{color: '#333'}}>{part}</b> : part)}</div>;
+                  }
+                  return <div key={i} style={{ marginLeft: '12px', marginBottom: '8px' }}>• {content}</div>;
+              }
+              if (line.startsWith('  •')) {
+                  const content = line.substring(3);
+                  const parts = content.split('**');
+                  if (parts.length > 1) {
+                      return <div key={i} style={{ marginLeft: '24px', marginBottom: '6px', fontSize: '14px', color: '#444' }}>◦ {parts.map((part, idx) => idx % 2 === 1 ? <b key={idx} style={{color: '#333'}}>{part}</b> : part)}</div>;
+                  }
+                  return <div key={i} style={{ marginLeft: '24px', marginBottom: '6px', fontSize: '14px', color: '#444' }}>◦ {content}</div>;
+              }
+              const boldParts = line.split('**');
+              if (boldParts.length > 1) {
+                  return <p key={i} style={{ marginBottom: '14px' }}>
+                    {boldParts.map((part, idx) => idx % 2 === 1 ? <strong key={idx} style={{ color: THEME.red || '#d9363e' }}>{part}</strong> : part)}
+                  </p>;
+              }
+              return <p key={i} style={{ marginBottom: '14px' }}>{line}</p>;
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '10px 0' }}>
             <div style={{ backgroundColor: '#fafafa', border: '1px dashed #ccc', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
                 <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖千字深度命書，您將獲得：</div>
                 <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
                 <li>引述古文印證，剖析日主核心靈魂</li>
-                <li>透視六親宮位，判斷原局「用神」與「大運喜神」的精確干支</li>
+                <li>透視六親宮位，精確判斷原局「用神」與天賦事業</li>
                 <li>深度財富格局分析，量身打造 **投資避險指南**</li>
                 <li>結合《黃帝內經》，揭示身體臟腑弱點與養生宜忌</li>
-                <li>{uiFortuneText}</li>
+                <li>**獨家剖析當前【十年大運】，指引人生黃金期與潛藏危機**</li>
+                <li>{uiFortuneText}（含事業、姻緣、疾厄分類及流月預警）</li>
                 <li>**只要在付費後一年內預約任何玄學項目，本次解鎖的費用即可在完成服務後全額抵銷**</li>
                 </ul>
             </div>
@@ -1420,7 +1571,6 @@ const AiBaziAnalysis = ({ data }) => {
                     borderRadius: '30px', 
                     cursor: 'pointer', 
                     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-                    // 🌟 關鍵修改：改成垂直排列，讓兩段內容上下分佈
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
@@ -1428,21 +1578,19 @@ const AiBaziAnalysis = ({ data }) => {
                     gap: '4px' 
                 }}
             >
-                {/* 第一行：圖示 + 主標題 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px' }}>
                     <Unlock size={18} /> 單次付費$198解鎖
                 </div>
                 
-                {/* 第二行：付款方式說明 (字體調小、稍微透明，增加層次感) */}
                 <div style={{ fontSize: '12px', fontWeight: 'normal', opacity: 0.8 }}>
                     (支援信用卡 / Apple Pay / Google Pay等)
                 </div>
             </button>
-            </div>
-        )}
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
         </div>
-    );
+      )}
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+    </div>
+  );
 };
 
 // --- BaziResult (八字結果) ---
