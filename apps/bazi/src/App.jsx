@@ -1004,6 +1004,115 @@ const PillarCard = ({
    );
 };
 
+// --- 姓名學 81 格大吉數及短評 (全域共用) ---
+const EIGHTY_ONE_ATTR = {
+    1: "繁榮發達，信用得固 (大吉)", 3: "根深蒂固，蒸蒸日上 (大吉)", 5: "陰陽和合，生意欣榮 (大吉)",
+    6: "萬寶集門，天降幸運 (大吉)", 7: "獨營生意，和氣致祥 (吉)", 8: "努力發達，貫徹志望 (吉)",
+    11: "草木逢春，穩健踏實 (大吉)", 13: "智略超群，富有奇謀 (大吉)", 15: "謙恭做事，外得人和 (大吉)",
+    16: "能獲眾望，成就大業 (大吉)", 17: "排除萬難，有貴人助 (吉)", 18: "經商做事，順利昌隆 (吉)",
+    21: "專心經營，善用智慧 (吉)", 23: "旭日東昇，名顯四方 (大吉)", 24: "錦繡前程，須靠自力 (大吉)",
+    25: "天時地利，只欠人和 (吉)", 29: "如龍得雲，青雲直上 (大吉)", 31: "此數大吉，名利雙收 (大吉)",
+    32: "池中之龍，風雲際會 (大吉)", 33: "意氣用事，人和必失 (吉)", 35: "處事嚴謹，進退保守 (吉)",
+    37: "逢凶化吉，吉人天相 (吉)", 39: "雲開見月，雖勞無怨 (吉)", 41: "天賦吉運，德望兼備 (大吉)",
+    45: "新生泰和，順風揚帆 (吉)", 47: "開花結果，權威進達 (大吉)", 48: "青松立鶴，智謀兼備 (吉)",
+    52: "草木逢春，雨過天晴 (吉)", 57: "寒雪青松，最大榮昌 (吉)", 61: "雲遮半月，百隱風波 (吉)",
+    63: "萬物化育，繁榮之象 (大吉)", 65: "吉星高照，萬事無阻 (大吉)", 67: "利路亨通，萬商雲集 (吉)",
+    68: "智慮周祥，集眾信達 (吉)", 81: "最吉之數，還本歸元 (大吉)"
+};
+
+// --- 專業姓名學五格圖表組件 (含詩詞尋源) ---
+const NameCardLayout = ({ surname, name1, name2, s0, s1, s2, tonePattern, p1, p2 }) => {
+    const tian = s0 + 1;
+    const ren = s0 + s1;
+    const di = s1 + s2;
+    const wai = s2 + 1;
+    const zong = s0 + s1 + s2;
+
+    const getWx = (num) => {
+        const d = num % 10;
+        if (d===1||d===2) return '木';
+        if (d===3||d===4) return '火';
+        if (d===5||d===6) return '土';
+        if (d===7||d===8) return '金';
+        return '水';
+    };
+
+    const green = "#27ae60"; 
+    const blue = "#0984e3";  
+    const red = "#d63031";   
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #e0e0e0', padding: '20px', borderRadius: '12px', marginBottom: '16px', backgroundColor: '#fafafa', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            
+            {/* 上半部：圖表與短評 */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                <div style={{ position: 'relative', width: '220px', height: '200px', flexShrink: 0, margin: '0 auto', fontFamily: 'sans-serif' }}>
+                    <svg width="220" height="200" style={{ position: 'absolute', top: 0, left: 0 }}>
+                        <path d="M 75 25 Q 55 25 55 85 Q 55 145 75 145" fill="transparent" stroke={green} strokeWidth="1" />
+                        <path d="M 105 25 Q 125 25 125 45 Q 125 65 105 65" fill="transparent" stroke={green} strokeWidth="1" />
+                        <path d="M 105 65 Q 125 65 125 85 Q 125 105 105 105" fill="transparent" stroke={green} strokeWidth="1" />
+                        <path d="M 105 105 Q 125 105 125 125 Q 125 145 105 145" fill="transparent" stroke={green} strokeWidth="1" />
+                        <line x1="30" y1="165" x2="190" y2="165" stroke={green} strokeWidth="1" />
+                    </svg>
+                    
+                    <div style={{ position: 'absolute', left: '10px', top: '75px', textAlign: 'center', width: '40px' }}>
+                        <div style={{ fontSize: '11px', color: '#000' }}>外格 <span style={{color: red}}>{wai}</span></div>
+                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWx(wai)}</div>
+                    </div>
+
+                    <div style={{ position: 'absolute', left: '85px', top: '15px', fontSize: '12px', color: red }}>1</div>
+                    
+                    <div style={{ position: 'absolute', left: '80px', top: '48px', fontSize: '20px', color: blue }}>{surname}</div>
+                    <div style={{ position: 'absolute', left: '105px', top: '56px', fontSize: '11px', color: red }}>{s0}</div>
+
+                    <div style={{ position: 'absolute', left: '80px', top: '88px', fontSize: '20px', color: blue }}>{name1}</div>
+                    <div style={{ position: 'absolute', left: '105px', top: '96px', fontSize: '11px', color: red }}>{s1}</div>
+
+                    <div style={{ position: 'absolute', left: '80px', top: '128px', fontSize: '20px', color: blue }}>{name2}</div>
+                    <div style={{ position: 'absolute', left: '105px', top: '136px', fontSize: '11px', color: red }}>{s2}</div>
+
+                    <div style={{ position: 'absolute', left: '130px', top: '35px', width: '60px' }}>
+                        <div style={{ fontSize: '11px', color: '#000' }}>天格 <span style={{color: red}}>{tian}</span></div>
+                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWx(tian)}</div>
+                    </div>
+                    <div style={{ position: 'absolute', left: '130px', top: '75px', width: '60px' }}>
+                        <div style={{ fontSize: '11px', color: '#000' }}>人格 <span style={{color: red}}>{ren}</span></div>
+                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWx(ren)}</div>
+                    </div>
+                    <div style={{ position: 'absolute', left: '130px', top: '115px', width: '60px' }}>
+                        <div style={{ fontSize: '11px', color: '#000' }}>地格 <span style={{color: red}}>{di}</span></div>
+                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWx(di)}</div>
+                    </div>
+
+                    <div style={{ position: 'absolute', left: '0', top: '175px', width: '220px', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ fontSize: '12px', color: '#000' }}><span style={{color: red}}>{zong}</span> 總格</div>
+                        <div style={{ fontSize: '14px', color: green }}>{getWx(zong)}</div>
+                    </div>
+                </div>
+
+                <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', fontSize: '14px', color: '#333' }}>
+                    <div><strong style={{ color: '#000' }}>人格 ({ren}畫) 主運：</strong><br/><span style={{ color: '#555' }}>{EIGHTY_ONE_ATTR[ren] || '吉'}</span></div>
+                    <div><strong style={{ color: '#000' }}>地格 ({di}畫) 前運：</strong><br/><span style={{ color: '#555' }}>{EIGHTY_ONE_ATTR[di] || '吉'}</span></div>
+                    <div><strong style={{ color: '#000' }}>總格 ({zong}畫) 後運：</strong><br/><span style={{ color: '#555' }}>{EIGHTY_ONE_ATTR[zong] || '吉'}</span></div>
+                    <div><strong style={{ color: '#000' }}>外格 ({wai}畫) 輔運：</strong><br/><span style={{ color: '#555' }}>{EIGHTY_ONE_ATTR[wai] || '吉'}</span></div>
+                </div>
+            </div>
+
+            {/* 下半部：古典詩詞藏頭尋源 */}
+            <div style={{ width: '100%', marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #ccc', fontSize: '13px', color: '#444', lineHeight: '1.6' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ color: '#8e44ad', fontWeight: 'bold', fontSize: '15px' }}>📜 古典詩詞尋源</span>
+                    <span style={{ fontSize: '12px', backgroundColor: '#e8daef', color: '#8e44ad', padding: '2px 8px', borderRadius: '12px' }}>
+                        音律：{tonePattern}
+                    </span>
+                </div>
+                <div style={{ marginBottom: '4px' }}><strong style={{color:'#000', fontSize:'15px'}}>「{name1}」</strong>：{p1}</div>
+                <div><strong style={{color:'#000', fontSize:'15px'}}>「{name2}」</strong>：{p2}</div>
+            </div>
+        </div>
+    );
+};
+
 const AiBaziAnalysis = ({ data }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -1012,11 +1121,13 @@ const AiBaziAnalysis = ({ data }) => {
   useEffect(() => {
       if (data.isPaid && !analysisResult) {
           setIsPaid(true);
-          setAnalysisResult(generateLongReport());
+          setTimeout(() => {
+              try { setAnalysisResult(generateLongReport(false)); } 
+              catch (e) { console.error("Report Generation Error:", e); }
+          }, 50);
       }
   }, [data, analysisResult]);
 
-  // --- 內部知識庫：滴天髓古文佐證 ---
   const DI_TIAN_SUI = {
     '甲': '「甲木參天，脫胎要火。春不容金，秋不容土。火熾乘龍，水宕騎虎。地潤天和，植立千古。」',
     '乙': '「乙木雖柔，刲羊解牛。懷丁抱丙，跨鳳乘猴。虛濕之地，騎馬亦憂。藤蘿繫甲，可春可秋。」',
@@ -1030,7 +1141,6 @@ const AiBaziAnalysis = ({ data }) => {
     '癸': '「癸水至弱，達於天津。得龍而運，功化斯神。不愁火土，不論庚辛。合戊見火，化象斯真。」'
   };
 
-  // 🌟 新增：滴天髓白話文詳細解析
   const DI_TIAN_SUI_DESC = {
     '甲': '甲木就像高聳入雲的大樹。如果在春天出生（木旺），需要「火」來發洩它的生機（木生火，即「食傷洩秀」），才能開花結果，脫胎換骨。春天木極旺，金來剋木反而會導致刀刃捲口；秋天金極旺，此時甲木凋零，若再見厚土生金，甲木必死無疑。如果八字火勢太猛，甲木需要坐在「辰」（即龍，辰為濕土）上來散火培根；如果水勢滔天，甲木需要坐在「寅」（即虎，寅為木之本氣）上，才能吸收水分並穩固根基。只要地支有適當的水分潤澤，天干氣候調和，甲木就能萬古長青。',
     '乙': '乙木雖然柔軟如花草，但它的根鬚極具穿透力，能夠剋制並疏通「未」（羊）和「丑」（牛）這兩種堅硬的土。只要天干有丙火、丁火保護，乙木就敢騎在「酉」（鳳/雞）和「申」（猴）這兩個強大的金之上，不怕被砍伐。如果八字充滿了水（虛濕之地），乙木根部腐爛，此時就算坐在「午」（馬，火）上，火也會被旺水撲滅，乙木依舊堪憂。這是乙木最著名的生存哲學：只要八字裡有「甲木」，乙木就像藤蔓纏繞著參天大樹，無論春夏秋冬都能屹立不倒（即依靠貴人、合夥人）。',
@@ -1055,13 +1165,9 @@ const AiBaziAnalysis = ({ data }) => {
   const getRelations = (dayWuxing) => {
     const cycle = ['木', '火', '土', '金', '水'];
     const idx = cycle.indexOf(dayWuxing);
-    return {
-      same: dayWuxing, produce: cycle[(idx + 1) % 5], control: cycle[(idx + 2) % 5],
-      controlledBy: cycle[(idx + 3) % 5], producedBy: cycle[(idx + 4) % 5]
-    };
+    return { same: dayWuxing, produce: cycle[(idx + 1) % 5], control: cycle[(idx + 2) % 5], controlledBy: cycle[(idx + 3) % 5], producedBy: cycle[(idx + 4) % 5] };
   };
 
-  // 高相容性：地支合化引擎
   const analyzeCombinations = (zhis) => {
       const combos = [];
       const potentialCombos = []; 
@@ -1074,11 +1180,7 @@ const AiBaziAnalysis = ({ data }) => {
           let i1 = [], i2 = [];
           zhis.forEach((z, i) => { if(z===z1) i1.push(i); if(z===z2) i2.push(i); });
           if (i1.length > 0 && i2.length > 0) {
-              i1.forEach(a => {
-                  i2.forEach(b => {
-                      if (Math.abs(a - b) === 1) isAdj = true;
-                  });
-              });
+              i1.forEach(a => { i2.forEach(b => { if (Math.abs(a - b) === 1) isAdj = true; }); });
           }
           return { exists: i1.length > 0 && i2.length > 0, isAdj };
       };
@@ -1093,56 +1195,38 @@ const AiBaziAnalysis = ({ data }) => {
       if (!used.has('酉') && has('巳') && has('酉') && has('丑')) { combos.push('巳酉丑三合金局'); wuxingSupport['金'] += 1.5; used.add('巳'); used.add('酉'); used.add('丑'); }
       if (!used.has('子') && has('申') && has('子') && has('辰')) { combos.push('申子辰三合水局'); wuxingSupport['水'] += 1.5; used.add('申'); used.add('子'); used.add('辰'); }
 
-      const banHeList = [
-          ['亥', '卯', '木'], ['卯', '未', '木'],
-          ['寅', '午', '火'], ['午', '戌', '火'],
-          ['巳', '酉', '金'], ['酉', '丑', '金'],
-          ['申', '子', '水'], ['子', '辰', '水']
-      ];
+      const banHeList = [ ['亥', '卯', '木'], ['卯', '未', '木'], ['寅', '午', '火'], ['午', '戌', '火'], ['巳', '酉', '金'], ['酉', '丑', '金'], ['申', '子', '水'], ['子', '辰', '水'] ];
       banHeList.forEach(item => {
           const z1 = item[0], z2 = item[1], wx = item[2];
           if (!used.has(z1) && !used.has(z2)) {
               const rel = checkRel(z1, z2);
               if (rel.exists) {
-                  if (rel.isAdj) {
-                      combos.push(`${z1}${z2}半合${wx}`);
-                      wuxingSupport[wx] += 1;
-                  } else {
-                      potentialCombos.push(`${z1}${z2}半合${wx}局`);
-                      wuxingSupport[wx] += 0.5;
-                  }
+                  if (rel.isAdj) { combos.push(`${z1}${z2}半合${wx}`); wuxingSupport[wx] += 1; } 
+                  else { potentialCombos.push(`${z1}${z2}半合${wx}局`); wuxingSupport[wx] += 0.5; }
                   used.add(z1); used.add(z2);
               }
           }
       });
-
-      const liuHeList = [
-          ['子', '丑', '土'], ['寅', '亥', '木'],
-          ['卯', '戌', '火'], ['辰', '酉', '金'],
-          ['巳', '申', '水'], ['午', '未', '火']
-      ];
+      
+      const liuHeList = [ ['子', '丑', '土'], ['寅', '亥', '木'], ['卯', '戌', '火'], ['辰', '酉', '金'], ['巳', '申', '水'], ['午', '未', '火'] ];
       liuHeList.forEach(item => {
           const z1 = item[0], z2 = item[1], wx = item[2];
           if (!used.has(z1) && !used.has(z2)) {
               const rel = checkRel(z1, z2);
               if (rel.exists) {
-                  if (rel.isAdj) {
-                      combos.push(`${z1}${z2}六合${wx}`);
-                      wuxingSupport[wx] += 1;
-                  } else {
-                      potentialCombos.push(`${z1}${z2}六合${wx}局`);
-                      wuxingSupport[wx] += 0.5;
-                  }
+                  if (rel.isAdj) { combos.push(`${z1}${z2}六合${wx}`); wuxingSupport[wx] += 1; } 
+                  else { potentialCombos.push(`${z1}${z2}六合${wx}局`); wuxingSupport[wx] += 0.5; }
                   used.add(z1); used.add(z2);
               }
           }
       });
 
+      // 🌟 【已補回】暗拱 (Dark Arches) 檢查邏輯
       if (has('申') && has('辰') && !has('子')) { combos.push('申辰暗拱子水'); wuxingSupport['水'] += 0.5; }
       if (has('亥') && has('未') && !has('卯')) { combos.push('亥未暗拱卯木'); wuxingSupport['木'] += 0.5; }
       if (has('寅') && has('戌') && !has('午')) { combos.push('寅戌暗拱午火'); wuxingSupport['火'] += 0.5; }
       if (has('巳') && has('丑') && !has('酉')) { combos.push('巳丑暗拱酉金'); wuxingSupport['金'] += 0.5; }
-      
+
       if (has('寅') && has('辰') && !has('卯')) { combos.push('寅辰暗拱卯木'); wuxingSupport['木'] += 0.5; }
       if (has('巳') && has('未') && !has('午')) { combos.push('巳未暗拱午火'); wuxingSupport['火'] += 0.5; }
       if (has('申') && has('戌') && !has('酉')) { combos.push('申戌暗拱酉金'); wuxingSupport['金'] += 0.5; }
@@ -1162,8 +1246,7 @@ const AiBaziAnalysis = ({ data }) => {
       return info[wuxing] || info['水'];
   };
 
-  // 綜合生成千字深度報告
-  const generateLongReport = () => {
+  const generateLongReport = (isAdmin = false) => {
     const { bazi, genderText } = data;
     const wx = getCounts();
     const dm = bazi.dayGan;
@@ -1179,9 +1262,7 @@ const AiBaziAnalysis = ({ data }) => {
     const totalSelfPower = baseSelfCount + comboSupportCount;
 
     const isMonthFavorable = ['same', 'producedBy'].includes(Object.keys(rel).find(k => rel[k] === monthZhiWuxing));
-    
     const isStrong = totalSelfPower >= 4.5 || (isMonthFavorable && totalSelfPower >= 3.5);
-    
     const favWuxing = isStrong ? [rel.control, rel.produce, rel.controlledBy] : [rel.producedBy, rel.same];
     const primaryFav = favWuxing[0];
 
@@ -1214,10 +1295,8 @@ const AiBaziAnalysis = ({ data }) => {
     let report = `### 一、 原局總論與古典格局剖析\n`;
     
     report += `閣下為**【${dm}${dmWuxing}】**日元，生於${season}${bazi.monthZhi}月。\n`;
-    
-    // 🌟 這裡插入了古文與對應的詳細白話文解釋
-    report += `《滴天髓》云：${DI_TIAN_SUI[dm]}\n\n`;
-    report += `- ${DI_TIAN_SUI_DESC[dm]}\n\n`;
+    report += `《滴天髓》云：${DI_TIAN_SUI[dm] || ''}\n\n`;
+    report += `- ${DI_TIAN_SUI_DESC[dm] || ''}\n\n`;
     report += `原局地支`;
     
     if (combos.length > 0 || potentialCombos.length > 0) {
@@ -1310,9 +1389,9 @@ const AiBaziAnalysis = ({ data }) => {
     if (['子', '午', '卯', '酉'].includes(bazi.dayZhi)) {
         report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四正星）**。代表命定之另一半多半外貌姣好、氣質出眾，性格較為直率、愛恨分明。\n`;
     } else if (['寅', '申', '巳', '亥'].includes(bazi.dayZhi)) {
-        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四馬星）**。代表命定之另一半性格活潑外向、機智敏捷，具備極佳的溝通與適應能力。\n`;
+        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四驛馬）**。代表命定之另一半性格活潑外向、機智敏捷，具備極佳的溝通與適應能力。\n`;
     } else {
-        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四庫星）**。代表命定之另一半性格沉穩、踏實，非常有責任感與傳統家庭觀念。\n`;
+        report += `閣下夫妻宮坐落於**【${bazi.dayZhi}】（四墓庫）**。代表命定之另一半性格沉穩、踏實，非常有責任感與傳統家庭觀念。\n`;
     }
 
     let spouseDesc = '';
@@ -1329,8 +1408,8 @@ const AiBaziAnalysis = ({ data }) => {
         case '卩': spouseDesc = '代表對方思想獨特、直覺敏銳，性格較為內斂。'; break;
     }
     
-    const spouseTenGodFullName = TEN_GOD_FULL_NAME[spouseTenGod] || spouseTenGod;
-    report += `- 夫妻宮內藏**【${spouseTenGodFullName}】**星，${spouseDesc}\n`;
+    const spouseTenGodFullName2 = TEN_GOD_FULL_NAME[spouseTenGod] || spouseTenGod;
+    report += `夫妻宮內藏**【${spouseTenGodFullName2}】**星，${spouseDesc}\n`;
 
     if (hasPeach) {
         report += `- 另外，本命多合或帶桃花紅鸞，代表閣下人緣極佳，易與人有關連牽扯，多應於男女之事，即多人追求，或易給人有追求者的感覺。\n\n`;
@@ -1381,7 +1460,7 @@ const AiBaziAnalysis = ({ data }) => {
         const dyZhiWuxing = WUXING_MAP[currentDaYun.zhi];
         const isDyGood = favWuxing.includes(dyGanWuxing) || favWuxing.includes(dyZhiWuxing);
         
-        report += `大運管十年大局，閣下於 ${currentDaYun.startYear} 年至 ${currentDaYun.startYear + 9} 年，正行**【${currentDaYun.gan}${currentDaYun.zhi}】**大運，此十年是閣下人生軌跡中極為關鍵的轉折樞紐。命理中，天干**【${currentDaYun.gan}】**主導前五年的外在境遇與表象，地支【${currentDaYun.zhi}】則掌管後五年的潛在能量與真實收穫。\n\n`;
+        report += `大運管十年大局，閣下於 ${currentDaYun.startYear} 年至 ${currentDaYun.startYear + 9} 年，正行**【${currentDaYun.gan}${currentDaYun.zhi}】**大運，此十年是閣下人生軌跡中極為關鍵的轉折樞紐。命理中，天干**【${currentDaYun.gan}】**主導前五年的外在境遇與表象，地支**【${currentDaYun.zhi}】**則掌管後五年的潛在能量與真實收穫。\n\n`;
         
         if (isDyGood) {
             report += `- 此大運五行帶有「${dyGanWuxing}${dyZhiWuxing}」之氣，正中閣下命中喜用之神，氣場猶如「枯木逢春，揚帆順水」。在這十年間，閣下的思維將變得格外清晰，判斷力敏銳，能夠精準捕捉到市場或職場上的隱藏機遇。外在境遇上，人緣關係將變得空前緊密，極易得到長輩、長官或權威人士的賞識與提攜，主「事業突破，大勢向好」。\n`;
@@ -1407,8 +1486,8 @@ const AiBaziAnalysis = ({ data }) => {
     targetYears.forEach((targetYear) => {
         const tgIdx = (targetYear - 4) % 10;
         const tzIdx = (targetYear - 4) % 12;
-        const tGan = TIANGAN[tgIdx >= 0 ? tgIdx : tgIdx + 10];
-        const tZhi = DIZHI[tzIdx >= 0 ? tzIdx : tzIdx + 12];
+        const tGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'][tgIdx >= 0 ? tgIdx : tgIdx + 10];
+        const tZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'][tzIdx >= 0 ? tzIdx : tzIdx + 12];
         const isYearGood = favWuxing.includes(WUXING_MAP[tGan]) || favWuxing.includes(WUXING_MAP[tZhi]);
         const tZhiWx = WUXING_MAP[tZhi];
         const isZhiFav = favWuxing.includes(tZhiWx);
@@ -1439,10 +1518,10 @@ const AiBaziAnalysis = ({ data }) => {
         report += `**姻緣運勢：**\n`;
         if (isYearGood) {
             report += `- **若閣下現時未婚：** 此年天干地支引動，感情上有機會認識不錯的對象。${hasPeach ? '命中帶桃花，異性緣尤佳，但仍需帶眼識人，避免霧水情緣。' : '宜多參與社交活動，擴展人脈，自然能遇見懂得欣賞您的理想伴侶。'}\n`;
-            report += `- **若閣下現時已婚：** 此年感情生活大致平穩。但日常相處仍需注意因「${marriedFriction}」而生磨擦。建議多包容對方，尋找共同興趣，感情方能進一步昇華。\n`;
+            report += `- **若閣下已婚：** 此年感情生活大致平穩。但日常相處仍需注意因「${marriedFriction}」而生磨擦。建議多包容對方，尋找共同興趣，感情方能進一步昇華。\n`;
         } else {
             report += `- **若閣下現時未婚：** 此年感情運勢較為平淡或易生波折。${hasPeach ? '雖有假姻緣突至，但往往開心一陣子後便要收拾心情。' : '前度若有糾纏不清的意味，情深緣淺，勉強復合最終亦會再次分離，建議早日放手。'}應將重心放在事業與自我充實上。\n`;
-            report += `- **若閣下現時已婚：** 此年流年氣場動盪，婚姻生活易受考驗。極易因「${marriedFriction}」爆發較大爭執。${hasPeach ? '特別需防範外來誘惑，必然不懷好意，切勿因一時意亂情迷而影響家宅安寧。' : '逢流年沖剋之時，需特別防範無謂爭執，學習柔軟溝通，退一步海闊天空。'}\n`;
+            report += `- **若閣下已婚：** 此年流年氣場動盪，婚姻生活易受考驗。極易因「${marriedFriction}」爆發較大爭執。${hasPeach ? '特別需防範外來誘惑，必然不懷好意，切勿因一時意亂情迷而影響家宅安寧。' : '逢流年沖剋之時，需特別防範無謂爭執，學習柔軟溝通，退一步海闊天空。'}\n`;
         }
 
         report += `**疾厄與健康：**\n`;
@@ -1490,8 +1569,170 @@ const AiBaziAnalysis = ({ data }) => {
 
     report += `### 七、 開運與吉方建議\n`;
     const lk = getLuckyInfo(primaryFav);
-    report += `- **吉利方位：** 閣下之爵祿與開運位在**${lk.dir}**，可在此方位擺放生旺之物。\n`;
-    report += `- **幸運色系：** 日常穿著宜以**${lk.color}**為主調，有助調和氣場。\n\n`;
+    report += `- **吉利方位：** 閣下之爵祿與開運位在**${lk.dir}**。\n`;
+    report += `- **幸運色系：** 日常穿著宜以**${lk.color}**為主調。\n\n`;
+
+    // 👑 專屬改名建議邏輯
+    if (isAdmin) {
+        report += `\n### 👑 專屬改名建議 (內部解鎖限定)\n`;
+        report += `根據八字喜忌，閣下之喜用神為**【${favWuxing.join('、')}】**。以下為您推薦符合康熙字典五行、三才五格大吉，且蘊含古典詩詞之美的精選好名。\n`;
+
+        const nameStr = data.name || '未命名';
+        const surname = nameStr.charAt(0);
+        // 🌟 【已補回】最完整的百家姓庫，許字 11 畫正確標註
+        const KANGXI_SURNAMES = { 
+            '李':{s:7,t:'仄'}, '王':{s:4,t:'平'}, '張':{s:11,t:'平'}, '劉':{s:15,t:'平'}, '陳':{s:16,t:'平'}, 
+            '楊':{s:13,t:'平'}, '黃':{s:12,t:'平'}, '趙':{s:14,t:'仄'}, '周':{s:8,t:'平'}, '吳':{s:7,t:'平'}, 
+            '徐':{s:10,t:'平'}, '孫':{s:10,t:'平'}, '朱':{s:6,t:'平'}, '馬':{s:10,t:'仄'}, '胡':{s:11,t:'平'}, 
+            '郭':{s:15,t:'仄'}, '林':{s:8,t:'平'}, '何':{s:7,t:'平'}, '高':{s:10,t:'平'}, '梁':{s:11,t:'平'}, 
+            '鄭':{s:19,t:'仄'}, '羅':{s:20,t:'平'}, '宋':{s:7,t:'仄'}, '謝':{s:17,t:'仄'}, '唐':{s:10,t:'平'},
+            '韓':{s:17,t:'平'}, '曹':{s:11,t:'平'}, '許':{s:11,t:'仄'}, '鄧':{s:19,t:'仄'}, '蕭':{s:18,t:'平'},
+            '馮':{s:12,t:'平'}, '曾':{s:12,t:'平'}, '蔡':{s:17,t:'仄'}, '彭':{s:12,t:'平'}, '潘':{s:15,t:'平'},
+            '袁':{s:10,t:'平'}, '于':{s:3,t:'平'}, '董':{s:15,t:'仄'}, '余':{s:7,t:'平'}, '蘇':{s:22,t:'平'},
+            '葉':{s:15,t:'仄'}, '呂':{s:7,t:'仄'}, '魏':{s:18,t:'仄'}, '蔣':{s:17,t:'仄'}, '田':{s:5,t:'平'},
+            '杜':{s:7,t:'仄'}, '丁':{s:2,t:'平'}, '沈':{s:8,t:'仄'}, '姜':{s:9,t:'平'}, '范':{s:11,t:'仄'},
+            '江':{s:7,t:'平'}, '傅':{s:12,t:'仄'}, '鍾':{s:17,t:'平'}, '盧':{s:16,t:'平'}, '汪':{s:8,t:'平'},
+            '戴':{s:18,t:'仄'}, '崔':{s:11,t:'平'}, '任':{s:6,t:'仄'}, '陸':{s:16,t:'仄'}, '廖':{s:14,t:'仄'},
+            '姚':{s:9,t:'平'}, '方':{s:4,t:'平'}, '熊':{s:14,t:'平'}, '史':{s:5,t:'仄'}, '顧':{s:21,t:'仄'},
+            '侯':{s:9,t:'平'}, '邵':{s:12,t:'仄'}, '孟':{s:8,t:'仄'}, '龍':{s:16,t:'平'}, '萬':{s:15,t:'仄'},
+            '段':{s:9,t:'仄'}, '雷':{s:13,t:'平'}, '錢':{s:16,t:'平'}, '湯':{s:13,t:'平'}, '尹':{s:4,t:'仄'},
+            '易':{s:8,t:'仄'}, '黎':{s:15,t:'平'}, '賴':{s:16,t:'仄'}, '莊':{s:13,t:'平'} 
+        };
+        
+        let surInfo = KANGXI_SURNAMES[surname] || {s:10, t:'平'};
+        let surnameStrokes = surInfo.s;
+        let surnameTone = surInfo.t;
+
+        report += `- **姓氏分析：** ${surname} (康熙筆畫：${surnameStrokes}畫 | 聲調：${surnameTone})\n`;
+
+        const parseChars = (arr) => arr.map(str => {
+            const [c, s, t, p] = str.split('|');
+            return { c, s: Number(s), t, p };
+        });
+
+        const CHARS = {
+            '金': parseChars([
+                '瑞|14|仄|瑞氣氤氳梅花白 (陸游)','誠|14|平|誠知此恨人人有 (晏殊)','詩|13|平|詩家清景在新春 (白居易)',
+                '錦|16|仄|錦瑟無端五十弦 (李商隱)','鈞|12|平|萬鈞雷動驚天地 (蘇軾)','睿|14|仄|睿思高遠照古今 (王勃)',
+                '齊|14|平|齊紈魯縞車班班 (李白)','楚|13|仄|楚天千里清秋 (辛棄疾)','琛|13|平|西江漫有水底琛 (杜牧)',
+                '銘|14|平|銘心空仰止 (王安石)','鋒|15|平|劍拔沉埋便倚鋒 (陸游)','靜|16|仄|靜女其姝 (詩經)',
+                '鈴|13|平|風動金鈴響 (李白)','鈺|13|仄|鈺潤冰清 (古文)','瑄|14|平|瑄玉無瑕 (古文)',
+                '翠|14|仄|翠竹黃花皆佛性 (蘇軾)','銳|15|仄|銳氣凌雲 (陸游)','劍|15|仄|劍外忽傳收薊北 (杜甫)',
+                '錚|16|平|錚錚鐵骨 (古文)','錫|16|平|錫命乘恩 (詩經)','鋼|16|平|百煉成鋼 (古語)',
+                '駿|17|仄|駿馬驕行踏落花 (李白)','鍾|17|平|鍾情流水 (陶淵明)','馨|20|平|惟吾德馨 (劉禹錫)'
+            ]),
+            '水': parseChars([
+                '子|3|仄|子建辭清 (杜甫)','宏|7|平|宏圖大展 (古語)','希|7|平|大音希聲 (老子)',
+                '沐|8|仄|沐浴清風 (古文)','沛|8|仄|沛然大雨 (孟子)','沁|8|仄|沁人心脾 (古語)',
+                '治|9|仄|治國安邦 (古文)','法|9|仄|道法自然 (老子)','波|9|平|波撼岳陽城 (孟浩然)',
+                '泰|9|仄|泰山不讓土壤 (李斯)','泉|9|平|清泉石上流 (王維)','泓|9|平|泓泓湛清波 (白居易)',
+                '洋|10|平|洋洋灑灑 (古語)','洛|10|仄|洛陽親友如相問 (王昌齡)','浩|11|仄|浩蕩離愁白日斜 (龔自珍)',
+                '海|11|仄|海內存知己 (王勃)','添|12|平|紅袖添香 (古文)','清|12|平|明月清風 (蘇軾)',
+                '淵|12|平|淵渟岳峙 (古文)','涵|12|平|涵虛混太清 (孟浩然)','淑|12|仄|窈窕淑女 (詩經)',
+                '淇|12|平|淇水滺滺 (詩經)','淳|12|平|淳風美俗 (古文)','湘|13|平|湘水無情 (李白)',
+                '源|14|平|為有源頭活水來 (朱熹)','滿|15|仄|滿城盡帶黃金甲 (黃巢)','潤|16|仄|潤物細無聲 (杜甫)',
+                '澄|16|平|澄江淨如練 (謝朓)','潔|16|仄|潔身自好 (孟子)','澈|16|仄|清澈見底 (古文)',
+                '霖|16|平|沛雨甘霖 (古文)','澤|17|平|氣蒸雲夢澤 (孟浩然)','濤|18|平|驚濤拍岸 (蘇軾)'
+            ]),
+            '木': parseChars([
+                '木|4|仄|草木有本心 (張九齡)','本|5|仄|本是同根生 (曹植)','竹|6|仄|竹杖芒鞋輕勝馬 (蘇軾)',
+                '朵|6|仄|千朵萬朵壓枝低 (杜甫)','杏|7|仄|紅杏枝頭春意鬧 (宋祁)','村|7|平|柳暗花明又一村 (陸游)',
+                '言|7|平|言為心聲 (古文)','君|7|平|君不見黃河之水 (李白)','林|8|平|停車坐愛楓林晚 (杜牧)',
+                '柏|9|仄|歲寒然後知松柏 (孔子)','柔|9|平|柔情似水 (秦觀)','芷|10|仄|岸芷汀蘭 (范仲淹)',
+                '芸|10|平|芸芸眾生 (老子)','桐|10|平|梧桐更兼細雨 (李清照)','芳|10|平|芳草鮮美 (陶淵明)',
+                '芝|10|平|芝蘭生於深林 (孔子)','茂|11|仄|茂林修竹 (王羲之)','若|11|仄|人生若只如初見 (納蘭性德)',
+                '茉|11|仄|茉莉香風 (古文)','梓|11|仄|桑梓之情 (古文)','茗|12|平|品茗論道 (古文)',
+                '茵|12|平|綠草如茵 (古文)','茹|12|平|茹苦含辛 (古文)','雅|12|仄|溫文爾雅 (古文)',
+                '雁|12|仄|雁字回時 (李清照)','森|12|平|森羅萬象 (古文)','棟|12|仄|國家棟樑 (古文)',
+                '植|12|仄|植杖而耘 (陶淵明)','楚|13|仄|楚天千里清秋 (辛棄疾)','業|13|仄|安居樂業 (古文)'
+            ]),
+            '火': parseChars([
+                '丹|4|平|留取丹心照汗青 (文天祥)','丙|5|仄|丙火炎炎 (古文)','旦|5|仄|日月光華旦 (詩經)',
+                '冬|5|平|冬嶺秀寒松 (陶淵明)','立|5|仄|三十而立 (孔子)','光|6|平|光陰似箭 (古文)',
+                '全|6|平|全心全意 (古文)','兆|6|仄|瑞雪兆豐年 (古文)','同|6|平|天下大同 (禮記)',
+                '廷|7|平|朝廷之上 (古文)','志|7|仄|志當存高遠 (諸葛亮)','呈|7|平|呈祥獻瑞 (古文)',
+                '彤|7|平|彤雲密布 (水滸傳)','卓|8|仄|卓爾不群 (古文)','昕|8|平|昕昕向榮 (古文)',
+                '昊|8|仄|昊天罔極 (詩經)','旻|8|平|秋日旻天 (古文)','昆|8|平|昆山玉碎 (李賀)',
+                '昇|8|平|旭日東昇 (古文)','易|8|仄|易如反掌 (古文)','明|8|平|明月松間照 (王維)',
+                '炎|8|平|炎炎夏日 (古文)','俊|9|仄|俊秀挺拔 (古文)','亮|9|仄|打開天窗說亮話 (古文)',
+                '昱|9|仄|昱昱生輝 (古文)','映|9|仄|映日荷花別樣紅 (楊萬里)','炳|9|仄|炳蔚文章 (古文)'
+            ]),
+            '土': parseChars([
+                '尹|4|仄|尹氏之尊 (詩經)','允|4|仄|允文允武 (詩經)','友|4|仄|友誼長存 (古文)',
+                '宇|6|仄|氣宇軒昂 (古文)','安|6|平|長安一片月 (李白)','戌|6|平|戌時星宿 (古文)',
+                '辰|7|平|日月星辰 (古文)','均|7|平|勢均力敵 (古文)','延|7|平|延年益壽 (古文)',
+                '佑|7|仄|承天之佑 (古文)','岩|8|平|千岩萬壑 (古文)','坤|8|平|扭轉乾坤 (古文)',
+                '坦|8|仄|坦坦蕩蕩 (論語)','岳|8|仄|岳峙淵渟 (古文)','怡|9|平|心曠神怡 (范仲淹)',
+                '威|9|平|威風凜凜 (古文)','宥|9|仄|原宥寬恕 (古文)','奎|9|平|奎星高照 (古文)',
+                '音|9|平|大音希聲 (老子)','勇|9|仄|智勇雙全 (古文)','幽|9|平|曲徑通幽處 (常建)',
+                '容|10|平|有容乃大 (林則徐)','軒|10|平|氣宇軒昂 (古文)','城|10|平|連城之璧 (古文)',
+                '峻|10|仄|高山峻嶺 (古文)','峰|10|平|橫看成嶺側成峰 (蘇軾)','恩|10|平|恩重如山 (古文)',
+                '培|11|平|栽培之恩 (古文)','基|11|平|基業長青 (古文)','堂|11|平|登堂入室 (論語)'
+            ])
+        };
+
+        const AUSPICIOUS = Object.keys(EIGHTY_ONE_ATTR).map(Number);
+        
+        // --- 設定允許的黃金音律 ---
+        const ALLOWED_TONES = ['平平仄', '平仄平', '仄仄平', '仄平仄', '平平平', '仄平平', '平仄仄'];
+
+        let recommendations = [];
+        let pool = [];
+        favWuxing.forEach(wx => { if (CHARS[wx]) pool = pool.concat(CHARS[wx].map(item => ({...item, wx}))); });
+
+        for (let i = 0; i < pool.length; i++) {
+            for (let j = 0; j < pool.length; j++) {
+                if (i === j) continue; 
+                const c1 = pool[i];
+                const c2 = pool[j];
+                
+                // 1. 檢查三才五格
+                const renGe = surnameStrokes + c1.s;         
+                const diGe = c1.s + c2.s;                    
+                const zongGe = surnameStrokes + c1.s + c2.s; 
+                
+                // 2. 檢查平仄音律
+                const tonePattern = `${surnameTone}${c1.t}${c2.t}`;
+
+                if (AUSPICIOUS.includes(renGe) && AUSPICIOUS.includes(diGe) && AUSPICIOUS.includes(zongGe)) {
+                    if (ALLOWED_TONES.includes(tonePattern)) {
+                        recommendations.push({
+                            name1: c1.c, name2: c2.c, s1: c1.s, s2: c2.s,
+                            renGe, diGe, zongGe, tonePattern, p1: c1.p, p2: c2.p
+                        });
+                    }
+                }
+            }
+        }
+
+        // 🌟 嚴格去重邏輯：確保抽出的名字中單字絕不重複
+        if (recommendations.length > 0) {
+            recommendations.sort(() => 0.5 - Math.random()); // 洗牌
+            
+            const top = [];
+            const usedChars = new Set(); 
+            
+            for (let k = 0; k < recommendations.length; k++) {
+                const rec = recommendations[k];
+                if (!usedChars.has(rec.name1) && !usedChars.has(rec.name2) && rec.name1 !== rec.name2) {
+                    top.push(rec);
+                    usedChars.add(rec.name1); 
+                    usedChars.add(rec.name2); 
+                }
+                if (top.length === 10) break; // 選滿 10 組
+            }
+            
+            report += `\n- **【精選大吉詩意組合】** (符合喜神、81數理，過濾不雅音律，且單字完全不重複)：\n`;
+            
+            top.forEach(rec => {
+                // 使用分隔符 | 傳遞數據給組件解析
+                report += `[NAMECARD]:${surname}|${rec.name1}|${rec.name2}|${surnameStrokes}|${rec.s1}|${rec.s2}|${rec.tonePattern}|${rec.p1}|${rec.p2}\n`;
+            });
+            report += `\n*註：以上筆畫以康熙字典為準。您的平仄觀念非常好！系統已為您過濾掉「仄仄仄」等拗口音律，僅提供如「平平仄、仄平平」等黃金韻律組合。*\n\n`;
+        } else {
+            report += `\n- 根據您的姓氏，在目前的精選字庫中暫無完美匹配雙方五行與三才五格大吉的組合。建議由專業師傅依據您的完整八字與家族字輩進行人工造字。\n\n`;
+        }
+    }
     
     report += `本命書由【許甯博風水命理館】監修編撰。版權所有，翻印必究。\n\n`;
     report += `💡 **【專屬親算升級優惠】**\n若需針對合婚、擇日或投資決策尋找師傅親自批算，本次解鎖費用可於一年內預約服務時全額抵銷。\n\n`;
@@ -1500,31 +1741,32 @@ const AiBaziAnalysis = ({ data }) => {
     return report;
   };
 
-  const handleUnlock = async () => {
+  const handleUnlock = () => {
       setIsAnalyzing(true);
       setTimeout(() => {
-          setIsPaid(true);
-          setAnalysisResult(generateLongReport());
-          setIsAnalyzing(false);
-      }, 800); 
+          try {
+              setIsPaid(true);
+              setAnalysisResult(generateLongReport(false));
+          } catch (e) { console.error(e); alert("錯誤：" + e.message); } 
+          finally { setIsAnalyzing(false); }
+      }, 500); 
   };
 
   const handlePasswordUnlock = (e) => {
       e.stopPropagation(); 
       const password = prompt("請輸入後台授權解鎖密碼：");
       if (!password) return;
-      
-      if (password === "ningbo666" || password === "8888") {
+      if (password === "mrk888") {
           setIsAnalyzing(true);
           setTimeout(() => {
-              setIsPaid(true);
-              setAnalysisResult(generateLongReport());
-              setIsAnalyzing(false);
-              alert("🔓 密碼正確，已成功為您手動開啟命書！");
+              try {
+                  setIsPaid(true);
+                  setAnalysisResult(generateLongReport(true)); 
+                  alert("🔓 已為您手動開啟命書與【專屬改名建議】！");
+              } catch (e) { console.error(e); } 
+              finally { setIsAnalyzing(false); }
           }, 500);
-      } else {
-          alert("❌ 密碼錯誤，無法解鎖。");
-      }
+      } else { alert("❌ 密碼錯誤，無法解鎖。"); }
   };
 
   const uiDate = new Date();
@@ -1570,6 +1812,18 @@ const AiBaziAnalysis = ({ data }) => {
           }}>
             {analysisResult.split('\n').map((line, i) => {
               if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace('### ', '')}</h3>;
+              
+              if (line.startsWith('[NAMECARD]:')) {
+                  const dataStr = line.substring(11);
+                  const [sur, n1, n2, s0, s1, s2, tone, p1, p2] = dataStr.split('|');
+                  return <NameCardLayout 
+                            key={i} 
+                            surname={sur} name1={n1} name2={n2} 
+                            s0={Number(s0)} s1={Number(s1)} s2={Number(s2)} 
+                            tonePattern={tone} p1={p1} p2={p2}
+                         />;
+              }
+
               if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
               if (line.startsWith('**【') && line.endsWith('】**')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.teal, marginTop: '20px', marginBottom: '10px', fontSize: '17px', borderBottom: `2px dashed ${THEME.teal}`, paddingBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
               if (line.startsWith('- ')) {
@@ -1579,14 +1833,6 @@ const AiBaziAnalysis = ({ data }) => {
                       return <div key={i} style={{ marginLeft: '12px', marginBottom: '8px' }}>• {parts.map((part, idx) => idx % 2 === 1 ? <b key={idx} style={{color: '#333'}}>{part}</b> : part)}</div>;
                   }
                   return <div key={i} style={{ marginLeft: '12px', marginBottom: '8px' }}>• {content}</div>;
-              }
-              if (line.startsWith('  •')) {
-                  const content = line.substring(3);
-                  const parts = content.split('**');
-                  if (parts.length > 1) {
-                      return <div key={i} style={{ marginLeft: '24px', marginBottom: '6px', fontSize: '14px', color: '#444' }}>◦ {parts.map((part, idx) => idx % 2 === 1 ? <b key={idx} style={{color: '#333'}}>{part}</b> : part)}</div>;
-                  }
-                  return <div key={i} style={{ marginLeft: '24px', marginBottom: '6px', fontSize: '14px', color: '#444' }}>◦ {content}</div>;
               }
               const boldParts = line.split('**');
               if (boldParts.length > 1) {
@@ -1616,19 +1862,9 @@ const AiBaziAnalysis = ({ data }) => {
             <button 
                 onClick={handleUnlock} 
                 style={{ 
-                    width: '100%', 
-                    padding: '12px', 
-                    backgroundColor: THEME.black, 
-                    color: '#FFD700', 
-                    border: 'none', 
-                    borderRadius: '30px', 
-                    cursor: 'pointer', 
-                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    gap: '4px' 
+                    width: '100%', padding: '12px', backgroundColor: THEME.black, color: '#FFD700', 
+                    border: 'none', borderRadius: '30px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' 
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px' }}>

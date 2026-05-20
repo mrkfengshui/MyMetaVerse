@@ -183,16 +183,26 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     const huoLing = safeRules.huoLing || DEFAULT_HUO_LING;
     const tianMa = safeRules.tianMa || DEFAULT_TIAN_MA;
     const tianMaType = safeRules.tianMaType || 'year';
+    const ziHourRule = safeRules.ziHourRule || 'ziShi';
 
     // 解構並驗證表單資料
     const { year, month, day, hour, minute } = formData;
-    const _y = parseInt(year);
-    const _m = parseInt(month);
-    const _d = parseInt(day);
-    const _h = parseInt(hour);
-    const _min = parseInt(minute);
+    let _y = parseInt(year);
+    let _m = parseInt(month);
+    let _d = parseInt(day);
+    let _h = parseInt(hour);
+    let _min = parseInt(minute);
 
     if (isNaN(_y)) throw new Error("年份格式錯誤");
+
+    if (_h >= 23 && rulesConfig?.ziHourRule === 'ziShi') {
+        const tempDate = new Date(_y, _m - 1, _d);
+        tempDate.setDate(tempDate.getDate() + 1);
+        _y = tempDate.getFullYear();
+        _m = tempDate.getMonth() + 1;
+        _d = tempDate.getDate();
+        _h = 0; // 23點後一律當第二天出生，推算新一天的曆法
+    }
 
     const solar = window.Solar.fromYmdHms(_y, _m, _d, _h, _min, 0);
     const lunar = solar.getLunar();
@@ -539,6 +549,7 @@ const SettingsView = ({
         mingHasDaXian, setMingHasDaXian,
         daXianSiHuaType, setDaXianSiHuaType,
         liuNianStartType, setLiuNianStartType,
+        ziHourRule, setZiHourRule,
         bookmarks, setBookmarks
     }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -590,7 +601,18 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
 
       {/* 安星規則 */}
       <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>自定義安星法</h3>
-      
+      <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
+          <ToggleSelector 
+            options={[
+                {val: 'ziShi', label: '子時換日'}, 
+                {val: 'ziZheng', label: '子正換日'}
+            ]} 
+            currentValue={ziHourRule} 
+            onChange={setZiHourRule} 
+          />
+      </div>
+
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限起限宮位</div>
           <ToggleSelector options={[{val: false, label: '命宮無大限'}, {val: true, label: '命宮有大限'}]} currentValue={mingHasDaXian} onChange={setMingHasDaXian} />
@@ -1528,6 +1550,7 @@ export default function ZwdsApp() {
   const [mingHasDaXian, setMingHasDaXian] = useState(false);
   const [daXianSiHuaType, setDaXianSiHuaType] = useState('book');
   const [liuNianStartType, setLiuNianStartType] = useState('xiao_xian');
+  const [ziHourRule, setZiHourRule] = useState('ziShi');
 
   // 3. 底部導航設定
   const tabs = [
@@ -1552,8 +1575,7 @@ export default function ZwdsApp() {
             const { value: r5 } = await Preferences.get({ key: 'zwds_rule_tm_type' }); if(r5) setTianMaType(r5);
             const { value: r6 } = await Preferences.get({ key: 'zwds_ming_daxian' }); if(r6 !== null) setMingHasDaXian(r6 === 'true');
             const { value: r7 } = await Preferences.get({ key: 'zwds_rule_daxian_sihua' }); if(r7) setDaXianSiHuaType(r7);
-            const { value: r8 } = await Preferences.get({ key: 'zwds_rule_liunian_start' }); if(r8) setLiuNianStartType(r8);
-
+            const { value: r9 } = await Preferences.get({ key: 'zwds_rule_zi_hour' }); if(r9) setZiHourRule(r9);
         } catch (e) { console.error("Data load error:", e); }
     };
     loadData();
@@ -1580,6 +1602,7 @@ export default function ZwdsApp() {
        localStorage.setItem('zwds_ming_daxian', mingHasDaXian);
        localStorage.setItem('zwds_rule_daxian_sihua', daXianSiHuaType);
        localStorage.setItem('zwds_rule_liunian_start', liuNianStartType);
+       localStorage.setItem('zwds_rule_zi_hour', ziHourRule);
     };
     saveData();
   }, [siHuaRules, kuiYueRules, huoLingRules, tianMaRules, tianMaType, mingHasDaXian, daXianSiHuaType, liuNianStartType]);
@@ -1588,7 +1611,7 @@ export default function ZwdsApp() {
   const handleCalculate = (formData) => {
      if (libStatus !== 'ready') return;
      try {
-        const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
+        const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType, ziHourRule: ziHourRule };
         const result = calculateZwdsResult(formData, rulesConfig, { mingHasDaXian });
         setResultData(result); setEditingData(null); setView('result');
      } catch(e) { console.error(e); alert('計算異常: ' + e.message); }
@@ -1706,6 +1729,7 @@ export default function ZwdsApp() {
                 mingHasDaXian={mingHasDaXian} setMingHasDaXian={setMingHasDaXian}
                 daXianSiHuaType={daXianSiHuaType} setDaXianSiHuaType={setDaXianSiHuaType}
                 liuNianStartType={liuNianStartType} setLiuNianStartType={setLiuNianStartType}
+                ziHourRule={ziHourRule} setZiHourRule={setZiHourRule}
                 bookmarks={bookmarks} setBookmarks={setBookmarks}
             />
           }
