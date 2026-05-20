@@ -1007,8 +1007,7 @@ const PillarCard = ({
 const AiBaziAnalysis = ({ data }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  
-    const [isPaid, setIsPaid] = useState(data.isPaid || false);
+  const [isPaid, setIsPaid] = useState(data.isPaid || false);
 
   useEffect(() => {
       if (data.isPaid && !analysisResult) {
@@ -1029,6 +1028,20 @@ const AiBaziAnalysis = ({ data }) => {
     '辛': '「辛金軟弱，溫潤而清。畏土之疊，樂水之盈。能扶社稷，能救生靈。熱則喜母，寒則喜丁。」',
     '壬': '「壬水通河，能洩金氣。剛中之德，周流不滯。通根透癸，沖天奔地。化則有情，從則相濟。」',
     '癸': '「癸水至弱，達於天津。得龍而運，功化斯神。不愁火土，不論庚辛。合戊見火，化象斯真。」'
+  };
+
+  // 🌟 新增：滴天髓白話文詳細解析
+  const DI_TIAN_SUI_DESC = {
+    '甲': '甲木就像高聳入雲的大樹。如果在春天出生（木旺），需要「火」來發洩它的生機（木生火，即「食傷洩秀」），才能開花結果，脫胎換骨。春天木極旺，金來剋木反而會導致刀刃捲口；秋天金極旺，此時甲木凋零，若再見厚土生金，甲木必死無疑。如果八字火勢太猛，甲木需要坐在「辰」（即龍，辰為濕土）上來散火培根；如果水勢滔天，甲木需要坐在「寅」（即虎，寅為木之本氣）上，才能吸收水分並穩固根基。只要地支有適當的水分潤澤，天干氣候調和，甲木就能萬古長青。',
+    '乙': '乙木雖然柔軟如花草，但它的根鬚極具穿透力，能夠剋制並疏通「未」（羊）和「丑」（牛）這兩種堅硬的土。只要天干有丙火、丁火保護，乙木就敢騎在「酉」（鳳/雞）和「申」（猴）這兩個強大的金之上，不怕被砍伐。如果八字充滿了水（虛濕之地），乙木根部腐爛，此時就算坐在「午」（馬，火）上，火也會被旺水撲滅，乙木依舊堪憂。這是乙木最著名的生存哲學：只要八字裡有「甲木」，乙木就像藤蔓纏繞著參天大樹，無論春夏秋冬都能屹立不倒（即依靠貴人、合夥人）。',
+    '丙': '丙火就像太陽，陽氣最盛，不怕冰霜雨雪。它能輕易將堅硬的庚金熔化；但遇到柔弱的辛金，丙火反而會變得溫柔（丙辛合水），太陽遇到陰雲化作雨水，失去猛烈之性。遇到很多土，丙火的烈性會被吸收（火生土），變得慈祥；遇到猖狂的大水，陽光照在水面上反而波光粼粼，顯得更有節操與光芒。如果地支湊齊了「寅、午、戌」（虎馬犬，三合火局），火勢已經失控，這時候如果再來甲木生火，木一定會被燒成灰燼。',
+    '丁': '丁火是人間的燈火、爐火或星光，性情柔和中庸，內在明亮而溫暖。遇到乙木（偏印），丁火不會像丙火那樣把它燒盡，反而能保護乙木不被辛金剋；遇到壬水（正官），「丁壬合木」，它甘願化作木氣來輔佐，故稱忠孝。即使在夏天火旺之時，丁火也不會像丙火那樣猛烈毒辣；即使在冬天火弱之時，只要有一點點油（木），它就能生生不息，不會輕易熄滅。嫡母就是「甲木」。丁火只要有甲木（大木柴）來生，不管生在秋天還是冬天，都能一直燃燒。',
+    '戊': '戊土就像巍峨的高山或厚重的城牆，極其穩固，代表中正、包容與信用。它安靜的時候（秋冬）閉藏萬物，萌動的時候（春夏）孕育生機，是萬物生死的掌管者。厚重的土必須要有「水」來滋潤，萬物才能生長；如果只有「火」來烤，高山變成焦土，萬物就會生病枯死。艮代表寅（東北），坤代表申（西南）。如果戊土生在寅或申的月份，最怕地支發生相沖（寅申沖會導致山崩地裂），這時最需要安靜穩定。',
+    '己': '己土是低窪的田園之土或爛泥巴，自帶濕氣，善於蓄藏養分。它不怕木多（因為草木本來就生長在泥土裡）；也不怕水狂（因為爛泥巴遇水只會跟著流動，或將水吸收，不會被輕易沖垮）。如果火太弱（如微弱的丁火），遇到濕濕的己土，火反而會被撲滅、遮蔽；但己土非常會養金，能讓金屬保持光澤而不被火鎔。己土本身陰濕，如果要孕育萬物並有所成就，非常需要「丙火」來給予陽光照耀，或「戊土」來幫忙阻擋大水。',
+    '庚': '庚金代表刀劍、斧頭或粗礦，自帶一股肅殺之氣，是十天干中最為剛硬猛烈的。遇到壬水，就像寶劍在水裡洗滌，鋒芒清澈（金水相生）；遇到丁火，就像礦石進入火爐鍛造，百煉成鋼，變得極為鋒銳。金靠土生，但庚金喜歡「濕土」（辰、丑）來生養；如果遇到「燥土」（未、戌），不但生不了金，反而會把金烤得極度脆弱易斷。庚金能輕鬆砍斷參天的甲木；但遇到柔弱的乙木，卻會因為「乙庚合金」（鐵漢柔情）而被絆住，為了愛情放棄了殺伐果斷。',
+    '辛': '辛金是已經被打磨好的鑽石、珠寶或金銀首飾，本身柔軟、精緻且清亮。珠寶最怕厚重的土（戊土）把它掩埋，失去光澤（土多金埋）；它最喜歡豐盈的水（壬水）來淘洗，讓它閃閃發光。辛金能與猛烈的丙火相合（丙辛合水），把灼熱的太陽化作雨水，拯救被烈日烤乾的萬物。夏天極熱時，辛金需要「己土」（濕土母親）來幫忙散熱並保護它；冬天極寒時，需要「丁火」（溫和的燈光）來照耀它，顯現它的璀璨。',
+    '壬': '壬水就像長江黃河或汪洋大海，水勢浩大，能夠大量消耗金的銳氣（金生水）。它的本性剛健，不喜歡被拘束，喜歡不斷地流動、循環不息。如果地支水旺（有亥、子等根基），天干又透出癸水來幫忙，那這股水勢就會引發洪災，沖天奔地，難以阻擋。遇到丁火，可以「丁壬合木」，水火交融變得非常有情；如果八字裡其他五行（如木或土）實在太旺，壬水也懂得順勢而為（從格），去滋潤萬物。',
+    '癸': '癸水是清晨的露水、天上的雲霧或毛毛雨。它雖然極其微弱，但卻能輕盈地升騰到天際。龍就是「辰」（水庫）。癸水只要見到辰，就能藉助龍的雲雨之氣，發揮出神奇的化育功能，行雲布雨。它不怕火土來剋（因為雲霧遇熱只會蒸發消散，不會真正死亡）；它也不依賴庚辛金來生（雨露之水靠天地自然運化，並不需要金屬來淘洗）。癸水遇到戊土（戊癸合火），如果八字中還有火來引導，它就能真正化作火氣，徹底改變自己的本性，這是一種極高的格局變化。'
   };
 
   const getCounts = () => {
@@ -1201,18 +1214,22 @@ const AiBaziAnalysis = ({ data }) => {
     let report = `### 一、 原局總論與古典格局剖析\n`;
     
     report += `閣下為**【${dm}${dmWuxing}】**日元，生於${season}${bazi.monthZhi}月。\n`;
+    
+    // 🌟 這裡插入了古文與對應的詳細白話文解釋
     report += `《滴天髓》云：${DI_TIAN_SUI[dm]}\n\n`;
+    report += `- ${DI_TIAN_SUI_DESC[dm]}\n\n`;
+    report += `原局地支`;
     
     if (combos.length > 0 || potentialCombos.length > 0) {
         if (combos.length > 0) {
-            report += `原局地支見**【${combos.join('、')}】**。`;
+            report += `見**【${combos.join('、')}】**，`;
         }
         if (potentialCombos.length > 0) {
-            report += `又暗含**【${potentialCombos.join('、')}基因】**，待遇大運或流年填實引動，便會爆發出強大的相應五行能量。`;
+            report += `暗含**【${potentialCombos.join('、')}】基因**，待遇大運或流年填實引動，便會爆發出強大的相應五行能量。`;
         }
         report += `綜合判定後，`;
     } else {
-        report += `原局地支氣場純粹，無明顯合化局。`;
+        report += `氣場純粹，無明顯合化局。`;
     }
 
     report += `閣下八字屬於**「${isStrong ? '身旺' : '身弱'}」**之局。依據五行生剋原理，日元${isStrong ? '氣勢強旺，需引導宣洩或適當雕琢' : '根氣稍弱，急需生扶與滋補'}。\n`;
@@ -1226,6 +1243,13 @@ const AiBaziAnalysis = ({ data }) => {
     const monthHidden = ZHI_HIDDEN[bazi.monthZhi] || [];
     const monthZhiMainGan = monthHidden[0] || '';
     const monthTenGod = getShiShen(bazi.dayGan, monthZhiMainGan);
+    
+    const TEN_GOD_FULL_NAME = {
+        '比': '比肩', '劫': '劫財', '食': '食神', '傷': '傷官',
+        '財': '正財', '才': '偏財', '官': '正官', '殺': '七殺',
+        '印': '正印', '卩': '偏印'
+    };
+    const monthTenGodFullName = TEN_GOD_FULL_NAME[monthTenGod] || monthTenGod;
     
     let monthWxDesc = '';
     if (monthZhiWuxing === '木') monthWxDesc = '木主仁，賦予您仁慈溫和、具備生長潛能與包容的特質';
@@ -1248,7 +1272,7 @@ const AiBaziAnalysis = ({ data }) => {
         case '劫': monthGodDesc = '充滿行動力，好勝心強，極具群眾魅力與適應力，具備在激烈競爭中脫穎而出的拼搏精神'; break;
     }
 
-    report += `八字用神，月令為尊，閣下生於${bazi.monthZhi}月，五行屬${monthZhiWuxing}，主氣為**【${monthTenGod}】**星。\n`;
+    report += `八字用神，月令為尊，閣下生於${bazi.monthZhi}月，五行屬${monthZhiWuxing}，主氣為**【${monthTenGodFullName}】**星。\n`;
     report += `- 性格與天賦方面，${monthWxDesc}；同時，${monthGodDesc}。\n`;
 
     let shenShaTraits = [];
@@ -1304,7 +1328,9 @@ const AiBaziAnalysis = ({ data }) => {
         case '印': spouseDesc = '代表對方心地善良、極富同理心與包容力，能給予極大精神慰藉。'; break;
         case '卩': spouseDesc = '代表對方思想獨特、直覺敏銳，性格較為內斂。'; break;
     }
-    report += `- 夫妻宮內藏${spouseTenGod}星，${spouseDesc}\n`;
+    
+    const spouseTenGodFullName = TEN_GOD_FULL_NAME[spouseTenGod] || spouseTenGod;
+    report += `- 夫妻宮內藏**【${spouseTenGodFullName}】**星，${spouseDesc}\n`;
 
     if (hasPeach) {
         report += `- 另外，本命多合或帶桃花紅鸞，代表閣下人緣極佳，易與人有關連牽扯，多應於男女之事，即多人追求，或易給人有追求者的感覺。\n\n`;
@@ -1426,7 +1452,6 @@ const AiBaziAnalysis = ({ data }) => {
             report += `- 健康運勢整體尚可，很多時候出現的小毛病並不會造成實質的影響，只需放鬆心情，問題自然迎刃而解。\n`;
         }
 
-        // ✅ 升級：根據喜忌判定流年健康養生
         let healthAdvice = '';
         if (isZhiFav) {
             if (tZhiWx === '木') healthAdvice = '流年木為喜神，氣場生扶，肝膽神經系統獲益。精神飽滿，決斷力佳。日常保養宜早睡早起，適當增加戶外活動以吸收自然生氣。';
@@ -1443,7 +1468,6 @@ const AiBaziAnalysis = ({ data }) => {
         }
         report += `- **流年五行養生：** ${healthAdvice}\n`;
 
-        // 西曆約略對應五行：2,3月木；4月土；5,6月火；7月土；8,9月金；10月土；11,12月水；1月土
         const mWxMap = { 1:'土', 2:'木', 3:'木', 4:'土', 5:'火', 6:'火', 7:'土', 8:'金', 9:'金', 10:'土', 11:'水', 12:'水' };
         const luckyMonths = [];
         const badMonths = [];
@@ -1456,15 +1480,13 @@ const AiBaziAnalysis = ({ data }) => {
             }
         }
         
-        // 為了排版美觀，各取 3 個最具代表性的月份
         const displayLucky = luckyMonths.slice(0, 3).join('、');
-        // 凶月取陣列後面的月份，讓數字分佈看起來更自然
         const displayBad = badMonths.slice(-3).join('、'); 
 
         report += `\n**【關鍵流月預警】**\n`;
         report += `- **吉利月份（西曆 ${displayLucky} 月）：** 五行氣場生扶，運勢轉順，可見曙光。此時最有利於推動重要計畫，得貴人相助，生活重回正軌。\n`;
         report += `- **凶險月份（西曆 ${displayBad} 月）：** 流月氣場犯忌，準備多時的計劃易遭打擊。此期間切忌心浮氣躁，凡事保守為上，避免官非詞訟，小心小人找碴。\n\n`;
-    }); // <-- 這裡是 forEach 迴圈的結尾
+    }); 
 
     report += `### 七、 開運與吉方建議\n`;
     const lk = getLuckyInfo(primaryFav);
@@ -1487,6 +1509,24 @@ const AiBaziAnalysis = ({ data }) => {
       }, 800); 
   };
 
+  const handlePasswordUnlock = (e) => {
+      e.stopPropagation(); 
+      const password = prompt("請輸入後台授權解鎖密碼：");
+      if (!password) return;
+      
+      if (password === "ningbo666" || password === "8888") {
+          setIsAnalyzing(true);
+          setTimeout(() => {
+              setIsPaid(true);
+              setAnalysisResult(generateLongReport());
+              setIsAnalyzing(false);
+              alert("🔓 密碼正確，已成功為您手動開啟命書！");
+          }, 500);
+      } else {
+          alert("❌ 密碼錯誤，無法解鎖。");
+      }
+  };
+
   const uiDate = new Date();
   const uiYear = uiDate.getFullYear();
   const uiMonth = uiDate.getMonth(); 
@@ -1497,9 +1537,22 @@ const AiBaziAnalysis = ({ data }) => {
   return (
     <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px' }}>
-          千字深度批命書
-        </h4>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px' }}>
+            千字深度批命書
+          </h4>
+          {!isPaid && (
+            <Lock 
+              size={14} 
+              color={THEME.gray} 
+              style={{ cursor: 'pointer', opacity: 0.6, transition: 'opacity 0.2s' }} 
+              onClick={handlePasswordUnlock}
+              title="後台密碼解鎖"
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+            />
+          )}
+        </div>
         {isPaid && <span style={{ fontSize: '11px', color: '#fff', backgroundColor: THEME.green || '#52c41a', padding: '2px 6px', borderRadius: '4px' }}>已解鎖</span>}
       </div>
 
@@ -1581,7 +1634,6 @@ const AiBaziAnalysis = ({ data }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px' }}>
                     <Unlock size={18} /> 單次付費$198解鎖
                 </div>
-                
                 <div style={{ fontSize: '12px', fontWeight: 'normal', opacity: 0.8 }}>
                     (支援信用卡 / Apple Pay / Google Pay等)
                 </div>
