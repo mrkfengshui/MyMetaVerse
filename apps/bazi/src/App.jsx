@@ -1977,6 +1977,48 @@ const AiBaziAnalysis = ({ data }) => {
       } else { alert("❌ 密碼錯誤，無法解鎖。"); }
   };
 
+  const handleDownloadTxt = () => {
+      if (!analysisResult) return;
+
+      // 1. 清理與格式化文本，移除 Markdown 符號
+      let textToSave = analysisResult
+          .replace(/### /g, '\n■ ')    // 將 H3 標題轉為實心方塊
+          .replace(/\*\*/g, '')        // 移除粗體標記
+          .replace(/- /g, '• ');       // 將列表轉為圓點
+
+      // 2. 解析特殊的 [NAMECARD] 詩詞姓名卡片標籤
+      const lines = textToSave.split('\n');
+      const cleanLines = lines.map(line => {
+          if (line.startsWith('[NAMECARD]:')) {
+              const dataStr = line.substring(11);
+              const [sur, n1, n2, s0, s1, s2, tone, p1, p2] = dataStr.split('|');
+              return `
+【推薦好名】：${sur}${n1}${n2}
+  - 姓名五格：天格(${Number(s0)+1})、人格(${Number(s0)+Number(s1)})、地格(${Number(s1)+Number(s2)})、總格(${Number(s0)+Number(s1)+Number(s2)})、外格(${Number(s2)+1})
+  - 音律：${tone}
+  - 詩詞尋源：
+    「${n1}」：${p1}
+    「${n2}」：${p2}
+`;
+          }
+          return line;
+      });
+
+      // 3. 組合最終文字
+      textToSave = `【${data.name}】千字深度批命書\n生成時間：${new Date().toLocaleString()}\n\n` + cleanLines.join('\n');
+
+      // 4. 建立 Blob 並觸發瀏覽器下載
+      const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${data.name}_千字命書.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+  };
+
   const uiDate = new Date();
   const uiYear = uiDate.getFullYear();
   const uiMonth = uiDate.getMonth(); 
@@ -2013,8 +2055,23 @@ const AiBaziAnalysis = ({ data }) => {
         </div>
       ) : analysisResult ? (
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+             <button 
+                 onClick={handleDownloadTxt}
+                 style={{ 
+                     display: 'flex', alignItems: 'center', gap: '6px', 
+                     padding: '8px 16px', backgroundColor: THEME.black, color: THEME.white, 
+                     border: 'none', borderRadius: '6px', fontSize: '14px', 
+                     cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                 }}
+             >
+                 <Download size={16} />
+                 下載命書 (TXT)
+             </button>
+          </div>
+
           <div style={{ 
-            backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px', 
+            backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px',
             fontSize: '15px', lineHeight: '1.8', color: '#222', textAlign: 'justify',
             border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
           }}>
