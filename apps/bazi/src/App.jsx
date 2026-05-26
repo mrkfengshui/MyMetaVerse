@@ -1187,9 +1187,13 @@ const AiBaziAnalysis = ({ data }) => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isPaid, setIsPaid] = useState(data.isPaid || false);
   
-  // 🌟 1. 新增這兩個狀態：用於記錄是否為管理員解鎖，以及自訂的五行陣列
+  // 🌟 1. 用於記錄是否為管理員解鎖，以及自訂
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [customWuxing, setCustomWuxing] = useState([]);
+  const [customStroke1, setCustomStroke1] = useState('');
+  const [customStroke2, setCustomStroke2] = useState('');
+  const [customChar1, setCustomChar1] = useState('');
+  const [customChar2, setCustomChar2] = useState('');
 
   useEffect(() => {
       if (data.isPaid && !analysisResult) {
@@ -1319,7 +1323,7 @@ const AiBaziAnalysis = ({ data }) => {
       return info[wuxing] || info['水'];
   };
 
-  const generateLongReport = (isAdmin = false, overrideWuxing = null) => {
+  const generateLongReport = (isAdmin = false, overrideWuxing = null, opts = {}) => {
     const { bazi, genderText } = data;
     const wx = getCounts();
     const dm = bazi.dayGan;
@@ -1386,7 +1390,18 @@ const AiBaziAnalysis = ({ data }) => {
         report += `氣場純粹，無明顯合化局。`;
     }
 
-    report += `閣下八字屬於**「${isStrong ? '身旺' : '身弱'}」**之局。依據五行生剋原理，日元${isStrong ? '氣勢強旺，需引導宣洩或適當雕琢' : '根氣稍弱，急需生扶與滋補'}。\n`;
+    // 🌟 新增：優化身強身弱的顯示邏輯 (只有明顯強弱才明言)
+    // totalSelfPower 滿分大約 8~10 (包含合局加成)。
+    // 設定閥值：大於 5.5 (或得月令且大於 4.5) 為明顯身旺；小於 2.5 (或失月令且小於 3.5) 為明顯身弱。
+    
+    if (totalSelfPower >= 5.5 || (isMonthFavorable && totalSelfPower >= 4.5)) {
+        report += `從原局能量來看，閣下八字屬於明顯的**「身旺」**之局。依據五行生剋原理，日元氣勢強旺，需引導宣洩或適當雕琢。\n`;
+    } else if (totalSelfPower <= 2.5 || (!isMonthFavorable && totalSelfPower <= 3.5)) {
+        report += `從原局能量來看，閣下八字屬於明顯的**「身弱」**之局。依據五行生剋原理，日元根氣較弱，急需生扶與滋補。\n`;
+    } else {
+        // 處於中間模糊地帶，不特別強調強弱，避免誤導
+        report += `從原局能量來看，閣下八字五行氣場較為平和，**日元能量適中，並無極端之過旺或過弱**。或是局中雖有生扶之神，但受牽制而處於動態平衡。依據五行中庸之道，此類命格之喜用，當視大運與流年之進退來靈活調候。\n`;
+    }
     
     let yongShenText = yongShenList.length > 0 ? yongShenList.join('、') : `${primaryFav}`;
     let xiShenText = xiShenList.length > 0 ? xiShenList.join('、') : `${favWuxing.slice(1).join('、')}`;
@@ -1427,6 +1442,71 @@ const AiBaziAnalysis = ({ data }) => {
     }
 
     report += `八字用神，月令為尊，閣下生於${bazi.monthZhi}月，五行屬${monthZhiWuxing}，主氣為**【${monthTenGodFullName}】**星。\n`;
+
+    // 🌟 新增：子平八字格局自動分析邏輯 (正格 / 從格 / 化氣格 / 專旺格)
+    let geJuAnalysis = '';
+    
+    // 1. 檢查【化氣格】 (天干五合且月令推動：甲己化土、乙庚化金、丙辛化水、丁壬化木、戊癸化火)
+    const checkHuaQiGrid = () => {
+        const neighborGans = [bazi.monthGan, bazi.timeGan]; // 與日干貼近的月干或時干
+        if ((dm === '甲' && neighborGans.includes('己')) || (dm === '己' && neighborGans.includes('甲'))) {
+            if (monthZhiWuxing === '土' || wx['土'] >= 3) return '【甲己化土格】';
+        }
+        if ((dm === '乙' && neighborGans.includes('庚')) || (dm === '庚' && neighborGans.includes('乙'))) {
+            if (monthZhiWuxing === '金' || wx['金'] >= 3) return '【乙庚化金格】';
+        }
+        if ((dm === '丙' && neighborGans.includes('辛')) || (dm === '辛' && neighborGans.includes('丙'))) {
+            if (monthZhiWuxing === '水' || wx['水'] >= 3) return '【丙辛化水格】';
+        }
+        if ((dm === '丁' && neighborGans.includes('壬')) || (dm === '壬' && neighborGans.includes('丁'))) {
+            if (monthZhiWuxing === '木' || wx['木'] >= 3) return '【丁壬化木格】';
+        }
+        if ((dm === '戊' && neighborGans.includes('癸')) || (dm === '癸' && neighborGans.includes('戊'))) {
+            if (monthZhiWuxing === '火' || wx['火'] >= 3) return '【戊癸化火格】';
+        }
+        return null;
+    };
+
+    const huaQiName = checkHuaQiGrid();
+
+    if (huaQiName) {
+        geJuAnalysis = `屬於特別格局中的**化氣格**，具體為**${huaQiName}**。這代表日主與貼近之天干達成天作之合，原局氣勢已被誘導轉向化神五行。此命格之人往往極具協調能力，行運最喜見化神及生扶化神之運，最忌爭合與逆其化神之氣。`;
+    } 
+    // 2. 檢查【從格】 (日主極度身弱， totalSelfPower 極低，滿盤皆是剋洩耗之物)
+    else if (!isStrong && totalSelfPower <= 1.5) {
+        // 找出剋洩耗（食傷、財星、官殺）中最強的勢力
+        const enemyWuxings = [rel.produce, rel.control, rel.controlledBy]; // 食傷、財星、官殺
+        let maxEnemy = enemyWuxings[0];
+        enemyWuxings.forEach(e => { if (wx[e] > wx[maxEnemy]) maxEnemy = e; });
+
+        if (maxEnemy === rel.control) {
+            geJuAnalysis = `屬於特別格局中的**從格**，具體為**【從財格】**。因日主極度弱勢，且局中財星氣勢滔天。日主自知無法自立，故「棄命從財」。此命格者對商機、財富極具天賦，行運最喜行財旺、食傷旺地，最忌印比生扶拔根破局。`;
+        } else if (maxEnemy === rel.controlledBy) {
+            geJuAnalysis = `屬於特別格局中的**從格**，具體為**【從殺格】**（或從官格）。因局中官殺肆虐、孤立無援，日主選擇全心臣服於官殺之威勢。行運喜官殺、財星，大忌印比運引發戰局。`;
+        } else {
+            geJuAnalysis = `屬於特別格局中的**從格**，具體為**【從兒格】**（即從食傷格）。古書云：「從兒不管身強弱，只要吾兒又見兒」。此局傷食大旺，才華橫溢，行運喜食傷、財星（兒又見兒），最忌官殺與印星破壞流暢之氣。`;
+        }
+    }
+    // 3. 額外贈送：檢查【專旺格】 (日主極度強旺，全盤皆是同類與印星)
+    else if (isStrong && totalSelfPower >= 6.5) {
+        let zhuanWangName = '專旺格';
+        if (dmWuxing === '木') zhuanWangName = '曲直仁壽格';
+        if (dmWuxing === '火') zhuanWangName = '炎上格';
+        if (dmWuxing === '土') zhuanWangName = '稼穡格';
+        if (dmWuxing === '金') zhuanWangName = '從革格';
+        if (dmWuxing === '水') zhuanWangName = '潤下格';
+        geJuAnalysis = `屬於特別格局中的**專旺格**（一行得氣格），具體為**【${zhuanWangName}】**。局中同類與印星能量高度凝聚，日主氣勢沖天，不可逆其鋒芒。行運喜順其氣勢之印比與食傷，大忌逆勢之官殺運。`;
+    }
+    // 4. 若以上皆非，則為【普通正格】
+    else {
+        let normalName = `${monthTenGodFullName}格`;
+        // 針對比肩、劫財月令優化特殊正格名稱
+        if (monthTenGod === '比') normalName = '建祿格';
+        if (monthTenGod === '劫') normalName = '月劫格（建祿月劫常格）';
+        geJuAnalysis = `屬於普通八格中的**正格**，具體為**【${normalName}】**。此格局行事遵循傳統子平常理，最重視原局五行的中庸、抑扶與流通，需依據日元強弱，尋求財官印食的制衡配合，行運喜中和，不喜大起大落。`;
+    }
+
+    report += `- **命局格局判定：** 經綜合原局能量分布、天干五合與月令氣勢，閣下之命局${geJuAnalysis}\n`;
     report += `- 性格與天賦方面，${monthWxDesc}；同時，${monthGodDesc}。\n`;
 
     let shenShaTraits = [];
@@ -1650,40 +1730,6 @@ const AiBaziAnalysis = ({ data }) => {
     // 👑 專屬改名建議邏輯
     if (isAdmin) {
         report += `\n### 👑 專屬改名建議\n`;
-        
-        // 🌟 5. 根據是否手動設定，改變提示文字
-        if (overrideWuxing && overrideWuxing.length > 0) {
-            report += `根據您手動設定之需求，本次取名五行鎖定為**【${namingWuxing.join('、')}】**。以下為您推薦符合康熙字典五行、三才五格大吉，且蘊含古典詩詞之美的精選好名。\n`;
-        } else {
-            report += `根據八字喜忌，閣下之喜用神為**【${namingWuxing.join('、')}】**。以下為您推薦符合康熙字典五行、三才五格大吉，且蘊含古典詩詞之美的精選好名。\n`;
-        }
-
-        const nameStr = data.name || '未命名';
-        const surname = nameStr.charAt(0);
-        const KANGXI_SURNAMES = { 
-            '李':{s:7,t:'仄'}, '王':{s:4,t:'平'}, '張':{s:11,t:'平'}, '劉':{s:15,t:'平'}, '陳':{s:16,t:'平'}, 
-            '楊':{s:13,t:'平'}, '黃':{s:12,t:'平'}, '趙':{s:14,t:'仄'}, '周':{s:8,t:'平'}, '吳':{s:7,t:'平'}, 
-            '徐':{s:10,t:'平'}, '孫':{s:10,t:'平'}, '朱':{s:6,t:'平'}, '馬':{s:10,t:'仄'}, '胡':{s:11,t:'平'}, 
-            '郭':{s:15,t:'仄'}, '林':{s:8,t:'平'}, '何':{s:7,t:'平'}, '高':{s:10,t:'平'}, '梁':{s:11,t:'平'}, 
-            '鄭':{s:19,t:'仄'}, '羅':{s:20,t:'平'}, '宋':{s:7,t:'仄'}, '謝':{s:17,t:'仄'}, '唐':{s:10,t:'平'},
-            '韓':{s:17,t:'平'}, '曹':{s:11,t:'平'}, '許':{s:11,t:'仄'}, '鄧':{s:19,t:'仄'}, '蕭':{s:18,t:'平'},
-            '馮':{s:12,t:'平'}, '曾':{s:12,t:'平'}, '蔡':{s:17,t:'仄'}, '彭':{s:12,t:'平'}, '潘':{s:15,t:'平'},
-            '袁':{s:10,t:'平'}, '于':{s:3,t:'平'}, '董':{s:15,t:'仄'}, '余':{s:7,t:'平'}, '蘇':{s:22,t:'平'},
-            '葉':{s:15,t:'仄'}, '呂':{s:7,t:'仄'}, '魏':{s:18,t:'仄'}, '蔣':{s:17,t:'仄'}, '田':{s:5,t:'平'},
-            '杜':{s:7,t:'仄'}, '丁':{s:2,t:'平'}, '沈':{s:8,t:'仄'}, '姜':{s:9,t:'平'}, '范':{s:11,t:'仄'},
-            '江':{s:7,t:'平'}, '傅':{s:12,t:'仄'}, '鍾':{s:17,t:'平'}, '盧':{s:16,t:'平'}, '汪':{s:8,t:'平'},
-            '戴':{s:18,t:'仄'}, '崔':{s:11,t:'平'}, '任':{s:6,t:'仄'}, '陸':{s:16,t:'仄'}, '廖':{s:14,t:'仄'},
-            '姚':{s:9,t:'平'}, '方':{s:4,t:'平'}, '熊':{s:14,t:'平'}, '史':{s:5,t:'仄'}, '顧':{s:21,t:'仄'},
-            '侯':{s:9,t:'平'}, '邵':{s:12,t:'仄'}, '孟':{s:8,t:'仄'}, '龍':{s:16,t:'平'}, '萬':{s:15,t:'仄'},
-            '段':{s:9,t:'仄'}, '雷':{s:13,t:'平'}, '錢':{s:16,t:'平'}, '湯':{s:13,t:'平'}, '尹':{s:4,t:'仄'},
-            '易':{s:8,t:'仄'}, '黎':{s:15,t:'平'}, '賴':{s:16,t:'仄'}, '莊':{s:13,t:'平'} 
-        };
-        
-        let surInfo = KANGXI_SURNAMES[surname] || {s:10, t:'平'};
-        let surnameStrokes = surInfo.s;
-        let surnameTone = surInfo.t;
-
-        report += `- **姓氏分析：** ${surname} (康熙筆畫：${surnameStrokes}畫 | 聲調：${surnameTone})\n`;
 
         const parseChars = (arr) => arr.map(str => {
             const [c, s, t, p] = str.split('|');
@@ -1733,7 +1779,7 @@ const AiBaziAnalysis = ({ data }) => {
                 // 5畫
                 '永|5|仄|永結無情遊 (李白《月下獨酌》)', '弘|5|平|人能弘道 (孔子《論語》)', '白|5|仄|白日依山盡 (王之渙《登鸛雀樓》)',
                 // 6畫
-                '冰|6|平|一片冰心在玉壺 (王昌齡《芙蓉樓送辛漸》)', '帆|6|平|孤帆遠影碧空盡 (李白《黃鶴樓送孟浩然之廣陵》)', '汗|6|仄|汗滴禾下土 (李紳《憫農》)',
+                '冰|6|平|一片冰心在玉壺 (王昌齡《芙蓉樓送辛漸》)', '帆|6|平|孤帆遠影碧空盡 (李白《黃鶴樓送孟浩然之廣陵》)', '汀|6|平|岸芷汀蘭，鬱鬱青青 (范仲淹《岳陽樓記》)',
                 // 7畫
                 '江|7|平|春江潮水連海平 (張若虛《春江花月夜》)', '池|7|平|池面冰初解 (白居易《春風》)', '步|7|仄|散步詠涼天 (韋應物《秋夜寄邱員外》)',
                 // 8畫
@@ -1777,7 +1823,7 @@ const AiBaziAnalysis = ({ data }) => {
                 // 9畫
                 '柳|9|仄|柳暗花明又一村 (陸游《遊山西村》)', '柏|9|仄|歲寒然後知松柏 (孔子《論語》)', '相|9|平|相看兩不厭 (李白《獨坐敬亭山》)',
                 // 10畫
-                '桃|10|平|人面桃花相映紅 (崔護《題都城南莊》)', '桂|10|仄|桂子月中落 (宋之問《靈隱寺》)', '桐|10|平|梧桐更兼細雨 (李清照《聲聲慢》)',
+                '桃|10|平|人面桃花相映紅 (崔護《題都城南莊》)', '桂|10|仄|桂子月中落 (宋之問《靈隱寺》)', '桐|10|平|梧桐更兼細雨 (李清照《聲聲慢》)', '芷|10|平|岸芷汀蘭，鬱鬱青青 (范仲淹《岳陽樓記》)',
                 // 11畫
                 '梅|11|平|梅子金黃杏子肥 (范成大《四時田園雜興》)', '梧|11|平|梧桐相待老 (孟郊《烈女操》)', '笛|11|仄|誰家玉笛暗飛聲 (李白《春夜洛城聞笛》)',
                 // 12畫
@@ -1873,6 +1919,81 @@ const AiBaziAnalysis = ({ data }) => {
             ])
         };
 
+        // 1. 建立搜尋字典的輔助函式
+        const getCharDetail = (char) => {
+            if (!char) return null;
+            for (const wx in CHARS) {
+                const match = CHARS[wx].find(item => item.c === char);
+                if (match) return { ...match, wx };
+            }
+            return null;
+        };
+
+        // 2. 處理自定義字與缺字檢查
+        let missingChars = [];
+        let c1Fixed = null;
+        let c2Fixed = null;
+
+        if (opts.char1) {
+            c1Fixed = getCharDetail(opts.char1);
+            if (!c1Fixed) missingChars.push(opts.char1);
+        }
+        if (opts.char2) {
+            c2Fixed = getCharDetail(opts.char2);
+            if (!c2Fixed) missingChars.push(opts.char2);
+        }
+
+        if (missingChars.length > 0) {
+            report += `\n⚠️ **系統提示**：您輸入的自定義字 **「${missingChars.join('、')}」** 目前不在內建的《康熙字典》精選詩詞字庫中。\n請手動將其加入程式碼的 \`CHARS\` 變數內（請確實標明筆劃、平仄與出處），方可進行五格與音律分析。\n\n💡 **添加範例格式**：\n\`'${missingChars[0]}|筆劃|平(或仄)|詩詞出處 (作者《書名》)'\`\n\n`;
+            return report; // 提早結束，等待使用者加進 code 裡
+        }
+
+        if (overrideWuxing && overrideWuxing.length > 0) {
+            report += `根據您手動設定之需求，五行鎖定為**【${namingWuxing.join('、')}】**。\n`;
+        } else {
+            report += `根據八字喜忌，閣下之喜用神為**【${namingWuxing.join('、')}】**。\n`;
+        }
+
+        // 3. 顯示目前套用的篩選條件
+        let conditionsDesc = [];
+        if (opts.char1) conditionsDesc.push(`首字指定「${opts.char1}」`);
+        if (opts.char2) conditionsDesc.push(`尾字指定「${opts.char2}」`);
+        if (opts.stroke1) conditionsDesc.push(`首字限定 ${opts.stroke1} 畫`);
+        if (opts.stroke2) conditionsDesc.push(`尾字限定 ${opts.stroke2} 畫`);
+
+        if (conditionsDesc.length > 0) {
+            report += `您已套用進階篩選條件：${conditionsDesc.join('、')}。\n`;
+        } else {
+            report += `以下為您推薦符合康熙字典五行、三才五格大吉，且蘊含古典詩詞之美的精選好名。\n`;
+        }
+
+        const nameStr = data.name || '未命名';
+        const surname = nameStr.charAt(0);
+        const KANGXI_SURNAMES = { 
+            '李':{s:7,t:'仄'}, '王':{s:4,t:'平'}, '張':{s:11,t:'平'}, '劉':{s:15,t:'平'}, '陳':{s:16,t:'平'}, 
+            '楊':{s:13,t:'平'}, '黃':{s:12,t:'平'}, '趙':{s:14,t:'仄'}, '周':{s:8,t:'平'}, '吳':{s:7,t:'平'}, 
+            '徐':{s:10,t:'平'}, '孫':{s:10,t:'平'}, '朱':{s:6,t:'平'}, '馬':{s:10,t:'仄'}, '胡':{s:11,t:'平'}, 
+            '郭':{s:15,t:'仄'}, '林':{s:8,t:'平'}, '何':{s:7,t:'平'}, '高':{s:10,t:'平'}, '梁':{s:11,t:'平'}, 
+            '鄭':{s:19,t:'仄'}, '羅':{s:20,t:'平'}, '宋':{s:7,t:'仄'}, '謝':{s:17,t:'仄'}, '唐':{s:10,t:'平'},
+            '韓':{s:17,t:'平'}, '曹':{s:11,t:'平'}, '許':{s:11,t:'仄'}, '鄧':{s:19,t:'仄'}, '蕭':{s:18,t:'平'},
+            '馮':{s:12,t:'平'}, '曾':{s:12,t:'平'}, '蔡':{s:17,t:'仄'}, '彭':{s:12,t:'平'}, '潘':{s:15,t:'平'},
+            '袁':{s:10,t:'平'}, '于':{s:3,t:'平'}, '董':{s:15,t:'仄'}, '余':{s:7,t:'平'}, '蘇':{s:22,t:'平'},
+            '葉':{s:15,t:'仄'}, '呂':{s:7,t:'仄'}, '魏':{s:18,t:'仄'}, '蔣':{s:17,t:'仄'}, '田':{s:5,t:'平'},
+            '杜':{s:7,t:'仄'}, '丁':{s:2,t:'平'}, '沈':{s:8,t:'仄'}, '姜':{s:9,t:'平'}, '范':{s:11,t:'仄'},
+            '江':{s:7,t:'平'}, '傅':{s:12,t:'仄'}, '鍾':{s:17,t:'平'}, '盧':{s:16,t:'平'}, '汪':{s:8,t:'平'},
+            '戴':{s:18,t:'仄'}, '崔':{s:11,t:'平'}, '任':{s:6,t:'仄'}, '陸':{s:16,t:'仄'}, '廖':{s:14,t:'仄'},
+            '姚':{s:9,t:'平'}, '方':{s:4,t:'平'}, '熊':{s:14,t:'平'}, '史':{s:5,t:'仄'}, '顧':{s:21,t:'仄'},
+            '侯':{s:9,t:'平'}, '邵':{s:12,t:'仄'}, '孟':{s:8,t:'仄'}, '龍':{s:16,t:'平'}, '萬':{s:15,t:'仄'},
+            '段':{s:9,t:'仄'}, '雷':{s:13,t:'平'}, '錢':{s:16,t:'平'}, '湯':{s:13,t:'平'}, '尹':{s:4,t:'仄'},
+            '易':{s:8,t:'仄'}, '黎':{s:15,t:'平'}, '賴':{s:16,t:'仄'}, '莊':{s:13,t:'平'} 
+        };
+        
+        let surInfo = KANGXI_SURNAMES[surname] || {s:10, t:'平'};
+        let surnameStrokes = surInfo.s;
+        let surnameTone = surInfo.t;
+
+        report += `- **姓氏分析：** ${surname} (康熙筆畫：${surnameStrokes}畫 | 聲調：${surnameTone})\n`;
+
         const AUSPICIOUS = Object.keys(EIGHTY_ONE_ATTR)
             .filter(k => EIGHTY_ONE_ATTR[k].includes('(吉)') || EIGHTY_ONE_ATTR[k].includes('(大吉)'))
             .map(Number);
@@ -1881,63 +2002,94 @@ const AiBaziAnalysis = ({ data }) => {
         let recommendations = [];
         let pool = [];
         namingWuxing.forEach(wx => { if (CHARS[wx]) pool = pool.concat(CHARS[wx].map(item => ({...item, wx}))); });
-        for (let i = 0; i < pool.length; i++) {
-            for (let j = 0; j < pool.length; j++) {
-                if (i === j) continue; 
-                const c1 = pool[i];
-                const c2 = pool[j];
+
+        // 4. 根據自訂條件建立字庫 Pool
+        let pool1 = c1Fixed ? [c1Fixed] : pool.filter(c => opts.stroke1 ? c.s === Number(opts.stroke1) : true);
+        let pool2 = c2Fixed ? [c2Fixed] : pool.filter(c => opts.stroke2 ? c.s === Number(opts.stroke2) : true);
+
+        // 判斷使用者是否有設定「任何」進階條件
+        const hasCustomConstraints = opts.char1 || opts.char2 || opts.stroke1 || opts.stroke2;
+
+        for (let i = 0; i < pool1.length; i++) {
+            for (let j = 0; j < pool2.length; j++) {
+                const c1 = pool1[i];
+                const c2 = pool2[j];
+                if (c1.c === c2.c) continue; 
                 
-                // 1. 檢查三才五格 (新增外格計算)
-                const renGe = surnameStrokes + c1.s;         // 人格 = 姓氏 + 名字1
-                const diGe = c1.s + c2.s;                    // 地格 = 名字1 + 名字2
-                const zongGe = surnameStrokes + c1.s + c2.s; // 總格 = 姓氏 + 名字1 + 名字2
-                const waiGe = c2.s + 1;                      // 外格 = 名字2 + 1 (單姓雙名規則)
-                
-                // 2. 檢查平仄音律
+                const renGe = surnameStrokes + c1.s;
+                const diGe = c1.s + c2.s;
+                const zongGe = surnameStrokes + c1.s + c2.s;
+                const waiGe = c2.s + 1;
                 const tonePattern = `${surnameTone}${c1.t}${c2.t}`;
 
-                // 3. 嚴格要求：人格、地格、總格、外格【全部】都必須在吉/大吉的名單內
-                if (AUSPICIOUS.includes(renGe) && 
-                    AUSPICIOUS.includes(diGe) && 
-                    AUSPICIOUS.includes(zongGe) && 
-                    AUSPICIOUS.includes(waiGe)) {
-                    
-                    if (ALLOWED_TONES.includes(tonePattern)) {
-                        recommendations.push({
-                            name1: c1.c, name2: c2.c, s1: c1.s, s2: c2.s,
-                            renGe, diGe, zongGe, waiGe, tonePattern, p1: c1.p, p2: c2.p
-                        });
-                    }
+                const isAuspicious = AUSPICIOUS.includes(renGe) && 
+                                     AUSPICIOUS.includes(diGe) && 
+                                     AUSPICIOUS.includes(zongGe) && 
+                                     AUSPICIOUS.includes(waiGe);
+                
+                const isGoodTone = ALLOWED_TONES.includes(tonePattern);
+
+                // 🌟 核心修改：如果有「任何」自訂條件（字或筆劃），就直接放行！讓系統印出來給使用者看凶格
+                if (hasCustomConstraints || (isAuspicious && isGoodTone)) {
+                    recommendations.push({
+                        name1: c1.c, name2: c2.c, s1: c1.s, s2: c2.s,
+                        renGe, diGe, zongGe, waiGe, tonePattern, p1: c1.p, p2: c2.p,
+                        isAuspicious: isAuspicious
+                    });
                 }
             }
         }
 
-        // 🌟 嚴格去重邏輯：確保抽出的名字中單字絕不重複
         if (recommendations.length > 0) {
-            recommendations.sort(() => 0.5 - Math.random()); // 洗牌
+            // 先隨機打亂，確保每次生成的名字不會都一樣
+            recommendations.sort(() => 0.5 - Math.random()); 
+            
+            // 如果有自訂條件，盡量把「吉格比較多」的組合排前面；但如果全都含凶格，也會照樣排出來
+            if (hasCustomConstraints) {
+                recommendations.sort((a, b) => {
+                    const aScore = (AUSPICIOUS.includes(a.renGe)?1:0) + (AUSPICIOUS.includes(a.diGe)?1:0) + (AUSPICIOUS.includes(a.zongGe)?1:0) + (AUSPICIOUS.includes(a.waiGe)?1:0);
+                    const bScore = (AUSPICIOUS.includes(b.renGe)?1:0) + (AUSPICIOUS.includes(b.diGe)?1:0) + (AUSPICIOUS.includes(b.zongGe)?1:0) + (AUSPICIOUS.includes(b.waiGe)?1:0);
+                    return bScore - aScore;
+                });
+            }
             
             const top = [];
             const usedChars = new Set(); 
             
             for (let k = 0; k < recommendations.length; k++) {
                 const rec = recommendations[k];
-                if (!usedChars.has(rec.name1) && !usedChars.has(rec.name2) && rec.name1 !== rec.name2) {
+                // 如果是強制指定的字，就不做去重判斷
+                if (c1Fixed || c2Fixed || (!usedChars.has(rec.name1) && !usedChars.has(rec.name2) && rec.name1 !== rec.name2)) {
                     top.push(rec);
-                    usedChars.add(rec.name1); 
-                    usedChars.add(rec.name2); 
+                    // 只有未被使用者寫死的字才加入去重 Set 中
+                    if (!c1Fixed) usedChars.add(rec.name1); 
+                    if (!c2Fixed) usedChars.add(rec.name2); 
                 }
-                if (top.length === 10) break; // 選滿 10 組
+                if (top.length === 10) break; 
             }
             
-            report += `\n- **【精選大吉詩意組合】** (符合喜神、81數理，過濾不雅音律，且單字完全不重複)：\n`;
+            // 🌟 根據輸出結果動態改變提示文案
+            if (hasCustomConstraints) {
+                report += `\n- **【自訂條件分析結果】**：\n`;
+                const hasPerfect = top.some(t => t.isAuspicious);
+                
+                if (c1Fixed && c2Fixed) {
+                    if (!top[0].isAuspicious) report += `⚠️ **注意**：您自訂的組合五格數理並非全部大吉，吉凶詳見下方圖表之短評。\n`;
+                } else if (!hasPerfect) {
+                    report += `⚠️ **注意**：根據您指定的條件（筆劃或單字），無法組合出「完全大吉」的名字。以下列出符合您條件的組合，請參考五格圖表中標示的**凶數與短評**。\n`;
+                } else {
+                    report += `以下為符合您自訂條件，且盡量為您挑選出吉數的組合：\n`;
+                }
+            } else {
+                report += `\n- **【精選大吉詩意組合】** (已過濾不雅音律與凶數)：\n`;
+            }
             
             top.forEach(rec => {
-                // 使用分隔符 | 傳遞數據給組件解析
                 report += `[NAMECARD]:${surname}|${rec.name1}|${rec.name2}|${surnameStrokes}|${rec.s1}|${rec.s2}|${rec.tonePattern}|${rec.p1}|${rec.p2}\n`;
             });
-            report += `\n*註：以上筆畫以康熙字典為準。僅提供如「平平仄、仄平平」等黃金韻律組合。*\n\n`;
+            report += `\n*註：以上筆畫以康熙字典為準。*\n\n`;
         } else {
-            report += `\n- 根據您的姓氏，在目前的精選字庫中暫無完美匹配雙方五行與三才五格大吉的組合。建議由專業師傅依據您的完整八字與家族字輩進行人工造字。\n\n`;
+            report += `\n- ⚠️ **分析結果**：根據您的姓氏與設定條件，目前的精選詩詞字庫中暫無匹配之字元，建議放寬筆劃限制或清除條件重新嘗試。\n\n`;
         }
     }
     
@@ -2111,10 +2263,10 @@ const AiBaziAnalysis = ({ data }) => {
           {/* 🌟 7. 新增：手動設定五行區塊 (僅在管理員解鎖模式下顯示) */}
           {isAdminUnlocked && (
              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: THEME.white, borderRadius: '8px', border: `1px dashed ${THEME.blue}` }}>
-                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>⚙️ 手動設定命名五行</div>
-                 <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '12px' }}>
-                     若不滿意系統自動判斷的喜用神，可勾選您需要的五行並重新產生名字：
-                 </div>
+                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>⚙️ 手動設定命名條件</div>
+                 
+                 {/* 五行選擇 */}
+                 <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '8px' }}>1. 指定五行屬性 (選填)</div>
                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
                      {['木', '火', '土', '金', '水'].map(wx => (
                          <label key={wx} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '14px' }}>
@@ -2133,11 +2285,33 @@ const AiBaziAnalysis = ({ data }) => {
                          </label>
                      ))}
                  </div>
+
+                 {/* 筆劃與自訂字選擇 */}
+                 <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '8px' }}>2. 指定筆劃或特定字元 (選填)</div>
+                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center' }}>
+                         首字筆劃 <input type="number" value={customStroke1} onChange={e => setCustomStroke1(e.target.value)} placeholder="不限" style={{ width: '50px', marginLeft: '6px', padding: '4px', border: `1px solid ${THEME.border}`, borderRadius: '4px' }} />
+                     </label>
+                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center' }}>
+                         尾字筆劃 <input type="number" value={customStroke2} onChange={e => setCustomStroke2(e.target.value)} placeholder="不限" style={{ width: '50px', marginLeft: '6px', padding: '4px', border: `1px solid ${THEME.border}`, borderRadius: '4px' }} />
+                     </label>
+                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center' }}>
+                         指定首字 <input type="text" maxLength="1" value={customChar1} onChange={e => setCustomChar1(e.target.value)} placeholder="不限" style={{ width: '50px', marginLeft: '6px', padding: '4px', border: `1px solid ${THEME.border}`, borderRadius: '4px', textAlign: 'center' }} />
+                     </label>
+                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center' }}>
+                         指定尾字 <input type="text" maxLength="1" value={customChar2} onChange={e => setCustomChar2(e.target.value)} placeholder="不限" style={{ width: '50px', marginLeft: '6px', padding: '4px', border: `1px solid ${THEME.border}`, borderRadius: '4px', textAlign: 'center' }} />
+                     </label>
+                 </div>
+
+                 {/* 觸發按鈕 */}
                  <button 
-                     onClick={() => setAnalysisResult(generateLongReport(true, customWuxing))}
-                     style={{ padding: '10px 16px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}
+                     onClick={() => setAnalysisResult(generateLongReport(true, customWuxing, {
+                         stroke1: customStroke1, stroke2: customStroke2,
+                         char1: customChar1, char2: customChar2
+                     }))}
+                     style={{ width: '100%', padding: '10px 16px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}
                  >
-                     重新生成改名建議
+                     套用條件並重新生成
                  </button>
              </div>
           )}
