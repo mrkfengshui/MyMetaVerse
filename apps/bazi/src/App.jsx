@@ -369,7 +369,7 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
 };
 
 // 核心計算函數
-const calculateBaziResult = (formData, ziHourRule) => {
+const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
     if (formData.isManual && formData.manualInput) {
         const mp = formData.manualInput;
         const baziObj = {
@@ -378,6 +378,8 @@ const calculateBaziResult = (formData, ziHourRule) => {
             dayGan: mp.day.gan, dayZhi: mp.day.zhi,
             timeGan: mp.time.gan, timeZhi: mp.time.zhi,
         };
+
+        const refGan = liJiRule === 'year' ? baziObj.yearGan : baziObj.dayGan; // 🌟 決定立極天干
 
         const yearGanIdx = TIANGAN.indexOf(mp.year.gan);
         const monthGanIdx = TIANGAN.indexOf(mp.month.gan);
@@ -395,7 +397,7 @@ const calculateBaziResult = (formData, ziHourRule) => {
 
             manualDaYuns.push({ 
                 seq: i, gan: nextGan, zhi: nextZhi,
-                ganGod: getShiShen(mp.day.gan, nextGan),
+                ganGod: getShiShen(refGan, nextGan), // 🌟 改用 refGan
                 zhiHidden: ZHI_HIDDEN[nextZhi] || [],
                 startAge: i, startYear: '', liuNians: [] 
             });
@@ -405,7 +407,8 @@ const calculateBaziResult = (formData, ziHourRule) => {
             genderText: formData.gender === '1' ? '元男' : '元女',
             rawDate: formData, isManual: true, solarDate: null, lunarDate: null,
             bazi: baziObj, naYin: { year: '', month: '', day: '', time: '' }, 
-            yunInfo: null, daYuns: manualDaYuns
+            yunInfo: null, daYuns: manualDaYuns,
+            meta: { dayKongWang: [], yearKongWang: [], refGan: refGan, liJiRule: liJiRule } // 🌟 儲存立極資訊
         };
     }
 
@@ -443,6 +446,8 @@ const calculateBaziResult = (formData, ziHourRule) => {
         timeGan: bazi.getTimeGan(), timeZhi: bazi.getTimeZhi(),
     };
 
+    const refGan = liJiRule === 'year' ? baziObj.yearGan : baziObj.dayGan; // 🌟 決定立極天干
+
     const stdMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月 (冬月) ', '十二月 (臘月) '];
     const stdDays = [
         '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
@@ -459,7 +464,7 @@ const calculateBaziResult = (formData, ziHourRule) => {
 
     const lunarString = `${bazi.getYearGan()}${bazi.getYearZhi()}年${leapText}${monthText}${dayText}${bazi.getTimeZhi()}時`;
     
-    const calculateDaYun = (bz, gender, startYunYear, startYunAge) => {
+    const calculateDaYun = (bz, gender, startYunYear, birthYear) => {
         const yearGanIdx = TIANGAN.indexOf(bz.yearGan);
         const isYangYear = yearGanIdx % 2 === 0;
         const isMale = gender === '1';
@@ -473,11 +478,17 @@ const calculateBaziResult = (formData, ziHourRule) => {
             const nextZhiIdx = (monthZhiIdx + (direction * i) + 120) % 12;
             const nextGan = TIANGAN[nextGanIdx];
             const currentYunYear = startYunYear + (i - 1) * 10;
-            const currentYunAge = startYunAge + (i - 1) * 10;
+            
+            // 🌟 修正：大運虛歲 = 大運年份 - 出生年份 + 1
+            const currentYunAge = currentYunYear - birthYear + 1; 
+            
             const liuNians = [];
             for (let j = 0; j < 10; j++) {
                 const lnYear = currentYunYear + j;
-                const lnAge = currentYunAge + j;
+                
+                // 🌟 修正：流年虛歲 = 流年年份 - 出生年份 + 1
+                const lnAge = lnYear - birthYear + 1; 
+                
                 const lnSolar = window.Solar.fromYmd(lnYear, 6, 15);
                 const lnLunar = lnSolar.getLunar();
                 const lnGanZhi = lnLunar.getYearInGanZhi(); 
@@ -485,12 +496,13 @@ const calculateBaziResult = (formData, ziHourRule) => {
                 const lnZhi = lnGanZhi.charAt(1);
                 liuNians.push({
                     year: lnYear, age: lnAge, ganZhi: lnGanZhi, gan: lnGan, zhi: lnZhi,
-                    ganGod: getShiShen(bz.dayGan, lnGan), zhiHidden: ZHI_HIDDEN[lnZhi] || []
+                    ganGod: getShiShen(refGan, lnGan),
+                    zhiHidden: ZHI_HIDDEN[lnZhi] || []
                 });
             }
             daYuns.push({ 
                 seq: i, gan: nextGan, zhi: DIZHI[nextZhiIdx],
-                ganGod: getShiShen(bz.dayGan, nextGan),
+                ganGod: getShiShen(refGan, nextGan),
                 zhiHidden: ZHI_HIDDEN[DIZHI[nextZhiIdx]] || [],
                 startYear: currentYunYear, startAge: currentYunAge, liuNians: liuNians
             });
@@ -498,43 +510,33 @@ const calculateBaziResult = (formData, ziHourRule) => {
         return daYuns;
     };
 
-    const daYuns = calculateDaYun(baziObj, formData.gender, startSolar.getYear(), startAge);
+    const daYuns = calculateDaYun(baziObj, formData.gender, startSolar.getYear(), calcYear);
     const pad = (n) => String(n).padStart(2, '0');
 
-    // 1. 計算日空亡 (以日柱查)
     const dayKongWang = getKongWang(baziObj.dayGan, baziObj.dayZhi);
-    
-    // 2. 計算年空亡 (以年柱查)
     const yearKongWang = getKongWang(baziObj.yearGan, baziObj.yearZhi);
 
-    // 3. 計算節氣
     let jieQiSpan = '';
     try {
-    if (typeof window.Lunar !== 'undefined' && lunar) {
-        const prevJie = lunar.getPrevJieQi(false);
-        const nextJie = lunar.getNextJieQi(false);
-
-        if (prevJie && nextJie) {
-            const pSolar = prevJie.getSolar();
-            const nSolar = nextJie.getSolar();
-
-            // 使用 julianDay 進行浮點數運算，確保毫秒級的精準
-            const currentJD = solar.getJulianDay();
-            const prevJD = pSolar.getJulianDay();
-            const nextJD = nSolar.getJulianDay();
-
-            // 天數差 = 當前時間減去節氣交換點
-            const daysSince = Math.round(currentJD - prevJD);
-            const daysLeft = Math.round(nextJD - currentJD);
-            
-            // 這樣顯示會最接近您月柱的判定邏輯
-            if (daysSince === 0) {
-                jieQiSpan = `${toTraditional(prevJie.getName())}當日`;
-            } else {
-                jieQiSpan = `${toTraditional(prevJie.getName())}後 ${daysSince} 天，距${toTraditional(nextJie.getName())}尚餘 ${daysLeft} 天`;
+        if (typeof window.Lunar !== 'undefined' && lunar) {
+            const prevJie = lunar.getPrevJieQi(false);
+            const nextJie = lunar.getNextJieQi(false);
+            if (prevJie && nextJie) {
+                const pSolar = prevJie.getSolar();
+                const nSolar = nextJie.getSolar();
+                const currentJD = solar.getJulianDay();
+                const prevJD = pSolar.getJulianDay();
+                const nextJD = nSolar.getJulianDay();
+                const daysSince = Math.round(currentJD - prevJD);
+                const daysLeft = Math.round(nextJD - currentJD);
+                
+                if (daysSince === 0) {
+                    jieQiSpan = `${toTraditional(prevJie.getName())}當日`;
+                } else {
+                    jieQiSpan = `${toTraditional(prevJie.getName())}後 ${daysSince} 天，距${toTraditional(nextJie.getName())}尚餘 ${daysLeft} 天`;
+                }
             }
         }
-    }
     } catch (e) {
         console.error('節氣計算詳細錯誤:', e);
         jieQiSpan = '計算錯誤'; 
@@ -550,11 +552,13 @@ const calculateBaziResult = (formData, ziHourRule) => {
         isPaid: formData.isPaid || false,
         solarDate: `${rawYear}-${pad(rawMonth)}-${pad(rawDay)} ${pad(rawHour)}:${pad(rawMinute)}`,
         lunarDate: lunarString,
-        jieQiSpan: jieQiSpan,           // 計算節氣天數
+        jieQiSpan: jieQiSpan,           
         bazi: baziObj,
         meta: {
-            dayKongWang: dayKongWang,   // 日空亡
-            yearKongWang: yearKongWang, // 年空亡
+            dayKongWang: dayKongWang,   
+            yearKongWang: yearKongWang,
+            refGan: refGan,             // 🌟 傳遞立極天干給後方 UI
+            liJiRule: liJiRule          // 🌟 傳遞立極規則
         },
         naYin: {
             year: toTraditional(bazi.getYearNaYin()), month: toTraditional(bazi.getMonthNaYin()),
@@ -570,9 +574,10 @@ const calculateBaziResult = (formData, ziHourRule) => {
 
 // --- SettingsView ---
 const SettingsView = ({ 
-    ziHourRule, setZiHourRule,   // App 專屬設定
-    colorTheme, setColorTheme,   // App 專屬設定
-    bookmarks, setBookmarks      // 共用資料
+    ziHourRule, setZiHourRule,   
+    colorTheme, setColorTheme,   
+    liJiRule, setLiJiRule,      // 🌟 新增這裡
+    bookmarks, setBookmarks      
 }) => {
   // 定義這個 App 獨有的資訊
   const APP_INFO = {
@@ -598,7 +603,17 @@ const SettingsView = ({
       {/* 1. App 專屬設定區塊 */}
     <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>偏好設定</h3>
     <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden', marginBottom: '12px' }}>
-        
+
+        {/* 立極模式設定 */}
+        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}` }}>
+              <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>排盤立極</div>
+              <ToggleSelector 
+                  options={[{val: 'day', label: '子平八字'}, {val: 'year', label: '李虛中祿命術'}]} 
+                  currentValue={liJiRule} 
+                  onChange={setLiJiRule} 
+              />
+        </div>
+
         {/* 子時設定 */}
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}` }}>
             <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
@@ -903,17 +918,18 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
 const PillarCard = ({ 
     title, gan, zhi, naYin, dayMaster, displayMode, 
     dayZhi, yearZhi, monthZhi, colorTheme, genderText, 
-    onShenShaClick, kongWangStatus 
+    onShenShaClick, kongWangStatus,
+    refGan, refTitle
     }) => {
 
    const safeTheme = colorTheme || 'elemental';
    const ganColor = safeTheme === 'elemental' ? (STEM_COLORS[gan] || '#555555') : '#555555';
    const zhiColor = safeTheme === 'elemental' ? (BRANCH_COLORS[zhi] || '#555555') : '#555555';
    
-   const ganGod = (title === '日柱') ? null : getShiShen(dayMaster, gan);
-   const zhiGods = (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(dayMaster, h));
+   const ganGod = (title === refTitle) ? null : getShiShen(refGan, gan);
+   const zhiGods = (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(refGan, h));
    const hiddenStems = ZHI_HIDDEN[zhi] || [];
-   const shenShas = getShenSha(gan, zhi, dayMaster, dayZhi, yearZhi, monthZhi);
+   const shenShas = getShenSha(gan, zhi, refGan, dayZhi, yearZhi, monthZhi);
 
    let displayTopRight = null;
    let displayBottomRight = [];
@@ -939,14 +955,16 @@ const PillarCard = ({
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1 }}>{gan}</span>
             
+            {/* 🌟 變通星向右移 (加大 marginLeft) */}
             {displayMode === 'shiShen' && displayTopRight && (
-                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '2px', fontSize: '14px', color: '#888', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '6px', fontSize: '14px', color: '#888', whiteSpace: 'nowrap' }}>
                     {displayTopRight}
                 </div>
             )}
             
+            {/* 🌟 元男/元女向左移 (改為 right: '100%' 並設定 marginRight) */}
             {genderText && (
-                <div style={{ position: 'absolute', top: '-2px', left: '100%', marginLeft: '4px', writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '14px', fontWeight: 'bold', color: THEME.gray, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: '-2px', right: '100%', marginRight: '8px', writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '14px', fontWeight: 'bold', color: genderText === '元男' ? THEME.blue : THEME.red, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
                     {genderText}
                 </div>
             )}
@@ -1326,7 +1344,9 @@ const AiBaziAnalysis = ({ data }) => {
   const generateLongReport = (isAdmin = false, overrideWuxing = null, opts = {}) => {
     const { bazi, genderText } = data;
     const wx = getCounts();
-    const dm = bazi.dayGan;
+    const liJiRule = data.meta?.liJiRule || 'day';
+    const dm = liJiRule === 'year' ? bazi.yearGan : bazi.dayGan;
+    const refName = liJiRule === 'year' ? '年干' : '日元';
     const dmWuxing = WUXING_MAP[dm];
     const monthZhiWuxing = WUXING_MAP[bazi.monthZhi];
     const rel = getRelations(dmWuxing);
@@ -1373,7 +1393,7 @@ const AiBaziAnalysis = ({ data }) => {
     // ================= 開始撰寫報告 =================
     let report = `### 一、 原局總論與古典格局剖析\n`;
     
-    report += `閣下為**【${dm}${dmWuxing}】**日元，生於${season}${bazi.monthZhi}月。\n`;
+    report += `閣下為**【${dm}${dmWuxing}】**${refName}，生於${season}${bazi.monthZhi}月。\n`;
     report += `《滴天髓》云：${DI_TIAN_SUI[dm] || ''}\n\n`;
     report += `- ${DI_TIAN_SUI_DESC[dm] || ''}\n\n`;
     report += `原局地支`;
@@ -2378,17 +2398,22 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        }
    };
 
+   const refGan = data.meta?.refGan || data.bazi.dayGan;
+   const liJiRule = data.meta?.liJiRule || 'day';
+   const refTitle = liJiRule === 'year' ? '年柱' : '日柱';
+
    const getDisplayItems = (gan, zhi) => {
         if (displayMode === 'zangGan') return ZHI_HIDDEN[zhi] || [];
-        if (displayMode === 'shenSha') return getShenSha(gan, zhi, data.bazi.dayGan, data.bazi.dayZhi, data.bazi.yearZhi, data.bazi.monthZhi);
+        // 🌟 神煞與十神判斷都帶入 refGan
+        if (displayMode === 'shenSha') return getShenSha(gan, zhi, refGan, data.bazi.dayZhi, data.bazi.yearZhi, data.bazi.monthZhi);
         
-        return (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(data.bazi.dayGan, h));
+        return (ZHI_HIDDEN[zhi] || []).map(h => getShiShen(refGan, h));
     };
 
     const getTopRightItem = (gan) => {
-        if (displayMode === 'shenSha') return null; // 神煞模式通常不顯示天干神煞
-        if (displayMode === 'zangGan') return null; // 藏干模式不顯示天干變通星
-        return getShiShen(data.bazi.dayGan, gan); // 預設顯示天干變通星
+        if (displayMode === 'shenSha') return null; 
+        if (displayMode === 'zangGan') return null; 
+        return getShiShen(refGan, gan); // 🌟 改為 refGan
     };
 
    const getColor = (char, type) => {
@@ -2577,6 +2602,36 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        return dayKongWang.includes(zhi) || yearKongWang.includes(zhi);
     };
 
+    // 🌟 新增：計算大運地支與原局地支的「刑沖破害」
+        const getZhiRelations = (targetZhi) => {
+            const baziZhis = [data.bazi.yearZhi, data.bazi.monthZhi, data.bazi.dayZhi, data.bazi.timeZhi];
+            const relations = new Set();
+            
+            const CHONG = {'子':'午','午':'子', '丑':'未','未':'丑', '寅':'申','申':'寅', '卯':'酉','酉':'卯', '辰':'戌','戌':'辰', '巳':'亥','亥':'巳'};
+            const HAI = {'子':'未','未':'子', '丑':'午','午':'丑', '寅':'巳','巳':'寅', '卯':'辰','辰':'卯', '申':'亥','亥':'申', '酉':'戌','戌':'酉'};
+            const PO = {'子':'酉','酉':'子', '丑':'辰','辰':'丑', '寅':'亥','亥':'寅', '卯':'午','午':'卯', '巳':'申','申':'巳', '未':'戌','戌':'未'};
+            
+            baziZhis.forEach(bz => {
+                if (!bz) return;
+                if (CHONG[targetZhi] === bz) relations.add('沖');
+                if (HAI[targetZhi] === bz) relations.add('害');
+                if (PO[targetZhi] === bz) relations.add('破');
+                // 刑：子卯、寅巳申、丑戌未、辰午酉亥(自刑)
+                if (
+                    (targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子') ||
+                    (targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)) ||
+                    (targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)) ||
+                    (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi))
+                ) {
+                    relations.add('刑');
+                }
+            });
+            const order = { '沖': 1, '刑': 2, '破': 3, '害': 4 };
+            return Array.from(relations)
+                .sort((a, b) => order[a] - order[b]) // 依照權重數字由小到大排序
+                .join('');
+        };
+
     const renderDaYunRow = (list) => {
         return (
             <div style={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -2585,25 +2640,36 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     const displayTopRight = getTopRightItem(dy.gan);
                     const displayBottomRight = getDisplayItems(dy.gan, dy.zhi);
                     const gColor = getColor(dy.gan, 'stem'); const zColor = getColor(dy.zhi, 'branch');
+                const zhiRelations = getZhiRelations(dy.zhi);
+
                 return (
-                    <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', 
+                    <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', // 🌟 1. 恢復 115px
                                 boxSizing: 'border-box', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
                             <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
                                 {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -11, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
                             </div>
                             <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                            
+                            {/* 🌟 2. 刑沖破害放在左邊，與右側完全對稱 (垂直排列) */}
+                            {zhiRelations && (
+                                <div style={{ position: 'absolute', top: 5, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                    {zhiRelations.split('').map((char, idx) => (
+                                        <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                    ))}
+                                </div>
+                            )}
+
                             <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
                             
                             <div style={{ position: 'absolute', top: 5, right: -11 }}>
                                 {displayMode === 'shenSha' ? (
                                     <ShenShaVerticalList 
-                                        items={displayBottomRight} // 這裡是完整神煞列表
+                                        items={displayBottomRight}
                                         onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)}
-                                        fontSize="10px" // 大運框較小
+                                        fontSize="10px"
                                     />
                                 ) : (
-                                    // 非神煞模式 (十神/藏干)
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                                         {displayBottomRight.map((item, idx) => (
                                             <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
@@ -2612,7 +2678,8 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                 )}
                             </div>
                         </div>
-                            {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}歲</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
+                            
+                            {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
                         </div>
                     );
                 })}
@@ -2637,6 +2704,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                          const displayTopRight = getTopRightItem(ln.gan);
                          const displayBottomRight = getDisplayItems(ln.gan, ln.zhi);
                          const gColor = getColor(ln.gan, 'stem'); const zColor = getColor(ln.zhi, 'branch');
+                         
+                         // 🌟 1. 取得流年地支的刑沖破害
+                         const zhiRelations = getZhiRelations(ln.zhi);
+
                          return (
                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', height: '120px', 
                                       boxSizing: 'border-box', border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
@@ -2645,6 +2716,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                         {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                     </div>
                                     <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
+                                    
+                                    {/* 🌟 2. 將刑沖破害放在流年地支左方，對齊右側 (top: 8) */}
+                                    {zhiRelations && (
+                                        <div style={{ position: 'absolute', top: 8, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                            {zhiRelations.split('').map((char, idx) => (
+                                                <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
                                     
                                     <div style={{ position: 'absolute', top: 8, right: -11 }}>
@@ -2664,7 +2745,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                     </div>
                                 </div>
                                   <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                      <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}歲</div>
+                                      <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}</div>
                                       <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
                                   </div>
                              </div>
@@ -2728,7 +2809,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                         const displayBottomRight = getDisplayItems(ly.gan, ly.zhi);
                         const gColor = getColor(ly.gan, 'stem'); 
                         const zColor = getColor(ly.zhi, 'branch');
-                        
+                        const zhiRelations = getZhiRelations(ly.zhi);
                         return (
                             <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)}
                                 style={{ 
@@ -2747,6 +2828,14 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                     {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -9, fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
                                 </div>
                                 <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
+                                    {zhiRelations && (
+                                        <div style={{ position: 'absolute', top: 8, left: -9, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                            {zhiRelations.split('').map((char, idx) => (
+                                                <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     
                                     <div style={{ position: 'absolute', top: 8, right: -9 }}>
@@ -2827,6 +2916,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                        const displayBottomRight = getDisplayItems(day.gan, day.zhi);
                        const gColor = getColor(day.gan, 'stem'); 
                        const zColor = getColor(day.zhi, 'branch');
+                       const zhiRelations = getZhiRelations(day.zhi);
 
                        return (
                            <div key={idx} 
@@ -2852,6 +2942,14 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                </div>
 
                                <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
+                                   {zhiRelations && (
+                                       <div style={{ position: 'absolute', top: 8, left: -10, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                           {zhiRelations.split('').map((char, i) => (
+                                               <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                           ))}
+                                       </div>
+                                   )}
+
                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
                                    <div style={{ position: 'absolute', top: 8, right: -10 }}>
                                         {displayMode === 'shenSha' ? (
@@ -3005,22 +3103,22 @@ return (
             <PillarCard 
                 title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} 
                 kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
-                {...{naYin:data.naYin.time, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
                 title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
                 kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
-                {...{naYin:data.naYin.day, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText:data.genderText, onShenShaClick:openShenShaModal}}
+                {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
                 title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
                 kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
-                {...{naYin:data.naYin.month, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
                 title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
                 kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
-                {...{naYin:data.naYin.year, dayMaster:data.bazi.dayGan, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
             />
         </div>
        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
@@ -3091,6 +3189,7 @@ export default function BaziApp() {
   const [editingData, setEditingData] = useState(null);
 
   // App 專屬狀態
+  const [liJiRule, setLiJiRule] = useState('day');
   const [ziHourRule, setZiHourRule] = useState('ziShi');
   const [colorTheme, setColorTheme] = useState('elemental');
 
@@ -3117,11 +3216,15 @@ export default function BaziApp() {
             const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
             if (savedBk) currentBookmarks = JSON.parse(savedBk);
 
+            const { value: savedLiJi } = await Preferences.get({ key: 'bazi_li_ji_rule' });
+            if (savedLiJi) setLiJiRule(savedLiJi);
+
             const { value: savedRule } = await Preferences.get({ key: 'bazi_zi_rule' });
             if (savedRule) setZiHourRule(savedRule);
 
             const { value: savedTheme } = await Preferences.get({ key: 'bazi_color_theme' });
             if (savedTheme) setColorTheme(savedTheme);
+
         } catch (e) { console.error("讀取儲存資料失敗:", e); }
 
         if (isSuccess) {
@@ -3198,6 +3301,7 @@ export default function BaziApp() {
     initializeApp();
   }, []);
 
+  useEffect(() => { const saveLiJi = async () => { await Preferences.set({ key: 'bazi_li_ji_rule', value: liJiRule }); }; saveLiJi(); }, [liJiRule]);
   useEffect(() => { const saveRule = async () => { await Preferences.set({ key: 'bazi_zi_rule', value: ziHourRule }); }; saveRule(); }, [ziHourRule]);
   useEffect(() => { const saveTheme = async () => { await Preferences.set({ key: 'bazi_color_theme', value: colorTheme }); }; saveTheme(); }, [colorTheme]);
 
@@ -3205,7 +3309,7 @@ export default function BaziApp() {
   const handleCalculate = (formData) => {
      if (libStatus !== 'ready') return;
      try {
-        const result = calculateBaziResult(formData, ziHourRule);
+        const result = calculateBaziResult(formData, ziHourRule, liJiRule);
         setBaziData(result); 
         setEditingData(null); 
         setView('result');
@@ -3260,12 +3364,11 @@ export default function BaziApp() {
           const raw = { 
               ...savedItem.rawDate, 
               isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true,
-              // 🌟 【新增】讓原始資料也繼承付款時間
               paidAt: savedItem.paidAt || savedItem.rawDate?.paidAt || null 
           };
           
-          const freshResult = calculateBaziResult(raw, ziHourRule);
-          freshResult.id = savedItem.id; 
+          const freshResult = calculateBaziResult(raw, ziHourRule, liJiRule);
+          freshResult.id = savedItem.id;
           
           freshResult.isPaid = raw.isPaid; 
           // 🌟 【新增】讓新排好的盤也繼承付款時間
@@ -3333,6 +3436,7 @@ export default function BaziApp() {
           
           {/* ✅ 6. 設定頁 (包含共用與專屬) */}
           {view === 'settings' && <SettingsView 
+            liJiRule={liJiRule} setLiJiRule={setLiJiRule}
             ziHourRule={ziHourRule} setZiHourRule={setZiHourRule} 
             colorTheme={colorTheme} setColorTheme={setColorTheme}
             bookmarks={bookmarks} setBookmarks={setBookmarks}
