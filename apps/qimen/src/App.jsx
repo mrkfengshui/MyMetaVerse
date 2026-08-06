@@ -28,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v1.3 增加宮位資訊";
+const APP_VERSION = "v1.4 增加陰曆顯示";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -474,10 +474,13 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     // 局數中文
     const juNumCN = CHINESE_NUM[juNum];
 
+    const lunarString = `${lunar.getYearInGanZhi()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日`;
+
     return {
         id: Date.now(),
         solarDateStr: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
         lunarDateStr: `${yearGanZhi}年 ${monthGanZhi}月 ${dayGanZhi}日 ${timeGanZhi}時`,
+        lunarString: lunarString,
         jieQi: jieQiName,
         jieQiTime: jieQiTimeStr,
         nextJieQiTime: nextJieQiStr,
@@ -1005,7 +1008,9 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                        <div style={{ fontSize: '13px', color: THEME.gray }}>{currentData.solarDateStr}</div>
+                        <div style={{ fontSize: '13px', color: THEME.gray }}>
+                            {currentData.solarDateStr} {currentData.lunarString}
+                        </div>
                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: THEME.black, marginBottom: '4px' }}>{currentData.lunarDateStr}</div>
                         {/* 節氣資訊 */}
                         <div style={{ fontSize: '12px', color: THEME.purple, marginBottom: '8px', borderLeft: `3px solid ${THEME.blue}`, paddingLeft: '6px' }}>
