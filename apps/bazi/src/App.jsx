@@ -1028,8 +1028,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
    const [selectedLiuRi, setSelectedLiuRi] = useState(null);
-   
-   // [核心修改] 狀態改為三態字串: 'shiShen'(預設), 'zangGan'(藏干), 'shenSha'(神煞)
+   const [showOverviewModal, setShowOverviewModal] = useState(false);
    const [displayMode, setDisplayMode] = useState('shiShen'); 
    
    const safeTheme = colorTheme || 'elemental';
@@ -1628,12 +1627,134 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        );
     };
 
-   const calculateWuXingStrength = () => {
+    const renderOverviewModal = () => {
+        if (!showOverviewModal) return null;
+
+        const targetDaYun = data.daYuns[selectedDaYunIndex];
+        const targetLiuNian = targetDaYun?.liuNians?.find(l => l.year === selectedLiuNianYear);
+        const targetLiuYue = selectedLiuYue;
+        
+        let targetLiuRi = null;
+        if (selectedLiuRi !== null && targetLiuYue) {
+            const ris = getLiuRiData();
+            targetLiuRi = ris[selectedLiuRi];
+        }
+
+        // 🌟 將原局與運勢合併，加入 isOriginal 標記以區分
+        const pillars = [
+            { title: '年柱', data: { gan: data.bazi.yearGan, zhi: data.bazi.yearZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '月柱', data: { gan: data.bazi.monthGan, zhi: data.bazi.monthZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '日柱', data: { gan: data.bazi.dayGan, zhi: data.bazi.dayZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '時柱', data: { gan: data.bazi.timeGan, zhi: data.bazi.timeZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '大運', data: targetDaYun, sub1: targetDaYun ? targetDaYun.startAge : '', sub2: targetDaYun ? targetDaYun.startYear : '', isOriginal: false },
+            { title: '流年', data: targetLiuNian, sub1: targetLiuNian ? targetLiuNian.age : '', sub2: targetLiuNian ? targetLiuNian.year : '', isOriginal: false },
+            { title: '流月', data: targetLiuYue, sub1: targetLiuYue ? targetLiuYue.dateStr : '', sub2: targetLiuYue ? targetLiuYue.name : '', isOriginal: false },
+            { title: '流日', data: targetLiuRi, sub1: targetLiuRi ? targetLiuRi.dateStr : '', sub2: '', isOriginal: false },
+        ].filter(p => p.data); // 只保留有資料的層級
+
+        return (
+            <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1500, 
+                backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px'
+            }} onClick={() => setShowOverviewModal(false)}>
+                
+                <div style={{
+                    backgroundColor: '#fff', borderRadius: '16px', padding: '20px',
+                    width: '95%', maxWidth: '650px', display: 'flex', flexDirection: 'column', gap: '16px',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                }} onClick={e => e.stopPropagation()}>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
+                        <button onClick={() => setShowOverviewModal(false)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}>
+                            <X size={24} color={THEME.gray} />
+                        </button>
+                    </div>
+
+                    {/* 🌟 改用 direction: 'rtl' 支援原生橫向捲動且由右至左排列 */}
+                    <div style={{ 
+                        display: 'flex', 
+                        direction: 'rtl', 
+                        overflowX: 'auto', 
+                        WebkitOverflowScrolling: 'touch',
+                        gap: '6px', 
+                        paddingBottom: '12px' 
+                    }}>
+                        {pillars.map((p, idx) => {
+                            const d = p.data;
+                            
+                            // 🌟 原局的「立極柱 (日主)」不顯示變通星
+                            const displayTopRight = (p.isOriginal && p.title === refTitle) ? null : getTopRightItem(d.gan);
+                            const displayBottomRight = getDisplayItems(d.gan, d.zhi);
+                            
+                            // 🌟 原局本身不顯示刑沖破害 (只在運勢柱顯示與原局的互動)
+                            const zhiRelations = p.isOriginal ? null : getZhiRelations(d.zhi);
+                            
+                            const gColor = getColor(d.gan, 'stem');
+                            const zColor = getColor(d.zhi, 'branch');
+
+                            return (
+                                <div key={idx} style={{ 
+                                    direction: 'ltr', // 🌟 卡片內容恢復左至右
+                                    flex: '0 0 auto', 
+                                    width: '65px',    // 🌟 固定寬度，防擠壓
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                                    backgroundColor: THEME.bgGray, borderRadius: '8px', padding: '12px 4px', 
+                                    border: `1px solid ${THEME.border}`, minHeight: '140px', position: 'relative'
+                                }}>
+                                    <div style={{ fontSize: '13px', color: THEME.blue, marginBottom: '8px', fontWeight: 'bold' }}>{p.title}</div>
+                                    
+                                    <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '22px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
+                                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '11px', color: THEME.gray }}>{displayTopRight}</div>}
+                                    </div>
+                                    
+                                    <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
+                                        {zhiRelations && (
+                                            <div style={{ position: 'absolute', top: 8, left: -12, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                                {zhiRelations.split('').map((char, i) => (
+                                                    <span key={i} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <span style={{ fontSize: '22px', fontWeight: 'bold', color: zColor }}>{d.zhi}</span>
+                                        <div style={{ position: 'absolute', top: 8, right: -12 }}>
+                                            {displayMode === 'shenSha' ? (
+                                                <ShenShaVerticalList 
+                                                    items={displayBottomRight}
+                                                    onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)}
+                                                    fontSize="10px"
+                                                />
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                                    {displayBottomRight.map((item, i) => (
+                                                        <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: 'auto', paddingTop: '12px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{p.sub1}</div>
+                                        {p.sub2 && <div style={{ fontSize: '10px', color: THEME.gray }}>{p.sub2}</div>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const calculateWuXingStrength = () => {
        const counts = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
        const chars = [ data.bazi.yearGan, data.bazi.yearZhi, data.bazi.monthGan, data.bazi.monthZhi, data.bazi.dayGan, data.bazi.dayZhi, data.bazi.timeGan, data.bazi.timeZhi ];
        chars.forEach(char => { const wx = WUXING_MAP[char]; if (wx && counts[wx] !== undefined) counts[wx]++; });
        return counts;
-   };   
+    };   
 
    const firstRow = data.daYuns ? data.daYuns.slice(0, 5) : [];
    const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
@@ -1828,6 +1949,39 @@ return (
                 config={shenShaModalConfig} 
                 onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
             />
+            
+        {/* 🌟 3. 渲染綜合運勢盤 */}
+        {renderOverviewModal()}
+
+        {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
+        <button
+            onClick={() => setShowOverviewModal(true)}
+            style={{
+                position: 'fixed',
+                bottom: '100px',     // 避開底部導航列
+                right: '20px',
+                width: '54px',
+                height: '54px',
+                borderRadius: '27px',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)', // 帶點透明度的白底
+                color: '#999999',                             // 圖示顏色改淺灰
+                border: '2px solid #e0e0e0',                  // 外圈改為極淺的灰色
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',     // 陰影再進一步調淡
+                
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+                cursor: 'pointer',
+                transition: 'transform 0.1s',
+            }}
+            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
+            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+            <Eye size={24} />
+        </button>
+
      </div>
    );
 };
