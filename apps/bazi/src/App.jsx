@@ -1642,10 +1642,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
 
         // 🌟 分拆為「原局」與「運勢」兩個陣列
         const originalPillars = [
-            { title: '年柱', data: { gan: data.bazi.yearGan, zhi: data.bazi.yearZhi }, sub1: '原局', sub2: '', isOriginal: true },
-            { title: '月柱', data: { gan: data.bazi.monthGan, zhi: data.bazi.monthZhi }, sub1: '原局', sub2: '', isOriginal: true },
-            { title: '日柱', data: { gan: data.bazi.dayGan, zhi: data.bazi.dayZhi }, sub1: '原局', sub2: '', isOriginal: true },
-            { title: '時柱', data: { gan: data.bazi.timeGan, zhi: data.bazi.timeZhi }, sub1: '原局', sub2: '', isOriginal: true },
+            { title: '年柱', data: { gan: data.bazi.yearGan, zhi: data.bazi.yearZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '月柱', data: { gan: data.bazi.monthGan, zhi: data.bazi.monthZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '日柱', data: { gan: data.bazi.dayGan, zhi: data.bazi.dayZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '時柱', data: { gan: data.bazi.timeGan, zhi: data.bazi.timeZhi }, sub1: '', sub2: '', isOriginal: true },
         ];
 
         const fortunePillars = [
