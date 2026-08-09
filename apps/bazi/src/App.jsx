@@ -1384,17 +1384,43 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     if (others.every(z => baziZhis.includes(z))) details.add(`地支與「${others.join('、')}」三會${wx}方局 ${checkHua(wx)}`);
                 }
             });
+            // 🌟 1. 事前判定：檢查當前命盤與運勢是否湊齊了完整的三刑
+            const allZhis = new Set([targetZhi, ...baziZhis]);
+            const isFullWuEn = allZhis.has('寅') && allZhis.has('申') && allZhis.has('巳');
+            const isFullShiShi = allZhis.has('丑') && allZhis.has('戌') && allZhis.has('未');
+
+            // 🌟 2. 滿編觸發：若湊齊三刑，直接將對象合併成一句顯示
+            if (isFullWuEn && ['寅', '巳', '申'].includes(targetZhi)) {
+                // 抓出原局中參與三刑的其他地支
+                const others = ['寅', '巳', '申'].filter(z => z !== targetZhi && baziZhis.includes(z));
+                if (others.length > 0) details.add(`地支與「${others.join('、')}」無恩之刑`);
+            }
+            if (isFullShiShi && ['丑', '戌', '未'].includes(targetZhi)) {
+                const others = ['丑', '戌', '未'].filter(z => z !== targetZhi && baziZhis.includes(z));
+                if (others.length > 0) details.add(`地支與「${others.join('、')}」恃勢之刑`);
+            }
+
+            // 🌟 3. 處理其他刑沖破害
             baziZhis.forEach(bz => {
                 if (CHONG[targetZhi] === bz) details.add(`地支與「${bz}」相沖`);
                 if (HAI[targetZhi] === bz) details.add(`地支與「${bz}」相害`);
                 if (PO[targetZhi] === bz) details.add(`地支與「${bz}」相破`);
-                if (
-                    (targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子') ||
-                    (targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)) ||
-                    (targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)) ||
-                    (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi))
-                ) {
+                
+                // 子卯：無禮之刑 (只需兩字即成立)
+                if ((targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子')) {
+                    details.add(`地支與「${bz}」無禮之刑`);
+                }
+                // 寅申巳：如果沒有湊齊滿編 (!isFullWuEn)，才單獨顯示一般的相刑
+                else if (!isFullWuEn && ((targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)))) {
                     details.add(`地支與「${bz}」相刑`);
+                }
+                // 丑戌未：如果沒有湊齊滿編 (!isFullShiShi)，才單獨顯示一般的相刑
+                else if (!isFullShiShi && ((targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)))) {
+                    details.add(`地支與「${bz}」相刑`);
+                }
+                // 辰午酉亥：自刑 (同字相見)
+                else if (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi)) {
+                    details.add(`地支與「${bz}」自刑`);
                 }
             });
             
