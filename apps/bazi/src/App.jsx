@@ -1571,12 +1571,13 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        };
 
        return (
-           <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+           <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', height: '44px', boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
                    {renderTitle()}
                    <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px' }}><X size={18} /></button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: '1fr', gap: '4px', direction: 'rtl' }}>
+                {/* 🌟 核心修正：repeat(6, minmax(0, 1fr)) 強制絕對平分，絕不撐開外框 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
                     {liuYues.map((ly) => {
                         const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
                         const displayTopRight = getTopRightItem(ly.gan);
@@ -1587,39 +1588,39 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
 
                         return (
                             <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)} style={{ 
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 2px', 
                                 backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, borderRadius: '8px', 
                                 border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
                                 minHeight: '115px', height: '100%', boxSizing: 'border-box', direction: 'ltr',
-                                cursor: 'pointer', transition: 'all 0.2s'
+                                cursor: 'pointer', transition: 'all 0.2s', minWidth: 0 // 🌟 強制允許內容縮小
                             }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '2px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: 0 }}>
+                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
+                                        <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
-                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px', minWidth: 0 }}>
+                                        {displayTopRight && <span style={{ fontSize: '9px', color: THEME.gray, padding: '0 1px', borderRadius: '2px', whiteSpace: 'nowrap' }}>{displayTopRight}</span>}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: 0 }}>
+                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
+                                        <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', minWidth: 0 }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize="10px" />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize="9px" />
                                         ) : (
-                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '9px', lineHeight: '1.1', color: '#888', whiteSpace: 'nowrap' }}>{item}</span>)
                                         )}
                                     </div>
                                 </div>
-                                <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
-                                    <div style={{ fontSize: '10px', color: THEME.gray }}>{ly.name}</div>
+                                <div style={{ marginTop: 'auto', paddingTop: '4px', textAlign: 'center', width: '100%', overflow: 'hidden' }}>
+                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.dateStr}</div>
+                                    <div style={{ fontSize: '9px', color: THEME.gray, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.name}</div>
                                 </div>
                             </div>
                         );
