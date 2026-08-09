@@ -26,7 +26,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v3.0 增加祿命術及其他實用提示";
+const APP_VERSION = "v3.1 增加實用提示";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -1029,6 +1029,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
    const [selectedLiuRi, setSelectedLiuRi] = useState(null);
    const [showOverviewModal, setShowOverviewModal] = useState(false);
+   const [relationModalContent, setRelationModalContent] = useState(null);
    const [displayMode, setDisplayMode] = useState('shiShen'); 
    
    const safeTheme = colorTheme || 'elemental';
@@ -1250,21 +1251,38 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        return dayKongWang.includes(zhi) || yearKongWang.includes(zhi);
     };
 
-    // 🌟 新增：計算大運地支與原局地支的「刑沖破害」
+        // 🌟 1. 新增：天干合沖關係
+        const getGanRelations = (targetGan) => {
+            const baziGans = Array.from(new Set([data.bazi.yearGan, data.bazi.monthGan, data.bazi.dayGan, data.bazi.timeGan].filter(Boolean)));
+            const relations = new Set();
+            const GAN_HE = {'甲':'己', '己':'甲', '乙':'庚', '庚':'乙', '丙':'辛', '辛':'丙', '丁':'壬', '壬':'丁', '戊':'癸', '癸':'戊'};
+            const GAN_CHONG = {'甲':'庚', '庚':'甲', '乙':'辛', '辛':'乙', '丙':'壬', '壬':'丙', '丁':'癸', '癸':'丁'};
+
+            baziGans.forEach(bg => {
+                if (GAN_HE[targetGan] === bg) relations.add('合');
+                if (GAN_CHONG[targetGan] === bg) relations.add('沖');
+            });
+            // 排序讓「合」優先於「沖」
+            return Array.from(relations).sort((a,b) => (a==='合'?1:2) - (b==='合'?1:2)).join('');
+        };
+
+        // 🌟 2. 地支關係 (維持原狀)
         const getZhiRelations = (targetZhi) => {
-            const baziZhis = [data.bazi.yearZhi, data.bazi.monthZhi, data.bazi.dayZhi, data.bazi.timeZhi];
+            const baziZhis = Array.from(new Set([data.bazi.yearZhi, data.bazi.monthZhi, data.bazi.dayZhi, data.bazi.timeZhi].filter(Boolean)));
             const relations = new Set();
             
             const CHONG = {'子':'午','午':'子', '丑':'未','未':'丑', '寅':'申','申':'寅', '卯':'酉','酉':'卯', '辰':'戌','戌':'辰', '巳':'亥','亥':'巳'};
             const HAI = {'子':'未','未':'子', '丑':'午','午':'丑', '寅':'巳','巳':'寅', '卯':'辰','辰':'卯', '申':'亥','亥':'申', '酉':'戌','戌':'酉'};
             const PO = {'子':'酉','酉':'子', '丑':'辰','辰':'丑', '寅':'亥','亥':'寅', '卯':'午','午':'卯', '巳':'申','申':'巳', '未':'戌','戌':'未'};
-            
+            const LIU_HE = {'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'};
+            const SAN_HE = [['申','子','辰'], ['亥','卯','未'], ['寅','午','戌'], ['巳','酉','丑']];
+            const SAN_HUI = [['亥','子','丑'], ['寅','卯','辰'], ['巳','午','未'], ['申','酉','戌']];
+
             baziZhis.forEach(bz => {
-                if (!bz) return;
                 if (CHONG[targetZhi] === bz) relations.add('沖');
                 if (HAI[targetZhi] === bz) relations.add('害');
                 if (PO[targetZhi] === bz) relations.add('破');
-                // 刑：子卯、寅巳申、丑戌未、辰午酉亥(自刑)
+                if (LIU_HE[targetZhi] === bz) relations.add('合');
                 if (
                     (targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子') ||
                     (targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)) ||
@@ -1274,10 +1292,113 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     relations.add('刑');
                 }
             });
-            const order = { '沖': 1, '刑': 2, '破': 3, '害': 4 };
-            return Array.from(relations)
-                .sort((a, b) => order[a] - order[b]) // 依照權重數字由小到大排序
-                .join('');
+
+            SAN_HE.forEach(group => {
+                if (group.includes(targetZhi)) {
+                    const others = group.filter(z => z !== targetZhi);
+                    if (others.every(z => baziZhis.includes(z))) relations.add('合');
+                }
+            });
+            SAN_HUI.forEach(group => {
+                if (group.includes(targetZhi)) {
+                    const others = group.filter(z => z !== targetZhi);
+                    if (others.every(z => baziZhis.includes(z))) relations.add('會'); 
+                }
+            });
+            const order = { '會': 1, '合': 2, '沖': 3, '刑': 4, '破': 5, '害': 6 };
+            return Array.from(relations).sort((a, b) => order[a] - order[b]).join('');
+        };
+
+        // 🌟 3. 升級：天干地支關係完整解析
+        const getRelationDetails = (targetGan, targetZhi) => {
+            const baziGans = Array.from(new Set([data.bazi.yearGan, data.bazi.monthGan, data.bazi.dayGan, data.bazi.timeGan].filter(Boolean)));
+            const baziZhis = Array.from(new Set([data.bazi.yearZhi, data.bazi.monthZhi, data.bazi.dayZhi, data.bazi.timeZhi].filter(Boolean)));
+            const details = new Set(); 
+            
+            // 判定化神是否成功的核心邏輯
+            const checkHua = (huaWx) => {
+                const monthWx = WUXING_MAP[data.bazi.monthZhi];
+                
+                const KE_MAP = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
+                
+                if (KE_MAP[monthWx] === huaWx) {
+                    return '(合而不化)';
+                }
+
+                const allGans = [data.bazi.yearGan, data.bazi.monthGan, data.bazi.dayGan, data.bazi.timeGan, targetGan];
+                const hasGan = allGans.some(gan => WUXING_MAP[gan] === huaWx);
+                return (monthWx === huaWx || hasGan) ? '(成化)' : '(合而不化)';
+            };
+
+            // --- 天干解析 ---
+            const GAN_HE = [
+                { pair: ['甲','己'], wx: '土' }, { pair: ['乙','庚'], wx: '金' },
+                { pair: ['丙','辛'], wx: '水' }, { pair: ['丁','壬'], wx: '木' },
+                { pair: ['戊','癸'], wx: '火' }
+            ];
+            const GAN_CHONG = {'甲':'庚', '庚':'甲', '乙':'辛', '辛':'乙', '丙':'壬', '壬':'丙', '丁':'癸', '癸':'丁'};
+
+            GAN_HE.forEach(({pair, wx}) => {
+                if (pair.includes(targetGan)) {
+                    const other = pair.find(g => g !== targetGan);
+                    if (baziGans.includes(other)) details.add(`天干與「${other}」五合${wx} ${checkHua(wx)}`);
+                }
+            });
+            baziGans.forEach(bg => {
+                if (GAN_CHONG[targetGan] === bg) details.add(`天干與「${bg}」相沖`);
+            });
+
+            // --- 地支解析 ---
+            const CHONG = {'子':'午','午':'子', '丑':'未','未':'丑', '寅':'申','申':'寅', '卯':'酉','酉':'卯', '辰':'戌','戌':'辰', '巳':'亥','亥':'巳'};
+            const HAI = {'子':'未','未':'子', '丑':'午','午':'丑', '寅':'巳','巳':'寅', '卯':'辰','辰':'卯', '申':'亥','亥':'申', '酉':'戌','戌':'酉'};
+            const PO = {'子':'酉','酉':'子', '丑':'辰','辰':'丑', '寅':'亥','亥':'寅', '卯':'午','午':'卯', '巳':'申','申':'巳', '未':'戌','戌':'未'};
+            const LIU_HE = [
+                { pair: ['子','丑'], wx: '土' }, { pair: ['寅','亥'], wx: '木' },
+                { pair: ['卯','戌'], wx: '火' }, { pair: ['辰','酉'], wx: '金' },
+                { pair: ['巳','申'], wx: '水' }, { pair: ['午','未'], wx: '土' }
+            ];
+            const SAN_HE = [
+                { group: ['申','子','辰'], wx: '水' }, { group: ['亥','卯','未'], wx: '木' },
+                { group: ['寅','午','戌'], wx: '火' }, { group: ['巳','酉','丑'], wx: '金' }
+            ];
+            const SAN_HUI = [
+                { group: ['亥','子','丑'], wx: '水' }, { group: ['寅','卯','辰'], wx: '木' },
+                { group: ['巳','午','未'], wx: '火' }, { group: ['申','酉','戌'], wx: '金' }
+            ];
+
+            LIU_HE.forEach(({pair, wx}) => {
+                if (pair.includes(targetZhi)) {
+                    const other = pair.find(z => z !== targetZhi);
+                    if (baziZhis.includes(other)) details.add(`地支與「${other}」六合${wx} ${checkHua(wx)}`);
+                }
+            });
+            SAN_HE.forEach(({group, wx}) => {
+                if (group.includes(targetZhi)) {
+                    const others = group.filter(z => z !== targetZhi);
+                    if (others.every(z => baziZhis.includes(z))) details.add(`地支與「${others.join('、')}」三合${wx}局 ${checkHua(wx)}`);
+                }
+            });
+            SAN_HUI.forEach(({group, wx}) => {
+                if (group.includes(targetZhi)) {
+                    const others = group.filter(z => z !== targetZhi);
+                    if (others.every(z => baziZhis.includes(z))) details.add(`地支與「${others.join('、')}」三會${wx}方局 ${checkHua(wx)}`);
+                }
+            });
+            baziZhis.forEach(bz => {
+                if (CHONG[targetZhi] === bz) details.add(`地支與「${bz}」相沖`);
+                if (HAI[targetZhi] === bz) details.add(`地支與「${bz}」相害`);
+                if (PO[targetZhi] === bz) details.add(`地支與「${bz}」相破`);
+                if (
+                    (targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子') ||
+                    (targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)) ||
+                    (targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)) ||
+                    (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi))
+                ) {
+                    details.add(`地支與「${bz}」相刑`);
+                }
+            });
+            
+            return Array.from(details).join('\n'); 
         };
 
     const renderDaYunRow = (list) => {
@@ -1661,24 +1782,41 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
             // 原局立極柱不顯示十神
             const displayTopRight = (p.isOriginal && p.title === refTitle) ? null : getTopRightItem(d.gan);
             const displayBottomRight = getDisplayItems(d.gan, d.zhi);
-            // 原局不計算刑沖破害
+            const ganRelations = p.isOriginal ? null : getGanRelations(d.gan);
             const zhiRelations = p.isOriginal ? null : getZhiRelations(d.zhi);
+            const hasRelations = !p.isOriginal && (ganRelations || zhiRelations);
             
             const gColor = getColor(d.gan, 'stem');
             const zColor = getColor(d.zhi, 'branch');
 
             return (
-                <div key={idx} style={{ 
-                    direction: 'ltr',    // 確保內部文字由左至右
-                    flex: 1,             // 🌟 讓卡片自動平均分配寬度
-                    minWidth: 0,         // 🌟 防止內容撐破 Flexbox
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                    backgroundColor: THEME.bgGray, borderRadius: '8px', padding: '10px 2px', 
-                    border: `1px solid ${THEME.border}`, minHeight: '135px', position: 'relative'
+                <div key={idx} 
+                    onClick={() => {
+                        if (hasRelations) {
+                            const details = getRelationDetails(d.gan, d.zhi);
+                            if (details) setRelationModalContent(details);
+                        }
+                    }}
+                    style={{ 
+                        direction: 'ltr',    
+                        flex: 1,             
+                        minWidth: 0,         
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                        backgroundColor: THEME.bgGray, borderRadius: '8px', padding: '10px 2px', 
+                        border: `1px solid ${THEME.border}`, minHeight: '135px', position: 'relative',
+                        cursor: hasRelations ? 'pointer' : 'default' 
                 }}>
                     <div style={{ fontSize: '12px', color: THEME.blue, marginBottom: '8px', fontWeight: 'bold' }}>{p.title}</div>
                     
                     <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* 🌟 渲染天干合沖 (顯示於天干左側) */}
+                        {ganRelations && (
+                            <div style={{ position: 'absolute', top: 4, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                {ganRelations.split('').map((char, i) => (
+                                    <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
+                                ))}
+                            </div>
+                        )}
                         <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
                         {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '10px', color: THEME.gray }}>{displayTopRight}</div>}
                     </div>
@@ -1710,8 +1848,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     </div>
                     
                     <div style={{ marginTop: 'auto', paddingTop: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{p.sub1}</div>
-                        {p.sub2 && <div style={{ fontSize: '10px', color: THEME.gray }}>{p.sub2}</div>}
+                        {/* 🌟 統一渲染上下兩行字，如果沒有字就用 '\u00A0' (隱形空白) 撐開高度 */}
+                        {/* 這樣流日的日期就會穩穩停在第一排(黑色粗體)，且所有卡片的天干地支都會垂直對齊 */}
+                        <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{p.sub1 || '\u00A0'}</div>
+                        <div style={{ fontSize: '10px', color: THEME.gray }}>{p.sub2 || '\u00A0'}</div>
                     </div>
                 </div>
             );
@@ -1749,8 +1889,40 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     <div style={{ display: 'flex', direction: 'rtl', gap: '6px', justifyContent: 'flex-start' }}>
                         {fortunePillars.map((p, idx) => renderCard(p, `fort-${idx}`))}
                     </div>
-                    
                 </div>
+
+                {/* 🌟 3. 新增：刑沖破害的自訂美化彈窗 (疊加在綜合盤上方) */}
+                {relationModalContent && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1600, // 比 1500 更高
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px'
+                    }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                        
+                        <div style={{
+                            backgroundColor: '#fff', borderRadius: '16px', padding: '16px',
+                            width: '80%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '16px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        }} onClick={e => e.stopPropagation()}>
+                            
+                            {/* 與綜合運勢盤一模一樣的 Header 設計 */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
+                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動</h3>
+                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}>
+                                    <X size={22} color={THEME.gray} />
+                                </button>
+                            </div>
+
+                            {/* 內容區塊：只顯示乾淨的「與午相沖」等文字 */}
+                            <div style={{ textAlign: 'center', padding: '10px 0', fontSize: '16px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.8' }}>
+                                {relationModalContent.split('\n').map((line, i) => (
+                                    <div key={i}>{line}</div>
+                                ))}
+                            </div>
+
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
