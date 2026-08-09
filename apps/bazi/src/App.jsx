@@ -1427,62 +1427,65 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
             return Array.from(details).join('\n'); 
         };
 
-    const renderDaYunRow = (list) => {
+    // 🌟 1. 大運 (整合為單一 Grid，確保上下兩排絕對等高)
+    const renderDaYunGrid = () => {
+        if (!data.daYuns) return null;
         return (
-            <div style={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: '8px' }}>
-                {list.map((dy) => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '8px', direction: 'rtl' }}>
+                {data.daYuns.map((dy) => {
                     const isSelected = selectedDaYunIndex === (dy.seq - 1);
                     const displayTopRight = getTopRightItem(dy.gan);
                     const displayBottomRight = getDisplayItems(dy.gan, dy.zhi);
                     const gColor = getColor(dy.gan, 'stem'); const zColor = getColor(dy.zhi, 'branch');
-                const zhiRelations = getZhiRelations(dy.zhi);
+                    const zhiRelations = getZhiRelations(dy.zhi);
+                    const ganRelations = getGanRelations(dy.gan); // 新增天干關係
 
-                return (
-                    <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '18%', height: '115px', // 🌟 1. 恢復 115px
-                                boxSizing: 'border-box', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
-                            <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
-                                {displayTopRight && <div style={{ position: 'absolute', top: -5, right: -11, fontSize: '14px', color: THEME.gray }}>{displayTopRight}</div>}
-                            </div>
-                            <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                            
-                            {/* 🌟 2. 刑沖破害放在左邊，與右側完全對稱 (垂直排列) */}
-                            {zhiRelations && (
-                                <div style={{ position: 'absolute', top: 5, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                    {zhiRelations.split('').map((char, idx) => (
-                                        <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                    ))}
+                    return (
+                        <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ 
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', 
+                            minHeight: '115px', height: '100%', // 🌟 自動拉伸對齊
+                            boxSizing: 'border-box', padding: '8px 4px', 
+                            backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, 
+                            borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, 
+                            cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative', direction: 'ltr'
+                        }}>
+                            {/* 🌟 內部 2x3 Grid：取代絕對定位，完美適應內容高度 */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
-                            )}
-
-                            <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
-                            
-                            <div style={{ position: 'absolute', top: 5, right: -11 }}>
-                                {displayMode === 'shenSha' ? (
-                                    <ShenShaVerticalList 
-                                        items={displayBottomRight}
-                                        onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)}
-                                        fontSize="10px"
-                                    />
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                        {displayBottomRight.map((item, idx) => (
-                                            <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                        ))}
-                                    </div>
-                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
+                                    {displayTopRight && <span style={{ fontSize: '12px', color: THEME.gray }}>{displayTopRight}</span>}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                    {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                                    {displayMode === 'shenSha' ? (
+                                        <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)} fontSize="10px" />
+                                    ) : (
+                                        displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                            
-                            {!data.isManual && ( <> <div style={{ marginTop: '6px', fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}</div> <div style={{ fontSize: '11px', color: THEME.gray }}>{dy.startYear}</div> </> )}                            
+                            <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}</div>
+                                <div style={{ fontSize: '10px', color: THEME.gray }}>{dy.startYear}</div>
+                            </div>
                         </div>
                     );
                 })}
-                {Array.from({ length: 5 - list.length }).map((_, i) => <div key={`empty-${i}`} style={{ width: '18%' }}></div>)}
             </div>
         );
     };
     
+    // 🌟 2. 流年 (加入自動等高)
     const renderLiuNianGrid = () => {
         if (data.isManual) return null;
         const targetDaYun = data.daYuns[selectedDaYunIndex];
@@ -1493,56 +1496,51 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: '15px' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
                     <span style={{ fontSize: '12px', color: THEME.gray, marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
                  </div>
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', direction: 'rtl' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '8px', direction: 'rtl' }}>
                      {targetDaYun.liuNians.map((ln) => {
                          const isSelected = selectedLiuNianYear === ln.year;
                          const displayTopRight = getTopRightItem(ln.gan);
                          const displayBottomRight = getDisplayItems(ln.gan, ln.zhi);
                          const gColor = getColor(ln.gan, 'stem'); const zColor = getColor(ln.zhi, 'branch');
-                         
-                         // 🌟 1. 取得流年地支的刑沖破害
                          const zhiRelations = getZhiRelations(ln.zhi);
+                         const ganRelations = getGanRelations(ln.gan);
 
                          return (
-                            <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', height: '120px', 
-                                      boxSizing: 'border-box', border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, position: 'relative', minHeight: '120px', direction: 'ltr', cursor: 'pointer' }}>
-                                    <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
-                                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -11, fontSize: '14px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
+                            <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ 
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                                backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', 
+                                minHeight: '120px', height: '100%', boxSizing: 'border-box', // 🌟 自動拉伸對齊
+                                border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, 
+                                direction: 'ltr', cursor: 'pointer' 
+                            }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
-                                    <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
-                                    
-                                    {/* 🌟 2. 將刑沖破害放在流年地支左方，對齊右側 (top: 8) */}
-                                    {zhiRelations && (
-                                        <div style={{ position: 'absolute', top: 8, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                            {zhiRelations.split('').map((char, idx) => (
-                                                <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
-                                    
-                                    <div style={{ position: 'absolute', top: 8, right: -11 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
+                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList 
-                                                items={displayBottomRight}
-                                                onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)}
-                                                fontSize="10px"
-                                            />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)} fontSize="10px" />
                                         ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                                {displayBottomRight.map((item, idx) => (
-                                                    <span key={idx} style={{ fontSize: '14px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                                ))}
-                                            </div>
+                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
                                     </div>
                                 </div>
-                                  <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                      <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}</div>
-                                      <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
-                                  </div>
+                                <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}</div>
+                                    <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
+                                </div>
                              </div>
                          );
                      })}
@@ -1551,106 +1549,75 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
         );
    };
 
+   // 🌟 3. 流月
    const renderLiuYueGrid = () => {
        if (!selectedLiuNianYear) return null;
        const targetDaYun = data.daYuns[selectedDaYunIndex];
        const lnData = targetDaYun.liuNians.find(l => l.year === selectedLiuNianYear);
        if(!lnData) return null;
-       
        const liuYues = getLiuYueData(lnData.gan, lnData.zhi, lnData.year);
        
-       // 決定標題顯示內容
        const renderTitle = () => {
            if (selectedLiuYue) {
-               // 點選時顯示：節與氣的時間
                return (
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                       <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>
-                           {lnData.gan}{lnData.zhi}流年 {selectedLiuYue.gan}{selectedLiuYue.zhi}月
-                       </span>
-                       <span style={{ fontSize: '13px', color: THEME.blue }}>
-                           <span style={{ marginRight: '12px' }}>{selectedLiuYue.jieInfo}</span>
-                           <span>{selectedLiuYue.qiInfo}</span>
-                       </span>
+                       <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>{lnData.gan}{lnData.zhi}流年 {selectedLiuYue.gan}{selectedLiuYue.zhi}月</span>
+                       <span style={{ fontSize: '13px', color: THEME.blue }}><span style={{ marginRight: '12px' }}>{selectedLiuYue.jieInfo}</span><span>{selectedLiuYue.qiInfo}</span></span>
                    </div>
                );
            } else {
-               // 預設標題
-               return (
-                   <h4 style={{ margin: '0', fontSize: '15px' }}>
-                       {lnData.gan}{lnData.zhi}流年 - 流月
-                   </h4>
-               );
+               return <h4 style={{ margin: '0', fontSize: '15px' }}>{lnData.gan}{lnData.zhi}流年 - 流月</h4>;
            }
        };
 
        return (
            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                {/* 標題列區塊 */}
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', height: '44px',           // 固定高度
-                    boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', height: '44px', boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
                    {renderTitle()}
-                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px' }}>
-                       <X size={18} />
-                   </button>
+                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px' }}><X size={18} /></button>
                 </div>
-
-                {/* 流月網格 */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', direction: 'rtl' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: '1fr', gap: '4px', direction: 'rtl' }}>
                     {liuYues.map((ly) => {
-                        // 判斷是否被選中
                         const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
                         const displayTopRight = getTopRightItem(ly.gan);
                         const displayBottomRight = getDisplayItems(ly.gan, ly.zhi);
-                        const gColor = getColor(ly.gan, 'stem'); 
-                        const zColor = getColor(ly.zhi, 'branch');
+                        const gColor = getColor(ly.gan, 'stem'); const zColor = getColor(ly.zhi, 'branch');
                         const zhiRelations = getZhiRelations(ly.zhi);
-                        return (
-                            <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)}
-                                style={{ 
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                                    padding: '8px 4px', 
-                                    // 選中時變色
-                                    backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, 
-                                    borderRadius: '8px', 
-                                    border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
-                                    position: 'relative', Height: '110px', boxSizing: 'border-box', direction: 'ltr',
-                                    cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
-                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -9, fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</div>}
-                                </div>
-                                <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
-                                    {zhiRelations && (
-                                        <div style={{ position: 'absolute', top: 8, left: -9, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                            {zhiRelations.split('').map((char, idx) => (
-                                                <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                            ))}
-                                        </div>
-                                    )}
+                        const ganRelations = getGanRelations(ly.gan);
 
-                                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
-                                    
-                                    <div style={{ position: 'absolute', top: 8, right: -9 }}>
+                        return (
+                            <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)} style={{ 
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                                backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, borderRadius: '8px', 
+                                border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
+                                minHeight: '115px', height: '100%', boxSizing: 'border-box', direction: 'ltr',
+                                cursor: 'pointer', transition: 'all 0.2s'
+                            }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
+                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList 
-                                                items={displayBottomRight}
-                                                onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)}
-                                                fontSize="10px"
-                                            />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize="10px" />
                                         ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                                {displayBottomRight.map((item, idx) => (
-                                                    <span key={idx} style={{ fontSize: '12px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                                ))}
-                                            </div>
+                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
                                     </div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                    {/* 顯示 日/月 */}
                                     <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{ly.dateStr}</div>
                                     <div style={{ fontSize: '10px', color: THEME.gray }}>{ly.name}</div>
                                 </div>
@@ -1662,107 +1629,65 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        );
    };
 
-    const renderLiuRiList = () => {
-       // 1. 建立 ref 以便控制捲動容器
+   // 🌟 4. 流日
+   const renderLiuRiList = () => {
        const scrollRef = useRef(null);
-       
        if (!selectedLiuYue) return null;
        const liuRis = getLiuRiData();
        if (liuRis.length === 0) return null;
 
-       // 2. 滑鼠滾輪事件處理：將垂直滾動轉換為水平滾動
-       const handleWheel = (e) => {
-           if (scrollRef.current) {
-               // 電腦端使用者捲動滾輪時，讓容器水平移動
-               // 減去 deltaY 是為了讓捲動方向更符合直覺
-               scrollRef.current.scrollLeft -= e.deltaY;
-           }
-       };
+       const handleWheel = (e) => { if (scrollRef.current) scrollRef.current.scrollLeft -= e.deltaY; };
 
        return (
            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-               {/* 標題與關閉按鈕 */}
                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.green || '#4caf50'}`, paddingLeft: '8px', fontSize: '15px' }}>
-                       {selectedLiuYue.gan}{selectedLiuYue.zhi}月 - 流日
-                   </h4>
-                   <button onClick={() => setSelectedLiuYue(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px', cursor: 'pointer' }}>
-                       <X size={18} />
-                   </button>
+                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.green || '#4caf50'}`, paddingLeft: '8px', fontSize: '15px' }}>{selectedLiuYue.gan}{selectedLiuYue.zhi}月 - 流日</h4>
+                   <button onClick={() => setSelectedLiuYue(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px', cursor: 'pointer' }}><X size={18} /></button>
                </div>
-
-               {/* 橫向滑動容器 */}
-               <div 
-                   ref={scrollRef}
-                   onWheel={handleWheel} 
-                   style={{ 
-                       display: 'flex', 
-                       direction: 'rtl', // 八字由右往左排列
-                       overflowX: 'auto', // 確保捲軸出現           
-                       WebkitOverflowScrolling: 'touch', 
-                       width: '100%',                
-                       gap: '6px', 
-                       paddingBottom: '12px', // 給捲軸留一點空間，避免擋住日期
-                   }} 
-               >
+               <div ref={scrollRef} onWheel={handleWheel} style={{ 
+                   display: 'flex', direction: 'rtl', overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', gap: '6px', paddingBottom: '12px',
+                   alignItems: 'stretch' // 🌟 確保所有流日卡片等高
+               }}>
                    {liuRis.map((day, idx) => {
                        const isSelected = selectedLiuRi === idx;
                        const displayTopRight = getTopRightItem(day.gan);
                        const displayBottomRight = getDisplayItems(day.gan, day.zhi);
-                       const gColor = getColor(day.gan, 'stem'); 
-                       const zColor = getColor(day.zhi, 'branch');
+                       const gColor = getColor(day.gan, 'stem'); const zColor = getColor(day.zhi, 'branch');
                        const zhiRelations = getZhiRelations(day.zhi);
+                       const ganRelations = getGanRelations(day.gan);
 
                        return (
-                           <div key={idx} 
-                               onClick={() => setSelectedLiuRi(idx)}
-                               style={{ 
-                                   direction: 'ltr', // 卡片內部文字恢復左往右
-                                   flex: '0 0 auto', 
-                                   width: '64px',
-                                   display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                                   padding: '8px 4px', 
-                                   backgroundColor: isSelected ? '#f0fff4' : THEME.bgGray, 
-                                   borderRadius: '8px', 
-                                   border: isSelected ? `2px solid ${THEME.green || '#4caf50'}` : `2px solid ${THEME.border}`, 
-                                   position: 'relative', 
-                                   height: '110px',
-                                   cursor: 'pointer',
-                                   transition: 'all 0.2s'
-                               }}
-                           >
-                               <div style={{ position: 'relative', width: '30px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
-                                   <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
-                                   {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -10, fontSize: '11px', color: THEME.gray }}>{displayTopRight}</div>}
-                               </div>
-
-                               <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '2px' }}>
-                                   {zhiRelations && (
-                                       <div style={{ position: 'absolute', top: 8, left: -10, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                           {zhiRelations.split('').map((char, i) => (
-                                               <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                           ))}
-                                       </div>
-                                   )}
-
-                                   <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
-                                   <div style={{ position: 'absolute', top: 8, right: -10 }}>
+                           <div key={idx} onClick={() => setSelectedLiuRi(idx)} style={{ 
+                               direction: 'ltr', flex: '0 0 auto', width: '64px',
+                               display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                               backgroundColor: isSelected ? '#f0fff4' : THEME.bgGray, borderRadius: '8px', 
+                               border: isSelected ? `2px solid ${THEME.green || '#4caf50'}` : `2px solid ${THEME.border}`, 
+                               minHeight: '115px', height: 'auto', cursor: 'pointer', transition: 'all 0.2s'
+                           }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
+                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray }}>{displayTopRight}</span>}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                        {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList 
-                                                items={displayBottomRight}
-                                                onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)}
-                                                fontSize="10px"
-                                            />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)} fontSize="10px" />
                                         ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                                {displayBottomRight.map((item, i) => (
-                                                    <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                                ))}
-                                            </div>
+                                            displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
-                                   </div>
-                               </div>
-
+                                    </div>
+                                </div>
                                <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                                     <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{day.dateStr}</div>
                                </div>
@@ -1774,6 +1699,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
        );
     };
 
+    // 🌟 5. 綜合運勢盤 (Modal) - 整合為單一 Grid 確保上下排永遠等高
     const renderOverviewModal = () => {
         if (!showOverviewModal) return null;
 
@@ -1787,7 +1713,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
             targetLiuRi = ris[selectedLiuRi];
         }
 
-        // 🌟 分拆為「原局」與「運勢」兩個陣列
         const originalPillars = [
             { title: '年柱', data: { gan: data.bazi.yearGan, zhi: data.bazi.yearZhi }, sub1: '', sub2: '', isOriginal: true },
             { title: '月柱', data: { gan: data.bazi.monthGan, zhi: data.bazi.monthZhi }, sub1: '', sub2: '', isOriginal: true },
@@ -1800,12 +1725,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
             { title: '流年', data: targetLiuNian, sub1: targetLiuNian ? targetLiuNian.age : '', sub2: targetLiuNian ? targetLiuNian.year : '', isOriginal: false },
             { title: '流月', data: targetLiuYue, sub1: targetLiuYue ? targetLiuYue.dateStr : '', sub2: targetLiuYue ? targetLiuYue.name : '', isOriginal: false },
             { title: '流日', data: targetLiuRi, sub1: targetLiuRi ? targetLiuRi.dateStr : '', sub2: '', isOriginal: false },
-        ].filter(p => p.data); // 只保留有選擇的運勢層級
+        ].filter(p => p.data); 
 
-        // 🌟 抽出共用的卡片渲染邏輯
         const renderCard = (p, idx) => {
             const d = p.data;
-            // 原局立極柱不顯示十神
             const displayTopRight = (p.isOriginal && p.title === refTitle) ? null : getTopRightItem(d.gan);
             const displayBottomRight = getDisplayItems(d.gan, d.zhi);
             const ganRelations = p.isOriginal ? null : getGanRelations(d.gan);
@@ -1816,66 +1739,45 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
             const zColor = getColor(d.zhi, 'branch');
 
             return (
-                <div key={idx} 
-                    onClick={() => {
-                        if (hasRelations) {
-                            const details = getRelationDetails(d.gan, d.zhi);
-                            if (details) setRelationModalContent(details);
-                        }
-                    }}
+                <div key={idx} onClick={() => { if (hasRelations) { const details = getRelationDetails(d.gan, d.zhi); if (details) setRelationModalContent(details); } }}
                     style={{ 
-                        direction: 'ltr',    
-                        flex: 1,             
-                        minWidth: 0,         
+                        direction: 'ltr', minWidth: 0, 
                         display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                        backgroundColor: THEME.bgGray, borderRadius: '8px', padding: '10px 2px', 
-                        border: `1px solid ${THEME.border}`, minHeight: '135px', position: 'relative',
+                        backgroundColor: THEME.bgGray, borderRadius: '8px', 
+                        padding: '10px 4px', // 🌟 稍微縮減上下內距，增加左右內距
+                        border: `1px solid ${THEME.border}`, 
+                        maxHeight: '145px',  // 🌟 從 145px 降到 125px，讓卡片不要那麼高
+                        height: '100%', 
                         cursor: hasRelations ? 'pointer' : 'default' 
                 }}>
-                    <div style={{ fontSize: '12px', color: THEME.blue, marginBottom: '8px', fontWeight: 'bold' }}>{p.title}</div>
+                    <div style={{ fontSize: '12px', color: THEME.blue, marginBottom: '6px', fontWeight: 'bold' }}>{p.title}</div>
                     
-                    <div style={{ position: 'relative', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {/* 🌟 渲染天干合沖 (顯示於天干左側) */}
-                        {ganRelations && (
-                            <div style={{ position: 'absolute', top: 4, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                {ganRelations.split('').map((char, i) => (
-                                    <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                ))}
-                            </div>
-                        )}
-                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
-                        {displayTopRight && <div style={{ position: 'absolute', top: -4, right: -12, fontSize: '10px', color: THEME.gray }}>{displayTopRight}</div>}
-                    </div>
-                    
-                    <div style={{ position: 'relative', width: '30px', height: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginTop: '4px' }}>
-                        {zhiRelations && (
-                            <div style={{ position: 'absolute', top: 8, left: -11, display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                {zhiRelations.split('').map((char, i) => (
-                                    <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>
-                                ))}
-                            </div>
-                        )}
-                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{d.zhi}</span>
-                        <div style={{ position: 'absolute', top: 8, right: -11 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                            {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
+                            {displayTopRight && <span style={{ fontSize: '10px', color: THEME.gray }}>{displayTopRight}</span>}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                            {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{d.zhi}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                             {displayMode === 'shenSha' ? (
-                                <ShenShaVerticalList 
-                                    items={displayBottomRight}
-                                    onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)}
-                                    fontSize="10px"
-                                />
+                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)} fontSize="10px" />
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                    {displayBottomRight.map((item, i) => (
-                                        <span key={i} style={{ fontSize: '10px', lineHeight: '1.1', color: '#888' }}>{item}</span>
-                                    ))}
-                                </div>
+                                displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: '10px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                             )}
                         </div>
                     </div>
                     
-                    <div style={{ marginTop: 'auto', paddingTop: '10px', textAlign: 'center' }}>
-                        {/* 🌟 統一渲染上下兩行字，如果沒有字就用 '\u00A0' (隱形空白) 撐開高度 */}
-                        {/* 這樣流日的日期就會穩穩停在第一排(黑色粗體)，且所有卡片的天干地支都會垂直對齊 */}
+                    <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
                         <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{p.sub1 || '\u00A0'}</div>
                         <div style={{ fontSize: '10px', color: THEME.gray }}>{p.sub2 || '\u00A0'}</div>
                     </div>
@@ -1884,68 +1786,56 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
         };
 
         return (
-            <div style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1500, 
-                backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px'
-            }} onClick={() => setShowOverviewModal(false)}>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1500, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={() => setShowOverviewModal(false)}>
                 
-                <div style={{
-                    backgroundColor: '#fff', borderRadius: '16px', padding: '16px',
-                    width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '16px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                <style>{`
+                    .no-scrollbar::-webkit-scrollbar { display: none; }
+                    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                `}</style>
+                
+                <div className="no-scrollbar" style={{ 
+                    backgroundColor: '#fff', borderRadius: '16px', 
+                    padding: '24px', // 🌟 將 Modal 的內距從 16px 加大到 24px，增加外圍呼吸空間
+                    width: '100%', 
+                    maxWidth: '560px', // 🌟 稍微加寬，讓格子有空間展開
+                    display: 'flex', flexDirection: 'column', gap: '16px', 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                    maxHeight: '90vh', overflowY: 'auto', 
+                    boxSizing: 'border-box'
                 }} onClick={e => e.stopPropagation()}>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
-                        <button onClick={() => setShowOverviewModal(false)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}>
-                            <X size={22} color={THEME.gray} />
-                        </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '8px' }}>
+                        <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
+                        <button onClick={() => setShowOverviewModal(false)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
                     </div>
 
-                    {/* 🌟 第一排：原局 (RTL：由右至左排列) */}
-                    <div style={{ display: 'flex', direction: 'rtl', gap: '6px', justifyContent: 'space-between' }}>
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(4, 1fr)', 
+                        gridTemplateRows: fortunePillars.length > 0 ? '1fr 1fr' : '1fr', 
+                        gap: '12px', // 🌟 將卡片之間的間距從 8px 加大到 12px
+                        direction: 'rtl', position: 'relative',
+                        flexGrow: 1 
+                    }}>
+                        {fortunePillars.length > 0 && (
+                            <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', height: '1px', borderTop: `1px dashed ${THEME.border}`, marginTop: '-0.5px' }}></div>
+                        )}
+                        
                         {originalPillars.map((p, idx) => renderCard(p, `orig-${idx}`))}
-                    </div>
-
-                    {/* 🌟 虛線分隔線 
-                    <div style={{ borderTop: `1px dashed ${THEME.border}`, margin: '0 4px' }}></div>
-*/}
-                    {/* 🌟 第二排：運勢 (RTL：由右至左，並靠右對齊) */}
-                    <div style={{ display: 'flex', direction: 'rtl', gap: '6px', justifyContent: 'flex-start' }}>
                         {fortunePillars.map((p, idx) => renderCard(p, `fort-${idx}`))}
                     </div>
                 </div>
 
-                {/* 🌟 3. 新增：刑沖破害的自訂美化彈窗 (疊加在綜合盤上方) */}
+                {/* 互動詳情彈窗 */}
                 {relationModalContent && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1600, // 比 1500 更高
-                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                        backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px'
-                    }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
-                        
-                        <div style={{
-                            backgroundColor: '#fff', borderRadius: '16px', padding: '16px',
-                            width: '80%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '16px',
-                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                        }} onClick={e => e.stopPropagation()}>
-                            
-                            {/* 與綜合運勢盤一模一樣的 Header 設計 */}
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1600, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                        <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '16px', width: '80%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
-                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動</h3>
-                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}>
-                                    <X size={22} color={THEME.gray} />
-                                </button>
+                                <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動</h3>
+                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
                             </div>
-
-                            {/* 內容區塊：只顯示乾淨的「與午相沖」等文字 */}
                             <div style={{ textAlign: 'center', padding: '10px 0', fontSize: '16px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.8' }}>
-                                {relationModalContent.split('\n').map((line, i) => (
-                                    <div key={i}>{line}</div>
-                                ))}
+                                {relationModalContent.split('\n').map((line, i) => <div key={i}>{line}</div>)}
                             </div>
-
                         </div>
                     </div>
                 )}
@@ -2095,13 +1985,14 @@ return (
                 {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
             />
         </div>
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
            <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
-           <div>{renderDaYunRow(firstRow)}{renderDaYunRow(secondRow)}</div>
-       </div>
-       {renderLiuNianGrid()}
-       {renderLiuYueGrid()}
-       {renderLiuRiList()}
+           {/* 🌟 改為呼叫最新的單一 Grid */}
+           {renderDaYunGrid()}
+        </div>
+        {renderLiuNianGrid()}
+        {renderLiuYueGrid()}
+        {renderLiuRiList()}
         {/* 五行強弱 */}
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
