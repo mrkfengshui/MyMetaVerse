@@ -1299,13 +1299,17 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                     if (others.every(z => baziZhis.includes(z))) relations.add('合');
                 }
             });
+            
             SAN_HUI.forEach(group => {
                 if (group.includes(targetZhi)) {
                     const others = group.filter(z => z !== targetZhi);
-                    if (others.every(z => baziZhis.includes(z))) relations.add('會'); 
+                    // 🌟 核心修改：三會局在簡化版網格中，共用「合」字
+                    if (others.every(z => baziZhis.includes(z))) relations.add('合'); 
                 }
             });
-            const order = { '會': 1, '合': 2, '沖': 3, '刑': 4, '破': 5, '害': 6 };
+            
+            // 🌟 排序更新：移除了「會」，將「合」統一置頂
+            const order = { '合': 1, '沖': 2, '刑': 3, '破': 4, '害': 5 };
             return Array.from(relations).sort((a, b) => order[a] - order[b]).join('');
         };
 
@@ -1747,7 +1751,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                         backgroundColor: THEME.bgGray, borderRadius: '8px', 
                         padding: '10px 4px', // 🌟 稍微縮減上下內距，增加左右內距
                         border: `1px solid ${THEME.border}`, 
-                        maxHeight: '145px',  // 🌟 從 145px 降到 125px，讓卡片不要那麼高
+                        maxHeight: '125px',  // 🌟 從 145px 降到 125px，讓卡片不要那麼高
                         height: '100%', 
                         cursor: hasRelations ? 'pointer' : 'default' 
                 }}>
@@ -1766,8 +1770,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
                             {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
                             <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{d.zhi}</span>
+                            <div style={{ paddingTop: '4px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.2' }}>{p.sub1 || '\u00A0'}</div>
+                                <div style={{ fontSize: '10px', color: THEME.gray, lineHeight: '1.2' }}>{p.sub2 || '\u00A0'}</div>
+                            </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                             {displayMode === 'shenSha' ? (
@@ -1776,11 +1784,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                                 displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: '10px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                             )}
                         </div>
-                    </div>
-                    
-                    <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{p.sub1 || '\u00A0'}</div>
-                        <div style={{ fontSize: '10px', color: THEME.gray }}>{p.sub2 || '\u00A0'}</div>
                     </div>
                 </div>
             );
