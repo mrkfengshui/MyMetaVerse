@@ -1765,7 +1765,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
         const originalPillars = [
             { title: '年柱', data: { gan: data.bazi.yearGan, zhi: data.bazi.yearZhi }, sub1: '', sub2: '', isOriginal: true },
             { title: '月柱', data: { gan: data.bazi.monthGan, zhi: data.bazi.monthZhi }, sub1: '', sub2: '', isOriginal: true },
-            { title: '日柱', data: { gan: data.bazi.dayGan, zhi: data.bazi.dayZhi }, sub1: '', sub2: '', isOriginal: true },
+            { title: '日柱', data: { gan: data.bazi.dayGan, zhi: data.bazi.dayZhi }, sub1: '', sub2: '', isOriginal: true, huaQi: data.meta?.isHuaQi },
             { title: '時柱', data: { gan: data.bazi.timeGan, zhi: data.bazi.timeZhi }, sub1: '', sub2: '', isOriginal: true },
         ];
 
@@ -1805,7 +1805,24 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                             {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                            {p.huaQi && (
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    bottom: '100%', 
+                                    left: '50%', 
+                                    transform: 'translateX(-50%)', 
+                                    marginBottom: '-4px',
+                                    fontSize: '9px',     
+                                    fontWeight: 'bold', 
+                                    color: THEME.purple, 
+                                    letterSpacing: '1px',
+                                    whiteSpace: 'nowrap',
+                                    zIndex: 2
+                                }}>
+                                    化氣格
+                                </div>
+                            )}
                             <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
