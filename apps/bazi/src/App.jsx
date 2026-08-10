@@ -368,6 +368,30 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     return [...new Set(list)]; // 去除重複 (例如年日支查到同一個神煞)
 };
 
+// === 🌟 新增：化氣格嚴格判定演算法 ===
+const getHuaQiStatus = (bz, liJiRule) => {
+    if (liJiRule !== 'day') return false;
+    const GAN_HE = {
+        '甲': { pair: '己', hua: '土' }, '己': { pair: '甲', hua: '土' },
+        '乙': { pair: '庚', hua: '金' }, '庚': { pair: '乙', hua: '金' },
+        '丙': { pair: '辛', hua: '水' }, '辛': { pair: '丙', hua: '水' },
+        '丁': { pair: '壬', hua: '木' }, '壬': { pair: '丁', hua: '木' },
+        '戊': { pair: '癸', hua: '火' }, '癸': { pair: '戊', hua: '火' }
+    };
+    const target = GAN_HE[bz.dayGan];
+    
+    // 如果日干無法合化，直接出局
+    if (!target) return false;
+    
+    // 條件一：必須與相鄰的天干（月干或時干）相合
+    if (bz.monthGan !== target.pair && bz.timeGan !== target.pair) return false;
+    
+    // 條件二：月支必須是化神五行 (嚴格得令)
+    if (WUXING_MAP[bz.monthZhi] !== target.hua) return false;
+    
+    return true;
+};
+
 // 核心計算函數
 const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
     if (formData.isManual && formData.manualInput) {
@@ -408,7 +432,7 @@ const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
             rawDate: formData, isManual: true, solarDate: null, lunarDate: null,
             bazi: baziObj, naYin: { year: '', month: '', day: '', time: '' }, 
             yunInfo: null, daYuns: manualDaYuns,
-            meta: { dayKongWang: [], yearKongWang: [], refGan: refGan, liJiRule: liJiRule } // 🌟 儲存立極資訊
+            meta: { dayKongWang: [], yearKongWang: [], refGan: refGan, liJiRule: liJiRule, isHuaQi: getHuaQiStatus(baziObj, liJiRule) } 
         };
     }
 
@@ -557,8 +581,9 @@ const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
         meta: {
             dayKongWang: dayKongWang,   
             yearKongWang: yearKongWang,
-            refGan: refGan,             // 🌟 傳遞立極天干給後方 UI
-            liJiRule: liJiRule          // 🌟 傳遞立極規則
+            refGan: refGan,             
+            liJiRule: liJiRule,         
+            isHuaQi: getHuaQiStatus(baziObj, liJiRule)
         },
         naYin: {
             year: toTraditional(bazi.getYearNaYin()), month: toTraditional(bazi.getMonthNaYin()),
@@ -919,7 +944,7 @@ const PillarCard = ({
     title, gan, zhi, naYin, dayMaster, displayMode, 
     dayZhi, yearZhi, monthZhi, colorTheme, genderText, 
     onShenShaClick, kongWangStatus,
-    refGan, refTitle
+    refGan, refTitle, huaQi 
     }) => {
 
    const safeTheme = colorTheme || 'elemental';
@@ -953,6 +978,25 @@ const PillarCard = ({
         
         {/* 天干區塊 (改為 inline-flex 緊貼字體) */}
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            
+            {/* 🌟 核心修正：將化氣格改用「絕對定位」包在天干容器內，徹底不干擾外部排版 */}
+            {huaQi && (
+                <div style={{ 
+                    position: 'absolute', 
+                    bottom: '100%',     // 對齊天干的最頂部
+                    left: '50%',        // 起點在正中央
+                    transform: 'translateX(-50%)', // 往回拉 50% 達成完美置中
+                    marginBottom: '6px', // 向上推，與天干保持舒適距離
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: THEME.purple, 
+                    letterSpacing: '1px',
+                    whiteSpace: 'nowrap', // 確保不會被擠到換行
+                    zIndex: 2
+                }}>
+                    化氣格
+                </div>
+            )}
             <span style={{ fontSize: '28px', fontWeight: '800', color: ganColor, lineHeight: 1 }}>{gan}</span>
             
             {/* 🌟 變通星向右移 (加大 marginLeft) */}
@@ -964,7 +1008,7 @@ const PillarCard = ({
             
             {/* 🌟 元男/元女向左移 (改為 right: '100%' 並設定 marginRight) */}
             {genderText && (
-                <div style={{ position: 'absolute', top: '-2px', right: '100%', marginRight: '8px', writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '14px', fontWeight: 'bold', color: genderText === '元男' ? THEME.blue : THEME.red, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: '-2px', right: '100%', marginRight: '2px', writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '14px', fontWeight: 'bold', color: genderText === '元男' ? THEME.blue : THEME.red, opacity: 0.8, letterSpacing: '2px', whiteSpace: 'nowrap' }}>
                     {genderText}
                 </div>
             )}
@@ -1973,6 +2017,7 @@ return (
             <PillarCard 
                 title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
                 kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
+                huaQi={data.meta.isHuaQi}
                 {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
             />
             <PillarCard 
