@@ -1820,9 +1820,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
                         direction: 'rtl', position: 'relative',
                         flexGrow: 1 
                     }}>
-                        {fortunePillars.length > 0 && (
-                            <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', height: '1px', borderTop: `1px dashed ${THEME.border}`, marginTop: '-0.5px' }}></div>
-                        )}
                         
                         {originalPillars.map((p, idx) => renderCard(p, `orig-${idx}`))}
                         {fortunePillars.map((p, idx) => renderCard(p, `fort-${idx}`))}
