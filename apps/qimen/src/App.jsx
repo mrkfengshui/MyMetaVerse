@@ -28,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v1.4 增加陰曆顯示";
+const APP_VERSION = "v2.0 增加提示";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -474,7 +474,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
     // 局數中文
     const juNumCN = CHINESE_NUM[juNum];
 
-    const lunarString = `${lunar.getYearInGanZhi()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日`;
+    const lunarString = `農曆${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日`;
 
     return {
         id: Date.now(),
@@ -905,13 +905,44 @@ const DetailModal = ({ data, onClose }) => {
                             </section>
                             
                             {(data.isKong || data.isMa || data.isXing || data.isMu || data.isPo) && (
-                                <div style={modalStyles.warningBox}>
-                                    {data.isKong && <span>空亡 </span>}
-                                    {data.isMa && <span>天馬 </span>}
-                                    {data.isXing && <span>擊刑 </span>}
-                                    {data.isMu && <span>入墓 </span>}
-                                    {data.isPo && <span>門迫 </span>}
-                                </div>
+                                <section style={{ ...modalStyles.section, marginTop: '16px' }}>
+                                    <div style={{ ...modalStyles.label, color: '#c0392b' }}>
+                                        <Info size={16} style={{ marginRight: '4px' }} />
+                                        特殊格局狀態
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {data.isKong && (
+                                            <div style={modalStyles.warningDetail}>
+                                                <span style={modalStyles.warningTitle}>空亡</span>
+                                                <span>代表能量減弱、落空、虛假、事情中斷或延遲。測事多主不成，需待「填實」或「沖空」之時方有轉機。</span>
+                                            </div>
+                                        )}
+                                        {data.isPo && (
+                                            <div style={modalStyles.warningDetail}>
+                                                <span style={modalStyles.warningTitle}>門迫</span>
+                                                <span>即八門剋宮位。代表能量受壓制、內部矛盾、阻力重重。吉門被迫吉不就，凶門被迫事更凶。</span>
+                                            </div>
+                                        )}
+                                        {data.isXing && (
+                                            <div style={modalStyles.warningDetail}>
+                                                <span style={modalStyles.warningTitle}>擊刑</span>
+                                                <span>六儀擊刑，極凶之局。代表刑罰、衝突、破財、傷災、嚴重阻礙。強行謀事必惹災禍。</span>
+                                            </div>
+                                        )}
+                                        {data.isMu && (
+                                            <div style={modalStyles.warningDetail}>
+                                                <span style={modalStyles.warningTitle}>入墓</span>
+                                                <span>代表被困、隱藏、受限制、能力無法發揮。測事多主暗昧不明、進退兩難、無能為力。</span>
+                                            </div>
+                                        )}
+                                        {data.isMa && (
+                                            <div style={modalStyles.warningDetail}>
+                                                <span style={modalStyles.warningTitle}>天馬</span>
+                                                <span>代表奔波、變動、外出、事物發展快速。逢沖則動，處於不穩定的變化之中。</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
                             )}
                         </>
                     )}
@@ -953,10 +984,14 @@ const modalStyles = {
         fontSize: '14px', color: '#444', lineHeight: '1.6', margin: 0,
         backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '8px'
     },
-    warningBox: {
-        marginTop: '10px', padding: '10px', borderRadius: '8px',
-        backgroundColor: '#fff5f5', color: '#c0392b', fontSize: '14px',
-        fontWeight: 'bold', textAlign: 'center', border: '1px solid #feb2b2'
+    warningDetail: {
+        backgroundColor: '#fff5f5', padding: '10px', borderRadius: '8px', 
+        fontSize: '13px', color: '#555', lineHeight: '1.6',
+        display: 'flex', alignItems: 'flex-start'
+    },
+    warningTitle: {
+        fontWeight: 'bold', marginRight: '6px', color: '#555', 
+        padding: '1px 2px', borderRadius: '4px', fontSize: '14px', whiteSpace: 'nowrap'
     },
     closeBtn: {
         width: '100%', marginTop: '10px', padding: '12px',

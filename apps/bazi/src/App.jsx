@@ -486,7 +486,7 @@ const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
     const dayText = stdDays[dVal - 1] || `${dVal}日`;
     const leapText = isLeap ? '閏' : ''; 
 
-    const lunarString = `${bazi.getYearGan()}${bazi.getYearZhi()}年${leapText}${monthText}${dayText}${bazi.getTimeZhi()}時`;
+    const lunarString = `${bazi.getYearGan()}${bazi.getYearZhi()}年${leapText}${monthText}${dayText}日${bazi.getTimeZhi()}時`;
     
     const calculateDaYun = (bz, gender, startYunYear, birthYear) => {
         const yearGanIdx = TIANGAN.indexOf(bz.yearGan);
@@ -2180,13 +2180,20 @@ export default function BaziApp() {
     const isCanceled = params.get('canceled') === 'true';
     const bookingId = params.get('booking_id');
 
-    // 🌟 把它包在一個大函數裡，讓讀取和存檔「乖乖排隊」，解決覆蓋問題
     const initializeApp = async () => {
         let currentBookmarks = [];
         try {
             // 先讀取最新的所有紀錄
             const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-            if (savedBk) currentBookmarks = JSON.parse(savedBk);
+            if (savedBk) {
+                currentBookmarks = JSON.parse(savedBk).map(b => {
+                    if (b.solarDate && b.solarDate.includes('undefined')) {
+                        b.solarDate = '無';
+                        b.lunarDate = '干支四柱排盤';
+                    }
+                    return b;
+                });
+            }
 
             const { value: savedLiJi } = await Preferences.get({ key: 'bazi_li_ji_rule' });
             if (savedLiJi) setLiJiRule(savedLiJi);
@@ -2293,12 +2300,15 @@ export default function BaziApp() {
       const dm = baziSource.dayGan || '';
       const dmElement = WUXING_MAP[dm] || '';
 
+      const finalSolarDate = data.isManual ? '無' : (data.solarDate || '');
+      const finalLunarDate = data.isManual ? '干支四柱排盤' : (data.lunarDate || '');
+
       const dataToSave = {
           id: data.id || Date.now(),
           name: data.name,
           genderText: data.genderText || (data.gender === '1' ? '男' : '女'),
-          solarDate: data.solarDate || `${data.year}-${data.month}-${data.day}`,
-          lunarDate: data.lunarDate || `${data.year}-${data.month}-${data.day}`,
+          solarDate: finalSolarDate,
+          lunarDate: finalLunarDate,
           dayMaster: dm + dmElement,
           monthBranch: baziSource.monthZhi || '', 
           rawDate: data.rawDate || data,
