@@ -27,7 +27,7 @@ import {
 // =========================================================================
 const APP_NAME = "甯博紫微斗數";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "v1.2 增加流日盤";
+const APP_VERSION = "v2.1 與八字app合併書簽";
 
 // --- 核心數據定義
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -593,6 +593,17 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
       }
   };
 
+  const handleRestore = async (importedData) => {
+      // 將匯入的資料與現有資料合併
+      const merged = [...importedData, ...bookmarks];
+      // 透過 id 去重，確保不會有重複的命盤
+      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      
+      setBookmarks(unique);
+      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(unique) });
+      alert('資料已成功合併！');
+  };
+
   return (
     <div style={{ padding: '16px', paddingBottom: '100px' }}>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
@@ -683,7 +694,7 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
       </div>
 
       {/* 共用功能區塊 */}
-      <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="ZWDS_BACKUP" />
+      <WebBackupManager data={bookmarks} onRestore={handleRestore} prefix="MRK_BACKUP" />
       <AppInfoCard info={APP_INFO} />
       <BuyMeCoffee />
 
@@ -1624,16 +1635,16 @@ export default function ZwdsApp() {
             genderText: data.genderText,
             solarDate: data.solarDateStr,
             lunarDate: data.lunarDateStr,
-            mingGongStars: data.mingGongStars, 
+            mingGongStars: data.mingGongStars, // 紫微專屬
             rawDate: data.rawDate 
         };
 
+        let newBk = [...bookmarks];
         const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
-        let newBk;
 
         if (existingIndex >= 0) { 
-            newBk = [...bookmarks]; 
-            newBk[existingIndex] = dataToSave; 
+            // 【關鍵修改】合併現有紀錄，保留另一個 App 的特有資料
+            newBk[existingIndex] = { ...newBk[existingIndex], ...dataToSave }; 
             alert('紀錄已更新'); 
         } else { 
             newBk = [dataToSave, ...bookmarks]; 
@@ -1641,26 +1652,30 @@ export default function ZwdsApp() {
         }
 
         setBookmarks(newBk); 
-        await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
-    };
+        await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
+  };
 
   const deleteBookmark = async (id) => {
       if (window.confirm('確定要刪除這條紀錄嗎？')) {
           const newBk = bookmarks.filter(b => b.id !== id);
           setBookmarks(newBk); 
-          await Preferences.set({ key: 'zwds_bookmarks', value: JSON.stringify(newBk) });
+          // 關鍵修改：把原來的 bazi_bookmarks 或 zwds_bookmarks 改成共同的 mrk_shared_bookmarks
+          await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
       }
   };
 
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('舊資料無法開啟'); return; }
       try {
+          // 不管這筆紀錄是紫微還是八字建的，只要有 rawDate 就直接排紫微盤
           const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
           const freshResult = calculateZwdsResult(savedItem.rawDate, rulesConfig, { mingHasDaXian });
           freshResult.id = savedItem.id; 
           setResultData(freshResult); 
           setView('result');
-      } catch (e) { alert('讀取失敗：' + (e.message || '未知錯誤')); }
+      } catch (e) { 
+          alert('讀取失敗：' + (e.message || '未知錯誤')); 
+      }
   };
 
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入斗數星曆...</div>;
