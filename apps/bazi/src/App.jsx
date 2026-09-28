@@ -26,7 +26,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v3.1 增加實用提示";
+const APP_VERSION = "v4.1 增加時辰快速切換";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -1067,8 +1067,43 @@ const PillarCard = ({
 };
 
 // --- BaziResult (八字結果) ---
-const BaziResult = ({ data, onBack, onSave, colorTheme }) => {
+const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
+
+   // 新增時辰微調處理函數
+   const handleHourAdjust = (delta) => {
+       if (data.isManual) {
+           alert('干支排盤模式無法微調時辰，請回到輸入頁手動修改。');
+           return;
+       }
+       
+       if (!onCalculate) {
+           alert('錯誤：請檢查 BaziApp 中是否有把 onCalculate={handleCalculate} 傳給 BaziResult！');
+           return;
+       }
+
+       const current = data.rawDate;
+       // 強制將所有變數轉為整數，避免 Date 計算錯誤
+       const y = parseInt(current.year);
+       const m = parseInt(current.month) - 1; // JS 的月份是 0-11
+       const d = parseInt(current.day);
+       const h = parseInt(current.hour) || 0;
+       const min = parseInt(current.minute) || 0;
+
+       const dt = new Date(y, m, d, h, min);
+       dt.setHours(dt.getHours() + delta);
+       
+       const newFormData = { 
+           ...current, 
+           year: dt.getFullYear(), 
+           month: dt.getMonth() + 1, 
+           day: dt.getDate(), 
+           hour: dt.getHours(), 
+           minute: dt.getMinutes() 
+       };
+       
+       onCalculate(newFormData);
+   };
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
    const [selectedLiuRi, setSelectedLiuRi] = useState(null);
@@ -1946,8 +1981,15 @@ return (
                     ) : ( 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}> 
                             <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                            <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
-                                農曆 {data.lunarDate} 
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
+                                    農曆 {data.lunarDate} 
+                                </div>
+                                {/* 時辰加減按鈕 */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                    <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                </div>
                             </div>
                             {/* 節氣天數 */}
                             {data.jieQiSpan && (
@@ -2388,7 +2430,13 @@ export default function BaziApp() {
           
           {view === 'result' && (
             <>
-              <BaziResult data={baziData} onBack={() => { setEditingData(null); setView('input'); }} onSave={saveBookmark} colorTheme={colorTheme} />
+              <BaziResult 
+                  data={baziData} 
+                  onBack={() => { setEditingData(null); setView('input'); }} 
+                  onSave={saveBookmark} 
+                  colorTheme={colorTheme} 
+                  onCalculate={handleCalculate} // <--- 確認這行有加！
+              />
               <AdsterraNarrow />
             </>
           )}
