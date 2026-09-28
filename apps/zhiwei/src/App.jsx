@@ -408,7 +408,14 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
         '甲': [8, 9], '己': [8, 9], '乙': [6, 7], '庚': [6, 7],
         '丙': [4, 5], '辛': [4, 5], '丁': [2, 3], '壬': [2, 3], '戊': [0, 1], '癸': [0, 1]
     };
-    jieKongMap[yearGan].forEach(idx => gridPalaces[idx].minorStars.push('截空'));
+    
+    const jkPair = jieKongMap[yearGan];
+    if (jkPair) {
+        // 陣列的第 0 項必定是偶數索引（陽宮：子0, 寅2, 辰4, 午6, 申8）
+        gridPalaces[jkPair[0]].minorStars.push('截空'); 
+        // 陣列的第 1 項必定是奇數索引（陰宮：丑1, 卯3, 巳5, 未7, 酉9）
+        gridPalaces[jkPair[1]].minorStars.push('截亡'); 
+    }
 
     gridPalaces[(mingIndex + yearZhiIdx) % 12].minorStars.push('天才');
     gridPalaces[(shenIndex + yearZhiIdx) % 12].minorStars.push('天壽');
