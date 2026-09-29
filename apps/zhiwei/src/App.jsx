@@ -975,10 +975,18 @@ const PalaceGrid = ({
 
             </div>
 
-            {/* 右下角的長生博士 (位置保持不變，因為是在右邊) */}
-            <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', zIndex: 2 }}>
-                {palace.changSheng12 && <span style={{ fontSize: '12px', color: COLORS.geng, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1, fontWeight: 'normal' }}>{palace.changSheng12}</span>}
-                {palace.doctor12 && <span style={{ fontSize: '12px', color: COLORS.jia, writingMode: 'vertical-rl', textOrientation: 'upright', lineHeight: 1 }}>{palace.doctor12}</span>}
+            {/* 右下角的長生博士 (長生在上方，博士在下方，強制寬度為1em達到絕對直排) */}
+            <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', zIndex: 2 }}>
+                {palace.changSheng12 && (
+                    <div style={{ fontSize: '12px', color: COLORS.geng, width: '1em', wordBreak: 'break-all', lineHeight: 1.1, textAlign: 'center' }}>
+                        {palace.changSheng12}
+                    </div>
+                )}
+                {palace.doctor12 && (
+                    <div style={{ fontSize: '12px', color: COLORS.jia, width: '1em', wordBreak: 'break-all', lineHeight: 1.1, textAlign: 'center' }}>
+                        {palace.doctor12}
+                    </div>
+                )}
             </div>
 
             {/* --- 1. 主星區域 (Top) --- */}
