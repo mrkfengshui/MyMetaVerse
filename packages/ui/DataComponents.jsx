@@ -181,6 +181,11 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                             <TitleIcon size={16} color={THEME.blue} />
                             {titleText} 
                             <span style={{ fontSize: '12px', color: THEME.gray, fontWeight: 'normal' }}>{subText}</span>
+                            {b.notes && (
+                                <span style={{ marginLeft: '4px', color: THEME.orange }} title="此命例有筆記">
+                                    <Edit3 size={14} />
+                                </span>
+                            )}
                             {b.isPaid && (
                                 <span style={{ 
                                     display: 'inline-flex', alignItems: 'center', gap: '4px',

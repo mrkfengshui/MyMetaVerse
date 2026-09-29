@@ -1121,7 +1121,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
    const [showOverviewModal, setShowOverviewModal] = useState(false);
    const [relationModalContent, setRelationModalContent] = useState(null);
    const [displayMode, setDisplayMode] = useState('shiShen'); 
-   
+   const [showNotesModal, setShowNotesModal] = useState(false);
+   const [notesText, setNotesText] = useState('');
+   useEffect(() => { setNotesText(data?.notes || ''); }, [data]);
+
    const safeTheme = colorTheme || 'elemental';
    useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
    useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
@@ -2022,6 +2025,9 @@ return (
                         <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
                             <Bookmark size={13} /> 保存 
                         </button>
+                        <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <Edit3 size={13} /> 筆記 
+                        </button>
                         <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
                             <RefreshCw size={13} /> 重排 
                         </button>
@@ -2192,7 +2198,28 @@ return (
         >
             <Eye size={24} />
         </button>
-
+        {showNotesModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                    <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
+                    <textarea 
+                        value={notesText} 
+                        onChange={e => setNotesText(e.target.value)}
+                        placeholder="在此輸入筆記或重點..."
+                        style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
+                    />
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                        <button onClick={() => setShowNotesModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.bgGray, color: THEME.gray, cursor: 'pointer' }}>取消</button>
+                        <button onClick={() => { 
+                            const updatedData = { ...data, notes: notesText };
+                            data.notes = notesText; // 同步目前物件
+                            onSave(updatedData); // 觸發儲存
+                            setShowNotesModal(false);
+                        }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存筆記</button>
+                    </div>
+                </div>
+            </div>
+        )}
      </div>
    );
 };
@@ -2364,6 +2391,7 @@ export default function BaziApp() {
           lunarDate: finalLunarDate,
           dayMaster: dm + dmElement, // 八字專屬
           monthBranch: baziSource.monthZhi || '', // 八字專屬
+          notes: data.notes || '',
           rawDate: data.rawDate || data,
           isPaid: data.isPaid || false,
           paidAt: data.paidAt || (data.isPaid ? Date.now() : null)
@@ -2408,6 +2436,7 @@ export default function BaziApp() {
           freshResult.id = savedItem.id;
           freshResult.isPaid = raw.isPaid; 
           freshResult.paidAt = raw.paidAt; 
+          freshResult.notes = savedItem.notes || '';
 
           setBaziData(freshResult); 
           setView('result');

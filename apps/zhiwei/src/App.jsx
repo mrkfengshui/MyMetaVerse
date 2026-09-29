@@ -1047,6 +1047,10 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
 
+    const [showNotesModal, setShowNotesModal] = useState(false);
+    const [notesText, setNotesText] = useState('');
+    useEffect(() => { setNotesText(chartData?.notes || ''); }, [chartData]);
+
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
@@ -1494,7 +1498,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                        <button onClick={onBack} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>返回</button>
+                        <button onClick={onBack} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>返回</button>
                         <button 
                             onClick={() => setShowScorePanel(true)} 
                             style={{ 
@@ -1508,7 +1512,10 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         >
                             運勢評分
                         </button>
-                        <button onClick={() => onSave(chartData)} style={{ padding: '2px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none' }}>保存</button>
+                        <div style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>筆記</button>
+                            <button onClick={() => onSave(chartData)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>保存</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1547,6 +1554,28 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     onClose={() => setShowScorePanel(false)}
                     siHuaRules={currentSiHuaRules}
                 />
+            )}
+            {showNotesModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
+                        <textarea 
+                            value={notesText} 
+                            onChange={e => setNotesText(e.target.value)}
+                            placeholder="在此輸入筆記或重點..."
+                            style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
+                        />
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button onClick={() => setShowNotesModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.bgGray, color: THEME.gray, cursor: 'pointer' }}>取消</button>
+                            <button onClick={() => { 
+                                const updatedData = { ...chartData, notes: notesText };
+                                setChartData(updatedData); // 更新本地狀態
+                                onSave(updatedData); // 觸發儲存
+                                setShowNotesModal(false);
+                            }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存筆記</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -1651,6 +1680,7 @@ export default function ZwdsApp() {
             solarDate: data.solarDateStr,
             lunarDate: data.lunarDateStr,
             mingGongStars: data.mingGongStars, // 紫微專屬
+            notes: data.notes || '',
             rawDate: data.rawDate 
         };
 
@@ -1686,6 +1716,7 @@ export default function ZwdsApp() {
           const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
           const freshResult = calculateZwdsResult(savedItem.rawDate, rulesConfig, { mingHasDaXian });
           freshResult.id = savedItem.id; 
+          freshResult.notes = savedItem.notes || '';
           setResultData(freshResult); 
           setView('result');
       } catch (e) { 
