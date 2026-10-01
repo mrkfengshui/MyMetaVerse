@@ -37,7 +37,6 @@ const RecordContent = ({ data }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
                 {/* 第一行：日期資訊 */}
                 <div style={{ ...rowStyle, marginTop: 0 }}>
-                    <Calendar size={14} />
                     <span>西曆 {data.solarDate}</span>
                     {safeLunarStr && (
                         <>

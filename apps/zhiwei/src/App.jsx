@@ -27,7 +27,7 @@ import {
 // =========================================================================
 const APP_NAME = "甯博紫微斗數";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "v2.1 與八字app合併書簽";
+const APP_VERSION = "v2.2 與八字app共用書簽,增加批注功能";
 
 // --- 核心數據定義
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -538,8 +538,8 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
         mingZhu: mingZhuMap[mingPalace.zhiIdx] || 'N/A',
         shenZhu: shenZhuMap[yearZhiIdx] || 'N/A', 
         douJun: DIZHI[(2 + (lunarMonth - 1) - timeZhiIdx + 12) % 12],
-        lunarDateStr: `${lunar.getYearInGanZhi()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日 ${lunar.getTimeZhi()}時`,
-        solarDateStr: `${formData.year}.${String(formData.month).padStart(2,'0')}.${String(formData.day).padStart(2,'0')}`,
+        lunarDateStr: `${lunar.getYearInGanZhi()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日${lunar.getTimeZhi()}時`,
+        solarDateStr: `${formData.year}-${String(formData.month).padStart(2,'0')}-${String(formData.day).padStart(2,'0')} ${String(formData.hour).padStart(2,'0')}:${String(formData.minute).padStart(2,'0')}`,
         grid: gridPalaces,
         rawDate: formData,
         mingGongStars: `${mingStars}在${mingPalace.zhi}`
@@ -601,14 +601,32 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
   };
 
   const handleRestore = async (importedData) => {
-      // 將匯入的資料與現有資料合併
-      const merged = [...importedData, ...bookmarks];
-      // 透過 id 去重，確保不會有重複的命盤
-      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      const mergedMap = new Map();
       
-      setBookmarks(unique);
-      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(unique) });
-      alert('資料已成功合併！');
+      // 1. 先把本地現有的書籤放進 Map
+      bookmarks.forEach(b => mergedMap.set(b.id, b));
+      
+      // 2. 逐一處理匯入的書籤
+      importedData.forEach(importedItem => {
+          if (mergedMap.has(importedItem.id)) {
+              // 🌟 【關鍵修復】如果 ID 相同，將本地與匯入的「屬性」互相合併。
+              // 後面的 importedItem 會覆蓋掉舊的同名欄位（確保批注是最新的），
+              // 但同時也會保留本地端獨有的欄位（八字日元/紫微命宮）。
+              mergedMap.set(importedItem.id, { 
+                  ...mergedMap.get(importedItem.id), 
+                  ...importedItem 
+              });
+          } else {
+              // 如果是新紀錄，直接加入
+              mergedMap.set(importedItem.id, importedItem);
+          }
+      });
+      
+      const finalUniqueBookmarks = Array.from(mergedMap.values());
+      
+      setBookmarks(finalUniqueBookmarks);
+      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(finalUniqueBookmarks) });
+      alert('資料已成功合併！批注與特有排盤資訊已完整保留。');
   };
 
   return (
@@ -1513,7 +1531,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             運勢評分
                         </button>
                         <div style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>筆記</button>
+                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>批注</button>
                             <button onClick={() => onSave(chartData)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>保存</button>
                         </div>
                     </div>
@@ -1562,7 +1580,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         <textarea 
                             value={notesText} 
                             onChange={e => setNotesText(e.target.value)}
-                            placeholder="在此輸入筆記或重點..."
+                            placeholder="在此輸入批注或重點..."
                             style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
                         />
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
@@ -1572,7 +1590,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                                 setChartData(updatedData); // 更新本地狀態
                                 onSave(updatedData); // 觸發儲存
                                 setShowNotesModal(false);
-                            }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存筆記</button>
+                            }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存批注</button>
                         </div>
                     </div>
                 </div>

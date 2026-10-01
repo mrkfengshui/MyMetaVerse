@@ -26,7 +26,7 @@ import {
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v4.1 與紫微app合併書簽";
+const APP_VERSION = "v4.2 與紫微app共用書簽,增加批注功能";
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -620,13 +620,31 @@ const SettingsView = ({
   );
 
   const handleRestore = async (importedData) => {
-      // 將匯入的資料與現有資料合併
-      const merged = [...importedData, ...bookmarks];
-      // 透過 id 去重，確保不會有重複的命盤
-      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      const mergedMap = new Map();
       
-      setBookmarks(unique);
-      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(unique) });
+      // 1. 先把本地現有的書籤放進 Map
+      bookmarks.forEach(b => mergedMap.set(b.id, b));
+      
+      // 2. 逐一處理匯入的書籤
+      importedData.forEach(importedItem => {
+          if (mergedMap.has(importedItem.id)) {
+              // 🌟 【關鍵修復】如果 ID 相同，將本地與匯入的「屬性」互相合併。
+              // 後面的 importedItem 會覆蓋掉舊的同名欄位（確保批注是最新的），
+              // 但同時也會保留本地端獨有的欄位（八字日元/紫微命宮）。
+              mergedMap.set(importedItem.id, { 
+                  ...mergedMap.get(importedItem.id), 
+                  ...importedItem 
+              });
+          } else {
+              // 如果是新紀錄，直接加入
+              mergedMap.set(importedItem.id, importedItem);
+          }
+      });
+      
+      const finalUniqueBookmarks = Array.from(mergedMap.values());
+      
+      setBookmarks(finalUniqueBookmarks);
+      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(finalUniqueBookmarks) });
       alert('資料已成功合併！');
   };
 
@@ -2026,7 +2044,7 @@ return (
                             <Bookmark size={13} /> 保存 
                         </button>
                         <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                            <Edit3 size={13} /> 筆記 
+                            <Edit3 size={13} /> 批注 
                         </button>
                         <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
                             <RefreshCw size={13} /> 重排 
@@ -2205,7 +2223,7 @@ return (
                     <textarea 
                         value={notesText} 
                         onChange={e => setNotesText(e.target.value)}
-                        placeholder="在此輸入筆記或重點..."
+                        placeholder="在此輸入批注或重點..."
                         style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
                     />
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
@@ -2215,7 +2233,7 @@ return (
                             data.notes = notesText; // 同步目前物件
                             onSave(updatedData); // 觸發儲存
                             setShowNotesModal(false);
-                        }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存筆記</button>
+                        }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存批注</button>
                     </div>
                 </div>
             </div>
