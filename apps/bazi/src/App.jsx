@@ -2036,50 +2036,43 @@ return (
                     )}
                 </div>
 
-                {/* 2. 右側：4個按鈕集中區 (固定在右上角) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', flexShrink: 0 }}>
-                    {/* 第一排按鈕：操作功能 (保存/重排) */}
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                            <Bookmark size={13} /> 保存 
-                        </button>
-                        <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                            <Edit3 size={13} /> 批注 
-                        </button>
-                        <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                            <RefreshCw size={13} /> 重排 
-                        </button>
-                    </div>
-                    {/* 第二排按鈕：顯示模式 (藏干/神煞) */}
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                        <button 
-                            onClick={() => toggleMode('zangGan')} 
-                            style={{ 
-                                ...btnStyle, 
-                                backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
-                                color: displayMode === 'zangGan' ? 'white' : THEME.gray,
-                                justifyContent: 'center',
-                                padding: '6px 10px', // 微調大小讓其緊湊
-                                minWidth: '60px'
-                            }}>
-                            {displayMode === 'zangGan' ? <Eye size={13}/> : <EyeOff size={13}/>} 
-                            藏干
-                        </button>
-                        <button 
-                            onClick={() => toggleMode('shenSha')} 
-                            style={{ 
-                                ...btnStyle, 
-                                backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
-                                color: displayMode === 'shenSha' ? 'white' : THEME.gray,
-                                justifyContent: 'center',
-                                padding: '6px 10px',
-                                minWidth: '60px'
-                            }}>
-                            {displayMode === 'shenSha' ? <Eye size={13}/> : <EyeOff size={13}/>} 
-                            神煞
-                        </button>
-                    </div>
+                {/* 2. 右側：按鈕集中區 (改為 2 欄 Grid 避免擠壓左側日期) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', flexShrink: 0 }}>
+                    {/* 第一排 */}
+                    <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                        <Edit3 size={13} /> 批注 
+                    </button>
+                    <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                        <RefreshCw size={13} /> 重排 
+                    </button>
+                    
+                    {/* 第二排 */}
+                    <button 
+                        onClick={() => toggleMode('zangGan')} 
+                        style={{ 
+                            ...btnStyle, 
+                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
+                            color: displayMode === 'zangGan' ? 'white' : THEME.gray,
+                            justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
+                        }}>
+                        {displayMode === 'zangGan' ? <Eye size={13}/> : <EyeOff size={13}/>} 藏干
+                    </button>
+                    <button 
+                        onClick={() => toggleMode('shenSha')} 
+                        style={{ 
+                            ...btnStyle, 
+                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
+                            color: displayMode === 'shenSha' ? 'white' : THEME.gray,
+                            justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
+                        }}>
+                        {displayMode === 'shenSha' ? <Eye size={13}/> : <EyeOff size={13}/>} 神煞
+                    </button>
 
+                    {/* 第三排：左邊留空，讓「保存」精準落在「神煞」下方 */}
+                    <div></div>
+                    <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                        <Bookmark size={13} /> 保存 
+                    </button>
                 </div>
             </div>
 
