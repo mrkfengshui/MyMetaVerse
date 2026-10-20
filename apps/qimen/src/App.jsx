@@ -20,7 +20,7 @@ import {
   ChevronUp, ChevronDown, Circle, Compass,
   CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
-  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles, Search, 
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -28,7 +28,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v2.0 增加提示";
+const APP_VERSION = "v3.0 增加搜尋功能";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 // --- 基礎定義 ---
@@ -546,7 +546,7 @@ const RotateControlBar = ({ rotateOffset, onRotate }) => {
     );
 };
 
-const InputView = ({ onCalculate, initialData }) => {
+const InputView = ({ onCalculate, initialData, onOpenSearch }) => {
     const [date, setDate] = useState(() => {
         if (initialData) {
             const d = new Date(initialData.year, initialData.month - 1, initialData.day, initialData.hour, initialData.minute);
@@ -586,11 +586,20 @@ const InputView = ({ onCalculate, initialData }) => {
     return (
         <div style={{ padding: '16px', backgroundColor: THEME.bg, flex: 1, overflowY: 'auto' }}>
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '24px', border: `1px solid ${THEME.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <h3 style={{ margin: '0 0 20px 0', textAlign: 'center', color: THEME.black, fontSize: '18px', fontWeight: 'bold' }}>{initialData ? '修改時間' : '陰盤奇門排盤'}</h3>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                    <div style={{ flex: 1.2 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> <select value={safeDate.getFullYear()} onChange={e => handleChange('year', parseInt(e.target.value))} style={selectStyle}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
-                    <div style={{ flex: 0.8 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={safeDate.getMonth() + 1} onChange={e => handleChange('month', parseInt(e.target.value))} style={selectStyle}>{months.map(m => <option key={m} value={m}>{m}</option>)}</select> </div>
-                    <div style={{ flex: 0.8 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={safeDate.getDate()} onChange={e => handleChange('day', parseInt(e.target.value))} style={selectStyle}>{days.map(d => <option key={d} value={d}>{d}</option>)}</select> </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ margin: 0, textAlign: 'left', color: THEME.black, fontSize: '18px', fontWeight: 'bold' }}>
+                        {initialData ? '修改時間' : '陰盤奇門排盤'}
+                    </h3>
+                    <button
+                        onClick={onOpenSearch}
+                        style={{
+                            backgroundColor: '#f0f0f0', color: THEME.black, padding: '6px 12px',
+                            borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', border: 'none',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                        }}
+                    >
+                        <Search size={14} /> 搜尋局數
+                    </button>
                 </div>
                 <div style={{ marginBottom: '24px' }}>
                     <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>時間</label>
@@ -1092,6 +1101,217 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
     );
 };
 
+// B-8: 搜尋條件輸入彈窗 (奇門進階版)
+const SearchModal = ({ visible, onClose, onSearch }) => {
+  const today = new Date();
+  const minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  const maxDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  
+  const [startDate, setStartDate] = useState(today.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]);
+
+  // 取法偏好設定
+  const [jiaMethod, setJiaMethod] = useState('zhifu'); // 'zhifu' = 看值符, 'xunshou' = 看旬首
+
+  // 進階搜尋條件 State
+  const [palace, setPalace] = useState(0); 
+  const [door, setDoor] = useState('');    
+  const [god, setGod] = useState('');      
+  
+  const [avoidFuYin, setAvoidFuYin] = useState(false);         
+  const [avoidFanYin, setAvoidFanYin] = useState(false);       
+  const [requireShengBi, setRequireShengBi] = useState(false); 
+  
+  const [yearShengDay, setYearShengDay] = useState(false);     
+  const [monthShengDay, setMonthShengDay] = useState(false);   
+  const [hourShengDay, setHourShengDay] = useState(false);     
+
+  const [avoidXing, setAvoidXing] = useState(false); 
+  const [avoidPo, setAvoidPo] = useState(false);     
+  const [avoidKong, setAvoidKong] = useState(false);   
+  const [avoidMu, setAvoidMu] = useState(false);     
+
+  if (!visible) return null;
+
+  const applyQuickSet = (type) => {
+    setPalace(0); 
+    setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(false); 
+    setAvoidFuYin(true); setAvoidFanYin(true); 
+    setRequireShengBi(true); 
+    setYearShengDay(false); setMonthShengDay(false); setHourShengDay(true); 
+    
+    if (type === 'career') { setDoor('開'); setGod(''); }      
+    else if (type === 'wealth') { setDoor('生'); setGod(''); } 
+    else if (type === 'gamble') { setDoor('傷'); setGod(''); } 
+    else if (type === 'love') { setDoor(''); setGod('合'); }   
+    else if (type === 'exam') { setDoor('景'); setGod(''); }   
+  };
+
+  const handleConfirm = () => {
+      onSearch({ 
+          jiaMethod, // 將甲木取法傳給搜尋引擎
+          palace, door, god, 
+          avoidXing, avoidPo, avoidKong, avoidMu, 
+          avoidFuYin, avoidFanYin, requireShengBi,
+          yearShengDay, monthShengDay, hourShengDay
+      }, startDate, endDate);
+  };
+
+  const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', fontSize: '14px' };
+  const quickBtnStyle = { padding: '6px 10px', backgroundColor: THEME.bgBlue, color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '92%', maxWidth: '380px', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Search size={20} color={THEME.blue}/> 搜尋奇門吉時
+        </h3>
+        
+        {/* 六甲派別設定 */}
+        <div style={{ backgroundColor: '#f0f7ff', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.blue}44`, marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', color: THEME.blue, fontWeight: 'bold', marginBottom: '6px' }}>六甲天干落宮定位法：</div>
+            <div style={{ display: 'flex', gap: '16px' }}>
+                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input type="radio" checked={jiaMethod === 'zhifu'} onChange={() => setJiaMethod('zhifu')} /> 看值符宮 (本派)
+                </label>
+                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input type="radio" checked={jiaMethod === 'xunshou'} onChange={() => setJiaMethod('xunshou')} /> 看旬首宮 (坊間)
+                </label>
+            </div>
+        </div>
+
+        {/* 快速主題區 */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '6px', fontWeight: 'bold' }}>快速主題 (自動設定吉格與避忌)</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+             <button onClick={() => applyQuickSet('career')} style={quickBtnStyle}>💼 見工/事業 (開門)</button>
+             <button onClick={() => applyQuickSet('wealth')} style={quickBtnStyle}>💰 正財/生意 (生門)</button>
+             <button onClick={() => applyQuickSet('gamble')} style={quickBtnStyle}>🎲 博彩/偏財 (傷門)</button>
+             <button onClick={() => applyQuickSet('love')} style={quickBtnStyle}>❤️ 感情/合作 (六合)</button>
+             <button onClick={() => applyQuickSet('exam')} style={quickBtnStyle}>📚 考試/文書 (景門)</button>
+             <button onClick={() => { setDoor(''); setGod(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{...quickBtnStyle, backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd'}}>重置</button>
+          </div>
+        </div>
+
+        <div style={{ borderTop: `1px solid ${THEME.border}`, margin: '12px 0' }}></div>
+
+        {/* 自訂條件區 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+            <div>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>目標宮位</label>
+                <select value={palace} onChange={e => setPalace(parseInt(e.target.value))} style={selectStyle}>
+                    <option value={0}>不限 (找全盤)</option>
+                    <option value={1}>坎一宮 (北)</option><option value={8}>艮八宮 (東北)</option><option value={3}>震三宮 (東)</option>
+                    <option value={4}>巽四宮 (東南)</option><option value={9}>離九宮 (南)</option><option value={2}>坤二宮 (西南)</option>
+                    <option value={7}>兌七宮 (西)</option><option value={6}>乾六宮 (西北)</option>
+                </select>
+            </div>
+            <div>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定八門</label>
+                <select value={door} onChange={e => setDoor(e.target.value)} style={selectStyle}>
+                    <option value="">不限</option>
+                    {['休','生','傷','杜','景','死','驚','開'].map(m => <option key={m} value={m}>{m}門</option>)}
+                </select>
+            </div>
+        </div>
+
+        {/* 避忌與高階條件區 */}
+        <div style={{ backgroundColor: '#fff5f5', padding: '12px', borderRadius: '8px', border: '1px solid #ffa39e', marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', color: THEME.red, marginBottom: '8px', fontWeight: 'bold' }}>全局與宮位進階要求：</div>
+            
+            {/* 全局四柱與宮位格局 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: '8px', borderBottom: '1px dashed #ffa39e', paddingBottom: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFuYin} onChange={e => setAvoidFuYin(e.target.checked)} /> 無全局伏吟</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFanYin} onChange={e => setAvoidFanYin(e.target.checked)} /> 無全局反吟</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={yearShengDay} onChange={e => setYearShengDay(e.target.checked)} /> 年干 生/比和 日干</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={monthShengDay} onChange={e => setMonthShengDay(e.target.checked)} /> 月干 生/比和 日干</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={hourShengDay} onChange={e => setHourShengDay(e.target.checked)} /> 時干 生/比和 日干</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={requireShengBi} onChange={e => setRequireShengBi(e.target.checked)} /> 用神宮 生/比和 日干宮</label>
+                </div>
+            </div>
+
+            {/* 凶格避忌 */}
+            <div style={{ fontSize: '12px', color: '#c0392b', marginBottom: '6px' }}>「用神宮、日干宮及所選四柱宮」須同時排除：</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidXing} onChange={e => setAvoidXing(e.target.checked)} /> 無擊刑</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidPo} onChange={e => setAvoidPo(e.target.checked)} /> 無門迫</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidKong} onChange={e => setAvoidKong(e.target.checked)} /> 無空亡</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidMu} onChange={e => setAvoidMu(e.target.checked)} /> 無入墓</label>
+            </div>
+        </div>
+
+        {/* 日期範圍 */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
+            <input type="date" min={minDate} max={maxDate} value={startDate} onChange={e => setStartDate(e.target.value)} style={selectStyle} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
+            <input type="date" min={minDate} max={maxDate} value={endDate} onChange={e => setEndDate(e.target.value)} style={selectStyle} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '12px', backgroundColor: THEME.bgGray, color: THEME.gray, borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>取消</button>
+          <button onClick={handleConfirm} style={{ flex: 1.5, padding: '12px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>開始過濾</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SearchResultsModal = ({ visible, onClose, results, onJumpToDate }) => {
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 6;
+  
+  useEffect(() => {
+    setPage(1);
+  }, [results, visible]);
+
+  if (!visible) return null;
+
+  const totalPages = Math.ceil(results.length / itemsPerPage);
+  const currentResults = results.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '95%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>搜尋結果 ({results.length}筆)</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={24} color={THEME.gray} /></button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {currentResults.length === 0 ? (
+            <div style={{ textAlign: 'center', color: THEME.gray, padding: '20px' }}>找不到相符的結果</div>
+          ) : (
+            currentResults.map((res, idx) => (
+              <div key={idx} onClick={() => onJumpToDate(res.dateObj)} style={{ border: `1px solid ${THEME.border}`, borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: '#fafafa' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>{res.dateStr}</div>
+                  <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '2px' }}>{res.lunarStr}</div>
+                  <div style={{ fontSize: '13px', color: THEME.primary, marginTop: '4px', fontWeight: 'bold' }}>⭐ {res.matchReason}</div>
+                </div>
+                <ChevronRight size={20} color="#ccc" />
+              </div>
+            ))
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: `1px solid ${THEME.border}`, paddingTop: '12px' }}>
+            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: page === 1 ? '#f0f0f0' : '#fff' }}>上一頁</button>
+            <span style={{ fontSize: '14px', color: THEME.gray }}>{page} / {totalPages}</span>
+            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: page === totalPages ? '#f0f0f0' : '#fff' }}>下一頁</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const SettingsView = ({ bookmarks, setBookmarks }) => (
     <div style={{ padding: '16px', paddingBottom: '100px' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2></div>
@@ -1111,6 +1331,196 @@ export default function QiMenApp() {
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
+
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  
+  const handleSearch = (filters, startStr, endStr) => {
+    setShowSearchModal(false);
+    if (!window.Solar) return;
+
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    end.setHours(23, 59, 59, 999);
+
+    const results = [];
+    let current = new Date(start);
+    current.setHours(0, 0, 0, 0); 
+    let loopGuard = 0;
+
+    // 宮位五行
+    const PALACE_ELEMENTS = { 1: '水', 2: '土', 3: '木', 4: '木', 5: '土', 6: '金', 7: '金', 8: '土', 9: '火' };
+    
+    const isShengOrBi = (sourceEle, targetEle) => {
+        if (!sourceEle || !targetEle) return false;
+        if (sourceEle === targetEle) return true; // 比和
+        if (sourceEle === '木' && targetEle === '火') return true; 
+        if (sourceEle === '火' && targetEle === '土') return true; 
+        if (sourceEle === '土' && targetEle === '金') return true; 
+        if (sourceEle === '金' && targetEle === '水') return true; 
+        if (sourceEle === '水' && targetEle === '木') return true; 
+        return false;
+    };
+
+    // 輔助函式：轉換甲木為隱遁天干或值符
+    const getSearchGan = (gan, zhi) => {
+        if (gan !== '甲') return gan;
+        if (filters.jiaMethod === 'zhifu') return '符';
+        
+        const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const zhiIdx = DIZHI.indexOf(zhi);
+        const diff = (zhiIdx - 0 + 12) % 12;
+        if (diff === 0) return '戊';
+        if (diff === 10) return '己';
+        if (diff === 8) return '庚';
+        if (diff === 6) return '辛';
+        if (diff === 4) return '壬';
+        if (diff === 2) return '癸';
+        return gan;
+    };
+
+    // 輔助函式：找出某個柱的天干落宮 (加入日干優先權邏輯)
+    const getPalaceForPillar = (pillarStr, grid, isDayPillar, daySearchGanVal) => {
+        if (!pillarStr) return null;
+        const searchGan = getSearchGan(pillarStr[0], pillarStr[1]);
+
+        if (searchGan === '符') {
+            return grid.find(g => g.num !== 5 && g.shen === '符');
+        }
+
+        // 核心修正：如果年月時干與日干(轉換後)相同，天盤已被日干佔用，必須看地盤(下盤)
+        let forceDiPan = false;
+        if (!isDayPillar && searchGan === daySearchGanVal) {
+            forceDiPan = true;
+        }
+
+        if (!forceDiPan) {
+            let p = grid.find(g => g.num !== 5 && g.tian.includes(searchGan));
+            if (p) return p;
+        }
+
+        return grid.find(g => g.num !== 5 && g.di.includes(searchGan));
+    };
+
+    const isPalaceBad = (p) => {
+        if (!p) return false;
+        if (filters.avoidXing && p.isXing) return true;
+        if (filters.avoidPo && p.isPo) return true;
+        if (filters.avoidKong && p.isKong) return true;
+        if (filters.avoidMu && p.isMu) return true;
+        return false;
+    };
+
+    while (current <= end && loopGuard < 4500) {
+        try {
+            const reqDate = {
+                year: current.getFullYear(), month: current.getMonth() + 1, day: current.getDate(),
+                hour: current.getHours(), minute: 0
+            };
+            const res = calculateQiMenResult(reqDate);
+
+            if (filters.avoidFuYin && res.patterns.some(p => p.includes('伏吟'))) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+            if (filters.avoidFanYin && res.patterns.some(p => p.includes('反吟'))) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+
+            // 解析四柱
+            const baziParts = res.lunarDateStr.split(' ');
+            
+            // 先取得日干的實際搜尋值 (用來比對年月時干是否與之重複)
+            const daySearchGanVal = getSearchGan(baziParts[2][0], baziParts[2][1]);
+
+            // 傳入 isDayPillar 以及 daySearchGanVal 進行判斷
+            const yearPalace = getPalaceForPillar(baziParts[0], res.grid, false, daySearchGanVal);
+            const monthPalace = getPalaceForPillar(baziParts[1], res.grid, false, daySearchGanVal);
+            const dayPalace = getPalaceForPillar(baziParts[2], res.grid, true, daySearchGanVal);
+            const hourPalace = getPalaceForPillar(baziParts[3], res.grid, false, daySearchGanVal);
+
+            const yearEle = yearPalace ? PALACE_ELEMENTS[yearPalace.num] : null;
+            const monthEle = monthPalace ? PALACE_ELEMENTS[monthPalace.num] : null;
+            const dayEle = dayPalace ? PALACE_ELEMENTS[dayPalace.num] : null;
+            const hourEle = hourPalace ? PALACE_ELEMENTS[hourPalace.num] : null;
+
+            let failShengBi = false;
+            if (filters.yearShengDay && (!yearEle || !dayEle || !isShengOrBi(yearEle, dayEle))) failShengBi = true;
+            if (filters.monthShengDay && (!monthEle || !dayEle || !isShengOrBi(monthEle, dayEle))) failShengBi = true;
+            if (filters.hourShengDay && (!hourEle || !dayEle || !isShengOrBi(hourEle, dayEle))) failShengBi = true;
+            
+            if (failShengBi) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+
+            if (isPalaceBad(dayPalace)) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+            if (filters.yearShengDay && isPalaceBad(yearPalace)) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+            if (filters.monthShengDay && isPalaceBad(monthPalace)) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+            if (filters.hourShengDay && isPalaceBad(hourPalace)) {
+                current.setHours(current.getHours() + 2); loopGuard++; continue;
+            }
+
+            let targetPalaces = res.grid.filter(g => g.num !== 5);
+
+            if (filters.palace !== 0) targetPalaces = targetPalaces.filter(g => g.num === filters.palace);
+            if (filters.door) targetPalaces = targetPalaces.filter(g => g.men === filters.door);
+            if (filters.god) targetPalaces = targetPalaces.filter(g => g.shen === filters.god);
+            
+            targetPalaces = targetPalaces.filter(g => !isPalaceBad(g));
+
+            if (filters.requireShengBi && dayPalace) {
+                targetPalaces = targetPalaces.filter(g => {
+                    const targetEle = PALACE_ELEMENTS[g.num];
+                    return isShengOrBi(targetEle, dayEle);
+                });
+            }
+
+            if (targetPalaces.length > 0) {
+                const matchGongNames = targetPalaces.map(g => `${g.name}宮`).join('、');
+                let reasonStr = `吉方：${matchGongNames}`;
+                if (filters.door) reasonStr += ` [${filters.door}]`;
+                if (filters.god) reasonStr += ` [${filters.god}]`;
+                
+                const extraTags = [];
+                if (filters.yearShengDay) extraTags.push('年宮生日宮');
+                if (filters.monthShengDay) extraTags.push('月宮生日宮');
+                if (filters.hourShengDay) extraTags.push('時宮生日宮');
+                if (filters.requireShengBi) extraTags.push('用神生/比日干');
+                if (filters.avoidXing || filters.avoidPo || filters.avoidKong || filters.avoidMu) extraTags.push('無凶格');
+                if (extraTags.length > 0) reasonStr += ` (${extraTags.join(', ')})`;
+
+                results.push({
+                    dateObj: new Date(current),
+                    dateStr: res.solarDateStr,
+                    lunarStr: res.lunarDateStr,
+                    matchReason: reasonStr
+                });
+            }
+        } catch(e) {}
+
+        current.setHours(current.getHours() + 2); 
+        loopGuard++;
+    }
+
+    setSearchResults(results);
+    setShowSearchResults(true);
+  };
+
+  const handleJumpFromSearch = (dateObj) => {
+    const formData = {
+        year: dateObj.getFullYear(), month: dateObj.getMonth() + 1, day: dateObj.getDate(),
+        hour: dateObj.getHours(), minute: dateObj.getMinutes()
+    };
+    handleCalculate(formData);
+    setShowSearchResults(false);
+  };
+
   const tabs = [{ id: 'input', label: '排盤', icon: Compass }, { id: 'bookmarks', label: '紀錄', icon: Bookmark }, { id: 'booking', label: '預約', icon: CalendarCheck }, { id: 'settings', label: '設定', icon: Settings }];
 
   useEffect(() => { const loadData = async () => { try { const { value } = await Preferences.get({ key: 'qimen_bookmarks' }); if (value) setBookmarks(JSON.parse(value)); } catch (e) { console.error("Load failed", e); } }; loadData(); }, []);
@@ -1151,12 +1561,25 @@ export default function QiMenApp() {
     <div style={COMMON_STYLES.fullScreen}>
         <AppHeader title={APP_NAME} logoChar={{ main: '奇', sub: '門' }} />
         <div style={COMMON_STYLES.contentArea}>
-            {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} /><AdsterraNarrow /></>}
+            {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} onOpenSearch={() => setShowSearchModal(true)} /><AdsterraNarrow /></>}
             {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><AdsterraNarrow /></>}
             {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><Adsterra /></div></div>}
             {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
             {view === 'settings' && <SettingsView bookmarks={bookmarks} setBookmarks={setBookmarks} />}
         </div>
+
+        <SearchModal 
+            visible={showSearchModal} 
+            onClose={() => setShowSearchModal(false)} 
+            onSearch={handleSearch} 
+        />
+        <SearchResultsModal 
+            visible={showSearchResults} 
+            onClose={() => setShowSearchResults(false)} 
+            results={searchResults} 
+            onJumpToDate={handleJumpFromSearch} 
+        />
+
         <InstallGuide />
         <BottomTabBar tabs={tabs} currentTab={view === 'result' ? 'input' : view} onTabChange={(id) => { if (id === 'input') { setEditingData(null); setView('input'); } else { setView(id); } }} />
     </div>

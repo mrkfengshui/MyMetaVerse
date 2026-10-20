@@ -21,7 +21,7 @@ import {
   ChevronUp, ChevronDown, Circle, Compass,
   CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, MapPin,
-  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
+  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles, Search, 
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -29,7 +29,7 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博進氣萬年曆";
-const APP_VERSION = "v1.8 增加加入原生日曆功能";
+const APP_VERSION = "v2.0 增加搜尋";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -979,8 +979,13 @@ const InfoItem = ({ label, value, yi, ji, source }) => {
 };
 
 // B-2: 摺疊區塊
-const AccordionSection = ({ title, children, defaultOpen = false, color = '#333' }) => {
+const AccordionSection = ({ title, children, defaultOpen = true, color = '#333' }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    setIsOpen(defaultOpen);
+  }, [title, defaultOpen]);
+  
   return (
     <div style={{ border: `1px solid ${THEME.border}`, borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', background: THEME.white }}>
       <div 
@@ -1001,11 +1006,11 @@ const AccordionSection = ({ title, children, defaultOpen = false, color = '#333'
 
 // B-3: 底部摘要面板 (點擊可展開詳細資訊，點擊時柱可換時辰)
 const BottomSummaryPanel = ({ info, onDetailClick, onTimeClick, isBookmarked, onToggleBookmark }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // 當日期改變時，自動收合 (可選)
   useEffect(() => {
-    setIsExpanded(false);
+    setIsExpanded(true);
   }, [info?.dateStr]);
 
   if (!info) return null;
@@ -1784,6 +1789,119 @@ const TimePickerModal = ({ visible, onClose, onSelect, currentRule, currentIndex
   );
 };
 
+// B-6: 搜尋條件輸入彈窗
+const SearchModal = ({ visible, onClose, onSearch }) => {
+  const [keyword, setKeyword] = useState('');
+  const today = new Date();
+  
+  // 限制最長1年前至1年後
+  const minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  const maxDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  
+  const [startDate, setStartDate] = useState(today.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]);
+
+  if (!visible) return null;
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '350px', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 'bold' }}>搜尋曆法資訊</h3>
+        
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>搜尋目標 (最少一字)</label>
+          <input 
+            type="text" 
+            value={keyword} 
+            onChange={(e) => setKeyword(e.target.value)} 
+            placeholder="例如: 三、天赦、宜嫁娶" 
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
+            <input type="date" min={minDate} max={maxDate} value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
+            <input type="date" min={minDate} max={maxDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', backgroundColor: THEME.bgGray, color: THEME.gray, borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>取消</button>
+          <button 
+            onClick={() => { if(keyword.length >= 1) onSearch(keyword, startDate, endDate); else alert('請輸入最少一個字的搜尋目標'); }} 
+            style={{ flex: 1, padding: '10px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            確定
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// B-7: 搜尋結果頁彈窗
+const SearchResultsModal = ({ visible, onClose, results, onJumpToDate, bookmarks, toggleBookmark }) => {
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
+  useEffect(() => {
+    setPage(1);
+  }, [results, visible]);
+  
+  if (!visible) return null;
+
+  const totalPages = Math.ceil(results.length / itemsPerPage);
+  const currentResults = results.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
+      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '95%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>搜尋結果 ({results.length}筆)</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={24} color={THEME.gray} /></button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {currentResults.length === 0 ? (
+            <div style={{ textAlign: 'center', color: THEME.gray, padding: '20px' }}>找不到相符的結果</div>
+          ) : (
+            currentResults.map((res, idx) => {
+              const dateObj = new Date(res.dateStr);
+              const dateKey = getLocalDateString(dateObj);
+              const isBookmarked = bookmarks.some(b => (typeof b === 'string' ? b : (b.targetDate || b.name || b.id)) === dateKey);
+
+              return (
+                <div key={idx} style={{ border: `1px solid ${THEME.border}`, borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onJumpToDate(dateObj)}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>{res.dateStr}</div>
+                    <div style={{ fontSize: '12px', color: THEME.primary, marginTop: '4px' }}>{res.lunarStr} | {res.matchReason}</div>
+                  </div>
+                  <button onClick={() => toggleBookmark(dateObj)} style={{ background: 'none', border: 'none', padding: '8px', cursor: 'pointer' }}>
+                    <Bookmark size={24} fill={isBookmarked ? THEME.red : 'none'} color={isBookmarked ? THEME.red : '#ccc'} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: `1px solid ${THEME.border}`, paddingTop: '12px' }}>
+            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: page === 1 ? '#f0f0f0' : '#fff' }}>上一頁</button>
+            <span style={{ fontSize: '14px', color: THEME.gray }}>{page} / {totalPages}</span>
+            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: page === totalPages ? '#f0f0f0' : '#fff' }}>下一頁</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // =========================================================================
 // PART C: 主要視圖組件
 // =========================================================================
@@ -1836,7 +1954,8 @@ const CalendarToolbar = ({
     currentDate, onToday, solarTerms, headerGanZhi, 
     onTitleClick, 
     showJinQi, setShowJinQi, 
-    showTuiQi, setShowTuiQi 
+    showTuiQi, setShowTuiQi,
+    setShowSearchModal 
 }) => {
     
     const getBtnStyle = (isActive, color, bgActive) => ({
@@ -1889,19 +2008,32 @@ const CalendarToolbar = ({
                     {showTuiQi ? <Eye size={14}/> : <EyeOff size={14}/>} 流月進退氣
                 </button>
             </div>
-
-            <button 
-                onClick={onToday} 
-                style={{ 
-                    color: THEME.white, backgroundColor: THEME.black, 
-                    padding: '6px 12px', borderRadius: '16px',
-                    fontSize: '12px', fontWeight: 'bold', 
-                    border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '4px'
-                }}
-            >
-                <RotateCcw size={12} /> 今天
-            </button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button 
+                    onClick={() => setShowSearchModal(true)}
+                    style={{ 
+                        color: THEME.black, backgroundColor: '#f0f0f0', 
+                        padding: '6px 12px', borderRadius: '16px',
+                        fontSize: '12px', fontWeight: 'bold', 
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '4px'
+                    }}
+                >
+                    <Search size={12} /> 搜尋
+                </button>
+                <button 
+                    onClick={onToday} 
+                    style={{ 
+                        color: THEME.white, backgroundColor: THEME.black, 
+                        padding: '6px 12px', borderRadius: '16px',
+                        fontSize: '12px', fontWeight: 'bold', 
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '4px'
+                    }}
+                >
+                    <RotateCcw size={12} /> 今天
+                </button>
+            </div>
           </div>
 
           {/* 下排標題區 (修改處) */}
@@ -2264,6 +2396,103 @@ export default function CalendarApp() {
   const [qiMode, setQiMode] = useState(null); 
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+
+  // 執行搜尋邏輯 (增加支援節氣、中氣、初三、甲子、太陽等字眼)
+  const handleSearch = (keyword, startStr, endStr) => {
+    setShowSearchModal(false);
+    if (!window.Solar) return;
+
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    // 確保結束日期包含整天 (23:59:59)，避免時區吃掉最後一天
+    end.setHours(23, 59, 59, 999);
+
+    const results = [];
+    let current = new Date(start);
+    let loopGuard = 0;
+
+    while (current <= end && loopGuard < 800) {
+      const solar = window.Solar.fromYmd(current.getFullYear(), current.getMonth() + 1, current.getDate());
+      const lunar = solar.getLunar();
+      
+      // 1. 宜忌 (轉為繁體)
+      const yiList = lunar.getDayYi().map(toTraditionalYiJi).join('');
+      const jiList = lunar.getDayJi().map(toTraditionalYiJi).join('');
+      
+      // 2. 建除與星宿
+      const rawJian = lunar.getZhiXing();
+      const jian = JIAN_FIX_MAP[rawJian] || rawJian;
+      const rawXiu = lunar.getXiu();
+      const xiu = XIU_FIX_MAP[rawXiu] || rawXiu;
+      const xiuFull = XIU_FULL_NAME_MAP[xiu] || xiu;
+
+      // 3. 特殊神煞與進階搜尋目標 (干支、農曆日、烏兔、節氣)
+      const baziEnd = window.Solar.fromYmdHms(current.getFullYear(), current.getMonth() + 1, current.getDate(), 23, 59, 59).getLunar().getEightChar();
+      const isTianShe = getTianShe(baziEnd.getMonthZhi(), lunar.getDayInGanZhi());
+      const isSanNiang = SAN_NIANG_DAYS.includes(lunar.getDay());
+      
+      const lunarDayStr = lunar.getDayInChinese(); // 取得如 "初三"、"十四"
+      const ganZhiDay = lunar.getDayInGanZhi();    // 取得如 "甲子"、"乙丑"
+      const wutuObj = getWuTuSolarStar(lunar);     // 取得烏兔星物件
+      const wutuName = wutuObj ? wutuObj.name : '';// 取得如 "太陽"、"太陰"
+      
+      // 取得節氣/中氣並轉為繁體
+      const rawJieQi = lunar.getJieQi();
+      const jieQi = rawJieQi ? (JIE_QI_FIX_MAP[rawJieQi] || rawJieQi) : '';
+      
+      let matchReason = '';
+      
+      // 依序檢查是否包含關鍵字 (順序決定了顯示的匹配原因)
+      if (keyword.includes('天赦') && isTianShe) {
+          matchReason = '天赦日';
+      } else if ((keyword.includes('三娘') || keyword === '三') && isSanNiang) {
+          matchReason = '三娘煞';
+      } else if (jieQi && jieQi.includes(keyword)) { 
+          matchReason = `交節氣：${jieQi}`;
+      } else if (wutuName.includes(keyword)) {
+          matchReason = `烏兔值星：${wutuName}`;
+      } else if (lunarDayStr.includes(keyword)) {
+          matchReason = `農曆 ${lunarDayStr}`;
+      } else if (ganZhiDay.includes(keyword)) {
+          matchReason = `日干支為 ${ganZhiDay}`;
+      } else if (yiList.includes(keyword)) {
+          matchReason = `宜包含「${keyword}」`;
+      } else if (jiList.includes(keyword)) {
+          matchReason = `忌包含「${keyword}」`;
+      } else if (jian.includes(keyword)) {
+          matchReason = `建除包含「${keyword}」`;
+      } else if (xiuFull.includes(keyword) || xiu.includes(keyword)) {
+          matchReason = `星宿包含「${keyword}」`;
+      }
+
+      // 如果有配對成功，推入結果陣列
+      if (matchReason) {
+        results.push({
+          dateStr: getLocalDateString(current),
+          lunarStr: `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
+          matchReason
+        });
+      }
+
+      // 前進一天
+      current.setDate(current.getDate() + 1);
+      loopGuard++;
+    }
+
+    setSearchResults(results);
+    setShowSearchResults(true);
+  };
+
+  const handleJumpFromSearch = (dateObj) => {
+    setCurrentDate(dateObj);
+    setSelectedDate(dateObj);
+    scrollToActiveDate(dateObj);
+    setShowSearchResults(false); // 跳轉後關閉結果頁
+  };
   
   const scrollRef = useRef(null);
   const touchStartRef = useRef(null);
@@ -2768,6 +2997,7 @@ const selectedInfo = useMemo(() => {
               onTitleClick={() => setShowDatePicker(true)}
               showJinQi={showJinQi} setShowJinQi={setShowJinQi}
               showTuiQi={showTuiQi} setShowTuiQi={setShowTuiQi}
+              setShowSearchModal={setShowSearchModal}
             />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', flexShrink: 0, width: '100%' }}>
               {WEEKDAYS.map((d, i) => (<div key={i} style={{ textAlign: 'center', padding: '6px 0', fontSize: '12px', color: THEME.gray }}>{d}</div>))}
@@ -2912,6 +3142,21 @@ const selectedInfo = useMemo(() => {
         onConfirm={jumpToDate}
       />
       
+      <SearchModal 
+        visible={showSearchModal} 
+        onClose={() => setShowSearchModal(false)} 
+        onSearch={handleSearch} 
+      />
+
+      <SearchResultsModal 
+        visible={showSearchResults} 
+        onClose={() => setShowSearchResults(false)} 
+        results={searchResults} 
+        onJumpToDate={handleJumpFromSearch} 
+        bookmarks={bookmarks} 
+        toggleBookmark={toggleBookmark} 
+      />
+
       <InstallGuide />
       <BottomTabBar tabs={TABS} currentTab={view} onTabChange={setView} />
       
