@@ -206,9 +206,9 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
         let offset = i - targetGuaIdx;
         let finalStarIdx = (starIdxBase + offset) % 8;
         if (finalStarIdx < 0) finalStarIdx += 8;
-        tianPanStarMap[g] = STAR_ORDER[finalStarIdx];
+        tianPanStarMap[g] = STAR_ORDER[finalStarIdx]; 
     });
-    tianPanStarMap[5] = ''; 
+    tianPanStarMap[5] = '';
 
     // 天盤干
     const tianPanGanMap = {};
@@ -457,7 +457,7 @@ const calculateQiMenResult = (dateObj, rotateOffset = 0) => {
             name: base.name,
             shen: content.shen || '',
             diShen: content.diShen || '',
-            star: content.star || '',
+            star: content.star === '芮' ? '禽芮' : (content.star || ''),
             men: content.men || '',
             tian: tianGanStr,
             di: diGanStr,
@@ -598,8 +598,28 @@ const InputView = ({ onCalculate, initialData, onOpenSearch }) => {
                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
                         }}
                     >
-                        <Search size={14} /> 搜尋局數
+                        <Search size={14} /> 搜尋
                     </button>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <div style={{ flex: 1 }}> 
+                        <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> 
+                        <select value={safeDate.getFullYear()} onChange={e => handleChange('year', parseInt(e.target.value))} style={selectStyle}>
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select> 
+                    </div>
+                    <div style={{ flex: 1 }}> 
+                        <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> 
+                        <select value={safeDate.getMonth() + 1} onChange={e => handleChange('month', parseInt(e.target.value))} style={selectStyle}>
+                            {months.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select> 
+                    </div>
+                    <div style={{ flex: 1 }}> 
+                        <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> 
+                        <select value={safeDate.getDate()} onChange={e => handleChange('day', parseInt(e.target.value))} style={selectStyle}>
+                            {days.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select> 
+                    </div>
                 </div>
                 <div style={{ marginBottom: '24px' }}>
                     <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '6px' }}>時間</label>
@@ -1111,12 +1131,14 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   const [endDate, setEndDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]);
 
   // 取法偏好設定
-  const [jiaMethod, setJiaMethod] = useState('zhifu'); // 'zhifu' = 看值符, 'xunshou' = 看旬首
+  const [jiaMethod, setJiaMethod] = useState('zhifu'); 
 
-  // 進階搜尋條件 State
+  // 進階搜尋條件 State (全部改為明確的選單)
   const [palace, setPalace] = useState(0); 
   const [door, setDoor] = useState('');    
   const [god, setGod] = useState('');      
+  const [star, setStar] = useState('');    // 新增：九星
+  const [stem, setStem] = useState('');    // 新增：天干
   
   const [avoidFuYin, setAvoidFuYin] = useState(false);         
   const [avoidFanYin, setAvoidFanYin] = useState(false);       
@@ -1134,7 +1156,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   if (!visible) return null;
 
   const applyQuickSet = (type) => {
-    setPalace(0); 
+    setPalace(0); setStar(''); setStem(''); 
     setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(false); 
     setAvoidFuYin(true); setAvoidFanYin(true); 
     setRequireShengBi(true); 
@@ -1149,8 +1171,8 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
 
   const handleConfirm = () => {
       onSearch({ 
-          jiaMethod, // 將甲木取法傳給搜尋引擎
-          palace, door, god, 
+          jiaMethod, 
+          palace, door, god, star, stem, // 傳遞全部明確條件
           avoidXing, avoidPo, avoidKong, avoidMu, 
           avoidFuYin, avoidFanYin, requireShengBi,
           yearShengDay, monthShengDay, hourShengDay
@@ -1167,20 +1189,18 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
           <Search size={20} color={THEME.blue}/> 搜尋奇門吉時
         </h3>
         
-        {/* 六甲派別設定 */}
         <div style={{ backgroundColor: '#f0f7ff', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.blue}44`, marginBottom: '16px' }}>
-            <div style={{ fontSize: '13px', color: THEME.blue, fontWeight: 'bold', marginBottom: '6px' }}>六甲天干落宮定位法：</div>
+            <div style={{ fontSize: '13px', color: THEME.blue, fontWeight: 'bold', marginBottom: '6px' }}>六甲天干落宮定位：</div>
             <div style={{ display: 'flex', gap: '16px' }}>
                 <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <input type="radio" checked={jiaMethod === 'zhifu'} onChange={() => setJiaMethod('zhifu')} /> 看值符宮 (本派)
+                    <input type="radio" checked={jiaMethod === 'zhifu'} onChange={() => setJiaMethod('zhifu')} /> 依值符宮
                 </label>
                 <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <input type="radio" checked={jiaMethod === 'xunshou'} onChange={() => setJiaMethod('xunshou')} /> 看旬首宮 (坊間)
+                    <input type="radio" checked={jiaMethod === 'xunshou'} onChange={() => setJiaMethod('xunshou')} /> 依旬首宮
                 </label>
             </div>
         </div>
 
-        {/* 快速主題區 */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '6px', fontWeight: 'bold' }}>快速主題 (自動設定吉格與避忌)</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -1189,21 +1209,28 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
              <button onClick={() => applyQuickSet('gamble')} style={quickBtnStyle}>🎲 博彩/偏財 (傷門)</button>
              <button onClick={() => applyQuickSet('love')} style={quickBtnStyle}>❤️ 感情/合作 (六合)</button>
              <button onClick={() => applyQuickSet('exam')} style={quickBtnStyle}>📚 考試/文書 (景門)</button>
-             <button onClick={() => { setDoor(''); setGod(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{...quickBtnStyle, backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd'}}>重置</button>
+             <button onClick={() => { setDoor(''); setGod(''); setStar(''); setStem(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{...quickBtnStyle, backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd'}}>重置</button>
           </div>
         </div>
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, margin: '12px 0' }}></div>
 
-        {/* 自訂條件區 */}
+        {/* 自訂條件區 (全部改為下拉選單) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
             <div>
-                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>目標宮位</label>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定宮位</label>
                 <select value={palace} onChange={e => setPalace(parseInt(e.target.value))} style={selectStyle}>
-                    <option value={0}>不限 (找全盤)</option>
+                    <option value={0}>不限</option>
                     <option value={1}>坎一宮 (北)</option><option value={8}>艮八宮 (東北)</option><option value={3}>震三宮 (東)</option>
                     <option value={4}>巽四宮 (東南)</option><option value={9}>離九宮 (南)</option><option value={2}>坤二宮 (西南)</option>
                     <option value={7}>兌七宮 (西)</option><option value={6}>乾六宮 (西北)</option>
+                </select>
+            </div>
+            <div>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定天干</label>
+                <select value={stem} onChange={e => setStem(e.target.value)} style={selectStyle}>
+                    <option value="">不限</option>
+                    {['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
             <div>
@@ -1213,13 +1240,24 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
                     {['休','生','傷','杜','景','死','驚','開'].map(m => <option key={m} value={m}>{m}門</option>)}
                 </select>
             </div>
+            <div>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定八神</label>
+                <select value={god} onChange={e => setGod(e.target.value)} style={selectStyle}>
+                    <option value="">不限</option>
+                    {['符','蛇','陰','合','虎','武','九','天'].map(s => <option key={s} value={s}>{s === '符' ? '值符' : (s === '合' ? '六合' : (s==='陰'?'太陰':(s==='虎'?'白虎':(s==='武'?'玄武':(s==='九'?'九地':(s==='天'?'九天':'螣蛇'))))))}</option>)}
+                </select>
+            </div>
+            <div>
+                <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定九星</label>
+                <select value={star} onChange={e => setStar(e.target.value)} style={selectStyle}>
+                    <option value="">不限</option>
+                    {['蓬','任','沖','輔','禽','英','芮','柱','心'].map(s => <option key={s} value={s}>天{s}星</option>)}
+                </select>
+            </div>
         </div>
 
-        {/* 避忌與高階條件區 */}
         <div style={{ backgroundColor: '#fff5f5', padding: '12px', borderRadius: '8px', border: '1px solid #ffa39e', marginBottom: '20px' }}>
             <div style={{ fontSize: '13px', color: THEME.red, marginBottom: '8px', fontWeight: 'bold' }}>全局與宮位進階要求：</div>
-            
-            {/* 全局四柱與宮位格局 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: '8px', borderBottom: '1px dashed #ffa39e', paddingBottom: '8px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFuYin} onChange={e => setAvoidFuYin(e.target.checked)} /> 無全局伏吟</label>
@@ -1230,8 +1268,6 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
                     <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={requireShengBi} onChange={e => setRequireShengBi(e.target.checked)} /> 用神宮 生/比和 日干宮</label>
                 </div>
             </div>
-
-            {/* 凶格避忌 */}
             <div style={{ fontSize: '12px', color: '#c0392b', marginBottom: '6px' }}>「用神宮、日干宮及所選四柱宮」須同時排除：</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidXing} onChange={e => setAvoidXing(e.target.checked)} /> 無擊刑</label>
@@ -1241,7 +1277,6 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             </div>
         </div>
 
-        {/* 日期範圍 */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
@@ -1336,6 +1371,7 @@ export default function QiMenApp() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   
+  // 執行搜尋邏輯 (三套邏輯完美並存版)
   const handleSearch = (filters, startStr, endStr) => {
     setShowSearchModal(false);
     if (!window.Solar) return;
@@ -1349,7 +1385,6 @@ export default function QiMenApp() {
     current.setHours(0, 0, 0, 0); 
     let loopGuard = 0;
 
-    // 宮位五行
     const PALACE_ELEMENTS = { 1: '水', 2: '土', 3: '木', 4: '木', 5: '土', 6: '金', 7: '金', 8: '土', 9: '火' };
     
     const isShengOrBi = (sourceEle, targetEle) => {
@@ -1363,7 +1398,6 @@ export default function QiMenApp() {
         return false;
     };
 
-    // 輔助函式：轉換甲木為隱遁天干或值符
     const getSearchGan = (gan, zhi) => {
         if (gan !== '甲') return gan;
         if (filters.jiaMethod === 'zhifu') return '符';
@@ -1380,7 +1414,7 @@ export default function QiMenApp() {
         return gan;
     };
 
-    // 輔助函式：找出某個柱的天干落宮 (加入日干優先權邏輯)
+    // 【邏輯2並存】：四柱與日干相同時，改看地盤
     const getPalaceForPillar = (pillarStr, grid, isDayPillar, daySearchGanVal) => {
         if (!pillarStr) return null;
         const searchGan = getSearchGan(pillarStr[0], pillarStr[1]);
@@ -1389,7 +1423,6 @@ export default function QiMenApp() {
             return grid.find(g => g.num !== 5 && g.shen === '符');
         }
 
-        // 核心修正：如果年月時干與日干(轉換後)相同，天盤已被日干佔用，必須看地盤(下盤)
         let forceDiPan = false;
         if (!isDayPillar && searchGan === daySearchGanVal) {
             forceDiPan = true;
@@ -1427,13 +1460,10 @@ export default function QiMenApp() {
                 current.setHours(current.getHours() + 2); loopGuard++; continue;
             }
 
-            // 解析四柱
             const baziParts = res.lunarDateStr.split(' ');
-            
-            // 先取得日干的實際搜尋值 (用來比對年月時干是否與之重複)
             const daySearchGanVal = getSearchGan(baziParts[2][0], baziParts[2][1]);
 
-            // 傳入 isDayPillar 以及 daySearchGanVal 進行判斷
+            // 計算四柱落宮
             const yearPalace = getPalaceForPillar(baziParts[0], res.grid, false, daySearchGanVal);
             const monthPalace = getPalaceForPillar(baziParts[1], res.grid, false, daySearchGanVal);
             const dayPalace = getPalaceForPillar(baziParts[2], res.grid, true, daySearchGanVal);
@@ -1471,6 +1501,12 @@ export default function QiMenApp() {
             if (filters.palace !== 0) targetPalaces = targetPalaces.filter(g => g.num === filters.palace);
             if (filters.door) targetPalaces = targetPalaces.filter(g => g.men === filters.door);
             if (filters.god) targetPalaces = targetPalaces.filter(g => g.shen === filters.god);
+            if (filters.star) targetPalaces = targetPalaces.filter(g => g.star === filters.star || (g.star && g.star.includes(filters.star)));
+            
+            // 【邏輯1與邏輯3並存】：指定用神天干時，永遠只看天盤，不被地盤干擾
+            if (filters.stem) {
+                targetPalaces = targetPalaces.filter(g => g.tian && g.tian.includes(filters.stem));
+            }
             
             targetPalaces = targetPalaces.filter(g => !isPalaceBad(g));
 
@@ -1484,7 +1520,9 @@ export default function QiMenApp() {
             if (targetPalaces.length > 0) {
                 const matchGongNames = targetPalaces.map(g => `${g.name}宮`).join('、');
                 let reasonStr = `吉方：${matchGongNames}`;
-                if (filters.door) reasonStr += ` [${filters.door}]`;
+                if (filters.stem) reasonStr += ` [${filters.stem}]`;
+                if (filters.door) reasonStr += ` [${filters.door}門]`;
+                if (filters.star) reasonStr += ` [天${filters.star}]`;
                 if (filters.god) reasonStr += ` [${filters.god}]`;
                 
                 const extraTags = [];
