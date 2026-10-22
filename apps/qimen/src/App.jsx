@@ -1157,7 +1157,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
 
   const applyQuickSet = (type) => {
     setPalace(0); setStar(''); setStem(''); 
-    setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(false); 
+    setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(true); 
     setAvoidFuYin(true); setAvoidFanYin(true); 
     setRequireShengBi(true); 
     setYearShengDay(false); setMonthShengDay(false); setHourShengDay(true); 
@@ -1193,10 +1193,10 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             <div style={{ fontSize: '13px', color: THEME.blue, fontWeight: 'bold', marginBottom: '6px' }}>六甲天干落宮定位：</div>
             <div style={{ display: 'flex', gap: '16px' }}>
                 <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <input type="radio" checked={jiaMethod === 'zhifu'} onChange={() => setJiaMethod('zhifu')} /> 依值符宮
+                    <input type="radio" checked={jiaMethod === 'zhifu'} onChange={() => setJiaMethod('zhifu')} /> 依值符
                 </label>
                 <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <input type="radio" checked={jiaMethod === 'xunshou'} onChange={() => setJiaMethod('xunshou')} /> 依旬首宮
+                    <input type="radio" checked={jiaMethod === 'xunshou'} onChange={() => setJiaMethod('xunshou')} /> 依旬首
                 </label>
             </div>
         </div>
@@ -1262,13 +1262,12 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFuYin} onChange={e => setAvoidFuYin(e.target.checked)} /> 無全局伏吟</label>
                     <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFanYin} onChange={e => setAvoidFanYin(e.target.checked)} /> 無全局反吟</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={yearShengDay} onChange={e => setYearShengDay(e.target.checked)} /> 年干 生/比和 日干</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={monthShengDay} onChange={e => setMonthShengDay(e.target.checked)} /> 月干 生/比和 日干</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={hourShengDay} onChange={e => setHourShengDay(e.target.checked)} /> 時干 生/比和 日干</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={yearShengDay} onChange={e => setYearShengDay(e.target.checked)} /> 年干宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={monthShengDay} onChange={e => setMonthShengDay(e.target.checked)} /> 月干宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={hourShengDay} onChange={e => setHourShengDay(e.target.checked)} /> 時干宮 生/比和 日干宮</label>
                     <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={requireShengBi} onChange={e => setRequireShengBi(e.target.checked)} /> 用神宮 生/比和 日干宮</label>
                 </div>
             </div>
-            <div style={{ fontSize: '12px', color: '#c0392b', marginBottom: '6px' }}>「用神宮、日干宮及所選四柱宮」須同時排除：</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidXing} onChange={e => setAvoidXing(e.target.checked)} /> 無擊刑</label>
                 <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidPo} onChange={e => setAvoidPo(e.target.checked)} /> 無門迫</label>
