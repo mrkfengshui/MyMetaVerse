@@ -1179,7 +1179,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
       }, startDate, endDate);
   };
 
-  const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', fontSize: '14px' };
+  const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', fontSize: '14px', boxSizing: 'border-box' };
   const quickBtnStyle = { padding: '6px 10px', backgroundColor: THEME.bgBlue, color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' };
 
   return (
@@ -1276,12 +1276,12 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+          <div>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
             <input type="date" min={minDate} max={maxDate} value={startDate} onChange={e => setStartDate(e.target.value)} style={selectStyle} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
             <input type="date" min={minDate} max={maxDate} value={endDate} onChange={e => setEndDate(e.target.value)} style={selectStyle} />
           </div>
