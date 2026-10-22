@@ -1121,7 +1121,6 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
     );
 };
 
-// B-8: 搜尋條件輸入彈窗 (奇門進階版)
 const SearchModal = ({ visible, onClose, onSearch }) => {
   const today = new Date();
   const minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
@@ -1130,15 +1129,13 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   const [startDate, setStartDate] = useState(today.toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]);
 
-  // 取法偏好設定
   const [jiaMethod, setJiaMethod] = useState('zhifu'); 
 
-  // 進階搜尋條件 State (全部改為明確的選單)
   const [palace, setPalace] = useState(0); 
   const [door, setDoor] = useState('');    
   const [god, setGod] = useState('');      
-  const [star, setStar] = useState('');    // 新增：九星
-  const [stem, setStem] = useState('');    // 新增：天干
+  const [star, setStar] = useState('');    
+  const [stem, setStem] = useState('');    
   
   const [avoidFuYin, setAvoidFuYin] = useState(false);         
   const [avoidFanYin, setAvoidFanYin] = useState(false);       
@@ -1153,9 +1150,12 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   const [avoidKong, setAvoidKong] = useState(false);   
   const [avoidMu, setAvoidMu] = useState(false);     
 
+  const [activeTheme, setActiveTheme] = useState('');
+
   if (!visible) return null;
 
   const applyQuickSet = (type) => {
+    setActiveTheme(type); // 設定當前選中的主題
     setPalace(0); setStar(''); setStem(''); 
     setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(true); 
     setAvoidFuYin(true); setAvoidFanYin(true); 
@@ -1172,7 +1172,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   const handleConfirm = () => {
       onSearch({ 
           jiaMethod, 
-          palace, door, god, star, stem, // 傳遞全部明確條件
+          palace, door, god, star, stem,
           avoidXing, avoidPo, avoidKong, avoidMu, 
           avoidFuYin, avoidFanYin, requireShengBi,
           yearShengDay, monthShengDay, hourShengDay
@@ -1180,7 +1180,19 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
   };
 
   const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, backgroundColor: '#fafafa', fontSize: '14px', boxSizing: 'border-box' };
-  const quickBtnStyle = { padding: '6px 10px', backgroundColor: THEME.bgBlue, color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' };
+  
+  const getBtnStyle = (themeName) => ({
+      padding: '6px 10px', 
+      borderRadius: '20px', 
+      fontSize: '12px', 
+      fontWeight: 'bold', 
+      cursor: 'pointer', 
+      whiteSpace: 'nowrap',
+      transition: 'all 0.2s',
+      backgroundColor: activeTheme === themeName ? THEME.bgBlue : '#f0f0f0',
+      color: activeTheme === themeName ? THEME.blue : '#666',
+      border: `1px solid ${activeTheme === themeName ? THEME.blue : '#ddd'}`
+  });
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
@@ -1204,22 +1216,22 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '6px', fontWeight: 'bold' }}>快速主題 (自動設定吉格與避忌)</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-             <button onClick={() => applyQuickSet('career')} style={quickBtnStyle}>💼 見工/事業 (開門)</button>
-             <button onClick={() => applyQuickSet('wealth')} style={quickBtnStyle}>💰 正財/生意 (生門)</button>
-             <button onClick={() => applyQuickSet('gamble')} style={quickBtnStyle}>🎲 博彩/偏財 (傷門)</button>
-             <button onClick={() => applyQuickSet('love')} style={quickBtnStyle}>❤️ 感情/合作 (六合)</button>
-             <button onClick={() => applyQuickSet('exam')} style={quickBtnStyle}>📚 考試/文書 (景門)</button>
-             <button onClick={() => { setDoor(''); setGod(''); setStar(''); setStem(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{...quickBtnStyle, backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd'}}>重置</button>
+             {/* 套用動態樣式 */}
+             <button onClick={() => applyQuickSet('career')} style={getBtnStyle('career')}>💼 見工/事業 (開門)</button>
+             <button onClick={() => applyQuickSet('wealth')} style={getBtnStyle('wealth')}>💰 正財/生意 (生門)</button>
+             <button onClick={() => applyQuickSet('gamble')} style={getBtnStyle('gamble')}>🎲 博彩/偏財 (傷門)</button>
+             <button onClick={() => applyQuickSet('love')} style={getBtnStyle('love')}>❤️ 感情/合作 (六合)</button>
+             <button onClick={() => applyQuickSet('exam')} style={getBtnStyle('exam')}>📚 考試/文書 (景門)</button>
+             <button onClick={() => { setActiveTheme(''); setDoor(''); setGod(''); setStar(''); setStem(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{ padding: '6px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd' }}>重置</button>
           </div>
         </div>
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, margin: '12px 0' }}></div>
 
-        {/* 自訂條件區 (全部改為下拉選單) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
             <div>
                 <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定宮位</label>
-                <select value={palace} onChange={e => setPalace(parseInt(e.target.value))} style={selectStyle}>
+                <select value={palace} onChange={e => {setPalace(parseInt(e.target.value)); setActiveTheme('');}} style={selectStyle}>
                     <option value={0}>不限</option>
                     <option value={1}>坎一宮 (北)</option><option value={8}>艮八宮 (東北)</option><option value={3}>震三宮 (東)</option>
                     <option value={4}>巽四宮 (東南)</option><option value={9}>離九宮 (南)</option><option value={2}>坤二宮 (西南)</option>
@@ -1228,28 +1240,28 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             </div>
             <div>
                 <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定天干</label>
-                <select value={stem} onChange={e => setStem(e.target.value)} style={selectStyle}>
+                <select value={stem} onChange={e => {setStem(e.target.value); setActiveTheme('');}} style={selectStyle}>
                     <option value="">不限</option>
-                    {['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'].map(s => <option key={s} value={s}>{s}</option>)}
+                    {['乙','丙','丁','戊','己','庚','辛','壬','癸'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
             <div>
                 <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定八門</label>
-                <select value={door} onChange={e => setDoor(e.target.value)} style={selectStyle}>
+                <select value={door} onChange={e => {setDoor(e.target.value); setActiveTheme('');}} style={selectStyle}>
                     <option value="">不限</option>
                     {['休','生','傷','杜','景','死','驚','開'].map(m => <option key={m} value={m}>{m}門</option>)}
                 </select>
             </div>
             <div>
                 <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定八神</label>
-                <select value={god} onChange={e => setGod(e.target.value)} style={selectStyle}>
+                <select value={god} onChange={e => {setGod(e.target.value); setActiveTheme('');}} style={selectStyle}>
                     <option value="">不限</option>
                     {['符','蛇','陰','合','虎','武','九','天'].map(s => <option key={s} value={s}>{s === '符' ? '值符' : (s === '合' ? '六合' : (s==='陰'?'太陰':(s==='虎'?'白虎':(s==='武'?'玄武':(s==='九'?'九地':(s==='天'?'九天':'螣蛇'))))))}</option>)}
                 </select>
             </div>
             <div>
                 <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>指定九星</label>
-                <select value={star} onChange={e => setStar(e.target.value)} style={selectStyle}>
+                <select value={star} onChange={e => {setStar(e.target.value); setActiveTheme('');}} style={selectStyle}>
                     <option value="">不限</option>
                     {['蓬','任','沖','輔','禽','英','芮','柱','心'].map(s => <option key={s} value={s}>天{s}星</option>)}
                 </select>
@@ -1260,19 +1272,19 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             <div style={{ fontSize: '13px', color: THEME.red, marginBottom: '8px', fontWeight: 'bold' }}>全局與宮位進階要求：</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: '8px', borderBottom: '1px dashed #ffa39e', paddingBottom: '8px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFuYin} onChange={e => setAvoidFuYin(e.target.checked)} /> 無全局伏吟</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFanYin} onChange={e => setAvoidFanYin(e.target.checked)} /> 無全局反吟</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={yearShengDay} onChange={e => setYearShengDay(e.target.checked)} /> 年干宮 生/比和 日干宮</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={monthShengDay} onChange={e => setMonthShengDay(e.target.checked)} /> 月干宮 生/比和 日干宮</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={hourShengDay} onChange={e => setHourShengDay(e.target.checked)} /> 時干宮 生/比和 日干宮</label>
-                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={requireShengBi} onChange={e => setRequireShengBi(e.target.checked)} /> 用神宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFuYin} onChange={e => {setAvoidFuYin(e.target.checked); setActiveTheme('');}} /> 無全局伏吟</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidFanYin} onChange={e => {setAvoidFanYin(e.target.checked); setActiveTheme('');}} /> 無全局反吟</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={yearShengDay} onChange={e => {setYearShengDay(e.target.checked); setActiveTheme('');}} /> 年干宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={monthShengDay} onChange={e => {setMonthShengDay(e.target.checked); setActiveTheme('');}} /> 月干宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={hourShengDay} onChange={e => {setHourShengDay(e.target.checked); setActiveTheme('');}} /> 時干宮 生/比和 日干宮</label>
+                    <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={requireShengBi} onChange={e => {setRequireShengBi(e.target.checked); setActiveTheme('');}} /> 用神宮 生/比和 日干宮</label>
                 </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidXing} onChange={e => setAvoidXing(e.target.checked)} /> 無擊刑</label>
-                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidPo} onChange={e => setAvoidPo(e.target.checked)} /> 無門迫</label>
-                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidKong} onChange={e => setAvoidKong(e.target.checked)} /> 無空亡</label>
-                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidMu} onChange={e => setAvoidMu(e.target.checked)} /> 無入墓</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidXing} onChange={e => {setAvoidXing(e.target.checked); setActiveTheme('');}} /> 無擊刑</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidPo} onChange={e => {setAvoidPo(e.target.checked); setActiveTheme('');}} /> 無門迫</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidKong} onChange={e => {setAvoidKong(e.target.checked); setActiveTheme('');}} /> 無空亡</label>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="checkbox" checked={avoidMu} onChange={e => {setAvoidMu(e.target.checked); setActiveTheme('');}} /> 無入墓</label>
             </div>
         </div>
 
