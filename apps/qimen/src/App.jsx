@@ -1290,8 +1290,8 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
         </div>
 
         {/* 日期範圍 */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
             <input 
               type="date" 
@@ -1302,7 +1302,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
               style={{ ...selectStyle, padding: '8px 4px', fontSize: '12px', letterSpacing: '-0.5px', minWidth: 0 }} 
             />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
             <input 
               type="date" 
