@@ -29,8 +29,13 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博進氣萬年曆";
-const APP_VERSION = "v2.0 增加搜尋";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+const VERSION_HISTORY = [
+    { version: "v3.0", date: "2026-10-23", changes: ["新增曆法搜尋功能", "支援搜尋宜忌、神煞、星宿與天干地支", "優化 UI 與效能"] },
+    { version: "v2.0", date: "2026-09-01", changes: ["新增批次同步書籤至日曆功能"] },
+    { version: "v1.0", date: "2026-03-01", changes: ["初始版本，支援流年流月進退氣", "包含烏兔太陽太陰與董公擇日"] }
+];
+const APP_VERSION = VERSION_HISTORY[0].version;
 
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -1908,11 +1913,7 @@ const SearchResultsModal = ({ visible, onClose, results, onJumpToDate, bookmarks
 
 // C-1: SettingsView
 const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
-  const APP_INFO = {
-    appName: APP_NAME,
-    version: APP_VERSION,
-    about: "本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間神煞，輔助使用者進行擇日修方用事分析。",
-  };
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
     <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
@@ -1937,7 +1938,17 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
       </div>
 
       <WebBackupManager data={bookmarks} onRestore={onRestore} prefix="CALENDAR_BACKUP" />
-      <AppInfoCard info={APP_INFO} />
+      
+      {/* 專屬版本資訊卡片 */}
+      <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: THEME.black }}>{APP_NAME}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
+              <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間神煞，輔助使用者進行擇日修方用事分析。</p>
+      </div>
+
       <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
@@ -1945,6 +1956,31 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
+
+      {/* 版本歷史彈窗 */}
+      {showVersionHistory && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
+                      <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {VERSION_HISTORY.map((v, i) => (
+                          <div key={i} style={{ borderLeft: `3px solid ${i === 0 ? THEME.blue : THEME.border}`, paddingLeft: '12px', position: 'relative' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: i === 0 ? THEME.blue : THEME.black }}>{v.version}</span>
+                                  <span style={{ fontSize: '12px', color: THEME.gray }}>{v.date}</span>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: '20px', color: '#444', fontSize: '13px', lineHeight: '1.6' }}>
+                                  {v.changes.map((change, idx) => <li key={idx} style={{ marginBottom: '4px' }}>{change}</li>)}
+                              </ul>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

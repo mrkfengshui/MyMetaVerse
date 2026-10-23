@@ -26,8 +26,13 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博風水";
-const APP_VERSION = "v2 增加平面圖紀錄及修正UI";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+const VERSION_HISTORY = [
+    { version: "v3.0", date: "2026-10-23", changes: ["支援匯入與紀錄平面圖", "新增平面圖縮放與旋轉工具", "修正圓盤與方盤 UI 顯示細節"] },
+    { version: "v2.0", date: "2026-07-20", changes: ["新增商戰揀舖功能", "優化指南針定位準確度"] },
+    { version: "v1.0", date: "2026-04-10", changes: ["初始版本，支援三元九運玄空飛星", "包含八宅法與大卦吉凶判定"] }
+];
+const APP_VERSION = VERSION_HISTORY[0].version;
 
 // 引入 Lunar 庫
 const useLunarScript = () => {
@@ -1616,11 +1621,7 @@ const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4
 // 5. 設定頁 (SettingsView) - 更新版
 const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLoggedIn, setIsLoggedIn }) => {
     const [password, setPassword] = useState('');
-        const APP_INFO = { 
-        appName: APP_NAME, 
-        version: APP_VERSION, 
-        about: "本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地判斷。電子羅庚並不保證向真確，如有疑慮請找甯博師傅作專業風水勘察。" 
-    };
+    const [showVersionHistory, setShowVersionHistory] = useState(false);
 
     const handleModeChange = (mode) => {
         setChartMode(mode);
@@ -1656,14 +1657,49 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLogg
             </div>
             
             <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="FENGSHUI_BACKUP" />
-            <AppInfoCard info={APP_INFO} />
+            
+            {/* 專屬版本資訊卡片 */}
+            <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: THEME.black }}>{APP_NAME}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
+                    <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
+                </div>
+                <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地判斷。電子羅庚並不保證向真確，如有疑慮請找甯博師傅作專業風水勘察。</p>
+            </div>
+
             <BuyMeCoffee />
             
             <div style={{ marginTop: '24px' }}>
-                      <button onClick={() => { if(window.confirm('還原預設?')) { setChartMode('traditional'); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                          <RefreshCw size={16} /> 還原預設值
-                      </button>
-                  </div>
+                <button onClick={() => { if(window.confirm('還原預設?')) { setChartMode('traditional'); } }} style={{ width: '100%', padding: '12px', backgroundColor: THEME.bgGray, color: THEME.red, border: `1px solid ${THEME.border}`, borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                    <RefreshCw size={16} /> 還原預設值
+                </button>
+            </div>
+
+            {/* 版本歷史彈窗 */}
+            {showVersionHistory && (
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+                    <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
+                            <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {VERSION_HISTORY.map((v, i) => (
+                                <div key={i} style={{ borderLeft: `3px solid ${i === 0 ? THEME.blue : THEME.border}`, paddingLeft: '12px', position: 'relative' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: i === 0 ? THEME.blue : THEME.black }}>{v.version}</span>
+                                        <span style={{ fontSize: '12px', color: THEME.gray }}>{v.date}</span>
+                                    </div>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#444', fontSize: '13px', lineHeight: '1.6' }}>
+                                        {v.changes.map((change, idx) => <li key={idx} style={{ marginBottom: '4px' }}>{change}</li>)}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

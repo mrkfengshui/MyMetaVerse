@@ -24,9 +24,15 @@ import {
 // =========================================================================
 // PART A: 核心數據與邏輯
 // =========================================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const APP_NAME = "甯博八字";
-const APP_VERSION = "v4.2 與紫微app共用書簽,增加批注功能";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+const VERSION_HISTORY = [
+    { version: "v4.0", date: "2026-10-23", changes: ["與紫微斗數共用書籤系統", "新增命盤批註功能"] },
+    { version: "v3.0", date: "2026-08-15", changes: ["新增 Gemini AI 八字算命分析"] },
+    { version: "v2.0", date: "2026-06-10", changes: ["支援李虛中祿命術排盤", "優化流月流日顯示"] },
+    { version: "v1.0", date: "2026-01-01", changes: ["初始版本，支援子平八字完整排盤", "包含神煞與五行強弱分析"] }
+];
+const APP_VERSION = VERSION_HISTORY[0].version;
 
 // --- 核心數據定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -601,15 +607,10 @@ const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
 const SettingsView = ({ 
     ziHourRule, setZiHourRule,   
     colorTheme, setColorTheme,   
-    liJiRule, setLiJiRule,      // 🌟 新增這裡
+    liJiRule, setLiJiRule,      
     bookmarks, setBookmarks      
 }) => {
-  // 定義這個 App 獨有的資訊
-  const APP_INFO = {
-    appName: APP_NAME,
-    version: APP_VERSION,
-    about: "本程式旨在提供專業子平八字排盤，精確至節氣日時，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
-  };
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   const ToggleSelector = ({ options, currentValue, onChange }) => (
     <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
@@ -621,28 +622,15 @@ const SettingsView = ({
 
   const handleRestore = async (importedData) => {
       const mergedMap = new Map();
-      
-      // 1. 先把本地現有的書籤放進 Map
       bookmarks.forEach(b => mergedMap.set(b.id, b));
-      
-      // 2. 逐一處理匯入的書籤
       importedData.forEach(importedItem => {
           if (mergedMap.has(importedItem.id)) {
-              // 🌟 【關鍵修復】如果 ID 相同，將本地與匯入的「屬性」互相合併。
-              // 後面的 importedItem 會覆蓋掉舊的同名欄位（確保批注是最新的），
-              // 但同時也會保留本地端獨有的欄位（八字日元/紫微命宮）。
-              mergedMap.set(importedItem.id, { 
-                  ...mergedMap.get(importedItem.id), 
-                  ...importedItem 
-              });
+              mergedMap.set(importedItem.id, { ...mergedMap.get(importedItem.id), ...importedItem });
           } else {
-              // 如果是新紀錄，直接加入
               mergedMap.set(importedItem.id, importedItem);
           }
       });
-      
       const finalUniqueBookmarks = Array.from(mergedMap.values());
-      
       setBookmarks(finalUniqueBookmarks);
       await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(finalUniqueBookmarks) });
       alert('資料已成功合併！');
@@ -654,43 +642,34 @@ const SettingsView = ({
         <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
       </div>
 
-      {/* 1. App 專屬設定區塊 */}
     <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>偏好設定</h3>
     <div style={{ backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, overflow: 'hidden', marginBottom: '12px' }}>
-
-        {/* 立極模式設定 */}
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}` }}>
               <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>排盤立極</div>
-              <ToggleSelector 
-                  options={[{val: 'day', label: '子平八字'}, {val: 'year', label: '李虛中祿命術'}]} 
-                  currentValue={liJiRule} 
-                  onChange={setLiJiRule} 
-              />
+              <ToggleSelector options={[{val: 'day', label: '子平八字'}, {val: 'year', label: '李虛中祿命術'}]} currentValue={liJiRule} onChange={setLiJiRule} />
         </div>
-
-        {/* 子時設定 */}
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}` }}>
             <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
             <ToggleSelector options={[{val: 'ziZheng', label: '子正換日'}, {val: 'ziShi', label: '子時換日'}]} currentValue={ziHourRule} onChange={setZiHourRule} />
         </div>
-
-        {/* 顯示配色設定 */}
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>顯示配色</div>
-            <ToggleSelector 
-                options={[
-                    {val: 'elemental', label: '五行五色'}, 
-                    {val: 'dark', label: '傳統深色'} 
-                ]} 
-                currentValue={colorTheme} 
-                onChange={setColorTheme} 
-            />
+            <ToggleSelector options={[{val: 'elemental', label: '五行五色'}, {val: 'dark', label: '傳統深色'}]} currentValue={colorTheme} onChange={setColorTheme} />
         </div>
     </div>
 
-      {/* 2. 共用功能區塊 (直接使用 UI Library) */}
       <WebBackupManager data={bookmarks} onRestore={handleRestore} prefix="MRK_BACKUP" />
-      <AppInfoCard info={APP_INFO} />
+      
+      {/* 專屬版本資訊卡片 */}
+      <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: THEME.black }}>{APP_NAME}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
+              <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業子平八字排盤，精確至節氣日時，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。</p>
+      </div>
+
       <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
@@ -698,6 +677,31 @@ const SettingsView = ({
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
+
+      {/* 版本歷史彈窗 */}
+      {showVersionHistory && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
+                      <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {VERSION_HISTORY.map((v, i) => (
+                          <div key={i} style={{ borderLeft: `3px solid ${i === 0 ? THEME.blue : THEME.border}`, paddingLeft: '12px', position: 'relative' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: i === 0 ? THEME.blue : THEME.black }}>{v.version}</span>
+                                  <span style={{ fontSize: '12px', color: THEME.gray }}>{v.date}</span>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: '20px', color: '#444', fontSize: '13px', lineHeight: '1.6' }}>
+                                  {v.changes.map((change, idx) => <li key={idx} style={{ marginBottom: '4px' }}>{change}</li>)}
+                              </ul>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

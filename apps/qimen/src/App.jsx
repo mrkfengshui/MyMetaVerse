@@ -28,8 +28,29 @@ import {
 // PART A: 核心數據與邏輯
 // =========================================================================
 const APP_NAME = "甯博陰盤奇門遁甲";
-const APP_VERSION = "v3.0 增加搜尋功能";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
+
+// 集中管理版本歷史紀錄
+const VERSION_HISTORY = [
+    { 
+        version: "v3.0", date: "2026-10-23", 
+        changes: ["新增奇門吉時搜尋功能", "支援自定義用神與條件過濾", "新增快速主題設定 (事業/財運等)", "修正天禽星與天芮星同宮顯示"] 
+    },
+    { 
+        version: "v2.1", date: "2026-09-15", 
+        changes: ["加入六甲落宮定位法設定 (支援值符/旬首切換)", "優化排版與日期選擇器"] 
+    },
+    { 
+        version: "v2.0", date: "2026-08-10", 
+        changes: ["新增占事紀錄與書籤功能", "支援雲端備份與還原"] 
+    },
+    { 
+        version: "v1.0", date: "2026-07-01", 
+        changes: ["初始版本，支援道家陰盤奇門遁甲排盤", "包含基本凶格 (門迫、擊刑、空亡、入墓) 提示"] 
+    }
+];
+// 自動取最新版本號
+const APP_VERSION = VERSION_HISTORY[0].version;
 
 // --- 基礎定義 ---
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -1374,14 +1395,60 @@ const SearchResultsModal = ({ visible, onClose, results, onJumpToDate }) => {
   );
 };
 
-const SettingsView = ({ bookmarks, setBookmarks }) => (
-    <div style={{ padding: '16px', paddingBottom: '100px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2></div>
-        <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="QIMEN_BACKUP" />
-        <AppInfoCard info={{ appName: APP_NAME, version: APP_VERSION, about: "本程式提供道家陰盤奇門遁甲排盤功能，解說仍需專業師傅進行。" }} />
-        <BuyMeCoffee />
-    </div>
-);
+const SettingsView = ({ bookmarks, setBookmarks }) => {
+    const [showVersionHistory, setShowVersionHistory] = useState(false);
+
+    return (
+        <div style={{ padding: '16px', paddingBottom: '100px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2></div>
+            <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="QIMEN_BACKUP" />
+            
+            {/* 取代原本的 AppInfoCard，改為自訂版本資訊卡片 */}
+            <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: THEME.black }}>{APP_NAME}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
+                    <button 
+                        onClick={() => setShowVersionHistory(true)} 
+                        style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                        更新紀錄
+                    </button>
+                </div>
+                <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式提供道家陰盤奇門遁甲排盤功能，解說仍需專業師傅進行。</p>
+            </div>
+
+            <BuyMeCoffee />
+
+            {/* 版本歷史彈窗 */}
+            {showVersionHistory && (
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+                    <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
+                            <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {VERSION_HISTORY.map((v, i) => (
+                                <div key={i} style={{ borderLeft: `3px solid ${i === 0 ? THEME.blue : THEME.border}`, paddingLeft: '12px', position: 'relative' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: i === 0 ? THEME.blue : THEME.black }}>{v.version}</span>
+                                        <span style={{ fontSize: '12px', color: THEME.gray }}>{v.date}</span>
+                                    </div>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#444', fontSize: '13px', lineHeight: '1.6' }}>
+                                        {v.changes.map((change, idx) => (
+                                            <li key={idx} style={{ marginBottom: '4px' }}>{change}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function QiMenApp() {
   // 全局啟用保護機制

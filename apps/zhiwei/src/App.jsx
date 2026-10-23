@@ -27,7 +27,14 @@ import {
 // =========================================================================
 const APP_NAME = "甯博紫微斗數";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
-const APP_VERSION = "v2.2 與八字app共用書簽,增加批注功能";
+
+// 集中管理版本歷史紀錄
+const VERSION_HISTORY = [
+    { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },
+    { version: "v2.0", date: "2026-08-01", changes: ["支援運勢評分與流日排盤"] },
+    { version: "v1.0", date: "2026-02-15", changes: ["初始版本，支援明朝紫微斗數全書安星法", "包含大限、小限、流年、流月盤切換"] }
+];
+const APP_VERSION = VERSION_HISTORY[0].version;
 
 // --- 核心數據定義
 const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -560,15 +567,10 @@ const SettingsView = ({
         bookmarks, setBookmarks
     }) => {
     const [openSection, setOpenSection] = useState(null);
+    const [showVersionHistory, setShowVersionHistory] = useState(false);
     const toggleSection = (sec) => setOpenSection(openSection === sec ? null : sec);
 
-  const APP_INFO = {
-    appName: APP_NAME,
-    version: APP_VERSION,
-    about: "本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。",
-    };
-
-const ToggleSelector = ({ options, currentValue, onChange }) => (
+  const ToggleSelector = ({ options, currentValue, onChange }) => (
     <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
       {options.map((opt) => (
         <button key={opt.val} onClick={(e) => { e.stopPropagation(); onChange(opt.val); }} style={{ padding: '6px 14px', border: 'none', borderRadius: '18px', backgroundColor: currentValue === opt.val ? THEME.blue : 'transparent', color: currentValue === opt.val ? 'white' : THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>{opt.label}</button>
@@ -602,28 +604,15 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
 
   const handleRestore = async (importedData) => {
       const mergedMap = new Map();
-      
-      // 1. 先把本地現有的書籤放進 Map
       bookmarks.forEach(b => mergedMap.set(b.id, b));
-      
-      // 2. 逐一處理匯入的書籤
       importedData.forEach(importedItem => {
           if (mergedMap.has(importedItem.id)) {
-              // 🌟 【關鍵修復】如果 ID 相同，將本地與匯入的「屬性」互相合併。
-              // 後面的 importedItem 會覆蓋掉舊的同名欄位（確保批注是最新的），
-              // 但同時也會保留本地端獨有的欄位（八字日元/紫微命宮）。
-              mergedMap.set(importedItem.id, { 
-                  ...mergedMap.get(importedItem.id), 
-                  ...importedItem 
-              });
+              mergedMap.set(importedItem.id, { ...mergedMap.get(importedItem.id), ...importedItem });
           } else {
-              // 如果是新紀錄，直接加入
               mergedMap.set(importedItem.id, importedItem);
           }
       });
-      
       const finalUniqueBookmarks = Array.from(mergedMap.values());
-      
       setBookmarks(finalUniqueBookmarks);
       await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(finalUniqueBookmarks) });
       alert('資料已成功合併！批注與特有排盤資訊已完整保留。');
@@ -635,18 +624,10 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
         <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
       </div>
 
-      {/* 安星規則 */}
       <h3 style={{ fontSize: '14px', color: THEME.gray, marginBottom: '8px', marginLeft: '4px' }}>自定義安星法</h3>
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>子時設定</div>
-          <ToggleSelector 
-            options={[
-                {val: 'ziShi', label: '子時換日'}, 
-                {val: 'ziZheng', label: '子正換日'}
-            ]} 
-            currentValue={ziHourRule} 
-            onChange={setZiHourRule} 
-          />
+          <ToggleSelector options={[{val: 'ziShi', label: '子時換日'}, {val: 'ziZheng', label: '子正換日'}]} currentValue={ziHourRule} onChange={setZiHourRule} />
       </div>
 
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
@@ -656,19 +637,11 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
 
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>大限四化依據</div>
-          <ToggleSelector 
-            options={[{val: 'book', label: '全書'}, {val: 'gong', label: '宮干'}]} 
-            currentValue={daXianSiHuaType} 
-            onChange={setDaXianSiHuaType} 
-          />
+          <ToggleSelector options={[{val: 'book', label: '全書'}, {val: 'gong', label: '宮干'}]} currentValue={daXianSiHuaType} onChange={setDaXianSiHuaType} />
       </div>
       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${THEME.border}`, marginBottom: '12px' }}>
           <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>歲限盤起法</div>
-          <ToggleSelector 
-            options={[{val: 'xiao_xian', label: '小限'}, {val: 'year_zhi', label: '流年'}]} 
-            currentValue={liuNianStartType} 
-            onChange={setLiuNianStartType} 
-          />
+          <ToggleSelector options={[{val: 'xiao_xian', label: '小限'}, {val: 'year_zhi', label: '流年'}]} currentValue={liuNianStartType} onChange={setLiuNianStartType} />
       </div>
 
       <CollapsibleSection title="四化星曜" isOpen={openSection === 'sihua'} onToggle={() => toggleSection('sihua')}>
@@ -718,9 +691,18 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
           <ToggleSelector options={[{val: 'year', label: '年馬'}, {val: 'month', label: '月馬'}]} currentValue={tianMaType} onChange={setTianMaType} />
       </div>
 
-      {/* 共用功能區塊 */}
       <WebBackupManager data={bookmarks} onRestore={handleRestore} prefix="MRK_BACKUP" />
-      <AppInfoCard info={APP_INFO} />
+      
+      {/* 專屬版本資訊卡片 */}
+      <div style={{ backgroundColor: THEME.white, padding: '16px', borderRadius: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: THEME.black }}>{APP_NAME}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
+              <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。</p>
+      </div>
+
       <BuyMeCoffee />
 
       <div style={{ marginTop: '24px' }}>
@@ -728,6 +710,31 @@ const ToggleSelector = ({ options, currentValue, onChange }) => (
               <RefreshCw size={16} /> 還原預設值
           </button>
       </div>
+
+      {/* 版本歷史彈窗 */}
+      {showVersionHistory && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
+                      <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {VERSION_HISTORY.map((v, i) => (
+                          <div key={i} style={{ borderLeft: `3px solid ${i === 0 ? THEME.blue : THEME.border}`, paddingLeft: '12px', position: 'relative' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: i === 0 ? THEME.blue : THEME.black }}>{v.version}</span>
+                                  <span style={{ fontSize: '12px', color: THEME.gray }}>{v.date}</span>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: '20px', color: '#444', fontSize: '13px', lineHeight: '1.6' }}>
+                                  {v.changes.map((change, idx) => <li key={idx} style={{ marginBottom: '4px' }}>{change}</li>)}
+                              </ul>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
