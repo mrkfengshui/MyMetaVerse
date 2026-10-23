@@ -1160,7 +1160,8 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
     setAvoidXing(true); setAvoidPo(true); setAvoidKong(true); setAvoidMu(true); 
     setAvoidFuYin(true); setAvoidFanYin(true); 
     setRequireShengBi(true); 
-    setYearShengDay(false); setMonthShengDay(false); setHourShengDay(true); 
+    setYearShengDay(false); setMonthShengDay(false); 
+    setHourShengDay(type === 'wealth');
     
     if (type === 'career') { setDoor('開'); setGod(''); }      
     else if (type === 'wealth') { setDoor('生'); setGod(''); } 
@@ -1288,14 +1289,29 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          <div>
+        {/* 日期範圍 */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
-            <input type="date" min={minDate} max={maxDate} value={startDate} onChange={e => setStartDate(e.target.value)} style={selectStyle} />
+            <input 
+              type="date" 
+              min={minDate} 
+              max={maxDate} 
+              value={startDate} 
+              onChange={e => setStartDate(e.target.value)} 
+              style={{ ...selectStyle, padding: '8px 4px', fontSize: '12px', letterSpacing: '-0.5px', minWidth: 0 }} 
+            />
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
-            <input type="date" min={minDate} max={maxDate} value={endDate} onChange={e => setEndDate(e.target.value)} style={selectStyle} />
+            <input 
+              type="date" 
+              min={minDate} 
+              max={maxDate} 
+              value={endDate} 
+              onChange={e => setEndDate(e.target.value)} 
+              style={{ ...selectStyle, padding: '8px 4px', fontSize: '12px', letterSpacing: '-0.5px', minWidth: 0 }} 
+            />
           </div>
         </div>
 
