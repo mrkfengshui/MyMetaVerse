@@ -505,15 +505,15 @@ const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }} onClick={onClose}>
             <div style={{ background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px', padding: '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', borderBottom:'1px solid #ddd', paddingBottom:'10px'}}>
-                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#333'}}><Briefcase size={20}/> 商戰揀舖要訣</h3>
-                    <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}><X size={24} color="#666"/></button>
+                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#2a2a2a'}}><Briefcase size={20}/> 商戰揀舖要訣</h3>
+                    <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}><X size={24} color="#888"/></button>
                 </div>
                 <div style={{background:'white', borderRadius:'10px', padding:'16px', marginBottom:'16px'}}>
                     <div style={{fontSize:'15px', fontWeight:'bold', marginBottom:'12px', color:THEME.blue}}>大廈坐向 vs 舖位宮位</div>
                     <div style={{marginBottom:'10px', fontSize:'14px'}}>大廈坐{sittingMt.name}向{facingMt.name}</div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'8px', marginBottom:'12px'}}>
                         {guas.map(g => (
-                            <button key={g} onClick={() => setShopSector(g)} style={{ padding:'12px', borderRadius:'6px', border:`1px solid ${shopSector === g ? THEME.blue : '#ddd'}`, background: shopSector === g ? '#e6f7ff' : 'white', color: shopSector === g ? THEME.blue : '#333', cursor:'pointer', fontWeight: shopSector === g ? 'bold' : 'normal', fontSize: '16px' }}>{g}</button>
+                            <button key={g} onClick={() => setShopSector(g)} style={{ padding:'12px', borderRadius:'6px', border:`1px solid ${shopSector === g ? THEME.blue : '#ddd'}`, background: shopSector === g ? '#e6f7ff' : 'white', color: shopSector === g ? THEME.blue : '#2a2a2a', cursor:'pointer', fontWeight: shopSector === g ? 'bold' : 'normal', fontSize: '16px' }}>{g}</button>
                         ))}
                     </div>
                     {mallRelation && (
@@ -574,7 +574,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                 maxHeight: '60vh', overflowY: 'auto', overscrollBehavior: 'contain'
             }} onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} style={{position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer'}}>
-                    <X size={24} color="#666"/>
+                    <X size={24} color="#888"/>
                 </button>
 
                 <h3 style={{marginTop: 0, fontSize: '20px', textAlign: 'center', borderBottom: '1px solid #eee', paddingBottom: '12px'}}>
@@ -584,7 +584,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                 <div style={{display: 'flex', justifyContent: 'center', gap: '20px', margin: '20px 0', alignItems:'center'}}>
                     <div style={{textAlign: 'center', position:'relative'}}>
                         <div style={{fontSize: '12px', color: THEME.gray}}>山星</div>
-                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#333'}}>{mt}</div>
+                        <div style={{fontSize: '32px', fontWeight: 'bold', color: '#2a2a2a'}}>{mt}</div>
                     </div>
                     <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '12px', color: THEME.gray}}>運星</div>
@@ -601,7 +601,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                     <div style={{fontSize: '16px', fontWeight: 'bold', color: THEME.blue, marginBottom: '4px'}}>
                         🚀 玄空飛星：{combination.title}
                     </div>
-                    <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333', marginBottom: '10px'}}>
+                    <div style={{fontSize: '14px', lineHeight: '1.5', color: '#2a2a2a', marginBottom: '10px'}}>
                         {combination.text}
                     </div>
                     
@@ -623,7 +623,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                         <div style={{fontSize: '16px', fontWeight: 'bold', color: baZhaiDetail.color, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px'}}>
                             🏠 八宅法：{baZhaiStar} <span style={{fontSize: '12px', background: baZhaiDetail.color, color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{baZhaiDetail.star}</span>
                         </div>
-                        <div style={{fontSize: '14px', lineHeight: '1.5', color: '#333'}}>
+                        <div style={{fontSize: '14px', lineHeight: '1.5', color: '#2a2a2a'}}>
                             {baZhaiDetail.desc}
                         </div>
                     </div>
@@ -675,7 +675,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                         <div style={{fontSize: '16px', fontWeight: 'bold', color: THEME.green, marginBottom: '8px'}}>
                             ☯️ 玄空大卦：坐向剋應
                         </div>
-                                            <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
+                                            <div style={{fontSize: '12px', color: '#888', marginBottom: '8px'}}>
                          向首: {facingDaGua.n}卦 氣{facingDaGua.q} / 運{facingDaGua.y}
                     </div>
                         <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
@@ -692,7 +692,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
                                     }}>
                                         <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
                                             <span style={{fontWeight:'bold', width:'30px', textAlign:'center', background:'#f0f0f0', borderRadius:'3px'}}>{pm.name}山</span>
-                                            <span style={{color:'#666', fontSize:'12px'}}>
+                                            <span style={{color:'#888', fontSize:'12px'}}>
                                                 {myDaGua ? `${myDaGua.n}卦 氣${myDaGua.q} / 運${myDaGua.y}` : '無'}
                                             </span>
                                         </div>
@@ -723,10 +723,13 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     );
 };
 
-// 羅庚頁面 (純粹實色版 - 經典紅黑金配色，無光影漸層)
+// 羅庚頁面 (純粹實色版 - 自動/點擊啟動授權)
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
     const isFrozenRef = React.useRef(isFrozen);
     useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
+
+    // 👇 新增：控制是否需要顯示授權遮罩
+    const [needPermission, setNeedPermission] = useState(false);
 
     const handleOrientation = React.useCallback((e) => {
         if (isFrozenRef.current) return;
@@ -747,11 +750,13 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         setHeading(prev => Math.abs(compass - prev) > 0.2 ? compass : prev);
     }, [setHeading]);
 
+    // 👇 新增：點擊觸發授權
     const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => { 
                     if (response === 'granted') {
+                        setNeedPermission(false);
                         window.addEventListener('deviceorientation', handleOrientation, true); 
                     } else {
                         alert("需允許取用方向權限，羅庚才能獲取真正的絕對方位！");
@@ -759,6 +764,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 })
                 .catch(console.error);
         } else {
+            setNeedPermission(false);
             if ('ondeviceorientationabsolute' in window) {
                 window.addEventListener('deviceorientationabsolute', handleOrientation, true);
             } else {
@@ -767,7 +773,20 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         }
     };
 
+    // 👇 修改：一開 App 檢查是否需要手動授權 (iOS)
     useEffect(() => { 
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // 需要用戶互動才能授權
+            setNeedPermission(true);
+        } else {
+            // Android 等可以直接掛載
+            if ('ondeviceorientationabsolute' in window) {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+        }
+
         return () => {
             window.removeEventListener('deviceorientation', handleOrientation, true);
             window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
@@ -781,12 +800,12 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     const sitDirName = GUA_TO_DIR[sittingMt.gua];
     const faceDirName = GUA_TO_DIR[facingMt.gua];
 
-    // 純粹實色定義 (無漸層)
-    const SOLID_RED = '#b82727';  // 霧面紅木底座
-    const DISK_BLACK = '#111111'; // 純黑轉盤
-    const GRID_GOLD = '#dcb962';  // 實色網格金線
-    const TEXT_GOLD = '#e8cd7b';  // 實色文字亮金
-    const TEXT_RED = '#e03a3a';   // 實色盤面紅字
+    // 原有的純粹實色定義 (無漸層) 保持不變
+    const SOLID_RED = '#b82727';  
+    const DISK_BLACK = '#111111'; 
+    const GRID_GOLD = '#dcb962';  
+    const TEXT_GOLD = '#e8cd7b';  
+    const TEXT_RED = '#e03a3a';   
 
     const CARDINALS = [
         { text: '北', angle: 0, color: TEXT_GOLD },
@@ -802,7 +821,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         { name: '兌', angle: 270, color: TEXT_GOLD }, { name: '乾', angle: 315, color: TEXT_GOLD }
     ];
 
-    const isRedMountain = (name) => ['子','午','卯','酉','乾','坤','艮','巽'].includes(name);
+    const isRedMountain = (name) => ['巽','巳','丙','坤','申','庚','乾','亥','壬','艮','寅','甲'].includes(name);
 
     return (
         <div style={{
@@ -813,23 +832,43 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         }}>
             
             {/* 1. 羅庚實體外方內圓設計 (實色方盤) */}
-            <div style={{
-                position: 'relative',
-                width: 'min(90vw, 45vh)', height: 'min(90vw, 45vh)',
-                maxWidth: '400px', maxHeight: '400px',
-                background: SOLID_RED, 
-                borderRadius: '12px', 
-                border: '1px solid #8f1f1f',
-                padding: '16px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                flexShrink: 0, marginTop: '10px'
-            }}>
+            <div 
+                onClick={needPermission ? requestAccess : undefined}
+                style={{
+                    position: 'relative',
+                    width: 'min(90vw, 45vh)', height: 'min(90vw, 45vh)',
+                    maxWidth: '400px', maxHeight: '400px',
+                    background: SOLID_RED, 
+                    borderRadius: '12px', 
+                    border: '1px solid #8f1f1f',
+                    padding: '16px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    flexShrink: 0, marginTop: '10px',
+                    cursor: needPermission ? 'pointer' : 'default' // 👇 讓滑鼠在需要點擊時顯示手指
+                }}
+            >
                 {/* 天心十道 (十字紅線) */}
                 <div style={{ position:'absolute', top: '0', left: '50%', transform: 'translateX(-50%)', height: '100%', width: '1px', background: TEXT_RED, zIndex: 50, pointerEvents: 'none' }}></div>
                 <div style={{ position:'absolute', top: '50%', left: '0', transform: 'translateY(-50%)', width: '100%', height: '1px', background: TEXT_RED, zIndex: 50, pointerEvents: 'none' }}></div>
 
-                {/* 旋轉黑金圓盤 (實色圓盤) */}
+                {/* 👇 新增：iOS 點擊啟動遮罩 👇 */}
+                {needPermission && (
+                    <div style={{
+                        position: 'absolute', inset: '16px', borderRadius: '50%', // 配合 padding:'16px' 剛好蓋住圓盤
+                        background: 'rgba(0, 0, 0, 0.7)', zIndex: 60,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        gap: '8px'
+                    }}>
+                        <Compass size={36} color={TEXT_GOLD} />
+                        <span style={{ fontSize: '15px', fontWeight: 'bold', color: TEXT_GOLD, letterSpacing: '1px' }}>
+                            點擊啟動羅庚
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#ccc' }}>按此允許方位感測權限</span>
+                    </div>
+                )}
+
+                {/* 旋轉黑金圓盤 (實色圓盤) - 內部原封不動 */}
                 <div style={{
                     width: '100%', height: '100%',
                     borderRadius: '50%',
@@ -916,11 +955,11 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 </div>
             </div>
 
-            {/* 2. 底部實色數據與控制面板 (無透視模糊) */}
+            {/* 2. 底部實色數據與控制面板 - 保持不變 */}
             <div style={{
                 width: '90%', maxWidth: '400px', marginTop: '24px',
                 background: '#1a1a1a',
-                border: '1px solid #333',
+                border: '1px solid #2a2a2a',
                 borderRadius: '16px', padding: '24px',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
             }}>
@@ -947,22 +986,20 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                         <button onClick={() => setIsFrozen(!isFrozen)} style={{
                             flex: 1, padding: '14px 0', borderRadius: '8px', border: 'none',
                             fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
-                            background: isFrozen ? '#333' : '#1890ff', color: 'white'
+                            background: isFrozen ? '#2a2a2a' : '#1890ff', color: 'white'
                         }}>
                             {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
                         </button>
 
-                        {!isFrozen && (
-                            <button onClick={requestAccess} style={{
-                                flex: 1, padding: '14px 0', borderRadius: '8px', border: '1px solid #555',
-                                fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
-                                background: '#222', color: TEXT_GOLD
+                        {!isFrozen ? (
+                            <button disabled style={{
+                                flex: 1, padding: '14px 0', borderRadius: '8px', border: 'none',
+                                fontWeight: 'bold', fontSize: '15px', cursor: 'not-allowed', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
+                                background: '#2a2a2a', color: '#888' // 灰色未啟動狀態
                             }}>
-                                <Compass size={18}/> 校準
+                                <RefreshCw size={18}/> 排盤
                             </button>
-                        )}
-
-                        {isFrozen && (
+                        ) : (
                             <button onClick={() => { setHeading(finalHeading); onAnalyze(); }} style={{
                                 flex: 1, padding: '14px 0', borderRadius: '8px', border: 'none',
                                 fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
@@ -974,7 +1011,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                     </div>
                     
                     {/* 手動微調區 (實色 Stepper) */}
-                    <div style={{ marginTop:'24px', paddingTop: '24px', borderTop: '1px solid #333' }}>
+                    <div style={{ marginTop:'24px', paddingTop: '24px', borderTop: '1px solid #2a2a2a' }}>
                         <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '16px'}}>
                             <span style={{fontSize: '14px', color: '#aaa', fontWeight: '500'}}>手動微調坐向</span>
                             
@@ -1144,7 +1181,7 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
     let visualMap = isModern ? [7, 6, 3, 0, 1, 2, 5, 8] : [1, 2, 5, 8, 7, 6, 3, 0];
 
     const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
-    const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#333', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
+    const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#2a2a2a', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
     const btnStyle = { padding: '6px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: `1px solid ${THEME.border}`, color: THEME.black, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
     const tagStyle = { fontSize:'9px', padding:'1px 3px', borderRadius:'2px', color:'#fff', fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1.2' };
 
@@ -1254,8 +1291,8 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
                 {idx !== 4 && (
                     <>
                         <div style={{ position: 'absolute', zIndex: 5, textShadow: isRound ? '0 0 2px white' : 'none', display: 'flex', flexDirection: isRound ? 'row' : 'column', alignItems: 'center', gap: isRound ? '2px' : '0px', lineHeight: 1, ...POS.guaPos }}>
-                            <span style={{ fontSize: FONT.gua, fontWeight: 'bold', color: isRound ? '#333' : THEME.lightgray }}>{guaName}</span>
-                            {dir && (<span style={{ fontSize: FONT.dir, fontWeight: 'normal', color: isRound ? '#666' : THEME.lightgray, transform: isRound ? 'none' : 'scale(0.9)', transformOrigin: 'center top' }}>{`(${dir})`}</span>)}
+                            <span style={{ fontSize: FONT.gua, fontWeight: 'bold', color: isRound ? '#2a2a2a' : THEME.lightgray }}>{guaName}</span>
+                            {dir && (<span style={{ fontSize: FONT.dir, fontWeight: 'normal', color: isRound ? '#888' : THEME.lightgray, transform: isRound ? 'none' : 'scale(0.9)', transformOrigin: 'center top' }}>{`(${dir})`}</span>)}
                         </div>
                         {baZhai && (
                             <div style={{ position: 'absolute', zIndex: 5, fontSize: FONT.baZhai, fontWeight: 'bold', color: BA_ZHAI_INFO[baZhai].color, background: 'rgba(255,255,255,0.8)', padding: '0px 2px', borderRadius: '3px', ...roundBaZhaiStyle }}>
@@ -1310,7 +1347,7 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
                             <span style={{fontSize:'14px', color:THEME.gray, fontWeight:'normal'}}> (坐{sitDir}向{faceDir})</span>
                         </div>
                         
-                        <div style={{display: 'flex', border: `1px solid ${THEME.border}`, borderRadius: '6px', overflow: 'hidden'}}>
+                        <div style={{display: 'flex', overflow: 'hidden'}}>
                             <button 
                                 onClick={() => { setIsLiveCompass(false); setHeading(h => normalizeAngle(h - 15)); }} 
                                 style={{background: THEME.bgGray, border: 'none', padding: '4px 8px', cursor: 'pointer', borderRight: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', color: THEME.black, outline: 'none', WebkitTapHighlightColor: 'transparent'}}
@@ -1370,13 +1407,13 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
                     <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: THEME.orange, cursor:'pointer'}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
                     
                     {/* 👇 marginLeft: 'auto' 負責把後面的按鈕推到右邊 👇 */}
-                    <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto', cursor:'pointer'}}><Briefcase size={12}/> 商戰</button>
+                    <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#2a2a2a', color: 'white', border:'none', marginLeft:'auto', cursor:'pointer'}}><Briefcase size={12}/> 商戰</button>
                     
-                    <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: 'none', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', cursor:'pointer'}}>
+                    <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: 'none', background: isRound ? '#2a2a2a' : 'white', color: isRound ? 'white' : '#2a2a2a', display: 'flex', alignItems: 'center', cursor:'pointer'}}>
                         {isRound ? <Circle size={12}/> : <Grid size={12}/>} {isRound ? '圓盤' : '方盤'}
                     </button>
 
-                    <button onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333', background: showFloorPlanPanel ? '#333' : 'white', color: showFloorPlanPanel ? 'white' : '#333', display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'}}>
+                    <button onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #2a2a2a', background: showFloorPlanPanel ? '#2a2a2a' : 'white', color: showFloorPlanPanel ? 'white' : '#2a2a2a', display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'}}>
                         <Map size={12}/> 平面圖
                     </button>
                 </div>
@@ -1593,10 +1630,10 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
             <div style={cardStyle}>
                 <div style={{...sectionTitle, color:THEME.blue}}>💨 三元納氣</div>
                 <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'4px'}}>
-                    {naQiRow1.map(gua => (<button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? THEME.blue : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer' }}>{gua}</button>))}
+                    {naQiRow1.map(gua => (<button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? THEME.blue : 'white', color: naQiDoor === gua ? 'white' : '#2a2a2a', cursor:'pointer' }}>{gua}</button>))}
                 </div>
                 <div style={{display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center', marginBottom:'12px'}}>
-                    {naQiRow2.map(gua => (<button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? THEME.blue : 'white', color: naQiDoor === gua ? 'white' : '#333', cursor:'pointer' }}>{gua}</button>))}
+                    {naQiRow2.map(gua => (<button key={gua} onClick={() => setNaQiDoor(gua)} style={{ padding:'6px 10px', borderRadius:'6px', border:'1px solid #ddd', background: naQiDoor === gua ? THEME.blue : 'white', color: naQiDoor === gua ? 'white' : '#2a2a2a', cursor:'pointer' }}>{gua}</button>))}
                 </div>
                 {naQiResult && (
                     <div style={{ background: naQiResult.type === '凶' ? '#fff1f0' : (naQiResult.type === '平' ? '#fff7e6' : '#f6ffed'), border: `1px solid ${naQiResult.color}`, borderRadius:'8px', padding:'12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -1663,7 +1700,7 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLogg
                     <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
                     <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
                 </div>
-                <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地判斷。電子羅庚並不保證向真確，如有疑慮請找甯博師傅作專業風水勘察。</p>
+                <p style={{ fontSize: '13px', color: '#888', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業風水排盤，輔助使用者進行理氣分析，巒頭剋應尚需專業地師實地判斷。電子羅庚並不保證向真確，如有疑慮請找甯博師傅作專業風水勘察。</p>
             </div>
 
             <BuyMeCoffee />

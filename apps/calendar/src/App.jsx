@@ -962,7 +962,7 @@ const InfoItem = ({ label, value, yi, ji, source }) => {
           <span style={{ fontSize: '12px', color: '#888', display:'flex', alignItems:'center', gap:'4px' }}>
             {label} <Info size={12}/>
           </span>
-          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{value}</span>
+          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#2a2a2a' }}>{value}</span>
       </div>
 
       {/* 宜忌區域：長期顯示 */}
@@ -995,7 +995,7 @@ const InfoItem = ({ label, value, yi, ji, source }) => {
 };
 
 // B-2: 摺疊區塊
-const AccordionSection = ({ title, children, defaultOpen = true, color = '#333' }) => {
+const AccordionSection = ({ title, children, defaultOpen = true, color = '#2a2a2a' }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   useEffect(() => {
@@ -1305,7 +1305,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
 
               {/* 關閉按鈕樣式 */}
               <button onClick={onClose} style={{ background: 'transparent', border: 'none', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor:'pointer' }}>
-                  <X size={26} color="#666"/>
+                  <X size={26} color="#888"/>
               </button>
             </div>
         </div>
@@ -1489,17 +1489,17 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
             {guiRenData && (
                 <AccordionSection title="貴人登天門時" defaultOpen={true} color="#eb2f96">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>
-                            月將：<span style={{ fontWeight: 'bold', color: '#333' }}>{guiRenData.general}</span>
+                        <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>
+                            月將：<span style={{ fontWeight: 'bold', color: '#2a2a2a' }}>{guiRenData.general}</span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                             <div style={{ background: '#fff0f6', padding: '10px', borderRadius: '8px', border: '1px solid #ffadd2' }}>
                                 <div style={{ fontSize: '12px', color: '#eb2f96', fontWeight: 'bold', marginBottom: '4px' }}>陽貴 (晝)</div>
-                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{guiRenData.yang}時</div>
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2a2a2a' }}>{guiRenData.yang}時</div>
                             </div>
                             <div style={{ background: '#f9f0ff', padding: '10px', borderRadius: '8px', border: '1px solid #d3adf7' }}>
                                 <div style={{ fontSize: '12px', color: '#722ed1', fontWeight: 'bold', marginBottom: '4px' }}>陰貴 (夜)</div>
-                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{guiRenData.yin}時</div>
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2a2a2a' }}>{guiRenData.yin}時</div>
                             </div>
                         </div>
                         <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
@@ -1533,7 +1533,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                         
                         {/* 1. 簡述與吉凶 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                             <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333' }}>
+                             <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#2a2a2a' }}>
                                  {wuTuData.name}
                              </div>
                              <div style={{ 
@@ -1563,27 +1563,27 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                 {/* 太陽 */}
                                 <div>
                                     <div style={{ fontSize: '12px', color: THEME.orange, fontWeight: 'bold', marginBottom: '4px' }}>☀ 太陽時方</div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.sun}時
                                     </div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.sunPos}
                                     </div>
                                 </div>
                                 {/* 太陰 */}
                                 <div>
                                     <div style={{ fontSize: '12px', color: THEME.purple, fontWeight: 'bold', marginBottom: '4px' }}>🌙 太陰時方</div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>時：</span>{wuTuDetail.moon}時
                                     </div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.moonPos}
                                     </div>
                                 </div>
                                 {/* 金星 */}
                                 <div>
                                     <div style={{ fontSize: '12px', color: COLORS.geng, fontWeight: 'bold', marginBottom: '2px' }}>🌟 金星到方</div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.venusPos}
                                     </div>
                                 </div>
@@ -1591,7 +1591,7 @@ const DayDetailModal = ({ isOpen, onClose, date, info, toggleBookmark, isBookmar
                                 {/* 木星 */}
                                 <div>
                                     <div style={{ fontSize: '12px', color: THEME.green, fontWeight: 'bold', marginBottom: '2px' }}>🪵 木星到方</div>
-                                    <div style={{ fontSize: '13px', color: '#333' }}>
+                                    <div style={{ fontSize: '13px', color: '#2a2a2a' }}>
                                         <span style={{ fontWeight: 'bold' }}>方：</span>{wuTuDetail.jupiterPos}
                                     </div>
                                 </div>
@@ -1957,7 +1957,7 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
               <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
               <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
           </div>
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間神煞，輔助使用者進行擇日修方用事分析。</p>
+          <p style={{ fontSize: '13px', color: '#888', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本應用程式旨在提供精確的流年流月進退氣萬年曆查詢，結合民間神煞，輔助使用者進行擇日修方用事分析。</p>
       </div>
 
       <BuyMeCoffee />

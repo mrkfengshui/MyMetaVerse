@@ -612,7 +612,7 @@ const InputView = ({ onCalculate, initialData, onOpenSearch }) => {
         };
         onCalculate(formData);
     };
-    const selectStyle = { width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white', fontSize: '14px', color: '#333' };
+    const selectStyle = { width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white', fontSize: '14px', color: '#2a2a2a' };
     const safeDate = isNaN(date.getTime()) ? new Date() : date;
 
     return (
@@ -927,7 +927,7 @@ const DetailModal = ({ data, onClose }) => {
                                         <div key={idx} style={{ backgroundColor: '#f0f7ff', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.blue}44` }}>
                                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom: '4px' }}>
                                                 <span style={{ fontWeight: 'bold', color: THEME.blue }}>
-                                                    {combo.top} + {combo.bottom} <span style={{fontSize:'0.8em', color:'#666'}}>({info.title})</span>
+                                                    {combo.top} + {combo.bottom} <span style={{fontSize:'0.8em', color:'#888'}}>({info.title})</span>
                                                 </span>
                                                 <span style={{ fontSize: '10px', backgroundColor: '#fff', padding: '2px 6px', borderRadius: '4px', color: '#888', border:'1px solid #eee' }}>
                                                     {combo.type}
@@ -1223,7 +1223,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
       whiteSpace: 'nowrap',
       transition: 'all 0.2s',
       backgroundColor: activeTheme === themeName ? THEME.bgBlue : '#f0f0f0',
-      color: activeTheme === themeName ? THEME.blue : '#666',
+      color: activeTheme === themeName ? THEME.blue : '#888',
       border: `1px solid ${activeTheme === themeName ? THEME.blue : '#ddd'}`
   });
 
@@ -1255,7 +1255,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
              <button onClick={() => applyQuickSet('gamble')} style={getBtnStyle('gamble')}>🎲 博彩/偏財 (傷門)</button>
              <button onClick={() => applyQuickSet('love')} style={getBtnStyle('love')}>❤️ 感情/合作 (六合)</button>
              <button onClick={() => applyQuickSet('exam')} style={getBtnStyle('exam')}>📚 考試/文書 (景門)</button>
-             <button onClick={() => { setActiveTheme(''); setDoor(''); setGod(''); setStar(''); setStem(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{ padding: '6px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd' }}>重置</button>
+             <button onClick={() => { setActiveTheme(''); setDoor(''); setGod(''); setStar(''); setStem(''); setPalace(0); setAvoidXing(false); setAvoidPo(false); setAvoidKong(false); setAvoidMu(false); setAvoidFuYin(false); setAvoidFanYin(false); setRequireShengBi(false); setYearShengDay(false); setMonthShengDay(false); setHourShengDay(false); }} style={{ padding: '6px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#f0f0f0', color: '#888', border: '1px solid #ddd' }}>重置</button>
           </div>
         </div>
 
@@ -1426,7 +1426,7 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
                         更新紀錄
                     </button>
                 </div>
-                <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式提供道家陰盤奇門遁甲排盤功能，解說仍需專業師傅進行。</p>
+                <p style={{ fontSize: '13px', color: '#888', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式提供道家陰盤奇門遁甲排盤功能，解說仍需專業師傅進行。</p>
             </div>
 
             <BuyMeCoffee />

@@ -711,7 +711,7 @@ const SettingsView = ({
               <span style={{ fontSize: '14px', color: THEME.gray }}>當前版本: {APP_VERSION}</span>
               <button onClick={() => setShowVersionHistory(true)} style={{ padding: '4px 12px', backgroundColor: '#f0f7ff', border: `1px solid ${THEME.blue}`, color: THEME.blue, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>更新紀錄</button>
           </div>
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。</p>
+          <p style={{ fontSize: '13px', color: '#888', marginTop: '12px', lineHeight: '1.5', marginBottom: 0 }}>本程式旨在提供專業紫微斗數排盤服務，結合傳統命理與現代流暢 UI，輔助使用者進行深入的命理分析。</p>
       </div>
 
       <BuyMeCoffee />
