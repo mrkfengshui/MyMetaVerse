@@ -1,4 +1,15 @@
+// =========================================================================
 // 1. 引入共用 UI 和 工具
+// 
+// 本 App 使用到的共用模組 (來自 packages/ui)：
+// - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
+// - BookingSystem.jsx    : BookingSystem
+// - DataComponents.jsx   : BookmarkList
+// - Constants.jsx        : DONG_GONG_RULES (董公擇日), XIU_INFO (二十八星宿), JIAN_CHU_INFO (建除十二神), WUTU_POEMS (烏兔太陽太陰)
+// - theme.js             : COLORS, THEME, COMMON_STYLES
+// - useProtection.js     : useProtection
+// =========================================================================
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';

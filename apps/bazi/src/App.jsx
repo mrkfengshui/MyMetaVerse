@@ -1,4 +1,15 @@
+// =========================================================================
 // 1. 引入共用 UI 和 工具
+// 
+// 本 App 使用到的共用模組 (來自 packages/ui)：
+// - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
+// - BookingSystem.jsx    : BookingSystem
+// - DataComponents.jsx   : BookmarkList
+// - fatebook.jsx         : AiBaziAnalysis (包含 NameCardLayout 與 AI 生成報告邏輯)
+// - theme.js             : COLORS, THEME, COMMON_STYLES
+// - useProtection.js     : useProtection
+// =========================================================================
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
@@ -27,8 +38,9 @@ import {
 const APP_NAME = "甯博八字";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const VERSION_HISTORY = [
+    { version: "v5.0", date: "2026-10-25", changes: ["改善 AI 八字算命分析"] },
     { version: "v4.0", date: "2026-10-23", changes: ["與紫微斗數共用書籤系統", "新增命盤批註功能"] },
-    { version: "v3.0", date: "2026-08-15", changes: ["新增 Gemini AI 八字算命分析"] },
+    { version: "v3.0", date: "2026-08-15", changes: ["新增 AI 八字算命分析"] },
     { version: "v2.0", date: "2026-06-10", changes: ["支援李虛中祿命術排盤", "優化流月流日顯示"] },
     { version: "v1.0", date: "2026-01-01", changes: ["初始版本，支援子平八字完整排盤", "包含神煞與五行強弱分析"] }
 ];
@@ -2168,6 +2180,8 @@ return (
         <AiBaziAnalysis 
             data={data} 
             THEME={THEME}
+            appType="bazi"
+            onSave={onSave}
             utils={{ 
                 WUXING_MAP, 
                 ZHI_HIDDEN, 
@@ -2390,42 +2404,50 @@ export default function BaziApp() {
      } catch(e) { console.error(e); alert('日期格式錯誤或計算異常'); }
   };
 
-  const saveBookmark = async (data) => {
-      const baziSource = data.bazi || {};
-      const dm = baziSource.dayGan || '';
-      const dmElement = WUXING_MAP[dm] || '';
+  const saveBookmark = async (data, silent = false) => {
+      try {
+          const baziSource = data.bazi || {};
+          const dm = baziSource.dayGan || '';
+          const dmElement = WUXING_MAP[dm] || '';
 
-      const finalSolarDate = data.isManual ? '無' : (data.solarDate || '');
-      const finalLunarDate = data.isManual ? '干支四柱排盤' : (data.lunarDate || '');
+          const finalSolarDate = data.isManual ? '無' : (data.solarDate || '');
+          const finalLunarDate = data.isManual ? '干支四柱排盤' : (data.lunarDate || '');
 
-      const dataToSave = {
-          id: data.id || Date.now(),
-          name: data.name,
-          genderText: data.genderText || (data.gender === '1' ? '男' : '女'),
-          solarDate: finalSolarDate,
-          lunarDate: finalLunarDate,
-          dayMaster: dm + dmElement, // 八字專屬
-          monthBranch: baziSource.monthZhi || '', // 八字專屬
-          notes: data.notes || '',
-          rawDate: data.rawDate || data,
-          isPaid: data.isPaid || false,
-          paidAt: data.paidAt || (data.isPaid ? Date.now() : null)
-      };
+          // 確保建立要儲存的完整物件
+          const dataToSave = {
+              id: data.id || Date.now(),
+              name: data.name,
+              genderText: data.genderText || (data.gender === '1' ? '男' : '女'),
+              solarDate: finalSolarDate,
+              lunarDate: finalLunarDate,
+              dayMaster: dm + dmElement, // 八字專屬
+              monthBranch: baziSource.monthZhi || '', // 八字專屬
+              notes: data.notes || '',
+              rawDate: data.rawDate || data,
+              
+              // ★ 將解鎖狀態與命書文字一併存入
+              isPaid: data.isPaid || false,
+              aiReport: data.aiReport || null,
+              paidAt: data.paidAt || (data.isPaid ? Date.now() : null)
+          };
 
-      let newBk = [...bookmarks];
-      const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
-      
-      if (existingIndex >= 0) { 
-          // 【關鍵修改】合併現有紀錄，保留另一個 App 的特有資料
-          newBk[existingIndex] = { ...newBk[existingIndex], ...dataToSave }; 
-          alert('紀錄已更新'); 
-      } else { 
-          newBk = [dataToSave, ...bookmarks]; 
-          alert('已保存至紀錄'); 
+          let newBk = [...bookmarks];
+          const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
+          
+          if (existingIndex >= 0) { 
+              newBk[existingIndex] = { ...newBk[existingIndex], ...dataToSave }; 
+              if (!silent) alert('紀錄已更新 (命書狀態已同步)'); 
+          } else { 
+              newBk = [dataToSave, ...bookmarks]; 
+              if (!silent) alert('已保存至紀錄'); 
+          }
+          
+          setBookmarks(newBk); 
+          await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
+      } catch (error) {
+          console.error("保存失敗:", error);
+          if (!silent) alert("保存失敗，請重試。");
       }
-      
-      setBookmarks(newBk); 
-      await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
   };
   
   const deleteBookmark = async (id) => {
@@ -2440,7 +2462,6 @@ export default function BaziApp() {
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('此書籤資料版本過舊，無法重新排盤'); return; }
       try {
-          // 不管這筆紀錄是紫微還是八字建的，只要有 rawDate 就直接排八字盤
           const raw = { 
               ...savedItem.rawDate, 
               isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true,
@@ -2449,14 +2470,17 @@ export default function BaziApp() {
           
           const freshResult = calculateBaziResult(raw, ziHourRule, liJiRule);
           freshResult.id = savedItem.id;
-          freshResult.isPaid = raw.isPaid; 
-          freshResult.paidAt = raw.paidAt; 
           freshResult.notes = savedItem.notes || '';
+          
+          // ★ 讀取書籤時，把存在裡面的命書塞回排盤結果中
+          freshResult.isPaid = savedItem.isPaid || raw.isPaid || false; 
+          freshResult.paidAt = savedItem.paidAt || raw.paidAt || null; 
+          freshResult.aiReport = savedItem.aiReport || null;
 
           setBaziData(freshResult); 
           setView('result');
       } catch (e) { 
-          console.error("Failed to recalulate bookmark:", e); 
+          console.error("Failed to recalculate bookmark:", e); 
           alert('讀取失敗，資料可能已損壞'); 
       }
   };

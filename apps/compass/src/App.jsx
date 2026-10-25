@@ -1,4 +1,15 @@
+// =========================================================================
 // 1. 引入共用 UI 和 工具
+// 
+// 本 App 使用到的共用模組 (來自 packages/ui)：
+// - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
+// - BookingSystem.jsx    : BookingSystem
+// - DataComponents.jsx   : BookmarkList
+// - Constants.jsx        : STAR_COMBINATIONS (玄空飛星組合吉凶)
+// - theme.js             : COLORS, THEME, COMMON_STYLES
+// - useProtection.js     : useProtection
+// =========================================================================
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import 'react-calendar/dist/Calendar.css';
@@ -28,6 +39,7 @@ import {
 const APP_NAME = "甯博風水";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const VERSION_HISTORY = [
+    { version: "v4.0", date: "2026-10-25", changes: ["美化首頁羅庚", "增加即時排盤"] },
     { version: "v3.0", date: "2026-10-23", changes: ["支援匯入與紀錄平面圖", "新增平面圖縮放與旋轉工具", "修正圓盤與方盤 UI 顯示細節"] },
     { version: "v2.0", date: "2026-07-20", changes: ["新增商戰揀舖功能", "優化指南針定位準確度"] },
     { version: "v1.0", date: "2026-04-10", changes: ["初始版本，支援三元九運玄空飛星", "包含八宅法與大卦吉凶判定"] }
@@ -711,7 +723,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
     );
 };
 
-// 羅庚頁面
+// 羅庚頁面 (純粹實色版 - 經典紅黑金配色，無光影漸層)
 const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) => {
     const isFrozenRef = React.useRef(isFrozen);
     useEffect(() => { isFrozenRef.current = isFrozen; }, [isFrozen]);
@@ -720,19 +732,14 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         if (isFrozenRef.current) return;
         
         let compass;
-        
-        // 1. 優先取用 iOS 特有的絕對指南針方位 (需嚴謹判斷)
         if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
             compass = e.webkitCompassHeading;
-        } 
-        // 2. 針對 Android 的絕對方向，或無硬體支援時的相對方向降級
-        else if (e.alpha !== null) {
-            compass = 360 - e.alpha + 15; // 觀察得知偏移約15-20度
+        } else if (e.alpha !== null) {
+            compass = 360 - e.alpha + 15; 
         } else {
             return;
         }
 
-        // 3. 加入螢幕轉向補償 (解決手機橫放或倒放時造成的偏差)
         const screenOrientation = window.screen?.orientation?.angle || window.orientation || 0;
         compass = (compass + screenOrientation) % 360;
         if (compass < 0) compass += 360;
@@ -742,7 +749,6 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 
     const requestAccess = () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // iOS 13+ 必須主動請求權限
             DeviceOrientationEvent.requestPermission()
                 .then(response => { 
                     if (response === 'granted') {
@@ -753,7 +759,6 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
                 })
                 .catch(console.error);
         } else {
-            // Android 優先監聽 deviceorientationabsolute (真北/磁北)
             if ('ondeviceorientationabsolute' in window) {
                 window.addEventListener('deviceorientationabsolute', handleOrientation, true);
             } else {
@@ -769,7 +774,6 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
         };
     }, [handleOrientation]);
     
-    // 將硬體度數加上手動微調的偏移量
     const finalHeading = normalizeAngle(heading);
     
     const facingMt = getMountain(finalHeading);
@@ -777,148 +781,271 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
     const sitDirName = GUA_TO_DIR[sittingMt.gua];
     const faceDirName = GUA_TO_DIR[facingMt.gua];
 
+    // 純粹實色定義 (無漸層)
+    const SOLID_RED = '#b82727';  // 霧面紅木底座
+    const DISK_BLACK = '#111111'; // 純黑轉盤
+    const GRID_GOLD = '#dcb962';  // 實色網格金線
+    const TEXT_GOLD = '#e8cd7b';  // 實色文字亮金
+    const TEXT_RED = '#e03a3a';   // 實色盤面紅字
+
     const CARDINALS = [
-        { text: '北', angle: 0, color: THEME.teal },
-        { text: '東', angle: 90, color: '#333' },
-        { text: '南', angle: 180, color: THEME.red },
-        { text: '西', angle: 270, color: '#333' }
+        { text: '北', angle: 0, color: TEXT_GOLD },
+        { text: '東', angle: 90, color: TEXT_GOLD },
+        { text: '南', angle: 180, color: TEXT_RED },
+        { text: '西', angle: 270, color: TEXT_GOLD }
     ];
 
+    const BAGUA_RING = [
+        { name: '坎', angle: 0, color: TEXT_GOLD }, { name: '艮', angle: 45, color: TEXT_GOLD },
+        { name: '震', angle: 90, color: TEXT_GOLD }, { name: '巽', angle: 135, color: TEXT_GOLD },
+        { name: '離', angle: 180, color: TEXT_RED }, { name: '坤', angle: 225, color: TEXT_GOLD },
+        { name: '兌', angle: 270, color: TEXT_GOLD }, { name: '乾', angle: 315, color: TEXT_GOLD }
+    ];
+
+    const isRedMountain = (name) => ['子','午','卯','酉','乾','坤','艮','巽'].includes(name);
+
     return (
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', background: '#222', color: '#fff', position: 'relative', overflowY: 'auto', overflowX: 'hidden', height: '100%', width: '100%', paddingTop: '40px', paddingBottom: '120px'}}>
+        <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', 
+            background: '#0a0a0a', 
+            color: '#fff', position: 'relative', overflowY: 'auto', overflowX: 'hidden', 
+            height: '100%', width: '100%', paddingTop: '30px', paddingBottom: '120px'
+        }}>
             
-            {/* 羅庚與十字星 */}
-            <div style={{ position: 'relative', width: 'min(80vw, 45vh)', height: 'min(80vw, 45vh)', maxWidth: '350px', maxHeight: '350px', aspectRatio: '1 / 1', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px 0', flexShrink: 0 }}>
-                <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', height: '20%', width: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
-                <div style={{ position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20%', height: '2px', background:'red', zIndex: 20, boxShadow: '0 0 2px rgba(255,0,0,0.8)' }}></div>
-                <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '6px solid #8B4513', background: '#e0c38c', transform: `rotate(${-finalHeading}deg)`, transition: isFrozen ? 'none' : 'transform 0.1s linear', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', boxSizing: 'border-box' }}>
-                     {MOUNTAINS.map((m, i) => (
-                        <div key={i} style={{ position: 'absolute', top: '10px', left: '50%', height: '45%', width: '1px', transformOrigin: 'bottom center', transform: `translateX(-50%) rotate(${m.angle}deg)` }}>
-                            <span style={{display:'block', fontSize:'14px', color:'#333', fontWeight:'bold', transform:'rotate(180deg)', whiteSpace:'nowrap'}}>{m.name}</span>
-                        </div>
-                     ))}
-                     {CARDINALS.map((c, i) => (
-                        <div key={`card-${i}`} style={{ 
-                            position: 'absolute', 
-                            top: '50%', left: '50%', 
-                            height: '28%', 
-                            width: '0px', 
-                            transformOrigin: 'top center', 
-                            transform: `rotate(${c.angle + 180}deg)` 
+            {/* 1. 羅庚實體外方內圓設計 (實色方盤) */}
+            <div style={{
+                position: 'relative',
+                width: 'min(90vw, 45vh)', height: 'min(90vw, 45vh)',
+                maxWidth: '400px', maxHeight: '400px',
+                background: SOLID_RED, 
+                borderRadius: '12px', 
+                border: '1px solid #8f1f1f',
+                padding: '16px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                flexShrink: 0, marginTop: '10px'
+            }}>
+                {/* 天心十道 (十字紅線) */}
+                <div style={{ position:'absolute', top: '0', left: '50%', transform: 'translateX(-50%)', height: '100%', width: '1px', background: TEXT_RED, zIndex: 50, pointerEvents: 'none' }}></div>
+                <div style={{ position:'absolute', top: '50%', left: '0', transform: 'translateY(-50%)', width: '100%', height: '1px', background: TEXT_RED, zIndex: 50, pointerEvents: 'none' }}></div>
+
+                {/* 旋轉黑金圓盤 (實色圓盤) */}
+                <div style={{
+                    width: '100%', height: '100%',
+                    borderRadius: '50%',
+                    background: DISK_BLACK, 
+                    border: `4px solid ${GRID_GOLD}`,
+                    transform: `rotate(${-finalHeading}deg)`,
+                    transition: isFrozen ? 'none' : 'transform 0.1s linear',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    position: 'relative', boxSizing: 'border-box'
+                }}>
+                    
+                    {/* 最外圈：360度細密實色刻度線 */}
+                    <div style={{
+                        position: 'absolute', width: '98%', height: '98%', borderRadius: '50%',
+                        background: `repeating-conic-gradient(${GRID_GOLD} 0deg, ${GRID_GOLD} 0.3deg, transparent 0.3deg, transparent 1.5deg)`,
+                        zIndex: 1
+                    }}></div>
+                    
+                    <div style={{
+                        position: 'absolute', width: '92%', height: '92%', borderRadius: '50%',
+                        background: DISK_BLACK, zIndex: 2
+                    }}></div>
+
+                    {/* 層級 2：外緣方位文字 */}
+                    {CARDINALS.map((c, i) => (
+                        <div key={`card-${i}`} style={{
+                            position: 'absolute', top: '5%', left: '50%', marginLeft: '-15px', height: '45%', width: '30px',
+                            transformOrigin: 'bottom center', transform: `rotate(${c.angle}deg)`,
+                            display: 'flex', justifyContent: 'center', zIndex: 3
                         }}>
-                             <div style={{
-                                 position: 'absolute',
-                                 bottom: '0', 
-                                 left: '50%',
-                                 transform: 'translateX(-50%) rotate(0deg)',
-                                 fontSize: '18px',
-                                 fontWeight: '900',
-                                 color: c.color,
-                                 whiteSpace: 'nowrap'
-                             }}>
-                                 {c.text}
-                             </div>
+                            <div style={{
+                                fontSize:'14px', color: c.color, fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1'
+                            }}>
+                                {c.text}
+                            </div>
                         </div>
-                     ))}
-                     <div style={{ width:'20%', height:'20%', background:'white', borderRadius:'50%', border:'2px solid red', boxSizing: 'border-box' }}></div>
+                    ))}
+
+                    {/* 實色同心圓網格線 */}
+                    <div style={{ position: 'absolute', width: '80%', height: '80%', borderRadius: '50%', border: `1px solid ${GRID_GOLD}`, zIndex: 4 }}></div>
+                    <div style={{ position: 'absolute', width: '56%', height: '56%', borderRadius: '50%', border: `1px solid ${GRID_GOLD}`, zIndex: 4 }}></div>
+                    <div style={{ position: 'absolute', width: '34%', height: '34%', borderRadius: '50%', border: `1.5px solid ${GRID_GOLD}`, zIndex: 4 }}></div>
+                    
+                    {/* 24山文字 */}
+                    {MOUNTAINS.map((m, i) => (
+                        <div key={i} style={{ 
+                            position: 'absolute', top: '12%', left: '50%', marginLeft: '-12px', height: '38%', width: '24px', 
+                            transformOrigin: 'bottom center', transform: `rotate(${m.angle}deg)`, 
+                            display: 'flex', justifyContent: 'center', zIndex: 5 
+                        }}>
+                            <div style={{
+                                fontSize:'15px', color: isRedMountain(m.name) ? TEXT_RED : TEXT_GOLD, fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1'
+                            }}>{m.name}</div>
+                        </div>
+                    ))}
+
+                    {/* 八卦文字 */}
+                    {BAGUA_RING.map((b, i) => (
+                        <div key={`bagua-${i}`} style={{
+                            position: 'absolute', top: '24%', left: '50%', marginLeft: '-15px', height: '26%', width: '30px',
+                            transformOrigin: 'bottom center', transform: `rotate(${b.angle}deg)`,
+                            display: 'flex', justifyContent: 'center', zIndex: 6
+                        }}>
+                            <div style={{
+                                fontSize:'18px', color: b.color, fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1'
+                            }}>{b.name}</div>
+                        </div>
+                    ))}
+
+                    {/* 最內圈：天池 (實黑底 + 實色磁針) */}
+                    <div style={{
+                        position: 'absolute', top: '33%', left: '33%', width:'34%', height:'34%',
+                        background: '#000',
+                        borderRadius:'50%', border:`2px solid ${GRID_GOLD}`,
+                        boxSizing: 'border-box',
+                        zIndex: 7
+                    }}>
+                         {/* 磁針 */}
+                         <div style={{ position: 'absolute', top: '15%', left: '50%', marginLeft: '-1.5px', width: '3px', height: '35%', background: TEXT_RED, borderRadius: '50% 50% 0 0' }}></div>
+                         <div style={{ position: 'absolute', bottom: '15%', left: '50%', marginLeft: '-1.5px', width: '3px', height: '35%', background: '#fff', borderRadius: '0 0 50% 50%' }}></div>
+                         {/* 磁針頂針軸心 */}
+                         <div style={{ position: 'absolute', top: '50%', left: '50%', marginLeft: '-3px', marginTop: '-3px', width: '6px', height: '6px', background: GRID_GOLD, borderRadius: '50%' }}></div>
+                    </div>
                 </div>
             </div>
 
-            {/* 底部數據與控制 */}
-                <div style={{textAlign:'center', zIndex: 10, marginTop: '10px'}}>
-                    <div style={{fontSize:'14px', color:'#aaa'}}>{isFrozen ? '已定格' : '請轉動手機或移動下方橫桿微調'}</div>
-                    <div style={{fontSize:'48px', fontWeight:'bold', fontFamily:'monospace', color: '#ffd700'}}>{finalHeading.toFixed(1)}°</div>
-                    <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'5px'}}>
-                        {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向 <span style={{fontSize: '15px', fontWeight: 'normal', color: '#ccc'}}>(坐{sitDirName}向{faceDirName})</span>
+            {/* 2. 底部實色數據與控制面板 (無透視模糊) */}
+            <div style={{
+                width: '90%', maxWidth: '400px', marginTop: '24px',
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '16px', padding: '24px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+            }}>
+                <div style={{textAlign:'center', zIndex: 10}}>
+                    
+                    <div style={{fontSize:'13px', color: isFrozen ? TEXT_RED : '#888', fontWeight: isFrozen ? 'bold' : 'normal', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'}}>
+                        {isFrozen ? <Lock size={14}/> : <Compass size={14}/>}
+                        {isFrozen ? '羅盤已定格' : '請轉動手機測量方位'}
                     </div>
 
-                    {/* --- 1. 按鈕區 (保持水平並排) --- */}
-                    <div style={{display:'flex', gap:'16px', justifyContent:'center', marginTop:'20px'}}>
-                        <button onClick={() => setIsFrozen(!isFrozen)} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: isFrozen ? THEME.red : THEME.blue, color:'white'}}>
-                            {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖羅庚" : "定格方位"}
+                    <div style={{fontSize:'54px', fontWeight:'900', fontFamily:'monospace', color: TEXT_GOLD, lineHeight: '1'}}>
+                        {finalHeading.toFixed(1)}°
+                    </div>
+
+                    <div style={{fontSize: '20px', fontWeight:'bold', marginTop:'12px', color: '#fff'}}>
+                        {sittingMt.gua}卦 - {sittingMt.name}山{facingMt.name}向
+                    </div>
+                    <div style={{fontSize: '15px', color: '#aaa', marginTop: '4px'}}>
+                        坐{sitDirName} 向{faceDirName}
+                    </div>
+
+                    {/* 實色按鈕區 */}
+                    <div style={{display:'flex', gap:'12px', justifyContent:'center', marginTop:'24px'}}>
+                        <button onClick={() => setIsFrozen(!isFrozen)} style={{
+                            flex: 1, padding: '14px 0', borderRadius: '8px', border: 'none',
+                            fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
+                            background: isFrozen ? '#333' : '#1890ff', color: 'white'
+                        }}>
+                            {isFrozen ? <Unlock size={18}/> : <Lock size={18}/>} {isFrozen ? "解鎖" : "定格"}
                         </button>
-                        
+
                         {!isFrozen && (
-                            <button onClick={requestAccess} style={{padding: '12px 24px', borderRadius: '30px', border: '1px solid white', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: 'transparent', color:'white'}}>
-                                <Compass size={18}/> 啟用羅庚
+                            <button onClick={requestAccess} style={{
+                                flex: 1, padding: '14px 0', borderRadius: '8px', border: '1px solid #555',
+                                fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
+                                background: '#222', color: TEXT_GOLD
+                            }}>
+                                <Compass size={18}/> 校準
                             </button>
                         )}
 
                         {isFrozen && (
-                            <button onClick={() => {
-                                setHeading(finalHeading); 
-                                onAnalyze();
-                            }} style={{padding: '12px 24px', borderRadius: '30px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', background: THEME.green, color:'white'}}>
-                                <RefreshCw size={18}/> 進入排盤
+                            <button onClick={() => { setHeading(finalHeading); onAnalyze(); }} style={{
+                                flex: 1, padding: '14px 0', borderRadius: '8px', border: 'none',
+                                fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent: 'center', gap:'6px',
+                                background: '#27ae60', color:'white'
+                            }}>
+                                <RefreshCw size={18}/> 排盤
                             </button>
                         )}
                     </div>
                     
-                    {/* --- 2. 🚀 全新自訂度數控制區 (放在按鈕區下方，置中顯示) --- */}
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <div style={{marginTop:'20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '12px 20px', borderRadius: '12px', width: '85%', maxWidth: '320px'}}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
-                                <span style={{fontSize: '13px', color: '#ccc'}}>自訂度數:</span>
-                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                    {/* 微調按鈕 (-) */}
-                                    <button 
-                                        onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h - 0.5)); }} 
-                                        style={{background: '#444', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
-                                    >-</button>
-                                    
-                                    {/* 直接輸入框 */}
-                                    <input 
-                                        type="number" 
-                                        value={Number(Math.round(finalHeading * 10) / 10).toString()} 
-                                        onFocus={() => setIsFrozen(true)}
-                                        onChange={(e) => {
-                                            setIsFrozen(true);
-                                            // 強制轉換為浮點數，如果輸入為空則預設為 0
-                                            let val = parseFloat(e.target.value);
-                                            if (isNaN(val)) val = 0;
-                                            setHeading(normalizeAngle(val));
-                                        }} 
-                                        style={{width:'65px', textAlign: 'center', fontSize: '15px', fontWeight: 'bold', padding: '4px', borderRadius: '4px', border: 'none'}}
-                                    />
-                                    
-                                    {/* 微調按鈕 (+) */}
-                                    <button 
-                                        onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h + 0.5)); }} 
-                                        style={{background: '#444', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
-                                    >+</button>
-                                </div>
-                            </div>
+                    {/* 手動微調區 (實色 Stepper) */}
+                    <div style={{ marginTop:'24px', paddingTop: '24px', borderTop: '1px solid #333' }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '16px'}}>
+                            <span style={{fontSize: '14px', color: '#aaa', fontWeight: '500'}}>手動微調坐向</span>
                             
-                            {/* 360度全範圍拉桿 */}
-                            <input 
-                                type="range" 
-                                min="0" 
-                                max="360" 
-                                step="0.1" 
-                                value={finalHeading} 
-                                onTouchStart={() => setIsFrozen(true)} // 觸控時自動定格
-                                onMouseDown={() => setIsFrozen(true)}  // 滑鼠點擊時自動定格
-                                onChange={(e) => {
-                                    setIsFrozen(true);
-                                    setHeading(Number(e.target.value));
-                                }} 
-                                style={{width:'100%', marginTop: '4px'}} 
-                            />
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '4px', 
+                                background: '#111', padding: '4px', 
+                                borderRadius: '8px', border: '1px solid #444'
+                            }}>
+                                <button 
+                                    onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h - 0.5)); }} 
+                                    style={{
+                                        background: '#222', border: 'none', color: TEXT_GOLD, 
+                                        width: '36px', height: '36px', borderRadius: '6px', cursor: 'pointer', 
+                                        fontSize: '20px', fontWeight: 'bold',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
+                                    }}
+                                >-</button>
+                                
+                                <input 
+                                    type="number" 
+                                    value={Number(Math.round(finalHeading * 10) / 10).toString()} 
+                                    onFocus={() => setIsFrozen(true)}
+                                    onChange={(e) => {
+                                        setIsFrozen(true);
+                                        let val = parseFloat(e.target.value);
+                                        if (isNaN(val)) val = 0;
+                                        setHeading(normalizeAngle(val));
+                                    }} 
+                                    style={{
+                                        width: '64px', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', 
+                                        padding: '4px 0', border: 'none', outline: 'none', 
+                                        color: TEXT_GOLD, background: 'transparent'
+                                    }}
+                                />
+                                
+                                <button 
+                                    onClick={() => { setIsFrozen(true); setHeading(h => normalizeAngle(h + 0.5)); }} 
+                                    style={{
+                                        background: '#222', border: 'none', color: TEXT_GOLD, 
+                                        width: '36px', height: '36px', borderRadius: '6px', cursor: 'pointer', 
+                                        fontSize: '20px', fontWeight: 'bold',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
+                                    }}
+                                >+</button>
+                            </div>
                         </div>
+                        
+                        <input 
+                            type="range" min="0" max="360" step="0.1" 
+                            value={finalHeading} 
+                            onTouchStart={() => setIsFrozen(true)}
+                            onMouseDown={() => setIsFrozen(true)}
+                            onChange={(e) => { setIsFrozen(true); setHeading(Number(e.target.value)); }} 
+                            style={{width:'100%', margin: 0, accentColor: TEXT_GOLD}} 
+                        />
                     </div>
                 </div>
             </div>
+        </div>
     );
 };
 
 // 4. 排盤視圖 (ChartView) - 圓盤佈局優化 (凶煞在上，雜項在下)
-const ChartView = ({ heading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn, floorPlan, setFloorPlan, imgConfig, setImgConfig }) => {
+const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn, floorPlan, setFloorPlan, imgConfig, setImgConfig }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
     const [showAnnual, setShowAnnual] = useState(true);
     const [showMonthly, setShowMonthly] = useState(false);
     const [showCommercial, setShowCommercial] = useState(false);
     const [isRound, setIsRound] = useState(false); 
+    const [showCompassAdjust, setShowCompassAdjust] = useState(false);
 
     // 1. 將西曆輸入轉換為風水曆法
     const fsData = useMemo(() => {
@@ -1358,6 +1485,18 @@ const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4
                     <label style={{fontSize:'14px'}}>
                         <select value={gregMonth} onChange={e => setGregMonth(Number(e.target.value))} style={{border:'1px solid #ddd', padding: '2px'}}>{months.map(m => (<option key={m} value={m}>{m}</option>))}</select>月
                     </label>
+                    <button 
+                        onClick={() => setShowCompassAdjust(!showCompassAdjust)} 
+                        style={{
+                            marginLeft: 'auto', 
+                            fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
+                            border: `1px solid ${THEME.blue}`, background: showCompassAdjust ? THEME.blue : 'white', 
+                            color: showCompassAdjust ? 'white' : THEME.blue, cursor:'pointer', 
+                            display: 'flex', alignItems: 'center', gap: '4px'
+                        }}
+                    >
+                        <Compass size={12}/> 變更坐向
+                    </button>
                 </div>
 
                 {/* --- 按鈕工具列 --- */}
@@ -1372,8 +1511,8 @@ const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4
                         onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} 
                         style={{
                             fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
-                            border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333', // 開啟時變藍色
-                            background: showFloorPlanPanel ? '#333' : 'white', // 開啟時變淺藍底
+                            border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333',
+                            background: showFloorPlanPanel ? '#333' : 'white', 
                             color: showFloorPlanPanel ? 'white' : '#333',
                             display: 'flex', alignItems: 'center', cursor:'pointer'
                         }}
@@ -1381,6 +1520,73 @@ const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4
                         <Map size={12}/> 平面圖
                     </button>
                 </div>
+
+                {showCompassAdjust && (
+                    <div style={{
+                        marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', 
+                        background: THEME.bgGray, border: `1px solid ${THEME.border}`, 
+                        padding: '16px 20px', borderRadius: '12px', animation: 'fadeIn 0.2s ease-in-out'
+                    }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
+                            <span style={{fontSize: '14px', color: THEME.black, fontWeight: 'bold'}}>即時微調坐向</span>
+                            
+                            {/* 類似 iOS 的 Stepper 膠囊設計 */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '4px', 
+                                background: THEME.white, padding: '4px', 
+                                borderRadius: '8px', border: `1px solid ${THEME.border}`,
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                            }}>
+                                <button 
+                                    onClick={() => setHeading(h => normalizeAngle(h - 0.5))} 
+                                    style={{
+                                        background: THEME.bgGray, border: 'none', color: THEME.black, 
+                                        width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', 
+                                        fontSize: '18px', fontWeight: 'bold',
+                                        // 👇 強制完美置中
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
+                                    }}
+                                >-</button>
+                                
+                                <input 
+                                    type="number" 
+                                    value={Number(Math.round(heading * 10) / 10).toString()} 
+                                    onChange={(e) => {
+                                        let val = parseFloat(e.target.value);
+                                        if (isNaN(val)) val = 0;
+                                        setHeading(normalizeAngle(val));
+                                    }} 
+                                    style={{
+                                        width: '60px', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', 
+                                        padding: '4px 0', border: 'none', outline: 'none', 
+                                        color: THEME.blue, background: 'transparent'
+                                    }}
+                                />
+                                
+                                <button 
+                                    onClick={() => setHeading(h => normalizeAngle(h + 0.5))} 
+                                    style={{
+                                        background: THEME.bgGray, border: 'none', color: THEME.black, 
+                                        width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', 
+                                        fontSize: '18px', fontWeight: 'bold',
+                                        // 👇 強制完美置中
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
+                                    }}
+                                >+</button>
+                            </div>
+                        </div>
+                        
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="360" 
+                            step="0.1" 
+                            value={heading} 
+                            onChange={(e) => setHeading(Number(e.target.value))} 
+                            style={{width:'100%', accentColor: THEME.blue, margin: 0}} 
+                        />
+                    </div>
+                )}
 
                 {/* --- 平面圖控制面板 (只在 showFloorPlanPanel 為 true 時顯示) --- */}
                 {showFloorPlanPanel && (
