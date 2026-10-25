@@ -1305,7 +1305,7 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
                     
                     {/* 山向文字與左右調節按鈕 (維持乾淨) */}
                     <div style={{fontWeight:'bold', fontSize:'18px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap'}}>
-                        <div style={{ minWidth: '210px' }}>
+                        <div style={{ minWidth: '150px' }}>
                             {data.sitting.name}山{data.facing.name}向
                             <span style={{fontSize:'14px', color:THEME.gray, fontWeight:'normal'}}> (坐{sitDir}向{faceDir})</span>
                         </div>
