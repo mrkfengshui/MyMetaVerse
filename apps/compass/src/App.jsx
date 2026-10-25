@@ -1045,7 +1045,72 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
     const [showMonthly, setShowMonthly] = useState(false);
     const [showCommercial, setShowCommercial] = useState(false);
     const [isRound, setIsRound] = useState(false); 
-    const [showCompassAdjust, setShowCompassAdjust] = useState(false);
+    const [showFloorPlanPanel, setShowFloorPlanPanel] = useState(false);
+
+    // ==========================================
+    // 👇 新增：即時羅庚 (變更坐向) 邏輯 👇
+    // ==========================================
+    const [isLiveCompass, setIsLiveCompass] = useState(false);
+    const isLiveRef = React.useRef(isLiveCompass);
+    useEffect(() => { isLiveRef.current = isLiveCompass; }, [isLiveCompass]);
+
+    const handleOrientation = React.useCallback((e) => {
+        if (!isLiveRef.current) return;
+        
+        let compass;
+        if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+            compass = e.webkitCompassHeading;
+        } else if (e.alpha !== null) {
+            compass = 360 - e.alpha + 15; 
+        } else {
+            return;
+        }
+
+        const screenOrientation = window.screen?.orientation?.angle || window.orientation || 0;
+        compass = (compass + screenOrientation) % 360;
+        if (compass < 0) compass += 360;
+
+        setHeading(prev => Math.abs(compass - prev) > 0.2 ? compass : prev);
+    }, [setHeading]);
+
+    const toggleLiveCompass = () => {
+        if (isLiveCompass) {
+            // 關閉並鎖定
+            setIsLiveCompass(false);
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+            window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+        } else {
+            // 啟動羅庚
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => { 
+                        if (response === 'granted') {
+                            setIsLiveCompass(true);
+                            window.addEventListener('deviceorientation', handleOrientation, true); 
+                        } else {
+                            alert("需允許取用方向權限，羅庚才能獲取真正的絕對方位！");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                setIsLiveCompass(true);
+                if ('ondeviceorientationabsolute' in window) {
+                    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+                } else {
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            }
+        }
+    };
+
+    // 離開組件時確保關閉感測器，省電防 Bug
+    useEffect(() => { 
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+            window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+        };
+    }, [handleOrientation]);
+    // ==========================================
 
     // 1. 將西曆輸入轉換為風水曆法
     const fsData = useMemo(() => {
@@ -1068,69 +1133,42 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
     const naQiRow2 = ['乾', '兌', '艮', '離'];
     const dirNames = ["巽", "離", "坤", "震", "中", "兌", "艮", "坎", "乾"];
 
-    // =======================================================
-    // 1. 方位映射邏輯
-    // =======================================================
     const isModern = chartMode === 'modern';
-
-    // A. 方盤 Grid 順序
     const gridOrder = isModern ? [8, 7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-    // B. 圓盤位置 (順時針)
     const POSITIONS = [
         { angle: 0 }, { angle: 45 }, { angle: 90 }, { angle: 135 }, 
         { angle: 180 }, { angle: 225 }, { angle: 270 }, { angle: 315 }
     ];
 
-    let visualMap = []; 
-    if (isModern) {
-        visualMap = [7, 6, 3, 0, 1, 2, 5, 8]; 
-    } else {
-        visualMap = [1, 2, 5, 8, 7, 6, 3, 0];
-    }
+    let visualMap = isModern ? [7, 6, 3, 0, 1, 2, 5, 8] : [1, 2, 5, 8, 7, 6, 3, 0];
 
     const cardStyle = { background: THEME.white, borderRadius:'12px', padding:'16px', marginBottom:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' };
     const sectionTitle = { fontSize:'15px', fontWeight:'bold', marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px', color:'#333', borderBottom:'2px solid #f0f0f0', paddingBottom:'6px' };
     const btnStyle = { padding: '6px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: `1px solid ${THEME.border}`, color: THEME.black, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
     const tagStyle = { fontSize:'9px', padding:'1px 3px', borderRadius:'2px', color:'#fff', fontWeight:'bold', whiteSpace:'nowrap', lineHeight: '1.2' };
 
-    // 取得格子內的標籤 (不分圓盤方盤，統一顯示所有重要資訊)
     const getGridTags = (idx) => {
         const dirGua = dirNames[idx]; 
         if (dirGua === '中') return []; 
         const tags = [];
         const { advanced } = data;
         
-        // 1. 曜煞 & 黃泉 (最重要)
         if (advanced.sha8 && advanced.sha8 !== '無' && getGuaFromStr(advanced.sha8) === dirGua) 
             tags.push({ text: `曜煞: ${advanced.sha8}`, color: THEME.red });
-        
         if (advanced.huangQuan) {
             const hqArr = advanced.huangQuan.split('/');
-            hqArr.forEach(hq => {
-                if (getGuaFromStr(hq) === dirGua) tags.push({ text: `黃泉水: ${hq}`, color: THEME.red });
-            });
+            hqArr.forEach(hq => { if (getGuaFromStr(hq) === dirGua) tags.push({ text: `黃泉水: ${hq}`, color: THEME.red }); });
         }
-        
-        // 2. 城門
         if (dirGua === advanced.chengMen.main) tags.push({ text: '正城門', color: THEME.orange }); 
         if (dirGua === advanced.chengMen.sub) tags.push({ text: '副城門', color: THEME.orange }); 
         
-        // 3. 山龍
-        const mtDragons = advanced.mountainDragon.mountains;
-        const mtMatches = mtDragons.filter(m => getGuaFromStr(m) === dirGua);
-        if (mtMatches.length > 0) {
-            tags.push({ text: `山龍: ${mtMatches.join('')}`, color: '#c41d7f' });
-        }
+        const mtMatches = advanced.mountainDragon.mountains.filter(m => getGuaFromStr(m) === dirGua);
+        if (mtMatches.length > 0) tags.push({ text: `山龍: ${mtMatches.join('')}`, color: '#c41d7f' });
 
-        // 4. 水龍 (圓盤空間有限，若太多標籤可考慮隱藏部分，目前全開)
-        const waterDragons = advanced.waterDragon.mountains;
-        const waterMatches = waterDragons.filter(m => getGuaFromStr(m) === dirGua);
-        if (waterMatches.length > 0) {
-            tags.push({ text: `水龍: ${waterMatches.join('')}`, color: THEME.blue });
-        }
+        const waterMatches = advanced.waterDragon.mountains.filter(m => getGuaFromStr(m) === dirGua);
+        if (waterMatches.length > 0) tags.push({ text: `水龍: ${waterMatches.join('')}`, color: THEME.blue });
 
-        // 5. 水法
         if (dirGua === advanced.waterMethod.early) tags.push({ text: '先天水', color: THEME.blue }); 
         if (dirGua === advanced.waterMethod.late) tags.push({ text: '後天水', color: THEME.green }); 
 
@@ -1171,27 +1209,11 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
     const faceDir = GUA_TO_DIR ? GUA_TO_DIR[data.facing.gua] : '';
     const years = []; for (let y = 1900; y <= 2100; y++) years.push(y);
     const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    
-    const getDirDisplayName = (name) => {
-        const dir = GUA_TO_DIR[name];
-        if (!dir) return name;
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.1' }}>
-                <span>{name}</span>
-                <span style={{ fontSize: '10px', fontWeight: 'normal' }}>({dir})</span>
-            </div>
-        );
-    };
 
-    // ==========================================
-    // 渲染單個宮位內容
-    // ==========================================
-    const [showFloorPlanPanel, setShowFloorPlanPanel] = useState(false);
-    
-    // 處理背景色邏輯
     const cellBgColor = floorPlan ? 'rgba(255, 252, 245, 0.4)' : '#fffcf5';
     const gridBorderColor = '#8b4513';
 
+    // ... renderCellContent ... 保持不變
     const renderCellContent = (idx, isCenter = false) => {
         const tags = getGridTags(idx);
         const yearly = getYearlyBadges(idx);
@@ -1199,231 +1221,51 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
         const dir = GUA_TO_DIR[guaName];
         const baZhai = data.advanced.baZhaiMap[guaName];
 
-        // --- 1. 定義樣式常數 (圓盤/方盤分離) ---
-        
-        // 字體大小配置
-        const FONT = {
-            mtFace: isRound ? '13px' : '20px',      // 山向星：圓盤改小
-            subStar: isRound ? '9px' : '14px',      // 流年/流月小數字
-            base: isRound ? '18px' : '24px',        // 運星(底數)
-            tag: isRound ? '8px' : '10px',          // 標籤文字
-            gua: isRound ? '10px' : '12px',         // 宮名
-            dir: isRound ? '8px' : '10px',          // 方向(東南西北)
-            baZhai: isRound ? '8px' : '11px'        // 八宅
-        };
+        const FONT = { mtFace: isRound ? '13px' : '20px', subStar: isRound ? '9px' : '14px', base: isRound ? '18px' : '24px', tag: isRound ? '8px' : '10px', gua: isRound ? '10px' : '12px', dir: isRound ? '8px' : '10px', baZhai: isRound ? '8px' : '11px' };
+        const POS = { starTop: isRound ? (isCenter ? '12px' : '14px') : (isCenter ? '4px' : '4px'), starSide: isRound ? (isCenter ? '22px' : '19px') : (isCenter ? '6px' : '6px'), tagBottom: isRound ? '26px' : '30px', baseBottom: isRound ? '4px' : '4px', guaPos: isRound ? { bottom: '60px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' } : { bottom: '4px', left: '4px', textAlign: 'left' } };
+        const roundBaZhaiStyle = isRound ? { top: '68px', right: '15px' } : { bottom: '4px', right: '4px' };
 
-        // 位置配置
-        const POS = {
-            // 山向星位置：圓盤模式下，side 要大(往內縮)，top 要大(往下降)，避開扇形邊緣
-            starTop: isRound ? (isCenter ? '12px' : '14px') : (isCenter ? '4px' : '4px'), 
-            starSide: isRound ? (isCenter ? '22px' : '19px') : (isCenter ? '6px' : '6px'),
-            
-            // 標籤容器位置
-            tagBottom: isRound ? '26px' : '30px', 
-            
-            // 運星位置
-            baseBottom: isRound ? '4px' : '4px',
+        const gridTagContainerStyle = { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '1px', width: isRound ? '80%' : '96%' };
+        const gridTagItemStyle = (color) => ({ ...tagStyle, background: color, width: 'fit-content', maxWidth: isRound ? '50px' : '55%', padding: isRound ? '1px 2px' : '1px 4px', borderRadius: '4px', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box', fontSize: FONT.tag, lineHeight: '1.2' });
 
-            // 宮名位置 (圓盤改為置中底部，方盤維持左下角)
-            guaPos: isRound 
-                ? { bottom: '60px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' } 
-                : { bottom: '4px', left: '4px', textAlign: 'left' },
-
-            // 八宅位置 (圓盤往內縮，方盤維持右下角)
-            baZhaiPos: isRound 
-                ? { bottom: '6px', right: '50%', transform: 'translateX(50%)' } // 圓盤：放在運星上方一點，或底部置中
-                : { bottom: '4px', right: '4px' }
-        };
-        
-        // 針對圓盤八宅位置的特殊調整：為了不擋運星，圓盤模式下我們把八宅稍微藏在向星下方或側邊
-        // 修正：圓盤空間太小，八宅改為放在"向星"的下方稍微偏右，或者放在運星上面
-        // 這裡採用：方盤不變，圓盤放在右側中間偏下，避開角落
-        const roundBaZhaiStyle = isRound 
-            ? { top: '68px', right: '15px' } // 圓盤：放在向星下方
-            : { bottom: '4px', right: '4px' }; // 方盤：右下角
-
-        // 標籤容器樣式
-        const gridTagContainerStyle = {
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1px', // 間距更緊密
-            width: isRound ? '80%' : '96%', // 圓盤限制寬度，避免碰到邊緣
-        };
-
-        // 單個標籤樣式
-        const gridTagItemStyle = (color) => ({
-            ...tagStyle,
-            background: color,
-            width: 'fit-content',
-            maxWidth: isRound ? '50px' : '55%', // 圓盤模式下強制限制標籤最大寬度
-            padding: isRound ? '1px 2px' : '1px 4px', // 圓盤減少內邊距
-            borderRadius: '4px',
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis', // 超出變...
-            boxSizing: 'border-box',
-            fontSize: FONT.tag,
-            lineHeight: '1.2'
-        });
-
-        // --- 2. 開始渲染 ---
         return (
-            <div style={{ 
-                width: '100%', height: '100%', position: 'relative', 
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' 
-            }}>
-                
-                {/* 1. 山星 (左上) & 向星 (右上) */}
-                <div style={{
-                    position:'absolute', 
-                    top: POS.starTop, 
-                    left: POS.starSide,
-                    display:'flex', flexDirection:'column', alignItems:'center'
-                }}>
-                    <div style={{
-                        fontSize: FONT.mtFace, fontWeight:'900', color:THEME.red, lineHeight:'1', 
-                        // 改用 textShadow 創造完美的 1px 白邊 + 微光暈
-                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff'
-                    }}>
-                        {data.mtGrid[idx]}
-                    </div>
-                    {showAnnual && <div style={{
-                        fontSize: FONT.subStar, fontWeight:'bold', color:'#722ed1',
-                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
-                    }}>
-                        {data.annualGrid[idx]}
-                    </div>}
+            <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position:'absolute', top: POS.starTop, left: POS.starSide, display:'flex', flexDirection:'column', alignItems:'center' }}>
+                    <div style={{ fontSize: FONT.mtFace, fontWeight:'900', color:THEME.red, lineHeight:'1', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff' }}>{data.mtGrid[idx]}</div>
+                    {showAnnual && <div style={{ fontSize: FONT.subStar, fontWeight:'bold', color:'#722ed1', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff' }}>{data.annualGrid[idx]}</div>}
                 </div>
-
-                <div style={{
-                    position:'absolute', 
-                    top: POS.starTop, 
-                    right: POS.starSide,
-                    display:'flex', flexDirection:'column', alignItems:'center'
-                }}>
-                    <div style={{
-                        fontSize: FONT.mtFace, fontWeight:'900', color:THEME.blue, lineHeight:'1',
-                        // 同樣改用 textShadow
-                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff'
-                    }}>
-                        {data.faceGrid[idx]}
-                    </div>
-                    {showMonthly && <div style={{
-                        fontSize: FONT.subStar, fontWeight:'bold', color:THEME.orange,
-                        textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
-                    }}>
-                        {data.monthlyGrid[idx]}
-                    </div>}
+                <div style={{ position:'absolute', top: POS.starTop, right: POS.starSide, display:'flex', flexDirection:'column', alignItems:'center' }}>
+                    <div style={{ fontSize: FONT.mtFace, fontWeight:'900', color:THEME.blue, lineHeight:'1', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff' }}>{data.faceGrid[idx]}</div>
+                    {showMonthly && <div style={{ fontSize: FONT.subStar, fontWeight:'bold', color:THEME.orange, textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff' }}>{data.monthlyGrid[idx]}</div>}
                 </div>
-
-                {/* 2. 歲煞 (中上) */}
                 {yearly.length > 0 && !isCenter && (
-                    <div style={{ 
-                        position: 'absolute', 
-                        top: isRound ? '2px' : '2px', // 圓盤貼頂
-                        left: '50%', transform: 'translateX(-50%)', 
-                        display: 'flex', gap: '1px', flexWrap: 'wrap', justifyContent: 'center', 
-                        width: '100%', zIndex: 10, pointerEvents: 'none'
-                    }}>
-                        {yearly.map((y, i) => (
-                            <span key={i} style={{ ...tagStyle, background: y.c, fontSize: isRound ? '8px' : '9px', padding: '1px 2px' }}>{y.t}</span>
-                        ))}
+                    <div style={{ position: 'absolute', top: isRound ? '2px' : '2px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '1px', flexWrap: 'wrap', justifyContent: 'center', width: '100%', zIndex: 10, pointerEvents: 'none' }}>
+                        {yearly.map((y, i) => (<span key={i} style={{ ...tagStyle, background: y.c, fontSize: isRound ? '8px' : '9px', padding: '1px 2px' }}>{y.t}</span>))}
                     </div>
                 )}
-
-                {/* 3. 其他標籤 (運星上方) */}
                 {tags.length > 0 && (
-                    <div style={{ 
-                        position:'absolute', 
-                        bottom: POS.tagBottom,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 2,
-                        ...gridTagContainerStyle 
-                    }}>
+                    <div style={{ position:'absolute', bottom: POS.tagBottom, left: '50%', transform: 'translateX(-50%)', zIndex: 2, ...gridTagContainerStyle }}>
                         {tags.map((t, i) => <span key={i} style={gridTagItemStyle(t.color)}>{t.text}</span>)}
                     </div>
                 )}
-
-                {/* 4. 運星 (中下) */}
-                <div style={{ 
-                    position: 'absolute', 
-                    bottom: POS.baseBottom, 
-                    left: '50%', 
-                    transform: 'translateX(-50%)', 
-                    fontSize: FONT.base, 
-                    fontWeight: 'bold', 
-                    color: '#e0e0e0',
-                    lineHeight: 1, 
-                    zIndex: 0 
-                }}>
+                <div style={{ position: 'absolute', bottom: POS.baseBottom, left: '50%', transform: 'translateX(-50%)', fontSize: FONT.base, fontWeight: 'bold', color: '#e0e0e0', lineHeight: 1, zIndex: 0 }}>
                     {PERIOD_MAP_CHART[data.baseGrid[idx]]}
                 </div>
-
-                {/* 5. 底部角落資訊 (僅非中宮顯示) */}
                 {idx !== 4 && (
                     <>
-                        {/* 左下 - 宮名 (方向) */}
-                        <div style={{ 
-                            position: 'absolute',
-                            zIndex: 5,
-                            textShadow: isRound ? '0 0 2px white' : 'none',
-                            display: 'flex',
-                            flexDirection: isRound ? 'row' : 'column', // 圓盤改為橫排
-                            alignItems: 'center',
-                            gap: isRound ? '2px' : '0px',
-                            lineHeight: 1,
-                            ...POS.guaPos // 套用位置樣式
-                        }}>
+                        <div style={{ position: 'absolute', zIndex: 5, textShadow: isRound ? '0 0 2px white' : 'none', display: 'flex', flexDirection: isRound ? 'row' : 'column', alignItems: 'center', gap: isRound ? '2px' : '0px', lineHeight: 1, ...POS.guaPos }}>
                             <span style={{ fontSize: FONT.gua, fontWeight: 'bold', color: isRound ? '#333' : THEME.lightgray }}>{guaName}</span>
-                            {dir && (
-                                <span style={{ 
-                                    fontSize: FONT.dir, 
-                                    fontWeight: 'normal',
-                                    color: isRound ? '#666' : THEME.lightgray,
-                                    transform: isRound ? 'none' : 'scale(0.9)',
-                                    transformOrigin: 'center top'
-                                }}>
-                                    {`(${dir})`} 
-                                </span>
-                            )}
+                            {dir && (<span style={{ fontSize: FONT.dir, fontWeight: 'normal', color: isRound ? '#666' : THEME.lightgray, transform: isRound ? 'none' : 'scale(0.9)', transformOrigin: 'center top' }}>{`(${dir})`}</span>)}
                         </div>
-
-                        {/* 右下 - 八宅 */}
                         {baZhai && (
-                            <div style={{
-                                position: 'absolute', 
-                                zIndex: 5,
-                                fontSize: FONT.baZhai, 
-                                fontWeight: 'bold', 
-                                color: BA_ZHAI_INFO[baZhai].color, 
-                                background: 'rgba(255,255,255,0.8)', 
-                                padding: '0px 2px', 
-                                borderRadius: '3px',
-                                ...roundBaZhaiStyle // 套用位置樣式
-                            }}>
+                            <div style={{ position: 'absolute', zIndex: 5, fontSize: FONT.baZhai, fontWeight: 'bold', color: BA_ZHAI_INFO[baZhai].color, background: 'rgba(255,255,255,0.8)', padding: '0px 2px', borderRadius: '3px', ...roundBaZhaiStyle }}>
                                 {baZhai}
                             </div>
                         )}
                     </>
                 )}
-
-                {/* 中宮特殊顯示 (Chart Type) */}
                 {idx === 4 && (
-                    <div style={{ 
-                        position:'absolute', 
-                        bottom: isRound ? '24px' : '30px', 
-                        fontSize: isRound ? '8px' : '10px', 
-                        fontWeight:'bold', 
-                        background:'rgba(83, 29, 171, 0.1)', 
-                        padding:'1px 5px', 
-                        borderRadius:'4px', 
-                        color: '#531dab', 
-                        whiteSpace: 'nowrap'
-                    }}>
+                    <div style={{ position:'absolute', bottom: isRound ? '24px' : '30px', fontSize: isRound ? '8px' : '10px', fontWeight:'bold', background:'rgba(83, 29, 171, 0.1)', padding:'1px 5px', borderRadius:'4px', color: '#531dab', whiteSpace: 'nowrap' }}>
                         {data.chartType}
                     </div>
                 )}
@@ -1438,40 +1280,54 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // 自動壓縮圖片避免 localStorage 爆滿
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // 限制最大寬度為 800px
+                    const MAX_WIDTH = 800;
                     let width = img.width;
                     let height = img.height;
-                    
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // 轉為 jpeg 格式，並將品質設為 0.7 (大幅度減少檔案大小)
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    setFloorPlan(compressedDataUrl);
+                    setFloorPlan(canvas.toDataURL('image/jpeg', 0.7));
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
     };
-const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4]; // dirNames[4] 為 "中"
+    
+    const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4]; 
+
     return (
         <div style={{padding:'16px', paddingBottom:'80px'}}>
              <div style={cardStyle}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                    <div style={{fontWeight:'bold', fontSize:'18px'}}>
-                        {data.sitting.name}山{data.facing.name}向
-                        <span style={{fontSize:'14px', color:THEME.gray, fontWeight:'normal'}}> (坐{sitDir}向{faceDir})</span>
+                    
+                    {/* 山向文字與左右調節按鈕 (維持乾淨) */}
+                    <div style={{fontWeight:'bold', fontSize:'18px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap'}}>
+                        <div style={{ minWidth: '210px' }}>
+                            {data.sitting.name}山{data.facing.name}向
+                            <span style={{fontSize:'14px', color:THEME.gray, fontWeight:'normal'}}> (坐{sitDir}向{faceDir})</span>
+                        </div>
+                        
+                        <div style={{display: 'flex', border: `1px solid ${THEME.border}`, borderRadius: '6px', overflow: 'hidden'}}>
+                            <button 
+                                onClick={() => { setIsLiveCompass(false); setHeading(h => normalizeAngle(h - 15)); }} 
+                                style={{background: THEME.bgGray, border: 'none', padding: '4px 8px', cursor: 'pointer', borderRight: `1px solid ${THEME.border}`, display: 'flex', alignItems: 'center', color: THEME.black, outline: 'none', WebkitTapHighlightColor: 'transparent'}}
+                                title="逆時針 (上一個山)"
+                            >
+                                <ChevronLeft size={16}/>
+                            </button>
+                            <button 
+                                onClick={() => { setIsLiveCompass(false); setHeading(h => normalizeAngle(h + 15)); }} 
+                                style={{background: THEME.bgGray, border: 'none', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: THEME.black, outline: 'none', WebkitTapHighlightColor: 'transparent'}}
+                                title="順時針 (下一個山)"
+                            >
+                                <ChevronRight size={16}/>
+                            </button>
+                        </div>
                     </div>
+
                     <button onClick={handleSaveClick} style={btnStyle}><Save size={14}/> 保存</button>
                 </div>
                 
@@ -1485,110 +1341,46 @@ const isCenterSelected = selectedSector && selectedSector.guaName === dirNames[4
                     <label style={{fontSize:'14px'}}>
                         <select value={gregMonth} onChange={e => setGregMonth(Number(e.target.value))} style={{border:'1px solid #ddd', padding: '2px'}}>{months.map(m => (<option key={m} value={m}>{m}</option>))}</select>月
                     </label>
-                    <button 
-                        onClick={() => setShowCompassAdjust(!showCompassAdjust)} 
-                        style={{
-                            marginLeft: 'auto', 
-                            fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
-                            border: `1px solid ${THEME.blue}`, background: showCompassAdjust ? THEME.blue : 'white', 
-                            color: showCompassAdjust ? 'white' : THEME.blue, cursor:'pointer', 
-                            display: 'flex', alignItems: 'center', gap: '4px'
-                        }}
-                    >
-                        <Compass size={12}/> 變更坐向
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                        {isLiveCompass && (
+                            <span style={{fontSize: '13px', color: THEME.red, fontWeight: 'bold', fontFamily: 'monospace', marginRight: '2px'}}>
+                                {normalizeAngle(heading).toFixed(1)}°
+                            </span>
+                        )}
+                        <button 
+                            onClick={toggleLiveCompass}
+                            style={{
+                                fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
+                                border: isLiveCompass ? `1px solid ${THEME.red}` : `1px solid ${THEME.blue}`,
+                                background: isLiveCompass ? THEME.red : 'white', 
+                                color: isLiveCompass ? 'white' : THEME.blue,
+                                cursor:'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                                outline: 'none', WebkitTapHighlightColor: 'transparent'
+                            }}
+                        >
+                            <Compass size={12}/> {isLiveCompass ? '鎖定坐向' : '變更坐向'}
+                        </button>
+                    </div>
                 </div>
+                
 
                 {/* --- 按鈕工具列 --- */}
                 <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap', alignItems:'center'}}>
                     <button onClick={() => setShowAnnual(!showAnnual)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #722ed1', background: showAnnual ? '#f9f0ff' : 'white', color: '#722ed1', cursor:'pointer'}}>{showAnnual ? <Eye size={12}/> : <EyeOff size={12}/>} 流年</button>
                     <button onClick={() => setShowMonthly(!showMonthly)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: '1px solid #fa8c16', background: showMonthly ? '#fff7e6' : 'white', color: THEME.orange, cursor:'pointer'}}>{showMonthly ? <Eye size={12}/> : <EyeOff size={12}/>} 流月</button>
+                    
+                    {/* 👇 marginLeft: 'auto' 負責把後面的按鈕推到右邊 👇 */}
                     <button onClick={() => setShowCommercial(true)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', background: '#333', color: 'white', border:'none', marginLeft:'auto', cursor:'pointer'}}><Briefcase size={12}/> 商戰</button>
+                    
                     <button onClick={() => setIsRound(!isRound)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: 'none', background: isRound ? '#333' : 'white', color: isRound ? 'white' : '#333', display: 'flex', alignItems: 'center', cursor:'pointer'}}>
                         {isRound ? <Circle size={12}/> : <Grid size={12}/>} {isRound ? '圓盤' : '方盤'}
                     </button>
-                    <button 
-                        onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} 
-                        style={{
-                            fontSize:'12px', padding:'4px 8px', borderRadius:'12px', 
-                            border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333',
-                            background: showFloorPlanPanel ? '#333' : 'white', 
-                            color: showFloorPlanPanel ? 'white' : '#333',
-                            display: 'flex', alignItems: 'center', cursor:'pointer'
-                        }}
-                    >
+
+                    <button onClick={() => setShowFloorPlanPanel(!showFloorPlanPanel)} style={{fontSize:'12px', padding:'4px 8px', borderRadius:'12px', border: showFloorPlanPanel ? `1px solid ${'white'}` : '1px solid #333', background: showFloorPlanPanel ? '#333' : 'white', color: showFloorPlanPanel ? 'white' : '#333', display: 'flex', alignItems: 'center', gap: '4px', cursor:'pointer'}}>
                         <Map size={12}/> 平面圖
                     </button>
                 </div>
 
-                {showCompassAdjust && (
-                    <div style={{
-                        marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', 
-                        background: THEME.bgGray, border: `1px solid ${THEME.border}`, 
-                        padding: '16px 20px', borderRadius: '12px', animation: 'fadeIn 0.2s ease-in-out'
-                    }}>
-                        <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
-                            <span style={{fontSize: '14px', color: THEME.black, fontWeight: 'bold'}}>即時微調坐向</span>
-                            
-                            {/* 類似 iOS 的 Stepper 膠囊設計 */}
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: '4px', 
-                                background: THEME.white, padding: '4px', 
-                                borderRadius: '8px', border: `1px solid ${THEME.border}`,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                            }}>
-                                <button 
-                                    onClick={() => setHeading(h => normalizeAngle(h - 0.5))} 
-                                    style={{
-                                        background: THEME.bgGray, border: 'none', color: THEME.black, 
-                                        width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', 
-                                        fontSize: '18px', fontWeight: 'bold',
-                                        // 👇 強制完美置中
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
-                                    }}
-                                >-</button>
-                                
-                                <input 
-                                    type="number" 
-                                    value={Number(Math.round(heading * 10) / 10).toString()} 
-                                    onChange={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 0;
-                                        setHeading(normalizeAngle(val));
-                                    }} 
-                                    style={{
-                                        width: '60px', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', 
-                                        padding: '4px 0', border: 'none', outline: 'none', 
-                                        color: THEME.blue, background: 'transparent'
-                                    }}
-                                />
-                                
-                                <button 
-                                    onClick={() => setHeading(h => normalizeAngle(h + 0.5))} 
-                                    style={{
-                                        background: THEME.bgGray, border: 'none', color: THEME.black, 
-                                        width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', 
-                                        fontSize: '18px', fontWeight: 'bold',
-                                        // 👇 強制完美置中
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1
-                                    }}
-                                >+</button>
-                            </div>
-                        </div>
-                        
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="360" 
-                            step="0.1" 
-                            value={heading} 
-                            onChange={(e) => setHeading(Number(e.target.value))} 
-                            style={{width:'100%', accentColor: THEME.blue, margin: 0}} 
-                        />
-                    </div>
-                )}
-
-                {/* --- 平面圖控制面板 (只在 showFloorPlanPanel 為 true 時顯示) --- */}
                 {showFloorPlanPanel && (
                     <div style={{...cardStyle, backgroundColor: '#f0f2f5', marginTop: '10px', animation: 'fadeIn 0.3s'}}>
                         <div style={sectionTitle}><Map size={16}/> 平面圖設置</div>
