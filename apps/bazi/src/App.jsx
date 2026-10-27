@@ -894,16 +894,22 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
   };
 
   return (
-    <div style={{ padding: '20px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg }}>
-       <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: `1px solid ${THEME.border}` }}>
+    <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: `1px solid ${THEME.border}` }}>
           <h3 style={{ margin: '0 0 20px 0', textAlign: 'center', color: THEME.black, fontSize: '18px', fontWeight: 'bold' }}>{initialData ? '修改出生資料' : '請輸入出生資料'}</h3>
           
+          {/* 🌟 新增：付費紀錄鎖定提示 */}
+          {initialData?.isPaid && (
+              <div style={{ padding: '10px', backgroundColor: '#fff1f0', border: '1px solid #ffa39e', borderRadius: '8px', color: THEME.red, fontSize: '13px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Lock size={16} /> 此命盤已解鎖付費命書，為確保報告準確性，僅開放修改姓名。
+              </div>
+          )}
+
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>姓名</label>
             <input type="text" value={formData.name} onChange={e => handleSolarChange('name', e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
           </div>
           
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '20px', opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>性別</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                  <button onClick={() => handleSolarChange('gender', '1')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${formData.gender === '1' ? THEME.blue : THEME.border}`, backgroundColor: formData.gender === '1' ? THEME.bgBlue : THEME.white, color: formData.gender === '1' ? THEME.blue : THEME.black, fontWeight: 'bold' }}>男 (乾造)</button>
@@ -911,7 +917,7 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
               </div>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '16px', opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
              <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>輸入方式</label>
              <div style={{ display: 'flex', gap: '10px' }}>
                 <button onClick={() => setInputType('solar')} style={getTabBtnStyle(inputType === 'solar')}>西曆</button>
@@ -920,67 +926,62 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
              </div>
           </div>
 
-        {inputType === 'solar' && (
-              <>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> <select value={formData.year} onChange={e => handleSolarChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={formData.month} onChange={e => handleSolarChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}</option>)}</select> </div>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={formData.day} onChange={e => handleSolarChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {solarDays.map(d => <option key={d} value={d}>{d}</option>)} </select> </div>
-                </div>
-                <div style={{ marginBottom: '24px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleSolarChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h =><option key={h} value={h}>{pad(h)}</option>)}</select> </div>
-                    <span>:</span>
-                    <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleSolarChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
+          <div style={{ opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
+            {inputType === 'solar' && (
+                  <>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> <select value={formData.year} onChange={e => handleSolarChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={formData.month} onChange={e => handleSolarChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}</option>)}</select> </div>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={formData.day} onChange={e => handleSolarChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {solarDays.map(d => <option key={d} value={d}>{d}</option>)} </select> </div>
                     </div>
-                </div>
-              </>
-          )}
-
-        {inputType === 'lunar' && (
-              <>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>農曆年</label> <select value={lunarData.year} onChange={e => handleLunarChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={lunarData.month} onChange={e => handleLunarChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {Array.from({length:12},(_,i)=>i+1).map(m => ( <option key={m} value={m}>{getLunarMonthText(m)}</option> ))} </select> </div>
-                    <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={lunarData.day} onChange={e => handleLunarChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {lunarDays.map(d => ( <option key={d} value={d}>{getLunarDayText(d)}</option> ))} </select> </div>
-                </div>
-                <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
-                      <input type="checkbox" id="leapMonth" checked={lunarData.isLeap} onChange={e => handleLunarChange('isLeap', e.target.checked)} style={{ marginRight: '8px', width: '18px', height: '18px' }} />
-                      <label htmlFor="leapMonth" style={{ fontSize: '13px', color: THEME.black }}>是閏月 (例如閏四月)</label>
-                </div>
-                <div style={{ marginBottom: '24px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ flex: 1 }}> <select value={lunarData.hour} onChange={e => handleLunarChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{pad(h)}</option>)}</select> </div>
-                    <span>:</span>
-                    <div style={{ flex: 1 }}> <select value={lunarData.minute} onChange={e => handleLunarChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleSolarChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h =><option key={h} value={h}>{pad(h)}</option>)}</select> </div>
+                        <span>:</span>
+                        <div style={{ flex: 1 }}> <select value={formData.minute} onChange={e => handleSolarChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
+                        </div>
                     </div>
-                </div>
-              </>
-          )}
+                  </>
+              )}
 
-          {inputType === 'ganzhi' && (
-              <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '10px' }}>點選下方修改四柱</div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                      {renderPillarInput('時柱', 'time')} {renderPillarInput('日柱', 'day')} {renderPillarInput('月柱', 'month')} {renderPillarInput('年柱', 'year')}
+            {inputType === 'lunar' && (
+                  <>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>農曆年</label> <select value={lunarData.year} onChange={e => handleLunarChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={lunarData.month} onChange={e => handleLunarChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {Array.from({length:12},(_,i)=>i+1).map(m => ( <option key={m} value={m}>{getLunarMonthText(m)}</option> ))} </select> </div>
+                        <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={lunarData.day} onChange={e => handleLunarChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}> {lunarDays.map(d => ( <option key={d} value={d}>{getLunarDayText(d)}</option> ))} </select> </div>
+                    </div>
+                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+                          <input type="checkbox" id="leapMonth" checked={lunarData.isLeap} onChange={e => handleLunarChange('isLeap', e.target.checked)} style={{ marginRight: '8px', width: '18px', height: '18px' }} />
+                          <label htmlFor="leapMonth" style={{ fontSize: '13px', color: THEME.black }}>是閏月 (例如閏四月)</label>
+                    </div>
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1 }}> <select value={lunarData.hour} onChange={e => handleLunarChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{hours.map(h => <option key={h} value={h}>{pad(h)}</option>)}</select> </div>
+                        <span>:</span>
+                        <div style={{ flex: 1 }}> <select value={lunarData.minute} onChange={e => handleLunarChange('minute', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{minutes.map(m => <option key={m} value={m}>{pad(m)}</option>)}</select> </div>
+                        </div>
+                    </div>
+                  </>
+              )}
+
+              {inputType === 'ganzhi' && (
+                  <div style={{ marginBottom: '24px' }}>
+                      <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '10px' }}>點選下方修改四柱</div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                          {renderPillarInput('時柱', 'time')} {renderPillarInput('日柱', 'day')} {renderPillarInput('月柱', 'month')} {renderPillarInput('年柱', 'year')}
+                      </div>
                   </div>
-              </div>
-          )}
+              )}
+          </div>
 
           <button onClick={handleStartCalculate} style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
             <Sparkles size={20} />
-            {initialData ? '重新排盤' : '開始排盤'}
+            {initialData ? '儲存修改並排盤' : '開始排盤'}
           </button>
-        </div>
-        <GanZhiModalPicker 
-            title={modalConfig.pillar ? { year: '年柱', month: '月柱', day: '日柱', time: '時柱' }[modalConfig.pillar] : ''}
-            isOpen={modalConfig.isOpen} onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
-            initialGan={modalConfig.pillar ? manualPillars[modalConfig.pillar].gan : ''} initialZhi={modalConfig.pillar ? manualPillars[modalConfig.pillar].zhi : ''}
-            onConfirm={handlePickerConfirm} colorTheme={colorTheme}
-        />
-      </div>
+       </div>
     );
 };
 
@@ -2029,16 +2030,18 @@ return (
                     ) : ( 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}> 
                             <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
-                                    農曆 {data.lunarDate} 
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
+                                        農曆 {data.lunarDate} 
+                                    </div>
+                                    {/* 🌟 修正：付費後隱藏時辰微調按鈕 */}
+                                    {!data.isPaid && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                        </div>
+                                    )}
                                 </div>
-                                {/* 時辰加減按鈕 */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                    <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                </div>
-                            </div>
                             {/* 節氣天數 */}
                             {data.jieQiSpan && (
                                 <div style={{ fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
@@ -2058,9 +2061,15 @@ return (
                     <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
                         <Edit3 size={13} /> 批注 
                     </button>
-                    <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                        <RefreshCw size={13} /> 重排 
-                    </button>
+                    {!data.isPaid ? (
+                        <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <RefreshCw size={13} /> 重排 
+                        </button>
+                    ) : (
+                        <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center', opacity: 0.6 }}> 
+                            <Lock size={13} /> 重排 
+                        </button>
+                    )}
                     
                     {/* 第二排 */}
                     <button 
@@ -2293,15 +2302,15 @@ export default function BaziApp() {
         let currentBookmarks = [];
         try {
             // 先讀取最新的所有紀錄
-            const { value: savedBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-            if (savedBk) {
-                currentBookmarks = JSON.parse(savedBk).map(b => {
-                    if (b.solarDate && b.solarDate.includes('undefined')) {
-                        b.solarDate = '無';
-                        b.lunarDate = '干支四柱排盤';
-                    }
-                    return b;
-                });
+            let { value: savedBk } = await Preferences.get({ key: 'mrk_shared_bookmarks' });
+            
+            // 【向下相容】如果共用紀錄是空的，嘗試讀取舊版八字紀錄並搬移過來
+            if (!savedBk) {
+                const { value: oldBk } = await Preferences.get({ key: 'bazi_bookmarks' });
+                if (oldBk) {
+                    savedBk = oldBk;
+                    await Preferences.set({ key: 'mrk_shared_bookmarks', value: oldBk });
+                }
             }
 
             const { value: savedLiJi } = await Preferences.get({ key: 'bazi_li_ji_rule' });
@@ -2347,8 +2356,8 @@ export default function BaziApp() {
                         dayMaster: dm + dmElement,
                         monthBranch: baziSource.monthZhi || '', 
                         rawDate: parsedData.rawDate,
-                        isPaid: true, 
-                        paidAt: nowTime 
+                        baziIsPaid: true, 
+                        baziPaidAt: nowTime
                     };
 
                     const existingIndex = currentBookmarks.findIndex(b => b.id === dataToSave.id);
@@ -2398,6 +2407,11 @@ export default function BaziApp() {
      if (libStatus !== 'ready') return;
      try {
         const result = calculateBaziResult(formData, ziHourRule, liJiRule);
+        
+        // 🌟 確保重新排盤時，若已有命書資料則一併繼承
+        if (formData.aiReport) result.aiReport = formData.aiReport;
+        if (formData.paidAt) result.paidAt = formData.paidAt;
+        
         setBaziData(result); 
         setEditingData(null); 
         setView('result');
@@ -2426,9 +2440,9 @@ export default function BaziApp() {
               rawDate: data.rawDate || data,
               
               // ★ 將解鎖狀態與命書文字一併存入
-              isPaid: data.isPaid || false,
-              aiReport: data.aiReport || null,
-              paidAt: data.paidAt || (data.isPaid ? Date.now() : null)
+              baziIsPaid: data.isPaid || false,
+              baziAiReport: data.aiReport || null,
+              baziPaidAt: data.paidAt || (data.isPaid ? Date.now() : null)
           };
 
           let newBk = [...bookmarks];
@@ -2451,10 +2465,28 @@ export default function BaziApp() {
   };
   
   const deleteBookmark = async (id) => {
-      if (window.confirm('確定要刪除這條紀錄嗎？')) {
-          const newBk = bookmarks.filter(b => b.id !== id);
+      // 🌟 1. 找出該筆紀錄
+      const target = bookmarks.find(b => (typeof b === 'string' ? b : b.id) === id);
+      
+      // 🌟 2. 判斷八字與紫微是否已付費 (包含向後相容的 isPaid)
+      const isBaziPaid = target && (target.baziIsPaid === true || target.isPaid === true || target.rawDate?.baziIsPaid === true || target.rawDate?.isPaid === true);
+      const isZwdsPaid = target && (target.zwdsIsPaid === true || target.rawDate?.zwdsIsPaid === true);
+
+      // 🌟 3. 根據付費狀態，動態組合警告訊息
+      let msg = '確定要刪除這條紀錄嗎？';
+      
+      if (isBaziPaid && isZwdsPaid) {
+          msg = '⚠️ 嚴重警告：此紀錄已解鎖【八字】與【紫微斗數】雙重付費 AI 命書！\n\n刪除後兩份命書將永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      } else if (isBaziPaid) {
+          msg = '⚠️ 警告：此命盤已解鎖【八字】付費 AI 命書！\n\n刪除後命書將永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      } else if (isZwdsPaid) {
+          msg = '⚠️ 警告：此命盤已在【紫微斗數】解鎖付費 AI 命書！\n\n雖然您現在使用的是八字，但刪除後紫微命書也會永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      }
+
+      // 🌟 4. 執行刪除確認
+      if (window.confirm(msg)) {
+          const newBk = bookmarks.filter(b => (typeof b === 'string' ? b : b.id) !== id);
           setBookmarks(newBk); 
-          // 關鍵修改：把原來的 bazi_bookmarks 或 zwds_bookmarks 改成共同的 mrk_shared_bookmarks
           await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
       }
   };
@@ -2462,20 +2494,24 @@ export default function BaziApp() {
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('此書籤資料版本過舊，無法重新排盤'); return; }
       try {
+          // 🌟 優先讀取八字專屬欄位 baziIsPaid (並相容舊版的 isPaid 防遺失)
+          const isPaidStatus = savedItem.baziIsPaid === true || savedItem.isPaid === true || savedItem.rawDate?.baziIsPaid === true || savedItem.rawDate?.isPaid === true;
+          const paidTime = savedItem.baziPaidAt || savedItem.paidAt || savedItem.rawDate?.baziPaidAt || savedItem.rawDate?.paidAt || null;
+
           const raw = { 
               ...savedItem.rawDate, 
-              isPaid: savedItem.isPaid === true || savedItem.rawDate?.isPaid === true,
-              paidAt: savedItem.paidAt || savedItem.rawDate?.paidAt || null 
+              isPaid: isPaidStatus,
+              paidAt: paidTime 
           };
           
           const freshResult = calculateBaziResult(raw, ziHourRule, liJiRule);
           freshResult.id = savedItem.id;
           freshResult.notes = savedItem.notes || '';
           
-          // ★ 讀取書籤時，把存在裡面的命書塞回排盤結果中
-          freshResult.isPaid = savedItem.isPaid || raw.isPaid || false; 
-          freshResult.paidAt = savedItem.paidAt || raw.paidAt || null; 
-          freshResult.aiReport = savedItem.aiReport || null;
+          // 🌟 將八字專屬的命書塞回排盤結果中 (不讀紫微的報告)
+          freshResult.isPaid = isPaidStatus; 
+          freshResult.paidAt = paidTime; 
+          freshResult.aiReport = savedItem.baziAiReport || savedItem.aiReport || null;
 
           setBaziData(freshResult); 
           setView('result');
@@ -2531,7 +2567,17 @@ export default function BaziApp() {
                     bookmarks={bookmarks}
                     onSelect={openBookmark}
                     onDelete={deleteBookmark}
-                    onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
+                    onEdit={(b) => { 
+                        setEditingData({
+                            ...b.rawDate, 
+                            id: b.id,
+                            // 🌟 確保將八字專屬付費屬性傳遞回輸入頁 (轉換回內部共用名)
+                            isPaid: b.baziIsPaid || b.isPaid,
+                            aiReport: b.baziAiReport || b.aiReport,
+                            paidAt: b.baziPaidAt || b.paidAt
+                        }); 
+                        setView('input'); 
+                    }}
                   />
                   
                   <div style={{ marginTop: '20px' }}><Adsterra /></div>

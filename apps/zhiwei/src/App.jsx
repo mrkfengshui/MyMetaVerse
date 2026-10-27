@@ -1655,7 +1655,18 @@ export default function ZwdsApp() {
   useEffect(() => {
     const loadData = async () => {
         try {
-            const { value: savedBk } = await Preferences.get({ key: 'zwds_bookmarks' });
+            // 先讀取最新的共用紀錄
+            let { value: savedBk } = await Preferences.get({ key: 'mrk_shared_bookmarks' });
+            
+            // 【向下相容】如果共用紀錄是空的，嘗試讀取舊版紫微紀錄並搬移過來
+            if (!savedBk) {
+                const { value: oldBk } = await Preferences.get({ key: 'zwds_bookmarks' });
+                if (oldBk) {
+                    savedBk = oldBk;
+                    await Preferences.set({ key: 'mrk_shared_bookmarks', value: oldBk });
+                }
+            }
+            
             if (savedBk) setBookmarks(JSON.parse(savedBk));
             
             // 讀取設定
