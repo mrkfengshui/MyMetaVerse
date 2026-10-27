@@ -504,8 +504,7 @@ const calculateBaziResult = (formData, ziHourRule, liJiRule = 'day') => {
     const dayText = stdDays[dVal - 1] || `${dVal}日`;
     const leapText = isLeap ? '閏' : ''; 
 
-    const lunarString = `${bazi.getYearGan()}${bazi.getYearZhi()}年${leapText}${monthText}${dayText}日${bazi.getTimeZhi()}時`;
-    
+    const lunarString = `${bazi.getYearGan()}${bazi.getYearZhi()}年${lunar.getMonth() < 0 ? '閏' : ''}${lunar.getMonthInChinese().replace('闰', '')}月${lunar.getDayInChinese()}日${bazi.getTimeZhi()}時`;    
     const calculateDaYun = (bz, gender, startYunYear, birthYear) => {
         const yearGanIdx = TIANGAN.indexOf(bz.yearGan);
         const isYangYear = yearGanIdx % 2 === 0;
