@@ -1719,32 +1719,54 @@ export default function ZwdsApp() {
      } catch(e) { console.error(e); alert('計算異常: ' + e.message); }
   };
   
-  const saveBookmark = async (data) => {
-        const dataToSave = {
-            id: data.id || Date.now(),
-            name: data.name,
-            genderText: data.genderText,
-            solarDate: data.solarDateStr,
-            lunarDate: data.lunarDateStr,
-            mingGongStars: data.mingGongStars, // 紫微專屬
-            notes: data.notes || '',
-            rawDate: data.rawDate 
-        };
+  const saveBookmark = async (data, silent = false) => {
+      try {
+          const dataToSave = {
+              id: data.id || Date.now(),
+              name: data.name,
+              genderText: data.genderText,
+              solarDate: data.solarDateStr,
+              lunarDate: data.lunarDateStr,
+              mingGongStars: data.mingGongStars, // 紫微專屬
+              notes: data.notes || '',
+              rawDate: data.rawDate 
+          };
 
-        let newBk = [...bookmarks];
-        const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
+          let newBk = [...bookmarks];
+          // 1. 優先透過 ID 尋找
+          let existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
 
-        if (existingIndex >= 0) { 
-            // 【關鍵修改】合併現有紀錄，保留另一個 App 的特有資料
-            newBk[existingIndex] = { ...newBk[existingIndex], ...dataToSave }; 
-            alert('紀錄已更新'); 
-        } else { 
-            newBk = [dataToSave, ...bookmarks]; 
-            alert('已保存至紀錄'); 
-        }
+          // 🌟 2. 智能配對：如果 ID 找不到，改用「姓名(不分大小寫) + 時間 + 性別」精準配對
+          if (existingIndex === -1 && data.rawDate) {
+              const normalize = (str) => (str || '').trim().toLowerCase();
+              existingIndex = bookmarks.findIndex(b => 
+                  normalize(b.name) === normalize(data.name) &&
+                  b.rawDate?.year === data.rawDate.year &&
+                  b.rawDate?.month === data.rawDate.month &&
+                  b.rawDate?.day === data.rawDate.day &&
+                  b.rawDate?.hour === data.rawDate.hour &&
+                  b.rawDate?.minute === data.rawDate.minute &&
+                  b.rawDate?.gender === data.rawDate.gender
+              );
+          }
 
-        setBookmarks(newBk); 
-        await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
+          if (existingIndex >= 0) { 
+              // 🌟 找到同一個人！強制沿用舊的 ID 並合併資料
+              const existingRecord = newBk[existingIndex];
+              dataToSave.id = existingRecord.id; 
+              newBk[existingIndex] = { ...existingRecord, ...dataToSave }; 
+              if (!silent) alert('紀錄已成功與現有命盤合併！'); 
+          } else { 
+              newBk = [dataToSave, ...bookmarks]; 
+              if (!silent) alert('已保存至紀錄'); 
+          }
+
+          setBookmarks(newBk); 
+          await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
+      } catch (error) {
+          console.error("保存失敗:", error);
+          if (!silent) alert("保存失敗，請重試。");
+      }
   };
 
   const deleteBookmark = async (id) => {
