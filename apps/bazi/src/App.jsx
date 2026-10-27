@@ -2303,14 +2303,27 @@ export default function BaziApp() {
         try {
             // 先讀取最新的所有紀錄
             let { value: savedBk } = await Preferences.get({ key: 'mrk_shared_bookmarks' });
-            
-            // 【向下相容】如果共用紀錄是空的，嘗試讀取舊版八字紀錄並搬移過來
-            if (!savedBk) {
-                const { value: oldBk } = await Preferences.get({ key: 'bazi_bookmarks' });
-                if (oldBk) {
-                    savedBk = oldBk;
-                    await Preferences.set({ key: 'mrk_shared_bookmarks', value: oldBk });
-                }
+            const { value: oldBk } = await Preferences.get({ key: 'bazi_bookmarks' });
+
+            // 強制把舊的 bazi_bookmarks 跟新的 mrk_shared_bookmarks 合併
+            let mergedBookmarks = [];
+            if (oldBk) {
+                mergedBookmarks = [...JSON.parse(oldBk)];
+            }
+            if (savedBk) {
+                const newBks = JSON.parse(savedBk);
+                // 過濾掉重複的 ID
+                newBks.forEach(nb => {
+                    if (!mergedBookmarks.find(mb => mb.id === nb.id)) {
+                        mergedBookmarks.push(nb);
+                    }
+                });
+            }
+
+            if (mergedBookmarks.length > 0) {
+                currentBookmarks = mergedBookmarks;
+                // 把合併後完整的資料寫回共用區
+                await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(currentBookmarks) });
             }
 
             const { value: savedLiJi } = await Preferences.get({ key: 'bazi_li_ji_rule' });
