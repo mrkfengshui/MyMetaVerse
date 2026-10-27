@@ -2431,50 +2431,51 @@ export default function BaziApp() {
      } catch(e) { console.error(e); alert('日期格式錯誤或計算異常'); }
   };
 
-  const saveBookmark = async (data, silent = false) => {
-      try {
-          const baziSource = data.bazi || {};
-          const dm = baziSource.dayGan || '';
-          const dmElement = WUXING_MAP[dm] || '';
+  const saveBookmark = async (data) => {
+        const dataToSave = {
+            id: data.id || Date.now(),
+            name: data.name,
+            genderText: data.genderText,
+            solarDate: data.solarDateStr,
+            lunarDate: data.lunarDateStr,
+            mingGongStars: data.mingGongStars, // 紫微專屬
+            notes: data.notes || '',
+            rawDate: data.rawDate 
+        };
 
-          const finalSolarDate = data.isManual ? '無' : (data.solarDate || '');
-          const finalLunarDate = data.isManual ? '干支四柱排盤' : (data.lunarDate || '');
+        let newBk = [...bookmarks];
+        // 1. 優先透過 ID 尋找
+        let existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
 
-          // 確保建立要儲存的完整物件
-          const dataToSave = {
-              id: data.id || Date.now(),
-              name: data.name,
-              genderText: data.genderText || (data.gender === '1' ? '男' : '女'),
-              solarDate: finalSolarDate,
-              lunarDate: finalLunarDate,
-              dayMaster: dm + dmElement, // 八字專屬
-              monthBranch: baziSource.monthZhi || '', // 八字專屬
-              notes: data.notes || '',
-              rawDate: data.rawDate || data,
+        // 🌟 2. 智能配對：如果 ID 找不到，改用「姓名 + 時間 + 性別」精準配對
+        if (existingIndex === -1 && data.rawDate) {
+              // 建立一個標準化函數：去除前後空白，並全部轉為小寫
+              const normalize = (str) => (str || '').trim().toLowerCase();
               
-              // ★ 將解鎖狀態與命書文字一併存入
-              baziIsPaid: data.isPaid || false,
-              baziAiReport: data.aiReport || null,
-              baziPaidAt: data.paidAt || (data.isPaid ? Date.now() : null)
-          };
-
-          let newBk = [...bookmarks];
-          const existingIndex = bookmarks.findIndex(b => b.id === dataToSave.id);
-          
-          if (existingIndex >= 0) { 
-              newBk[existingIndex] = { ...newBk[existingIndex], ...dataToSave }; 
-              if (!silent) alert('紀錄已更新 (命書狀態已同步)'); 
-          } else { 
-              newBk = [dataToSave, ...bookmarks]; 
-              if (!silent) alert('已保存至紀錄'); 
+              existingIndex = bookmarks.findIndex(b => 
+                  normalize(b.name) === normalize(data.name) &&
+                  b.rawDate?.year === data.rawDate.year &&
+                  b.rawDate?.month === data.rawDate.month &&
+                  b.rawDate?.day === data.rawDate.day &&
+                  b.rawDate?.hour === data.rawDate.hour &&
+                  b.rawDate?.minute === data.rawDate.minute &&
+                  b.rawDate?.gender === data.rawDate.gender
+              );
           }
-          
-          setBookmarks(newBk); 
-          await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
-      } catch (error) {
-          console.error("保存失敗:", error);
-          if (!silent) alert("保存失敗，請重試。");
-      }
+
+        if (existingIndex >= 0) { 
+            // 🌟 找到同一個人！強制沿用舊的 ID 並合併資料
+            const existingRecord = newBk[existingIndex];
+            dataToSave.id = existingRecord.id; 
+            newBk[existingIndex] = { ...existingRecord, ...dataToSave }; 
+            alert('紀錄已成功與現有命盤合併！'); 
+        } else { 
+            newBk = [dataToSave, ...bookmarks]; 
+            alert('已保存至紀錄'); 
+        }
+
+        setBookmarks(newBk); 
+        await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
   };
   
   const deleteBookmark = async (id) => {

@@ -556,7 +556,7 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
         mingZhu: mingZhuMap[mingPalace.zhiIdx] || 'N/A',
         shenZhu: shenZhuMap[yearZhiIdx] || 'N/A', 
         douJun: DIZHI[(2 + (lunarMonth - 1) - timeZhiIdx + 12) % 12],
-        lunarDateStr: `${lunar.getYearInGanZhi()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日${lunar.getTimeZhi()}時`,
+        lunarDateStr: `${lunar.getYearInGanZhi()}年${lunar.getMonth() < 0 ? '閏' : ''}${lunar.getMonthInChinese().replace('闰', '')}月${lunar.getDayInChinese()}日${lunar.getTimeZhi()}時`,
         solarDateStr: `${formData.year}-${String(formData.month).padStart(2,'0')}-${String(formData.day).padStart(2,'0')} ${String(formData.hour).padStart(2,'0')}:${String(formData.minute).padStart(2,'0')}`,
         grid: gridPalaces,
         rawDate: formData,
