@@ -196,7 +196,9 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   const handleGenerateAIReport = async (overrideWuxing = null) => {
       setIsAnalyzing(true);
       
-      let prompt = `你現在是一位專業、親切且具備深厚玄學素養的風水命理大師。請根據以下資料，為我撰寫一份約 1000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【許甯博風水命理館】所有。\n\n`;
+      let isChildBeforeDaYun = false; // 🌟 1. 新增判斷變數：是否處於童限（未入大運）
+      
+      let prompt = `你現在是一位專業、親切且具備深厚玄學素養的徐子平大師。請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【許甯博風水命理館】所有。\n\n`;
       
       prompt += `【基本資料】\n`;
       prompt += `姓名：${data.name || '未命名'}\n`;
@@ -205,16 +207,36 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       
       if (appType === 'bazi' && data.bazi) {
           prompt += `八字四柱：${data.bazi.yearGan}${data.bazi.yearZhi} ${data.bazi.monthGan}${data.bazi.monthZhi} ${data.bazi.dayGan}${data.bazi.dayZhi} ${data.bazi.timeGan}${data.bazi.timeZhi}\n`;
+          prompt += `\n【日元分析特別指引】：請根據日元五行特性進行深度剖析，例如甲木參天、乙木柔弱等，並結合生肖與節氣進行生動的描述。\n`;
           
           if (data.daYuns && data.daYuns.length > 0) {
               const currentYear = new Date().getFullYear();
-              const currentDy = data.daYuns.find(dy => currentYear >= dy.startYear && currentYear <= (dy.startYear + 9));
-              
-              if (currentDy) {
-                  prompt += `當前大運：【${currentDy.gan}${currentDy.zhi}】運 (起於西曆 ${currentDy.startYear} 年，虛歲 ${currentDy.startAge} 歲)\n`;
-                  const lns = currentDy.liuNians.filter(ln => ln.year >= currentYear && ln.year <= currentYear + 1);
-                  if (lns.length > 0) {
-                      prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
+              const birthYear = parseInt(data.rawDate.year);
+              const firstYunYear = data.daYuns[0].startYear;
+
+              if (currentYear < firstYunYear) {
+                  isChildBeforeDaYun = true; // 🌟 2. 觸發童限標籤
+                  prompt += `狀態：命主目前尚未入大運 (將於西曆 ${firstYunYear} 年起運)。\n`;
+                  
+                  const recentLns = [];
+                  const targetStartYear = Math.max(currentYear, birthYear); 
+                  for (let y = targetStartYear; y < targetStartYear + 4; y++) {
+                      try {
+                          const tempLunar = window.Solar.fromYmd(y, 6, 15).getLunar();
+                          recentLns.push(`${y}年(${tempLunar.getYearInGanZhi()}年)`);
+                      } catch(e){}
+                  }
+                  if (recentLns.length > 0) {
+                      prompt += `近期流年：${recentLns.join('、')}\n`;
+                  }
+              } else {
+                  const currentDy = data.daYuns.find(dy => currentYear >= dy.startYear && currentYear <= (dy.startYear + 9));
+                  if (currentDy) {
+                      prompt += `當前大運：【${currentDy.gan}${currentDy.zhi}】運 (起於西曆 ${currentDy.startYear} 年，虛歲 ${currentDy.startAge} 歲)\n`;
+                      const lns = currentDy.liuNians.filter(ln => ln.year >= currentYear && ln.year <= currentYear + 3);
+                      if (lns.length > 0) {
+                          prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
+                      }
                   }
               }
           }
@@ -232,14 +254,24 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
       prompt += `\n【報告要求段落】請按以下結構撰寫：\n`;
       prompt += `⚠️ 排版規定：請全部使用文字與列點 (Bullet points) 呈現，絕對不要使用表格 (Table)。\n`;
-      prompt += `1. 原局總論與核心性格特質,他給別人的感覺及他真實的內心 (引述經典古籍如《滴天髓》、《千里命稿》、《窮通寶鑑》、《三命通會》、《子平真詮》、《淵海子平》、《神峰通考》或《紫微斗數全書》)\n`;
+      prompt += `1. 原局總論 (包括生肖、喜用神、可以合作的生肖) 與核心性格特質,他給別人的感覺及他真實的內心 (引述經典古籍如《滴天髓》、《千里命稿》、《窮通寶鑑》、《三命通會》、《子平真詮》、《淵海子平》、《神峰通考》或《紫微斗數全書》)\n`;
       prompt += `2. 人生頭30年曾/將會發生的3件大事，如沒有不要老作 (事件越具體越好,例如獲奬、傑出成就、車禍、先天疾病)\n`;
-      prompt += `3. 天賦事業與財富格局分析 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
-      prompt += `4. 感情婚姻與伴侶特質\n`;
-      prompt += `5. 疾厄與中醫五行養生建議\n`;
-      prompt += `6. 當前十年大運與前後3年大勢詳述 (如果命主是小童, 不要提及未入大運或/及出世前的流年運勢)\n`;
-      prompt += `7. 開運與幸運色/吉方建議，行為建議\n`;
-
+      
+      // 🌟 3. 根據幼童狀態，動態替換 AI 的分析重點要求
+      if (isChildBeforeDaYun) {
+          prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
+          prompt += `4. 未來感情婚姻與伴侶特質\n`;
+          prompt += `5. 疾厄與中醫五行養生建議 (包含幼兒期體質與健康注意事項)\n`;
+          prompt += `6. 近期流年大勢詳述：由於命主尚未起運（處於童限），請將近期流年的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，絕對禁止提及職場升遷、事業投資、婚姻家庭等不符合其年齡層的內容。\n`;
+          prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
+      } else {
+          prompt += `3. 天賦事業與財富格局分析 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
+          prompt += `4. 感情婚姻與伴侶特質\n`;
+          prompt += `5. 疾厄與中醫五行養生建議\n`;
+          prompt += `6. 當前十年大運與前後3年大勢詳述 (如果命主是小童, 不要提及未入大運或/及出世前的流年運勢)\n`;
+          prompt += `7. 開運與幸運色/吉方建議，行為建議\n`;
+      }
+      
       // 👇 修正：只有當管理員解鎖 (isAdminUnlocked 為 true) 時，才要求 AI 給出改名建議 👇
       if (isAdminUnlocked) {
           if (overrideWuxing && overrideWuxing.length > 0) {
@@ -278,7 +310,101 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
       } catch (error) {
           console.error("AI 錯誤詳細資訊:", error);
-          alert("❌ 命書生成失敗\n\n伺服器繁忙或網路連線異常，請稍後再試。");
+          
+          alert("⚠️ AI 伺服器目前大塞車！\n\n您的付款紀錄已經安全保存（已解鎖）。\n系統先為您提供【經典精華版命盤析論】，您可以稍後隨時點擊按鈕，免費重試生成完整的 5000 字深度命書！");
+          
+          // ==========================================
+          // 🌟 離線保底假 AI 命書 (精華版 Template)
+          // ==========================================
+          let fallbackText = `### ⚠️ 系統提示：AI 深度運算排隊中\n\n`;
+          fallbackText += `*親愛的客戶，由於目前玄學 AI 伺服器運算量過大，深度命書正在塞車中。您的命盤已成功標記為【已付款解鎖】，請您稍後再點擊下方按鈕免費重新生成完整報告。*\n\n`;
+          fallbackText += `*在此之前，系統先為您提供本地大數據萃取的**【經典精華版析論】**：*\n\n---\n\n`;
+          
+          if (appType === 'bazi' && data.bazi) {
+              const dayGan = data.bazi.dayGan;
+              const wuxing = utils.WUXING_MAP[dayGan] || '';
+              
+              // 十干滴天髓古賦
+              const poemMap = {
+                  '甲': '甲木參天，脫胎要火。春不容金，秋不容土。火熾乘龍，水宕騎虎。地潤天和，植立千古。',
+                  '乙': '乙木雖柔，刲羊解牛。懷丁抱丙，跨鳳乘猴。虛濕之地，騎馬亦憂。藤蘿繫甲，可春可秋。',
+                  '丙': '丙火猛烈，欺霜侮雪。能煆庚金，逢辛反怯。土眾成慈，水猖顯節。虎馬犬鄉，甲木若來，必當焚滅。',
+                  '丁': '丁火柔中，內性昭融。抱乙而孝，合壬而忠。旺而不烈，衰而不窮。如有嫡母，可秋可冬。',
+                  '戊': '戊土固重，既中且正。靜翕動闢，萬物司命。水潤物生，火燥物病。若在艮坤，怕沖宜靜。',
+                  '己': '己土卑濕，中正蓄藏。不愁木盛，不畏水狂。火少火晦，金多金光。若要物旺，宜助宜幫。',
+                  '庚': '庚金帶煞，剛健為最。得水而清，得火而銳。土潤則生，土乾則脆。能贏甲兄，輸於乙妹。',
+                  '辛': '辛金軟弱，溫潤而清。畏土之疊，樂水之盈。能扶社稷，能救生靈。熱則喜母，寒則喜丁。',
+                  '壬': '壬水通河，能洩金氣。剛中之德，周流不滯。通根透癸，沖天奔地。化則有情，從則相濟。',
+                  '癸': '癸水至弱，達於天津。得龍而運，功化斯神。不愁火土，不論庚辛。合戊見火，化象斯真。'
+              };
+              
+              // 十干核心性格
+              const traitMap = {
+                  '甲': '如參天大樹，性格直爽、仁慈且有強烈的責任感與向上奮發的毅力，為人可靠，具備領導潛質。',
+                  '乙': '如花草藤蔓，性格柔和、具備極強的環境適應力與韌性，心思細膩，善於交際與妥協。',
+                  '丙': '如太陽之火，熱情開朗、慷慨大方，充滿活力與感染力，行事光明磊落，喜好照顧他人。',
+                  '丁': '如燭光星火，心思細密、外柔內剛，具有敏銳的洞察力與奉獻精神，行事謹慎溫和。',
+                  '戊': '如高山厚土，穩重誠實、守信重諾，包容力強，行事踏實，給人極大的安全感。',
+                  '己': '如田園卑土，溫和柔順、蘊藏涵養，做事精細，多才多藝，具備極強的包容與孕育能力。',
+                  '庚': '如刀劍之金，剛毅果決、重情重義，具備開創與突破的魄力，愛恨分明，行事果斷。',
+                  '辛': '如珠寶首飾，溫潤秀氣、自尊心強，具備獨特的審美觀與細膩的心思，追求完美。',
+                  '壬': '如江河之水，聰明機智、外向好動，適應力強且胸襟開闊，具備極佳的交際與開創能力。',
+                  '癸': '如雨露之水，柔和內斂、心思細膩，直覺敏銳，具備極強的滲透力與靈活性，善於策劃。'
+              };
+
+              // 五行開運色
+              const colorMap = {
+                  '木': '黑色、藍色系（水生木）以及 綠色系（木比旺）',
+                  '火': '綠色系（木生火）以及 紅色、紫色系（火比旺）',
+                  '土': '紅色、紫色系（火生土）以及 黃色、大地色系（土比旺）',
+                  '金': '黃色、大地色系（土生金）以及 白色、金色系（金比旺）',
+                  '水': '白色、金色系（金生水）以及 黑色、藍色系（水比旺）'
+              };
+
+              fallbackText += `### 一、 原局總論與核心性格特質\n\n`;
+              fallbackText += `**▶ 經典古籍解析**\n`;
+              fallbackText += `古籍《滴天髓》評【${dayGan}${wuxing}】曰：「**${poemMap[dayGan] || ''}**」\n\n`;
+              fallbackText += `**▶ 核心性格**\n`;
+              fallbackText += `您的日元為「**${dayGan}${wuxing}**」。${traitMap[dayGan] || ''}\n\n`;
+              
+              // 🌟 判斷是否為童限，動態輸出精華版內容
+              if (isChildBeforeDaYun) {
+                  fallbackText += `### 二、 天賦潛能與學業發展\n\n`;
+                  fallbackText += `日元${dayGan}${wuxing}之孩童，具備獨特的天賦與潛力。建議父母在教養上順應其「${wuxing}」屬性特質，給予適當的引導與栽培。在求學階段，五行相生之年將有利於學業發展與才華展現。\n\n`;
+
+                  fallbackText += `### 三、 疾厄與幼兒養生建議\n\n`;
+                  fallbackText += `幼兒時期需特別注意與「${wuxing}」相剋之五行對應的臟腑（木對肝膽、火對心血管、土對脾胃、金對呼吸道、水對腎與泌尿系統）。建議平時注意營養均衡與作息，增強基礎體質。\n\n`;
+              } else {
+                  fallbackText += `### 二、 天賦事業與財富格局\n\n`;
+                  fallbackText += `日元${dayGan}${wuxing}之人，財星與官殺皆有其特定屬性。您在事業上具備穩紮穩打的潛力，適合能發揮您「${wuxing}」屬性特質的行業。建議在決策時保持理性，把握五行相生之年的機遇，將有助於財富的積累與社會地位的提升。\n\n`;
+
+                  fallbackText += `### 三、 疾厄與中醫五行養生\n\n`;
+                  fallbackText += `五行講究中庸之道。您的原局以「${dayGan}${wuxing}」為核心，需特別注意與之相剋之五行對應的臟腑（木對肝膽、火對心血管、土對脾胃、金對呼吸道、水對腎與泌尿系統）。建議平時作息規律，飲食均衡，保持情緒平穩。\n\n`;
+              }
+
+              fallbackText += `### 四、 開運與幸運色建議\n\n`;
+              fallbackText += `- **幸運色彩**：推薦日常多穿搭或使用 ${colorMap[wuxing] || '相生之色'}，有助於生旺自身氣場。\n`;
+              fallbackText += `- **行為建議**：隨時保持積極向上的心態。遇到困境時，不妨退一步海闊天空；順境時則應居安思危，廣結善緣。\n\n`;
+              
+          } else if (appType === 'zwds' && data.mingGongStars) {
+              fallbackText += `### 一、 命宮主星解析\n\n`;
+              fallbackText += `您的命宮主星為「**${data.mingGongStars}**」。\n\n`;
+              fallbackText += `這代表您原局的命格基調受此星曜影響甚深。紫微斗數中，命宮乃全盤之樞紐，影響著一生的性格、才華與外在給人的感受。\n\n`;
+              fallbackText += `### 二、 五行局與運勢起伏\n\n`;
+              fallbackText += `您的五行局為「**${data.bureau}**」，這決定了您大運起步的早晚與生命節奏。命主為「**${data.mingZhu}**」，身主為「**${data.shenZhu}**」，兩者相輔相成，影響著您先天與後天的造化。\n\n`;
+          }
+          
+          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「十年大運」及「流年大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成 AI 命書】按鈕即可免費重新運算！\n`;
+
+          // 🌟 將精華版顯示在畫面上，但不存入最終資料庫
+          setAnalysisResult(fallbackText);
+          
+          // 標記為已付費，保留按鈕讓用戶日後能重按
+          setIsPaid(true);
+          data.isPaid = true;
+          data.paidAt = data.paidAt || Date.now();
+          if (onSave) onSave(data, true); 
+
       } finally {
           setIsAnalyzing(false);
       }
@@ -343,7 +469,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       let htmlContent = `
       <div style="font-family: 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif; padding: 20px 10px; color: #222; line-height: 1.8; font-size: 15px; word-break: break-word; letter-spacing: 0.5px; text-align: justify;">
           <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
-              <h2 style="margin: 0 0 10px 0; color: #000;">【${data.name || '未命名'}】專屬深度命書</h2>
+              <h2 style="margin: 0 0 10px 0; color: #000;">【${data.name || '未命名'}】專屬深度流年命書</h2>
               <div style="font-size: 13px; color: #666;">生成時間：${new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
           </div>
       `;
@@ -377,7 +503,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
       const opt = {
           margin:       15, 
-          filename:     `${data.name || '未命名'}_深度批命書.pdf`,
+          filename:     `${data.name || '未命名'}_深度流年批命書.pdf`,
           image:        { type: 'jpeg', quality: 0.98 },
           html2canvas:  { scale: 2, useCORS: true }, 
           pagebreak:    { mode: ['css', 'avoid-all'] }, 
@@ -397,7 +523,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px' }}>
-            AI 深度批命書
+            AI 深度流年批命書
           </h4>
           {!isPaid && (
             <Lock 
@@ -441,7 +567,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
             border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>
-                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】專屬深度命書</h2>
+                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】專屬深度流年命書</h2>
                 <div style={{ fontSize: '13px', color: '#666' }}>生成時間：{new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
             </div>
 
@@ -502,11 +628,11 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
             </div>
 
             <div style={{ backgroundColor: '#fafafa', border: '1px dashed #ccc', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖 AI 深度命書，您將獲得：</div>
+                <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖 AI 深度流年命書，您將獲得：</div>
                 <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
                 <li>由最先進 AI 語言模型為您客製化批命</li>
                 <li>透視原局性格、財富格局與事業發展方向</li>
-                <li>深度感情分析與伴侶特質解析</li>
+                <li>深層感情分析與伴侶特質解析</li>
                 <li>**獨家剖析當前【十年大運】與【近期流年】大勢**</li>
                 <li>每次生成需消耗 1 個點數 Token</li>
                 <li>AI 論命或有錯漏失算，僅供娛樂</li>

@@ -2449,6 +2449,8 @@ export default function BaziApp() {
               monthBranch: baziSource.monthZhi || '', // 八字專屬
               notes: data.notes || '',
               rawDate: data.rawDate || data,
+              isPaid: data.isPaid || false,
+              paidAt: data.paidAt || (data.isPaid ? Date.now() : null),
               baziIsPaid: data.isPaid || false,
               baziAiReport: data.aiReport || null,
               baziPaidAt: data.paidAt || (data.isPaid ? Date.now() : null)
