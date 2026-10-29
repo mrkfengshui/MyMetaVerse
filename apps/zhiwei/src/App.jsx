@@ -1456,16 +1456,14 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
         <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
             <div style={{ 
                 display: 'grid', 
-                // 4欄均分
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                // 🌟 4列均分：手機版允許縮放以適應螢幕，電腦版維持最少 140px
                 gridTemplateRows: isMobile ? 'repeat(4, minmax(0, 1fr))' : 'repeat(4, minmax(140px, 1fr))', 
                 gap: '1px', 
                 backgroundColor: THEME.border, 
                 border: `1px solid ${THEME.border}`, 
                 
-                // 🌟 核心魔法：手機版鎖定高度為「全螢幕減去上下選單(約135px)」，使其剛好平分 1/4
-                height: isMobile ? 'calc(100vh - 135px)' : 'auto',
+                // 🌟 修復 1：使用 dvh 並加大安全扣減值，確保不被手機瀏覽器底列遮擋
+                height: isMobile ? 'calc(100dvh - 165px)' : 'auto',
                 flex: isMobile ? 'none' : 1,
 
                 width: '100%',           
@@ -1486,10 +1484,12 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
-                    justifyContent: 'center', 
-                    padding: '10px',
-                    // ★ 確保中宮不會遮住任何格線
-                    zIndex: 1 
+                    justifyContent: 'flex-start', // 改為向上對齊
+                    padding: '6px',               // 縮減內距
+                    zIndex: 1,
+                    overflowY: 'auto',            // 內容過多時自行滾動
+                    minHeight: 0,                 // 🌟 核心防爆魔法：允許中宮縮小，絕不撐破外層！
+                    minWidth: 0
                 }}>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
@@ -1524,26 +1524,26 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                    <div style={{ marginTop: 'auto', width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 3fr 1.5fr', gridTemplateRows: '40px 40px', gap: '6px' }}>
+                    <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 3fr 1.5fr', gridTemplateRows: '34px 34px', gap: '4px' }}>
                         {/* 1. 左側：返回 (直立長條) */}
-                        <button onClick={onBack} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: THEME.white, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '12px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                            <RotateCcw size={16} />
-                            <span style={{ fontSize: '11px' }}>返回</span>
+                        <button onClick={onBack} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', backgroundColor: THEME.white, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '10px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                            <RotateCcw size={14} />
+                            <span style={{ fontSize: '10px' }}>返回</span>
                         </button>
                         {/* 2. 中間：運勢評分 (特大方塊，視覺焦點) */}
-                        <button onClick={() => setShowScorePanel(true)} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: '#fff7e6', color: THEME.orange, border: `1px solid #ffd591`, borderRadius: '16px', cursor: 'pointer', fontWeight: 'bold', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.96)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
-                            <Sparkles size={24} />
-                            <span style={{ fontSize: '15px' }}>運勢評分</span>
+                        <button onClick={() => setShowScorePanel(true)} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', backgroundColor: '#fff7e6', color: THEME.orange, border: `1px solid #ffd591`, borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.96)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
+                            <Sparkles size={18} />
+                            <span style={{ fontSize: '13px' }}>運勢評分</span>
                         </button>
                         {/* 3. 右上：批注 (小橫條) */}
-                        <button onClick={() => setShowNotesModal(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: '#f9f0ff', color: THEME.purple, border: `1px solid #d3adf7`, borderRadius: '10px', cursor: 'pointer' }}>
-                            <Edit3 size={13} />
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>批注</span>
+                        <button onClick={() => setShowNotesModal(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', backgroundColor: '#f9f0ff', color: THEME.purple, border: `1px solid #d3adf7`, borderRadius: '8px', cursor: 'pointer' }}>
+                            <Edit3 size={11} />
+                            <span style={{ fontSize: '11px', fontWeight: 'bold' }}>批注</span>
                         </button>
                         {/* 4. 右下：保存 (小橫條，實心強調) */}
-                        <button onClick={() => onSave(chartData)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 6px rgba(24, 144, 255, 0.3)' }}>
-                            <Bookmark size={13} />
-                            <span style={{ fontSize: '12px' }}>保存</span>
+                        <button onClick={() => onSave(chartData)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)' }}>
+                            <Bookmark size={11} />
+                            <span style={{ fontSize: '11px' }}>保存</span>
                         </button>
                     </div>
                 </div>
