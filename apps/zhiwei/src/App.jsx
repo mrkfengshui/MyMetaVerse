@@ -1524,7 +1524,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                    <div style={{ marginTop: 'auto', marginBottom: 'auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.2fr 1.8fr', gridTemplateRows: '26px 26px', gap: '4px' }}>
+                    <div style={{ marginTop: 'auto', marginBottom: 'auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gridTemplateRows: '26px 26px', gap: '4px' }}>
                         {/* 1. 左側：返回 (直立，跨 2 列) */}
                         <button onClick={onBack} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                             <RotateCcw size={12} />
