@@ -178,3 +178,26 @@ const NameCardLayout = ({ surname, name1, name2, s0, s1, s2, tonePattern, p1, p2
         </div>
     );
 };
+
+          {isAdminUnlocked && (
+             <div style={{ marginTop: '16px', padding: '16px', backgroundColor: THEME.white, borderRadius: '8px', border: `1px dashed ${THEME.blue}` }}>
+                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>⚙️ 手動設定命名條件 (AI 重生)</div>
+                 <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '8px' }}>指定五行喜用神：</div>
+                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                     {['木', '火', '土', '金', '水'].map(wx => (
+                         <label key={wx} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                             <input type="checkbox" checked={customWuxing.includes(wx)} 
+                                 onChange={(e) => {
+                                     let newWx = [...customWuxing];
+                                     if (e.target.checked) newWx.push(wx);
+                                     else newWx = newWx.filter(w => w !== wx);
+                                     setCustomWuxing(newWx);
+                                 }}
+                                 style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                             /> {wx}
+                         </label>
+                     ))}
+                 </div>
+                 <button onClick={() => handleGenerateAIReport(customWuxing)} style={{ width: '100%', padding: '10px 16px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}>套用條件並重新生成命書</button>
+             </div>
+          )}

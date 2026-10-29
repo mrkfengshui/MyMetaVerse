@@ -1484,12 +1484,10 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
-                    justifyContent: 'flex-start', // 改為向上對齊
-                    padding: '6px',               // 縮減內距
-                    zIndex: 1,
-                    overflow: 'hidden',           // 不准滾動
-                    minHeight: 0,                 // 🌟 核心防爆魔法：允許中宮縮小，絕不撐破外層！
-                    minWidth: 0
+                    justifyContent: 'center', 
+                    padding: '10px',
+                    // ★ 確保中宮不會遮住任何格線
+                    zIndex: 1 
                 }}>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>

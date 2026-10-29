@@ -18,9 +18,11 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   const handleGenerateAIReport = async (overrideWuxing = null) => {
       setIsAnalyzing(true);
       
-      let isChildBeforeDaYun = false; // 🌟 1. 新增判斷變數：是否處於童限（未入大運）
+      let isChildBeforeDaYun = false; 
       
-      let prompt = `你現在是一位專業、親切且具備深厚玄學素養的徐子平大師。請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【許甯博風水命理館】所有。\n\n`;
+      // 🌟 1. 動態切換大師人設
+      const masterName = appType === 'zwds' ? '希夷' : '徐子平';
+      let prompt = `你現在是一位專業、親切且具備深厚玄學素養的${masterName}大師。請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【許甯博風水命理館】所有。\n\n`;
       
       prompt += `【基本資料】\n`;
       prompt += `姓名：${data.name || '未命名'}\n`;
@@ -37,7 +39,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               const firstYunYear = data.daYuns[0].startYear;
 
               if (currentYear < firstYunYear) {
-                  isChildBeforeDaYun = true; // 🌟 2. 觸發童限標籤
+                  isChildBeforeDaYun = true; 
                   prompt += `狀態：命主目前尚未入大運 (將於西曆 ${firstYunYear} 年起運)。\n`;
                   
                   const recentLns = [];
@@ -48,21 +50,17 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
                           recentLns.push(`${y}年(${tempLunar.getYearInGanZhi()}年)`);
                       } catch(e){}
                   }
-                  if (recentLns.length > 0) {
-                      prompt += `近期流年：${recentLns.join('、')}\n`;
-                  }
+                  if (recentLns.length > 0) prompt += `近期流年：${recentLns.join('、')}\n`;
               } else {
                   const currentDy = data.daYuns.find(dy => currentYear >= dy.startYear && currentYear <= (dy.startYear + 9));
                   if (currentDy) {
                       prompt += `當前大運：【${currentDy.gan}${currentDy.zhi}】運 (起於西曆 ${currentDy.startYear} 年，虛歲 ${currentDy.startAge} 歲)\n`;
                       const lns = currentDy.liuNians.filter(ln => ln.year >= currentYear && ln.year <= currentYear + 3);
-                      if (lns.length > 0) {
-                          prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
-                      }
+                      if (lns.length > 0) prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
                   }
               }
           }
-          prompt += `\n⚠️ 【系統強制指令】：請務必嚴格使用上述提供的「當前大運」與「近期流年」干支與年份進行分析。絕對禁止自行重新推算起運歲數或大運干支，以免造成時間錯亂。\n`;
+          prompt += `\n⚠️ 【系統強制指令】：請務必嚴格使用上述提供的「當前大運」與「近期流年」干支與年份進行分析。絕對禁止自行重新推算起運歲數或大運干支。\n`;
 
       } else if (appType === 'zwds' && data.mingGongStars) {
           prompt += `命宮主星：${data.mingGongStars}\n`;
@@ -73,51 +71,92 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           const birthYear = parseInt(data.rawDate.year);
           const currentAge = currentYear - birthYear + 1; // 虛歲
           
-          // 🌟 1. 紫微判斷童限：五行局數字即為起運歲數
           const bureauNumMap = { '水二局': 2, '木三局': 3, '金四局': 4, '土五局': 5, '火六局': 6 };
           const firstYunAge = bureauNumMap[data.bureau] || 2;
 
           if (currentAge < firstYunAge) {
-              isChildBeforeDaYun = true; // 🌟 2. 觸發童限標籤
+              isChildBeforeDaYun = true; 
               const firstYunYear = birthYear + firstYunAge - 1;
               prompt += `狀態：命主目前尚未入大限 (將於西曆 ${firstYunYear} 年，虛歲 ${firstYunAge} 歲起運)。\n`;
               
-              const recentLns = [];
-              const targetStartYear = Math.max(currentYear, birthYear);
-              for (let y = targetStartYear; y < targetStartYear + 4; y++) {
-                  try {
-                      const tempLunar = window.Solar.fromYmd(y, 6, 15).getLunar();
-                      recentLns.push(`${y}年(${tempLunar.getYearInGanZhi()}年)`);
-                  } catch(e){}
-              }
-              if (recentLns.length > 0) {
-                  prompt += `近期流年：${recentLns.join('、')}\n`;
+              // 幼童期間，找出近幾年的歲限宮位給 AI
+              if (data.grid) {
+                  prompt += `【近期歲限星曜分佈】：\n`;
+                  for (let i = 0; i < 3; i++) {
+                      const targetAge = currentAge + i;
+                      const xiaoXianPalace = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(targetAge));
+                      if (xiaoXianPalace) {
+                          const stars = xiaoXianPalace.stars.map(s => s.name).join('') || '空宮';
+                          prompt += `- 虛歲 ${targetAge} 歲 (${currentYear + i}年)：走【${xiaoXianPalace.name}】，主星為 ${stars}\n`;
+                      }
+                  }
               }
           } else {
-              prompt += `當前流年：${currentYear} 年\n`;
+              prompt += `當前流年：${currentYear} 年 (虛歲 ${currentAge} 歲)\n`;
+              
+              // 🌟 核心更新：精準抓取當前的大限與歲限宮位資料餵給 AI
+              if (data.grid) {
+                  // 1. 找當前大限
+                  const currentDaXian = data.grid.find(p => {
+                      if (!p.daXian) return false;
+                      const [start, end] = p.daXian.split('-').map(Number);
+                      return currentAge >= start && currentAge <= end;
+                  });
+                  if (currentDaXian) {
+                      const daXianStars = currentDaXian.stars.map(s => s.name).join('') || '空宮';
+                      prompt += `當前大限：走【${currentDaXian.name}】(歲數 ${currentDaXian.daXian})，大限宮內主星為 ${daXianStars}\n`;
+                  }
+
+                  // 2. 找當前歲限 (小限)
+                  const currentXiaoXian = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(currentAge));
+                  if (currentXiaoXian) {
+                      const xiaoXianStars = currentXiaoXian.stars.map(s => s.name).join('') || '空宮';
+                      prompt += `當前歲限：走【${currentXiaoXian.name}】，歲限宮內主星為 ${xiaoXianStars}\n`;
+                  }
+              }
           }
           
-          prompt += `\n⚠️ 【系統強制指令】：請務必嚴格使用上述提供的「當前流年」進行分析，絕對禁止自行推算流年干支。\n`;
+          // 🌟 紫微專屬強制防呆指令 (隔絕八字邏輯)
+          prompt += `\n⚠️ 【紫微分析特別指引】：請專注於紫微斗數的「三方四正」星曜交會與「四化（祿權科忌）」引動進行深度論斷，絕對禁止使用八字的「干支生剋」與「五行強弱」邏輯。\n`;
       }
 
       prompt += `\n【報告要求段落】請按以下結構撰寫：\n`;
       prompt += `⚠️ 排版規定：請全部使用文字與列點 (Bullet points) 呈現，絕對不要使用表格 (Table)。\n`;
-      prompt += `1. 原局總論 (包括生肖、喜用神、可以合作的生肖) 與核心性格特質,他給別人的感覺及他真實的內心 (引述經典古籍如《滴天髓》、《千里命稿》、《窮通寶鑑》、《三命通會》、《子平真詮》、《淵海子平》、《神峰通考》或《紫微斗數全書》)\n`;
-      prompt += `2. 人生頭30年曾/將會發生的3件大事，如沒有不要老作 (事件越具體越好,例如獲奬、傑出成就、車禍、先天疾病)\n`;
-      
-      // 🌟 3. 根據幼童狀態，動態替換 AI 的分析重點要求
-      if (isChildBeforeDaYun) {
-          prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
-          prompt += `4. 未來感情婚姻與伴侶特質\n`;
-          prompt += `5. 疾厄與中醫五行養生建議 (包含幼兒期體質與健康注意事項)\n`;
-          prompt += `6. 近期流年大勢詳述：由於命主尚未起運（處於童限），請將近期流年的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，絕對禁止提及職場升遷、事業投資、婚姻家庭等不符合其年齡層的內容。\n`;
-          prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
+
+      // 🌟 3. 將紫微與八字的提詞要求徹底分離，使用專業專屬名詞
+      if (appType === 'zwds') {
+          prompt += `1. 原局總論 (包括命身格局、三方四正結構) 與核心性格特質，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)\n`;
+          prompt += `2. 人生頭30年曾/將會發生的3件大事，如沒有不要老作 (事件越具體越好,例如獲奬、傑出成就、車禍、先天疾病)\n`;
+          if (isChildBeforeDaYun) {
+              prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
+              prompt += `4. 未來感情婚姻與伴侶特質\n`;
+              prompt += `5. 疾厄與養生建議 (包含幼兒期體質與健康注意事項)\n`;
+              prompt += `6. 近期歲限大勢詳述：由於命主尚未起運（處於童限），請將近期歲限（流年）的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，禁止提及職場升遷、事業投資等不符合年齡的內容。\n`;
+              prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
+          } else {
+              prompt += `3. 天賦事業與財富格局分析 (從三方四正及四化引動分析，給予具體的投資與創業建議)\n`;
+              prompt += `4. 感情婚姻與伴侶特質\n`;
+              prompt += `5. 疾厄與養生建議\n`;
+              prompt += `6. 當前大限與前後3年歲限(流年)運勢詳述\n`;
+              prompt += `7. 開運與幸運色/吉方建議，行為建議\n`;
+          }
       } else {
-          prompt += `3. 天賦事業與財富格局分析 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
-          prompt += `4. 感情婚姻與伴侶特質\n`;
-          prompt += `5. 疾厄與中醫五行養生建議\n`;
-          prompt += `6. 當前十年大運與前後3年大勢詳述 (如果命主是小童, 不要提及未入大運或/及出世前的流年運勢)\n`;
-          prompt += `7. 開運與幸運色/吉方建議，行為建議\n`;
+          // 八字專屬段落 (維持不變)
+          prompt += `1. 原局總論 (包括生肖、喜用神、可以合作的生肖) 與核心性格特質,他給別人的感覺及他真實的內心 (引述經典古籍如《滴天髓》、《千里命稿》、《窮通寶鑑》、《三命通會》、《子平真詮》、《淵海子平》、《神峰通考》)\n`;
+          prompt += `2. 人生頭30年曾/將會發生的3件大事，如沒有不要老作 (事件越具體越好,例如獲奬、傑出成就、車禍、先天疾病)\n`;
+          if (isChildBeforeDaYun) {
+              prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
+              prompt += `4. 未來感情婚姻與伴侶特質\n`;
+              prompt += `5. 疾厄與中醫五行養生建議 (包含幼兒期體質與健康注意事項)\n`;
+              prompt += `6. 近期流年大勢詳述：由於命主尚未起運（處於童限），請將近期流年的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，絕對禁止提及職場升遷、事業投資、婚姻家庭等不符合其年齡層的內容。\n`;
+              prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
+          } else {
+              prompt += `3. 天賦事業與財富格局分析 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
+              prompt += `4. 感情婚姻與伴侶特質\n`;
+              prompt += `5. 疾厄與中醫五行養生建議\n`;
+              prompt += `6. 當前十年大運與前後3年大勢詳述 (如果命主是小童, 不要提及未入大運或/及出世前的流年運勢)\n`;
+              prompt += `7. 開運與幸運色/吉方建議，行為建議\n`;
+          }
       }
 
       try {
@@ -230,19 +269,18 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               fallbackText += `您的命宮主星為「**${data.mingGongStars}**」。\n\n`;
               fallbackText += `這代表您原局的命格基調受此星曜影響甚深。紫微斗數中，命宮乃全盤之樞紐，影響著一生的性格、才華與外在給人的感受。\n\n`;
               fallbackText += `### 二、 五行局與生命節奏\n\n`;
-              fallbackText += `您的五行局為「**${data.bureau}**」，這決定了您大運起步的早晚與生命節奏。命主為「**${data.mingZhu}**」，身主為「**${data.shenZhu}**」，兩者相輔相成，影響著先天與後天的造化。\n\n`;
+              fallbackText += `您的五行局為「**${data.bureau}**」，這決定了您大限起步的早晚與生命節奏。命主為「**${data.mingZhu}**」，身主為「**${data.shenZhu}**」，兩者相輔相成，影響著先天與後天的造化。\n\n`;
               
-              // 🌟 判斷是否為童限，動態輸出紫微精華版內容
               if (isChildBeforeDaYun) {
                   fallbackText += `### 三、 天賦潛能與學業發展\n\n`;
                   fallbackText += `命主目前尚處於童限階段，主星的特質將逐漸顯露。建議父母可順應其命宮主星的特質，給予適當的啟發與栽培，有助於未來學業與才華的發展。\n\n`;
               } else {
                   fallbackText += `### 三、 事業格局與財富潛力\n\n`;
-                  fallbackText += `根據紫微斗數的星曜分佈，您在事業上具備特定的格局潛力。把握大限與流年的轉換，順勢而為，將有助於財富的積累與社會地位的提升。\n\n`;
+                  fallbackText += `根據紫微斗數的三方四正星曜分佈與四化引動，您在事業上具備特定的格局潛力。把握大限與歲限的轉換，順勢而為，將有助於財富的積累與社會地位的提升。\n\n`;
               }
           }
           
-          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「十年大運」及「流年大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成 AI 命書】按鈕即可免費重新運算！\n`;
+          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「當前大限」及「歲限大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成 AI 命書】按鈕即可免費重新運算！\n`;
 
           // 🌟 將精華版顯示在畫面上，但不存入最終資料庫
           setAnalysisResult(fallbackText);
@@ -326,25 +364,33 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           const trimmed = line.trim();
           if (!trimmed || trimmed === '---' || trimmed === '***' || trimmed === '___') return;
           
-          let elementHtml = '';
+          let styleStr = "page-break-inside: avoid; break-inside: avoid; ";
+          let contentHtml = '';
+          
           if (line.startsWith('###')) {
-              elementHtml = `<h3 style="color: #000; margin-top: 24px; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 8px;">${line.replace(/### /g, '')}</h3>`;
+              styleStr += "color: #000; margin-top: 24px; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 8px; font-weight: bold;";
+              contentHtml = line.replace(/### /g, '');
           } else if (line.startsWith('**▶')) {
-              elementHtml = `<div style="font-weight: bold; color: #1890ff; margin-top: 16px; margin-bottom: 8px; font-size: 16px;">${line.replace(/\*\*/g, '')}</div>`;
+              styleStr += "font-weight: bold; color: #1890ff; margin-top: 16px; margin-bottom: 8px; font-size: 16px;";
+              contentHtml = line.replace(/\*\*/g, '');
           } else if (line.startsWith('**【') && line.endsWith('】**')) {
-              elementHtml = `<div style="font-weight: bold; color: #008080; margin-top: 20px; margin-bottom: 10px; font-size: 17px; border-bottom: 2px dashed #008080; padding-bottom: 4px;">${line.replace(/\*\*/g, '')}</div>`;
+              styleStr += "font-weight: bold; color: #008080; margin-top: 20px; margin-bottom: 10px; font-size: 17px; border-bottom: 2px dashed #008080; padding-bottom: 4px;";
+              contentHtml = line.replace(/\*\*/g, '');
           } else if (line.startsWith('- ') || line.startsWith('* ')) {
               const content = line.substring(2);
               const parts = content.split('**');
               let formatted = parts.map((part, idx) => idx % 2 === 1 ? `<b style="color: #333;">${part}</b>` : part).join('');
-              elementHtml = `<div style="margin-left: 12px; margin-bottom: 8px;">• ${formatted}</div>`;
+              styleStr += "margin-left: 12px; margin-bottom: 8px;";
+              contentHtml = `• ${formatted}`;
           } else {
               const boldParts = line.split('**');
               let formatted = boldParts.map((part, idx) => idx % 2 === 1 ? `<strong style="color: #d9363e;">${part}</strong>` : part).join('');
-              elementHtml = `<div style="margin-bottom: 14px;">${formatted}</div>`; 
+              styleStr += "margin-bottom: 14px;";
+              contentHtml = formatted; 
           }
           
-          htmlContent += `<div style="page-break-inside: avoid; break-inside: avoid;">${elementHtml}</div>`;
+          // 將所有樣式集中在同一層 div，徹底解決 PDF 渲染引擎高度計算失準的問題
+          htmlContent += `<div style="${styleStr}">${contentHtml}</div>`;
       });
 
       htmlContent += `</div>`;
@@ -353,8 +399,10 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           margin:       15, 
           filename:     `${data.name || '未命名'}_深度流年批命書.pdf`,
           image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true }, 
-          pagebreak:    { mode: ['css', 'avoid-all'] }, 
+          // 🌟 增強渲染設定：加入 letterRendering 防切字
+          html2canvas:  { scale: 2, useCORS: true, letterRendering: true }, 
+          // 🌟 加入 legacy 模式，確保相容更多長篇 PDF 的斷頁處理
+          pagebreak:    { mode: ['css', 'legacy', 'avoid-all'] }, 
           jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
@@ -387,7 +435,9 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       {isAnalyzing ? (
         <div style={{ padding: '40px 20px', textAlign: 'center' }}>
           <RefreshCw size={36} color={THEME.teal} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto' }} />
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>AI 大師正在為您測算命局...</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>
+              {appType === 'zwds' ? '希夷仰觀天上星，作為斗數推人命...' : '子平造化察元機，五行生剋論枯榮...'}
+          </div>
           <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '8px' }}>請稍候，可能需要 4~5 分鐘，請先去泡杯咖啡</div>
         </div>
       ) : analysisResult ? (
@@ -437,29 +487,6 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               return <p key={i} style={{ marginBottom: '14px' }}>{line}</p>;
             })}
           </div>
-          
-          {isAdminUnlocked && (
-             <div style={{ marginTop: '16px', padding: '16px', backgroundColor: THEME.white, borderRadius: '8px', border: `1px dashed ${THEME.blue}` }}>
-                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '8px' }}>⚙️ 手動設定命名條件 (AI 重生)</div>
-                 <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '8px' }}>指定五行喜用神：</div>
-                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                     {['木', '火', '土', '金', '水'].map(wx => (
-                         <label key={wx} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '14px' }}>
-                             <input type="checkbox" checked={customWuxing.includes(wx)} 
-                                 onChange={(e) => {
-                                     let newWx = [...customWuxing];
-                                     if (e.target.checked) newWx.push(wx);
-                                     else newWx = newWx.filter(w => w !== wx);
-                                     setCustomWuxing(newWx);
-                                 }}
-                                 style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                             /> {wx}
-                         </label>
-                     ))}
-                 </div>
-                 <button onClick={() => handleGenerateAIReport(customWuxing)} style={{ width: '100%', padding: '10px 16px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}>套用條件並重新生成命書</button>
-             </div>
-          )}
         </div>
       ) : isPaid ? (
         <div style={{ padding: '30px 20px', textAlign: 'center', backgroundColor: '#fafafa', borderRadius: '8px', border: '1px dashed #ccc' }}>
