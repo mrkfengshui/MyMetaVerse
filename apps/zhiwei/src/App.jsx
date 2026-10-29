@@ -19,7 +19,7 @@ import {
   BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
   InstallGuide, WebBackupManager, 
   COLORS, THEME, COMMON_STYLES,
-  Adsterra, AdsterraNarrow, ScorePanel
+  Adsterra, AdsterraNarrow, ScorePanel, AiBaziAnalysis // 🌟 記得在這裡補上
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
@@ -41,6 +41,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 
 // 集中管理版本歷史紀錄
 const VERSION_HISTORY = [
+    { version: "v4.0", date: "2026-10-29", changes: ["新增AI命書"] },
     { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },
     { version: "v2.0", date: "2026-08-01", changes: ["支援運勢評分與流日排盤"] },
     { version: "v1.0", date: "2026-02-15", changes: ["初始版本，支援明朝紫微斗數全書安星法", "包含大限、小限、流年、流月盤切換"] }
@@ -921,8 +922,7 @@ const PalaceGrid = ({
     const currentBgColor = getBackgroundColor();
 
     return (
-        <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
-            <div style={{ 
+        <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: isMobile ? '0' : '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>    <div style={{ 
                 position: 'absolute', 
                 top: 2, 
                 left: 2, 
@@ -1079,7 +1079,7 @@ const PalaceGrid = ({
     );
 };
 
-const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianStartType = 'xiao_xian' }) => {
+const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianStartType = 'xiao_xian', onCalculate }) => {
     const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
 
@@ -1101,29 +1101,16 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     }, []);
 
     const handleHourAdjust = (delta) => {
+        if (!onCalculate) {
+            alert('錯誤：請檢查 ZwdsApp 中是否有把 onCalculate 傳給 ZwdsResult！');
+            return;
+        }
         const current = chartData.rawDate;
         const dt = new Date(current.year, current.month - 1, current.day, parseInt(current.hour), current.minute);
         dt.setHours(dt.getHours() + delta);
         const newFormData = { ...current, year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate(), hour: dt.getHours(), minute: dt.getMinutes() };
         
-        // 為了確保重算正確，暫時讀取 localStorage 設定 (與 SettingsView 同步)
-        const getRule = (key, def) => { 
-            const s = localStorage.getItem(key); 
-            try { return s ? JSON.parse(s) : def; } catch(e) { return def; } 
-        };
-        const rulesConfig = {
-            siHua: getRule('zwds_rule_sihua', DEFAULT_SI_HUA),
-            kuiYue: getRule('zwds_rule_kuiyue', DEFAULT_KUI_YUE),
-            huoLing: getRule('zwds_rule_huoling', DEFAULT_HUO_LING),
-            tianMa: getRule('zwds_rule_tianMa', DEFAULT_TIAN_MA),
-            tianMaType: localStorage.getItem('zwds_rule_tm_type') || 'year'
-        };
-        const mingHasDaXian = localStorage.getItem('zwds_ming_daxian') === 'true';
-        
-        try {
-            const newResult = calculateZwdsResult(newFormData, rulesConfig, { mingHasDaXian });
-            setChartData(newResult);
-        } catch (e) { console.error("調整時辰失敗", e); }
+        onCalculate(newFormData); // 🌟 呼叫完這行就可以直接結束了，下面的都不需要
     };
 
     const handleDateChange = (field, value) => { setTargetDate(prev => ({ ...prev, [field]: parseInt(value) })); };
@@ -1471,19 +1458,19 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 display: 'grid', 
                 // 4欄均分
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                // 4列均分
-                gridTemplateRows: 'repeat(4, minmax(140px, 1fr))', 
-                // 1. 設定 gap 為 1px
+                // 🌟 4列均分：手機版允許縮放以適應螢幕，電腦版維持最少 140px
+                gridTemplateRows: isMobile ? 'repeat(4, minmax(0, 1fr))' : 'repeat(4, minmax(140px, 1fr))', 
                 gap: '1px', 
-                // 2. 設定容器背景色
                 backgroundColor: THEME.border, 
-                // 3. 設定外框
                 border: `1px solid ${THEME.border}`, 
-                flex: 1,
+                
+                // 🌟 核心魔法：手機版鎖定高度為「全螢幕減去上下選單(約135px)」，使其剛好平分 1/4
+                height: isMobile ? 'calc(100vh - 135px)' : 'auto',
+                flex: isMobile ? 'none' : 1,
 
-                width: '100%',           // 手機版佔滿
-                maxWidth: '900px',       // 電腦版最大 900px (紫微資訊多，寬一點比較好讀)
-                margin: '0 auto'         // 水平居中
+                width: '100%',           
+                maxWidth: '900px',       
+                margin: '0 auto'         
                 }}>
 
                 {/* 第一列 (巳 午 未 申) */}
@@ -1507,12 +1494,16 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
                     <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '4px' }}>
-                        <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '0px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '0px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
+                            
+                            {/* 🌟 加入這層判斷，確保與八字同步，付費解鎖後隱藏微調按鈕 */}
+                            {!chartData.isPaid && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <button onClick={() => handleHourAdjust(-2)} style={{ background: 'transparent', border: 'none', outline: 'none', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronLeft size={14} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                <button onClick={() => handleHourAdjust(2)} style={{ background: 'transparent', border: 'none', outline: 'none', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronRight size={14} style={{ transform: 'rotate(90deg)' }} /> </button>
+                            </div>
+                            )}
                         </div>
-                    </div>
                         <div>西曆 {birthDetails.solarStr}</div>
                         <div>農曆 {birthDetails.lunarStr}</div>
                     </div>
@@ -1533,25 +1524,27 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                        <button onClick={onBack} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>返回</button>
-                        <button 
-                            onClick={() => setShowScorePanel(true)} 
-                            style={{ 
-                                padding: '2px 8px', 
-                                fontSize: '11px', 
-                                backgroundColor: THEME.orange, // 使用不同顏色區分
-                                color: 'white', 
-                                border: 'none', 
-                                cursor: 'pointer'
-                            }}
-                        >
-                            運勢評分
+                    <div style={{ marginTop: 'auto', width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 3fr 1.5fr', gridTemplateRows: '40px 40px', gap: '6px' }}>
+                        {/* 1. 左側：返回 (直立長條) */}
+                        <button onClick={onBack} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: THEME.white, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '12px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                            <RotateCcw size={16} />
+                            <span style={{ fontSize: '11px' }}>返回</span>
                         </button>
-                        <div style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>批注</button>
-                            <button onClick={() => onSave(chartData)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>保存</button>
-                        </div>
+                        {/* 2. 中間：運勢評分 (特大方塊，視覺焦點) */}
+                        <button onClick={() => setShowScorePanel(true)} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: '#fff7e6', color: THEME.orange, border: `1px solid #ffd591`, borderRadius: '16px', cursor: 'pointer', fontWeight: 'bold', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.96)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
+                            <Sparkles size={24} />
+                            <span style={{ fontSize: '15px' }}>運勢評分</span>
+                        </button>
+                        {/* 3. 右上：批注 (小橫條) */}
+                        <button onClick={() => setShowNotesModal(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: '#f9f0ff', color: THEME.purple, border: `1px solid #d3adf7`, borderRadius: '10px', cursor: 'pointer' }}>
+                            <Edit3 size={13} />
+                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>批注</span>
+                        </button>
+                        {/* 4. 右下：保存 (小橫條，實心強調) */}
+                        <button onClick={() => onSave(chartData)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 6px rgba(24, 144, 255, 0.3)' }}>
+                            <Bookmark size={13} />
+                            <span style={{ fontSize: '12px' }}>保存</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1565,6 +1558,16 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
             </div>
             <div style={{ marginTop: '1px', textAlign: 'center', fontSize: '10px', color: THEME.gray, paddingBottom: '1px' }}>排盤依據明朝紫微斗數全書</div>
+            {/* AI 算命分析區塊 (綁定 ID 供按鈕滾動跳轉) */}
+            <div id="ai-analysis-section">
+                <AiBaziAnalysis 
+                    data={chartData} 
+                    THEME={THEME}
+                    appType="zwds"
+                    onSave={onSave}
+                />
+            </div>
+            
             {/* 渲染懸浮的 ScorePanel */}
             {showScorePanel && (
                 <ScorePanel 
@@ -1729,7 +1732,16 @@ export default function ZwdsApp() {
               lunarDate: data.lunarDateStr,
               mingGongStars: data.mingGongStars, // 紫微專屬
               notes: data.notes || '',
-              rawDate: data.rawDate 
+              rawDate: data.rawDate,
+              
+              // 🌟 1. 為了讓 BookmarkList 正確顯示綠色標籤
+              isPaid: data.isPaid || false,
+              paidAt: data.paidAt || (data.isPaid ? Date.now() : null),
+              
+              // 🌟 2. 紫微專屬的付費狀態 (與八字隔離)
+              zwdsIsPaid: data.isPaid || false,
+              zwdsAiReport: data.aiReport || null,
+              zwdsPaidAt: data.paidAt || (data.isPaid ? Date.now() : null)
           };
 
           let newBk = [...bookmarks];
@@ -1770,10 +1782,24 @@ export default function ZwdsApp() {
   };
 
   const deleteBookmark = async (id) => {
-      if (window.confirm('確定要刪除這條紀錄嗎？')) {
-          const newBk = bookmarks.filter(b => b.id !== id);
+      const target = bookmarks.find(b => (typeof b === 'string' ? b : b.id) === id);
+      
+      const isBaziPaid = target && (target.baziIsPaid === true || target.isPaid === true || target.rawDate?.baziIsPaid === true || target.rawDate?.isPaid === true);
+      const isZwdsPaid = target && (target.zwdsIsPaid === true || target.rawDate?.zwdsIsPaid === true);
+
+      let msg = '確定要刪除這條紀錄嗎？';
+      
+      if (isBaziPaid && isZwdsPaid) {
+          msg = '⚠️ 嚴重警告：此紀錄已解鎖【八字】與【紫微斗數】雙重付費 AI 命書！\n\n刪除後兩份命書將永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      } else if (isZwdsPaid) {
+          msg = '⚠️ 警告：此命盤已解鎖【紫微斗數】付費 AI 命書！\n\n刪除後命書將永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      } else if (isBaziPaid) {
+          msg = '⚠️ 警告：此命盤已在【八字】解鎖付費 AI 命書！\n\n雖然您現在使用的是紫微斗數，但刪除後八字命書也會永久遺失且無法退款。\n您確定要強制刪除嗎？';
+      }
+
+      if (window.confirm(msg)) {
+          const newBk = bookmarks.filter(b => (typeof b === 'string' ? b : b.id) !== id);
           setBookmarks(newBk); 
-          // 關鍵修改：把原來的 bazi_bookmarks 或 zwds_bookmarks 改成共同的 mrk_shared_bookmarks
           await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(newBk) });
       }
   };
@@ -1781,11 +1807,19 @@ export default function ZwdsApp() {
   const openBookmark = (savedItem) => {
       if (!savedItem.rawDate) { alert('舊資料無法開啟'); return; }
       try {
-          // 不管這筆紀錄是紫微還是八字建的，只要有 rawDate 就直接排紫微盤
           const rulesConfig = { siHua: siHuaRules, kuiYue: kuiYueRules, huoLing: huoLingRules, tianMa: tianMaRules, tianMaType: tianMaType };
           const freshResult = calculateZwdsResult(savedItem.rawDate, rulesConfig, { mingHasDaXian });
           freshResult.id = savedItem.id; 
           freshResult.notes = savedItem.notes || '';
+          
+          // 🌟 讀取紫微專屬的付費狀態
+          const isPaidStatus = savedItem.zwdsIsPaid === true || savedItem.rawDate?.zwdsIsPaid === true;
+          const paidTime = savedItem.zwdsPaidAt || savedItem.paidAt || savedItem.rawDate?.zwdsPaidAt || savedItem.rawDate?.paidAt || null;
+
+          freshResult.isPaid = isPaidStatus; 
+          freshResult.paidAt = paidTime; 
+          freshResult.aiReport = savedItem.zwdsAiReport || null; // 確保紫微只讀紫微的報告
+
           setResultData(freshResult); 
           setView('result');
       } catch (e) { 
@@ -1822,6 +1856,7 @@ export default function ZwdsApp() {
                     onSave={saveBookmark} 
                     daXianSiHuaType={daXianSiHuaType}
                     liuNianStartType={liuNianStartType}
+                    onCalculate={handleCalculate} // 🌟 記得加上這行！
                 />
                 <AdsterraNarrow />
             </>
