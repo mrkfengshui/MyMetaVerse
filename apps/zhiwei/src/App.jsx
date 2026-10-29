@@ -1522,27 +1522,25 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
-                    <div style={{ marginTop: 'auto', marginBottom: 'auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gridTemplateRows: '26px 26px', gap: '4px' }}>
-                        {/* 1. 左側：返回 (直立，跨 2 列) */}
-                        <button onClick={onBack} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                            <RotateCcw size={12} />
-                            <span style={{ fontSize: '9px', whiteSpace: 'nowrap' }}>返回</span>
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                        <button onClick={onBack} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>返回</button>
+                        <button 
+                            onClick={() => setShowScorePanel(true)} 
+                            style={{ 
+                                padding: '2px 8px', 
+                                fontSize: '11px', 
+                                backgroundColor: THEME.orange, // 使用不同顏色區分
+                                color: 'white', 
+                                border: 'none', 
+                                cursor: 'pointer'
+                            }}
+                        >
+                            運勢評分
                         </button>
-                        {/* 2. 中間：運勢評分 (直立，跨 2 列) */}
-                        <button onClick={() => setShowScorePanel(true)} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', backgroundColor: '#fff7e6', color: THEME.orange, border: `1px solid #ffd591`, borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.96)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
-                            <Sparkles size={14} />
-                            <span style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>運勢評分</span>
-                        </button>
-                        {/* 3. 右上：批注 (橫向單列) */}
-                        <button onClick={() => setShowNotesModal(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: '#f9f0ff', color: THEME.purple, border: `1px solid #d3adf7`, borderRadius: '6px', cursor: 'pointer' }}>
-                            <Edit3 size={11} />
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>批注</span>
-                        </button>
-                        {/* 4. 右下：保存 (橫向單列) */}
-                        <button onClick={() => onSave(chartData)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)' }}>
-                            <Bookmark size={11} />
-                            <span style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>保存</span>
-                        </button>
+                        <div style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>批注</button>
+                            <button onClick={() => onSave(chartData)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>保存</button>
+                        </div>
                     </div>
                 </div>
 
