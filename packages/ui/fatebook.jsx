@@ -21,7 +21,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       let isChildBeforeDaYun = false; 
       
       // 🌟 1. 動態切換大師人設
-      const masterName = appType === 'zwds' ? '希夷' : '徐子平';
+      const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
       let prompt = `你現在是一位專業、親切且具備深厚玄學素養的${masterName}大師。請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【許甯博風水命理館】所有。\n\n`;
       
       prompt += `【基本資料】\n`;
@@ -125,7 +125,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
       // 🌟 3. 將紫微與八字的提詞要求徹底分離，使用專業專屬名詞
       if (appType === 'zwds') {
-          prompt += `1. 原局總論 (包括命身格局、三方四正結構) 與核心性格特質，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)\n`;
+          prompt += `1. 原局總論 (包括命身格局、三方四正、左右宮夾忌結構) 與核心性格特質，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)\n`;
           prompt += `2. 人生頭30年曾/將會發生的3件大事，如沒有不要老作 (事件越具體越好,例如獲奬、傑出成就、車禍、先天疾病)\n`;
           if (isChildBeforeDaYun) {
               prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
@@ -134,7 +134,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               prompt += `6. 近期歲限大勢詳述：由於命主尚未起運（處於童限），請將近期歲限（流年）的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，禁止提及職場升遷、事業投資等不符合年齡的內容。\n`;
               prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
           } else {
-              prompt += `3. 天賦事業與財富格局分析 (從三方四正及四化引動分析，給予具體的投資與創業建議)\n`;
+              prompt += `3. 天賦事業與財富格局分析，第一桶金如何獲得 (從三方四正、左右宮夾忌及四化引動分析，給予具體的投資與創業建議)\n`;
               prompt += `4. 感情婚姻與伴侶特質\n`;
               prompt += `5. 疾厄與養生建議\n`;
               prompt += `6. 當前大限與前後3年歲限(流年)運勢詳述\n`;
@@ -151,7 +151,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               prompt += `6. 近期流年大勢詳述：由於命主尚未起運（處於童限），請將近期流年的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，絕對禁止提及職場升遷、事業投資、婚姻家庭等不符合其年齡層的內容。\n`;
               prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
           } else {
-              prompt += `3. 天賦事業與財富格局分析 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
+              prompt += `3. 天賦事業與財富格局分析，第一桶金如何獲得 (從五行及變通星分析，給予具體的投資與創業建議)\n`;
               prompt += `4. 感情婚姻與伴侶特質\n`;
               prompt += `5. 疾厄與中醫五行養生建議\n`;
               prompt += `6. 當前十年大運與前後3年大勢詳述 (如果命主是小童, 不要提及未入大運或/及出世前的流年運勢)\n`;
@@ -351,58 +351,65 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   const executePdfGeneration = () => {
       if (!analysisResult) return setIsGeneratingPdf(false);
 
-      // 👇 修正：在最外層的 style 加上 text-align: justify; 讓文字左右切齊 👇
       let htmlContent = `
-      <div style="font-family: 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif; padding: 20px 10px; color: #222; line-height: 1.8; font-size: 15px; word-break: break-word; letter-spacing: 0.5px; text-align: justify;">
-          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
-              <h2 style="margin: 0 0 10px 0; color: #000;">【${data.name || '未命名'}】專屬深度流年命書</h2>
+      <div style="font-family: 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif; padding: 0; color: #222; line-height: 1.8; font-size: 15px; word-break: break-word; letter-spacing: 0.5px; text-align: justify; width: 100%; box-sizing: border-box;">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #ccc; page-break-inside: avoid; break-inside: avoid; display: block; margin-bottom: 20px;">
+              <h2 style="margin: 0 0 10px 0; color: #000;">【${data.name || '未命名'}】專屬深度流年批命書</h2>
               <div style="font-size: 13px; color: #666;">生成時間：${new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
           </div>
       `;
+
+      let h3Count = 0; // 🌟 用來追蹤大章節的數量
 
       analysisResult.split('\n').forEach(line => {
           const trimmed = line.trim();
           if (!trimmed || trimmed === '---' || trimmed === '***' || trimmed === '___') return;
           
-          let styleStr = "page-break-inside: avoid; break-inside: avoid; ";
+          // 🌟 核心防斬斷：使用 display: block 和 padding，徹底避免引擎高度計算錯誤
+          let styleStr = "page-break-inside: avoid !important; break-inside: avoid !important; display: block; width: 100%; box-sizing: border-box; ";
           let contentHtml = '';
           
-          if (line.startsWith('###')) {
-              styleStr += "color: #000; margin-top: 24px; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 8px; font-weight: bold;";
-              contentHtml = line.replace(/### /g, '');
+          if (line.startsWith('## ')) {
+              h3Count++;
+              // 🌟 智能換頁：遇到第二個以上的「大章節(##)」時，自動強制從新的一頁開始！
+              if (h3Count > 1) {
+                  styleStr += "page-break-before: always; break-before: page; ";
+              }
+              // 將 margin 改為 padding
+              styleStr += "color: #000; padding-top: 24px; padding-bottom: 12px; font-size: 18px; border-bottom: 1px solid #ddd; font-weight: bold;";
+              contentHtml = line.replace(/^#{2,3}\s/, '');
           } else if (line.startsWith('**▶')) {
-              styleStr += "font-weight: bold; color: #1890ff; margin-top: 16px; margin-bottom: 8px; font-size: 16px;";
+              styleStr += "font-weight: bold; color: #1890ff; padding-top: 16px; padding-bottom: 8px; font-size: 16px;";
               contentHtml = line.replace(/\*\*/g, '');
           } else if (line.startsWith('**【') && line.endsWith('】**')) {
-              styleStr += "font-weight: bold; color: #008080; margin-top: 20px; margin-bottom: 10px; font-size: 17px; border-bottom: 2px dashed #008080; padding-bottom: 4px;";
+              styleStr += "font-weight: bold; color: #008080; padding-top: 20px; padding-bottom: 10px; font-size: 17px; border-bottom: 2px dashed #008080;";
               contentHtml = line.replace(/\*\*/g, '');
           } else if (line.startsWith('- ') || line.startsWith('* ')) {
               const content = line.substring(2);
               const parts = content.split('**');
               let formatted = parts.map((part, idx) => idx % 2 === 1 ? `<b style="color: #333;">${part}</b>` : part).join('');
-              styleStr += "margin-left: 12px; margin-bottom: 8px;";
+              styleStr += "padding-left: 12px; padding-bottom: 8px;";
               contentHtml = `• ${formatted}`;
           } else {
               const boldParts = line.split('**');
               let formatted = boldParts.map((part, idx) => idx % 2 === 1 ? `<strong style="color: #d9363e;">${part}</strong>` : part).join('');
-              styleStr += "margin-bottom: 14px;";
+              styleStr += "padding-bottom: 14px;";
               contentHtml = formatted; 
           }
           
-          // 將所有樣式集中在同一層 div，徹底解決 PDF 渲染引擎高度計算失準的問題
           htmlContent += `<div style="${styleStr}">${contentHtml}</div>`;
       });
 
       htmlContent += `</div>`;
 
       const opt = {
-          margin:       15, 
+          // 🌟 [上, 右, 下, 左]：明確給予底部 20mm 的安全區，確保引擎提早換頁
+          margin:       [15, 15, 20, 15], 
           filename:     `${data.name || '未命名'}_深度流年批命書.pdf`,
           image:        { type: 'jpeg', quality: 0.98 },
-          // 🌟 增強渲染設定：加入 letterRendering 防切字
           html2canvas:  { scale: 2, useCORS: true, letterRendering: true }, 
-          // 🌟 加入 legacy 模式，確保相容更多長篇 PDF 的斷頁處理
-          pagebreak:    { mode: ['css', 'legacy', 'avoid-all'] }, 
+          // 🌟 單純依賴 css 斷頁指令與 avoid-all
+          pagebreak:    { mode: ['css', 'avoid-all'] }, 
           jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
@@ -472,7 +479,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
             {analysisResult.split('\n').map((line, i) => {
               const trimmed = line.trim();
               if (trimmed === '---' || trimmed === '***' || trimmed === '___') return null;
-              if (line.startsWith('###')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/### /g, '')}</h3>;
+              if (line.startsWith('### ') || line.startsWith('## ')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/^#{2,3}\s/, '')}</h3>;
               if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
               if (line.startsWith('**【') && line.endsWith('】**')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.teal, marginTop: '20px', marginBottom: '10px', fontSize: '17px', borderBottom: `2px dashed ${THEME.teal}`, paddingBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
               
