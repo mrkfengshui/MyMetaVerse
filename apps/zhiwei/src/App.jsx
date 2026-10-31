@@ -1527,7 +1527,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
                             <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
                     </div>
-                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
+                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>未入大限並無四化</div>}
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr 1fr', gap: '4px', width: '100%' }}>
                         <button onClick={onBack} style={{ height: '24px', padding: '0', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>返回</button>
