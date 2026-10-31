@@ -922,7 +922,8 @@ const PalaceGrid = ({
     const currentBgColor = getBackgroundColor();
 
     return (
-        <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: isMobile ? '0' : '140px', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>    <div style={{ 
+        <div onClick={onClick} style={{ ...customStyle, position: 'relative', backgroundColor: currentBgColor, height: '100%', minHeight: '0', overflow: 'hidden', padding: '2px', cursor: 'pointer' }}>
+            <div style={{
                 position: 'absolute', 
                 top: 2, 
                 left: 2, 
@@ -1457,14 +1458,15 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-                gridTemplateRows: isMobile ? 'repeat(4, minmax(0, 1fr))' : 'repeat(4, minmax(140px, 1fr))', 
+                gridTemplateRows: 'repeat(4, minmax(0, 1fr))',
                 gap: '1px', 
                 backgroundColor: THEME.border, 
                 border: `1px solid ${THEME.border}`, 
                 
                 // 🌟 修復 1：使用 dvh 並加大安全扣減值，確保不被手機瀏覽器底列遮擋
-                height: isMobile ? 'calc(100dvh - 165px)' : 'auto',
-                flex: isMobile ? 'none' : 1,
+                height: isMobile ? 'calc(100dvh - 165px)' : 'calc(100vh - 140px)',
+                minHeight: isMobile ? 'auto' : '600px', // 給電腦版一個最小高度防呆
+                flex: 'none',
 
                 width: '100%',           
                 maxWidth: '900px',       
