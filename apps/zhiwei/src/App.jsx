@@ -891,9 +891,18 @@ const PalaceGrid = ({
         const rows = [];
         for (let i = 0; i < Math.min(palace.xiaoXian.length, 8); i += 4) { rows.push(palace.xiaoXian.slice(i, i + 4)); }
         return rows.map((row, ridx) => (
-            <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '1px', marginBottom: '1px' }}>
+            <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginBottom: '1px' }}>
                 {row.map(age => (
-                    <span key={age} style={{ color: age === currentAge ? THEME.red : '#888', border: age === currentAge ? `1px solid ${THEME.red}` : 'none', borderRadius: '50%', minWidth: '13px', fontSize: '10px', textAlign: 'center', lineHeight: '13px' }}>{age}</span>
+                    <span key={age} style={{ 
+                        color: age === currentAge ? THEME.red : '#888', 
+                        border: age === currentAge ? `1px solid ${THEME.red}` : 'none', 
+                        borderRadius: '50%', 
+                        // 🌟 電腦版放大圓圈寬度與字體
+                        minWidth: isMobile ? '13px' : '16px', 
+                        fontSize: isMobile ? '10px' : '12px', 
+                        textAlign: 'center', 
+                        lineHeight: isMobile ? '13px' : '16px' 
+                    }}>{age}</span>
                 ))}
             </div>
         ));
@@ -1000,7 +1009,7 @@ const PalaceGrid = ({
                 <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: '1px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                         <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginBottom: '0px' }}>{palace.name}</div>
-                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: '9px', borderRadius: '3px', padding: '1px 1px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: isMobile ? '9px' : '13px', borderRadius: isMobile ? '3px' : '4px', padding: isMobile ? '1px 1px' : '2px 4px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
                     </div>
                     
                     {/* 限名 (大限命宮、歲限兄弟等) */}
@@ -1065,13 +1074,12 @@ const PalaceGrid = ({
             <div style={{ position: 'absolute', bottom: 2, left: '32px', right: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
                 
-                {/* ▼▼▼ 修改這一行：加入 whiteSpace: 'nowrap' ▼▼▼ */}
                 <div style={{ 
-                    fontSize: '9px', 
+                    fontSize: isMobile ? '9px' : '13px', 
                     color: isDaXian ? THEME.red : THEME.black, 
                     fontWeight: isDaXian ? 'bold' : 'normal', 
                     marginTop: '1px',
-                    whiteSpace: 'nowrap'  // ★ 強制不換行
+                    whiteSpace: 'nowrap'
                 }}>
                     {palace.daXian || '\u00A0'}
                 </div>
@@ -1464,8 +1472,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 border: `1px solid ${THEME.border}`, 
                 
                 // 🌟 修復 1：使用 dvh 並加大安全扣減值，確保不被手機瀏覽器底列遮擋
-                height: isMobile ? 'calc(100dvh - 165px)' : 'calc(100vh - 140px)',
-                minHeight: isMobile ? 'auto' : '600px', // 給電腦版一個最小高度防呆
+                height: isMobile ? 'calc(100dvh - 165px)' : 'calc(100vh - 180px)',
+                minHeight: isMobile ? 'auto' : '500px', // 給電腦版一個最小高度防呆
                 flex: 'none',
 
                 width: '100%',           
@@ -1487,16 +1495,16 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    padding: '10px',
-                    // ★ 確保中宮不會遮住任何格線
-                    zIndex: 1 
+                    padding: isMobile ? '10px' : '4px 10px', // 🌟 電腦版減少上下內距以爭取空間
+                    zIndex: 1,
+                    overflow: 'hidden' // 🌟 防止極端壓縮時文字浮出
                 }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{chartData.name}</div>
-                    <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '4px' }}>
+                    <div style={{ fontSize: isMobile ? '24px' : '22px', fontWeight: 'bold', marginBottom: '2px' }}>{chartData.name}</div>
+                    
+                    <div style={{ fontSize: '11px', color: THEME.gray, textAlign: 'center', marginBottom: '4px', lineHeight: '1.4' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '2px' }}>
                             <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '0px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
                             
-                            {/* 🌟 加入這層判斷，確保與八字同步，付費解鎖後隱藏微調按鈕 */}
                             {!chartData.isPaid && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                 <button onClick={() => handleHourAdjust(-2)} style={{ background: 'transparent', border: 'none', outline: 'none', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronLeft size={14} style={{ transform: 'rotate(90deg)' }} /> </button>
@@ -1504,39 +1512,69 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             </div>
                             )}
                         </div>
-                        <div>西曆 {birthDetails.solarStr}</div>
-                        <div>農曆 {birthDetails.lunarStr}</div>
+                        {/* 🌟 電腦版將西曆農曆並排以節省高度 */}
+                        <div style={{ display: isMobile ? 'block' : 'flex', justifyContent: 'center', gap: '12px' }}>
+                            <div>西曆 {birthDetails.solarStr}</div>
+                            <div>農曆 {birthDetails.lunarStr}</div>
+                        </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '2px', height: '22px' }}>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '4px', height: '22px' }}>
                         <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
                             <ChevronLeft size={18} />
                         </button>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold', textAlign: 'center', lineHeight: 1 }}>
+                        <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', textAlign: 'center', lineHeight: 1 }}>
                             {getLayerTitle()}
                         </span>
                         <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
                             <ChevronRight size={18} />
                         </button>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                        <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
-                        <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: '12px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
-                        <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: '12px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+
+                    {/* 🌟 電腦版將選單與目標農曆並排以節省高度 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+                            <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
+                            <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                        </div>
+                        
+                        {/* 🌟 目標農曆放下一行，移除括號並放大字體 */}
+                        <div style={{ fontSize: isMobile ? '12px' : '14px', color: THEME.blue }}>
+                            {targetLunarDisplay}
+                        </div>
                     </div>
-                    <div style={{ fontSize: '12px', marginBottom: '8px', color: THEME.blue }}>{targetLunarDisplay}</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px', fontSize: '12px', textAlign: 'left', width: '100%', paddingLeft: '20px', color: THEME.gray }}>
-                            <div>命主 : {chartData.mingZhu}</div> <div>身主 : {chartData.shenZhu}</div>
-                            <div>五行 : {chartData.bureau}</div> <div>性別 : {chartData.genderText}</div>
-                            <div>子斗 : {chartData.douJun}</div> <div>虛歲 : {currentAge}歲</div>
+                    
+                    {/* 🌟 電腦版改為 3欄2列 以節省高度 */}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '2px 10px', fontSize: isMobile ? '11px' : '14px', textAlign: 'left', width: '60%', paddingLeft: isMobile ? '20px' : '10px', color: THEME.gray }}>
+                            <div>命主: {chartData.mingZhu}</div> 
+                            <div>身主: {chartData.shenZhu}</div>
+                            <div>五行: {chartData.bureau}</div> 
+                            <div>性別: {chartData.genderText}</div>
+                            <div>子斗: {chartData.douJun}</div> 
+                            <div>虛歲: {currentAge}歲</div>
                     </div>
-                    {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>未入大限並無四化</div>}
+                    
+                    {/* 🌟 電腦版放大警告標語字體 */}
+                    <div style={{ 
+                        width: '100%', 
+                        textAlign: 'center', 
+                        color: THEME.red, 
+                        fontSize: isMobile ? '11px' : '14px', 
+                        fontWeight: 'bold', 
+                        margin: '2px 0',
+                        visibility: (layerMode === 1 && !daXianGan) ? 'visible' : 'hidden'
+                    }}>
+                        未入大限並無四化
+                    </div>
+                    
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px', width: '100%' }}>
                         <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>返回</button>
                         <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>評分</button>
                         <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>批注</button>
                         <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>保存</button>
-                        </div>
+                    </div>
                     </div>
                 </div>
 
