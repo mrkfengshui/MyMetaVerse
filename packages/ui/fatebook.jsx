@@ -15,7 +15,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-  const handleGenerateAIReport = async (overrideWuxing = null) => {
+    const handleGenerateAIReport = async (overrideWuxing = null) => {
       setIsAnalyzing(true);
       
       let isChildBeforeDaYun = false; 
@@ -227,30 +227,50 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           }
       }
 
-      const controller = new AbortController();
-      // const timeoutId = setTimeout(() => controller.abort(), 300000);
       try {
           const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyyTTv2RWkwSjogD8W46UFIGMNZMnn6tpAQTwhpfUwN5SeQ8NzQvThwY-AttTkClEII/exec"; 
 
+          // 建立 AbortController 以設定 60 秒超時
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000);
+
           const response = await fetch(GAS_PROXY_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ prompt: prompt, token: userToken })
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ prompt: prompt, token: userToken }),
+                signal: controller.signal // 將 signal 綁定到 fetch 請求
           });
+            
+          // 成功取得回應後，清除計時器
+          clearTimeout(timeoutId);
 
           if (!response.ok) throw new Error(`網路請求失敗，狀態碼：${response.status}`);
-          const result = await response.json();
           
-          // 🛑 核心防線：如果後端 GAS 說 Token 無效，立刻拋出錯誤阻擋！
-          if (result.result === "error") {
-              throw new Error(result.message || "授權碼無效或已使用完畢");
+          // 🌟 1. 先以純文字讀取，避免 Google 回傳 HTML 導致程式崩潰
+          const rawText = await response.text();
+          console.log("後端原始回傳內容:", rawText); // Debug 用：可在瀏覽器 F12 主控台查看後端到底傳了什麼
+          
+          let result;
+          try {
+              result = JSON.parse(rawText);
+          } catch (e) {
+              console.error("JSON 解析失敗，後端可能沒有回傳正確的 JSON:", e);
+              throw new Error("後端回傳格式異常 (可能回傳了網頁而非資料)");
           }
-          if (!result.text) throw new Error("API 回傳成功，但內容為空。");
           
-          // ✅ 只有當後端確實回傳了命書內容，才正式解鎖並存入手機
-          setAnalysisResult(result.text);
-          setIsPaid(true);if (!result.text) throw new Error("API 回傳成功，但內容為空。");
+          // 🛑 2. 核心防線：如果後端 GAS 說 Token 無效
+          if (result.result === "error") {
+              throw new Error(result.message || "授權碼無效或伺服器回報錯誤");
+          }
           
+          // 🌟 3. 容錯處理：自動抓取各種可能的 AI 內文欄位
+          const aiText = result.text || result.content || result.message || result.data;
+          
+          if (!aiText) {
+              console.log("解析後的 JSON 物件:", result);
+              throw new Error("API 回傳成功，但找不到命書內容 (欄位可能不符)。");
+          }
+                    
           // 🌟 核心新增：自動在命書最開頭注入「命造基本盤」資訊
           let chartHeader = `### 📜 命造基本盤\n\n`;
           chartHeader += `- **姓名**：${data.name || '未命名'} (${data.genderText})\n`;
@@ -277,7 +297,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           chartHeader += `\n`; // 換行區隔 AI 內文
 
           // 將基本盤與 AI 產生的內文結合
-          const finalReport = chartHeader + result.text;
+          const finalReport = chartHeader + aiText;
           
           // ✅ 只有當後端確實回傳了命書內容，才正式解鎖並存入手機
           setAnalysisResult(finalReport);
@@ -291,9 +311,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       } catch (error) {
           console.error("AI 錯誤詳細資訊:", error);
           
-          setTimeout(() => {
-              alert("⚠️ 伺服器連線逾時或忙碌中！\n\n系統已先為您提供【經典精華版命盤析論】，請稍後網路順暢時再重試。");
-          }, 100);
+          alert("⚠️ AI 伺服器目前大塞車！\n\n您的付款紀錄已經安全保存（已解鎖）。\n系統先為您提供【經典精華版命盤析論】，您可以稍後隨時點擊按鈕，免費重試生成完整的深度命書！");
           
           // ==========================================
           // 🌟 離線保底假 AI 命書 (精華版 Template)
@@ -411,7 +429,6 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           if (onSave) onSave(data, true); 
 
       } finally {
-          clearTimeout(timeoutId); // 🌟 3. 無論成功或失敗，都把計時器清掉，避免記憶體洩漏
           setIsAnalyzing(false);
       }
   };
