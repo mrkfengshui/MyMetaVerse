@@ -1468,6 +1468,14 @@ export default function QiMenApp() {
 
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
+  
+  // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
+  const contentRef = useRef(null);
+  useEffect(() => {
+      if (contentRef.current) {
+          contentRef.current.scrollTo(0, 0);
+      }
+  }, [view]);
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
@@ -1703,7 +1711,7 @@ export default function QiMenApp() {
   return (
     <div style={COMMON_STYLES.fullScreen}>
         <AppHeader title={APP_NAME} logoChar={{ main: '奇', sub: '門' }} />
-        <div style={COMMON_STYLES.contentArea}>
+        <div ref={contentRef} style={COMMON_STYLES.contentArea}>
             {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} onOpenSearch={() => setShowSearchModal(true)} /><AdsterraNarrow /></>}
             {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><AdsterraNarrow /></>}
             {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><Adsterra /></div></div>}

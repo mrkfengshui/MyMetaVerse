@@ -29,7 +29,7 @@ import {
   ChevronUp, ChevronDown, Circle, Compass,
   CloudUpload, DoorOpen, Download,
   Edit3, Eye, EyeOff, Info, Grid, Lock, Map, MapPin,
-  RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
+  Radar, RefreshCw, RotateCcw, RotateCw, Save, Settings, Sparkles,
   Trash2, Unlock, User, X
 } from 'lucide-react';
 
@@ -39,6 +39,7 @@ import {
 const APP_NAME = "甯博風水";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const VERSION_HISTORY = [
+    { version: "v4.1", date: "2026-10-31", changes: ["指南針按鈕改放排盤頁"] },
     { version: "v4.0", date: "2026-10-25", changes: ["美化首頁羅庚", "增加即時排盤"] },
     { version: "v3.0", date: "2026-10-23", changes: ["支援匯入與紀錄平面圖", "新增平面圖縮放與旋轉工具", "修正圓盤與方盤 UI 顯示細節"] },
     { version: "v2.0", date: "2026-07-20", changes: ["新增商戰揀舖功能", "優化指南針定位準確度"] },
@@ -1075,7 +1076,7 @@ const CompassView = ({ heading, setHeading, isFrozen, setIsFrozen, onAnalyze }) 
 };
 
 // 4. 排盤視圖 (ChartView) - 圓盤佈局優化 (凶煞在上，雜項在下)
-const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', isLoggedIn, floorPlan, setFloorPlan, imgConfig, setImgConfig }) => {
+const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYear, gregMonth, setGregMonth, onSave, chartMode = 'traditional', setChartMode, isLoggedIn, floorPlan, setFloorPlan, imgConfig, setImgConfig }) => {
     const [selectedSector, setSelectedSector] = useState(null);
     const [naQiDoor, setNaQiDoor] = useState(null); 
     const [showAnnual, setShowAnnual] = useState(true);
@@ -1379,6 +1380,31 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
                         <select value={gregMonth} onChange={e => setGregMonth(Number(e.target.value))} style={{border:'1px solid #ddd', padding: '2px'}}>{months.map(m => (<option key={m} value={m}>{m}</option>))}</select>月
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                        
+                        <button 
+                            onClick={() => {
+                                const newMode = chartMode === 'traditional' ? 'modern' : 'traditional';
+                                setChartMode(newMode);
+                                Preferences.set({ key: 'fengshui_chart_mode', value: newMode });
+                            }}
+                            style={{
+                                fontSize:'12px', 
+                                padding:'4px 0', 
+                                width: '76px', // 🌟 設定固定寬度，2個字或3個字都不會變形
+                                justifyContent: 'center', // 🌟 確保內容永遠置中
+                                borderRadius:'14px', 
+                                border: chartMode === 'traditional' ? '1px solid #8b4513' : '1px solid #D32F2F', 
+                                background: chartMode === 'traditional' ? '#8b4513' : '#D32F2F',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                cursor:'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                                outline: 'none', WebkitTapHighlightColor: 'transparent',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                             <Radar size={12}/> {chartMode === 'traditional' ? '羅庚' : '指南針'}
+                        </button>
                         {isLiveCompass && (
                             <span style={{fontSize: '13px', color: THEME.red, fontWeight: 'bold', fontFamily: 'monospace', marginRight: '2px'}}>
                                 {normalizeAngle(heading).toFixed(1)}°
@@ -1653,42 +1679,15 @@ const ChartView = ({ heading, setHeading, period, setPeriod, gregYear, setGregYe
     );
 };
 
-// 5. 設定頁 (SettingsView) - 更新版
+// 5. 設定頁 (SettingsView)
 const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLoggedIn, setIsLoggedIn }) => {
     const [password, setPassword] = useState('');
     const [showVersionHistory, setShowVersionHistory] = useState(false);
 
-    const handleModeChange = (mode) => {
-        setChartMode(mode);
-        Preferences.set({ key: 'fengshui_chart_mode', value: mode });
-    };
-    
     return (
         <div style={{ padding: '16px', paddingBottom: '100px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}>
                 <h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>設定</h2>
-            </div>
-
-            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
-                <div style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black, marginBottom: '12px' }}>排盤模式</div>
-                <div style={{ display: 'flex', backgroundColor: THEME.bgGray, borderRadius: '20px', padding: '2px' }}>
-                    <button 
-                        onClick={() => handleModeChange('traditional')} 
-                        style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '18px', backgroundColor: chartMode === 'traditional' ? THEME.blue : 'transparent', color: chartMode === 'traditional' ? 'white' : THEME.gray, fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
-                    >
-                        風水羅庚盤
-                    </button>
-                    <button 
-                        onClick={() => handleModeChange('modern')} 
-                        style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '18px', backgroundColor: chartMode === 'modern' ? THEME.blue : 'transparent', color: chartMode === 'modern' ? 'white' : THEME.gray, fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
-                    >
-                        現代指南針
-                    </button>
-                </div>
-                <div style={{ fontSize: '11px', color: THEME.gray, marginTop: '8px', paddingLeft: '4px' }}>
-                    * 風水羅庚盤為天南地北，左東右西。<br/>
-                    * 現代指南針為上北下南，左西右東。
-                </div>
             </div>
             
             <WebBackupManager data={bookmarks} onRestore={setBookmarks} prefix="FENGSHUI_BACKUP" />
@@ -1753,6 +1752,14 @@ export default function FengShuiApp() {
     const [gregMonth, setGregMonth] = useState(new Date().getMonth() + 1);
     
     const [view, setView] = useState('input');
+
+    // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
+    const contentRef = useRef(null);
+    useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.scrollTo(0, 0);
+        }
+    }, [view]);
     const [bookmarks, setBookmarks] = useState([]);
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
@@ -1921,7 +1928,7 @@ export default function FengShuiApp() {
                  <AppHeader title={APP_NAME} logoChar={{ main: '風', sub: '水' }} />
             )}
 
-            <div style={{...COMMON_STYLES.contentArea, background: view === 'input' ? '#222' : THEME.bg}}>
+            <div ref={contentRef} style={{...COMMON_STYLES.contentArea, background: view === 'input' ? '#222' : THEME.bg}}>
                 {view === 'input' && (
                     <CompassView 
                         heading={heading} setHeading={setHeading} 
@@ -1960,7 +1967,8 @@ export default function FengShuiApp() {
                             gregYear={gregYear} setGregYear={setGregYear}
                             gregMonth={gregMonth} setGregMonth={setGregMonth}
                             onSave={saveBookmark}
-                            chartMode={chartMode} 
+                            chartMode={chartMode}
+                            setChartMode={setChartMode}
                             isLoggedIn={isLoggedIn}
                             floorPlan={floorPlan} setFloorPlan={setFloorPlan}
                             imgConfig={imgConfig} setImgConfig={setImgConfig}

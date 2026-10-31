@@ -2435,6 +2435,7 @@ export default function CalendarApp() {
 
   const [bookmarks, setBookmarks] = useState([]);
   const [view, setView] = useState('calendar');
+  const contentRef = useRef(null);
   const [ziHourRule, setZiHourRule] = useState('ziShi'); 
   const [timeIndex, setTimeIndex] = useState(6);
   
@@ -2573,38 +2574,40 @@ export default function CalendarApp() {
   };
 
   useEffect(() => {
-    const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
-    lockOrientation();
-    const savedRule = localStorage.getItem('zi_hour_rule');
-    if (savedRule) setZiHourRule(savedRule);
-    
-    // 讀取儲存日期或預設為今天
-    const savedDateStr = localStorage.getItem('selected_date');
-    let initialDate = new Date();
-    if (savedDateStr) { 
-        const d = new Date(savedDateStr); 
-        if (!isNaN(d.getTime())) { 
-            initialDate = d;
-        } 
-    }
-    
-    // 設定狀態
-    setSelectedDate(initialDate); 
-    setCurrentDate(initialDate);
+      if (contentRef.current) {
+          contentRef.current.scrollTo(0, 0); // 確保外層不卡位
+      }
+      if (view === 'calendar') {
+          scrollToActiveDate(selectedDate);
+      }
+  }, [view]); // 🚨 故意不加入 selectedDate，避免點擊格子時畫面亂跳
 
-    // --- 新增：初始化時自動捲動到當天位置 ---
-    if (view === 'calendar') {
-        scrollToActiveDate(initialDate);
-    }
-    
-    const savedBk = localStorage.getItem('calendar_bookmarks');
-    if (savedBk) { try { setBookmarks(JSON.parse(savedBk)); } catch(e) {} }
-    const currentHour = new Date().getHours();
-    setTimeIndex(getDefaultTimeIndex(currentHour, savedRule || 'ziZheng'));
-  }, []);
+  useEffect(() => {
+        const lockOrientation = async () => { try { if (window.screen?.orientation?.lock) await window.screen.orientation.lock("portrait"); } catch (e) {} };
+        lockOrientation();
+        const savedRule = localStorage.getItem('zi_hour_rule');
+        if (savedRule) setZiHourRule(savedRule);
+        
+        // 🌟 修正：一開 App 時，強制設定為「今天」，不再讀取之前的舊紀錄
+        const initialDate = new Date();
+        
+        // 設定狀態
+        setSelectedDate(initialDate); 
+        setCurrentDate(initialDate);
 
-  useEffect(() => { localStorage.setItem('zi_hour_rule', ziHourRule); }, [ziHourRule]);
-  useEffect(() => { if (!isNaN(selectedDate.getTime())) localStorage.setItem('selected_date', getLocalDateString(selectedDate)); }, [selectedDate]);
+        // 初始化時自動捲動到當天位置
+        if (view === 'calendar') {
+            scrollToActiveDate(initialDate);
+        }
+        
+        const savedBk = localStorage.getItem('calendar_bookmarks');
+        if (savedBk) { try { setBookmarks(JSON.parse(savedBk)); } catch(e) {} }
+        const currentHour = new Date().getHours();
+        setTimeIndex(getDefaultTimeIndex(currentHour, savedRule || 'ziZheng'));
+    }, []);
+
+    useEffect(() => { localStorage.setItem('zi_hour_rule', ziHourRule); }, [ziHourRule]);
+    useEffect(() => { if (!isNaN(selectedDate.getTime())) localStorage.setItem('selected_date', getLocalDateString(selectedDate)); }, [selectedDate]);
   
   useEffect(() => {
     if (showJinQi) {
@@ -3032,8 +3035,7 @@ const selectedInfo = useMemo(() => {
       <div style={COMMON_STYLES.fullScreen}>
         <AppHeader title={APP_NAME} logoChar={{ main: '進', sub: '氣' }} />
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        
+        <div ref={contentRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         {view === 'calendar' && (
           <>
             <CalendarToolbar 

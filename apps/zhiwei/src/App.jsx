@@ -889,7 +889,7 @@ const PalaceGrid = ({
     const renderXiaoXianAges = () => {
         if (!palace.xiaoXian) return null;
         const rows = [];
-        for (let i = 0; i < Math.min(palace.xiaoXian.length, 8); i += 4) { rows.push(palace.xiaoXian.slice(i, i + 4)); }
+        for (let i = 0; i < Math.min(palace.xiaoXian.length, 7); i += 4) { rows.push(palace.xiaoXian.slice(i, i + 4)); }
         return rows.map((row, ridx) => (
             <div key={ridx} style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginBottom: '1px' }}>
                 {row.map(age => (
@@ -898,10 +898,10 @@ const PalaceGrid = ({
                         border: age === currentAge ? `1px solid ${THEME.red}` : 'none', 
                         borderRadius: '50%', 
                         // 🌟 電腦版放大圓圈寬度與字體
-                        minWidth: isMobile ? '13px' : '16px', 
-                        fontSize: isMobile ? '10px' : '12px', 
+                        minWidth: '13px',
+                        fontSize: isMobile ? '10px' : '11px', 
                         textAlign: 'center', 
-                        lineHeight: isMobile ? '13px' : '16px' 
+                        lineHeight: isMobile ? '13px' : '14px' 
                     }}>{age}</span>
                 ))}
             </div>
@@ -1009,7 +1009,7 @@ const PalaceGrid = ({
                 <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: '1px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                         <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginBottom: '0px' }}>{palace.name}</div>
-                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: isMobile ? '9px' : '13px', borderRadius: isMobile ? '3px' : '4px', padding: isMobile ? '1px 1px' : '2px 4px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: isMobile ? '10px' : '13px', borderRadius: isMobile ? '3px' : '4px', padding: isMobile ? '1px 1px' : '2px 4px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
                     </div>
                     
                     {/* 限名 (大限命宮、歲限兄弟等) */}
@@ -1567,7 +1567,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     }}>
                         未入大限並無四化
                     </div>
-                    
+
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
                         <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px', width: '100%' }}>
                         <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>返回</button>
@@ -1661,6 +1661,14 @@ export default function ZwdsApp() {
   
   // 2. 狀態管理
   const [view, setView] = useState('input');
+  
+  // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
+  const contentRef = useRef(null);
+  useEffect(() => {
+      if (contentRef.current) {
+          contentRef.current.scrollTo(0, 0);
+      }
+  }, [view]);
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
@@ -1870,7 +1878,7 @@ export default function ZwdsApp() {
       <AppHeader title={APP_NAME} logoChar={{ main: '紫', sub: '微' }} />
 
       {/* ✅ 內容滾動區 */}
-      <div style={COMMON_STYLES.contentArea}>
+      <div ref={contentRef} style={COMMON_STYLES.contentArea}>
           {view === 'input' && (
             <>
                 <ZwdsInput onCalculate={handleCalculate} initialData={editingData} />

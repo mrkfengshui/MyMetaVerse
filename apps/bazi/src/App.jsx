@@ -2273,6 +2273,14 @@ export default function BaziApp() {
   
   // 2. 狀態管理
   const [view, setView] = useState('input');
+  
+  // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
+  const contentRef = useRef(null);
+  useEffect(() => {
+      if (contentRef.current) {
+          contentRef.current.scrollTo(0, 0);
+      }
+  }, [view]);
   const [baziData, setBaziData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
@@ -2563,7 +2571,7 @@ export default function BaziApp() {
       <AppHeader title={APP_NAME} logoChar={{ main: '八', sub: '字' }} />
 
       {/* ✅ 3. 內容滾動區 */}
-      <div style={COMMON_STYLES.contentArea}>
+      <div ref={contentRef} style={COMMON_STYLES.contentArea}>
           {view === 'input' && (
             <>
               <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
