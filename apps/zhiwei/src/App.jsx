@@ -1505,10 +1505,16 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         <div>西曆 {birthDetails.solarStr}</div>
                         <div>農曆 {birthDetails.lunarStr}</div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
-                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronLeft size={24} /></button>
-                        <span style={{ fontSize: '14px', fontWeight: 'bold', textAlign: 'center' }}>{getLayerTitle()}</span>
-                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue }}><ChevronRight size={24} /></button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '2px', height: '22px' }}>
+                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
+                            <ChevronLeft size={18} />
+                        </button>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', textAlign: 'center', lineHeight: 1 }}>
+                            {getLayerTitle()}
+                        </span>
+                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
+                            <ChevronRight size={18} />
+                        </button>
                     </div>
                     <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
                         <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: '12px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
@@ -1523,24 +1529,12 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     </div>
                     {(layerMode === 1 && !daXianGan) && <div style={{ width: '100%', textAlign: 'center', color: THEME.red, fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>未入大限並無四化</div>}
                     <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                        <button onClick={onBack} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>返回</button>
-                        <button 
-                            onClick={() => setShowScorePanel(true)} 
-                            style={{ 
-                                padding: '2px 8px', 
-                                fontSize: '11px', 
-                                backgroundColor: THEME.orange, // 使用不同顏色區分
-                                color: 'white', 
-                                border: 'none', 
-                                cursor: 'pointer'
-                            }}
-                        >
-                            運勢評分
-                        </button>
-                        <div style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <button onClick={() => setShowNotesModal(true)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.purple, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>批注</button>
-                            <button onClick={() => onSave(chartData)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px' }}>保存</button>
-                        </div>
+                        <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr 1fr', gap: '4px', width: '100%' }}>
+                        <button onClick={onBack} style={{ height: '24px', padding: '0', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>返回</button>
+                        <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>運勢評分</button>
+                        <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>批注</button>
+                        <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>保存</button>
+                    </div>
                     </div>
                 </div>
 

@@ -94,6 +94,36 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           const storedDaXianType = localStorage.getItem('zwds_rule_daxian_sihua') || 'book';
           const siHuaRuleText = storedDaXianType === 'book' ? '依紫微斗數全書(由命宮起干，男女順逆行)' : '依大限本宮之宮干';
 
+          // 🌟 獨家秘訣 1：找出命主星所在的宮位，供空宮借星使用
+          let mingZhuPalaceName = '命宮'; // 預設防呆
+          if (data.grid) {
+              const mzPalace = data.grid.find(p => p.stars.some(s => s.name === data.mingZhu) || p.minorStars.some(s => s.name === data.mingZhu));
+              if (mzPalace) mingZhuPalaceName = mzPalace.name;
+          }
+          
+          prompt += `\n⚠️ 【本派特有空宮借星法則（極重要）】：\n`;
+          prompt += `若遇「空宮」（定義：無十四正曜、無左右魁鉞昌曲、無火鈴羊陀空劫、無祿存視為空宮），絕對不可借對宮星曜！必須直接借用「命主星」所在宮位的所有星曜。\n`;
+          prompt += `本造命主星為【${data.mingZhu}】（位於${mingZhuPalaceName}），因此推算時，所有空宮一律借用「${mingZhuPalaceName}」的星曜組合來論斷！\n`;
+
+          // 🌟 獨家秘訣 2：提前由系統算出前 3 個大限的天干，塞給 AI 封死它算錯的機會
+          prompt += `\n【人生頭30年之大限四化天干（極重要）】：\n`;
+          if (data.grid) {
+              const earlyDaXians = data.grid.filter(p => p.daXian).sort((a, b) => parseInt(a.daXian.split('-')[0]) - parseInt(b.daXian.split('-')[0])).slice(0, 3);
+              earlyDaXians.forEach(dx => {
+                  let dxGan = dx.gan; // 預設宮干
+                  if (storedDaXianType === 'book') {
+                      const mingPalace = data.grid.find(p => p.name === '命宮');
+                      const bYearGan = data.lunarDateStr.charAt(0);
+                      const isMale = data.genderText === '男';
+                      const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                      const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                      const steps = isClockwise ? (dx.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - dx.zhiIdx + 12) % 12;
+                      dxGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                  }
+                  prompt += `- ${dx.daXian} 歲大限：走【${dx.name}】，大限四化天干必須使用【${dxGan}】\n`;
+              });
+          }
+
           if (currentAge < firstYunAge) {
               isChildBeforeDaYun = true; 
               const firstYunYear = birthYear + firstYunAge - 1;
@@ -163,8 +193,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       prompt += `⚠️ 排版規定：請全部使用文字與列點 (Bullet points) 呈現，絕對不要使用表格 (Table)。\n`;
 
       if (appType === 'zwds') {
-          prompt += `1. 原局總論 (包括命身格局、三方四正、左右宮夾忌結構) 與核心性格特質，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)\n`;
-          prompt += `2. 人生頭30年曾/將會發生的3件大事。【重要：遵照「${siHuaRuleText}」來決定大限四化天干！】(事件越具體越好，例如獲奬、傑出成就、車禍、先天疾病，若是破產、重病、意外、學業失敗、父母離異等凶災，請如實寫出，絕不粉飾太平，並提供化解與心態建議)\n`;
+          prompt += `1. 原局總論 (包括命身格局、三方四正、左右宮夾忌結構) ，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)，請集中火力分析「命宮」、「父母宮」(代表長輩及職場上司老闆對自己的助力與壓制)、「官祿宮」、「財帛宮」這四個核心宮位。解析其命身格局與核心性格特質\n`;
+          prompt += `2. 人生頭30年曾/將會發生的3件大事。必須嚴格使用上方提供的「頭30年大限四化天干」推算四化，禁止擅用宮干！】(事件越具體越好，例如獲奬、傑出成就、車禍、先天疾病，若是破產、重病、意外、學業失敗、父母離異等凶災，請如實寫出，絕不粉飾太平，並提供化解與心態建議)\n`;
           if (isChildBeforeDaYun) {
               prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
               prompt += `4. 未來感情婚姻與伴侶特質\n`;
@@ -197,6 +227,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           }
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       try {
           const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyyTTv2RWkwSjogD8W46UFIGMNZMnn6tpAQTwhpfUwN5SeQ8NzQvThwY-AttTkClEII/exec"; 
 
@@ -259,7 +291,9 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       } catch (error) {
           console.error("AI 錯誤詳細資訊:", error);
           
-          alert("⚠️ AI 伺服器目前大塞車！\n\n您的付款紀錄已經安全保存（已解鎖）。\n系統先為您提供【經典精華版命盤析論】，您可以稍後隨時點擊按鈕，免費重試生成完整的深度命書！");
+          setTimeout(() => {
+              alert("⚠️ 伺服器連線逾時或忙碌中！\n\n系統已先為您提供【經典精華版命盤析論】，請稍後網路順暢時再重試。");
+          }, 100);
           
           // ==========================================
           // 🌟 離線保底假 AI 命書 (精華版 Template)
@@ -377,6 +411,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           if (onSave) onSave(data, true); 
 
       } finally {
+          clearTimeout(timeoutId); // 🌟 3. 無論成功或失敗，都把計時器清掉，避免記憶體洩漏
           setIsAnalyzing(false);
       }
   };
