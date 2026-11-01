@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, RefreshCw, Download, Unlock } from 'lucide-react';
+import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
 
 export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave }) => {
   const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
@@ -13,7 +13,6 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   
   const [userToken, setUserToken] = useState('');
   const [showTokenInput, setShowTokenInput] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [progress, setProgress] = useState(0);
 
     useEffect(() => {
@@ -22,8 +21,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
             setProgress(0); // 開始時歸零
             interval = setInterval(() => {
                 setProgress(prev => {
-                    const step = Math.random() * 2 + 0.5; // 確保每次至少增加 0.5~2.5
-                    return prev + step >= 95 ? 95 : prev + step; // 最高停在 95%
+                    const step = Math.random() * 1 + 0.2; // 確保每次至少增加 0.5~2.5
+                    return prev + step >= 99 ? 99 : prev + step; // 最高停在 99%
                 });
             }, 500);
         } else {
@@ -38,8 +37,10 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       setProgress(0);
       setIsAnalyzing(true);
       
-      let isChildBeforeDaYun = false; 
+      let isChildBeforeDaYun = false;
+      let siHuaRuleText = '';
       
+      try {
       // 🌟 1. 動態切換大師人設
       const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
       let prompt = `你現在是一位專業、客觀且具備深厚玄學素養的${masterName}大師。\n`;
@@ -56,7 +57,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           
           if (data.daYuns && data.daYuns.length > 0) {
               const currentYear = new Date().getFullYear();
-              const birthYear = parseInt(data.rawDate.year);
+              const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
               const firstYunYear = data.daYuns[0].startYear;
 
               if (currentYear < firstYunYear) {
@@ -104,7 +105,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           }
           
           const currentYear = new Date().getFullYear();
-          const birthYear = parseInt(data.rawDate.year);
+          const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
           const currentAge = currentYear - birthYear + 1; 
           
           const bureauNumMap = { '水二局': 2, '木三局': 3, '金四局': 4, '土五局': 5, '火六局': 6 };
@@ -112,19 +113,50 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
           // 🌟 提取用戶的大限四化設定 (用來強制統整前後30年的四化標準)
           const storedDaXianType = localStorage.getItem('zwds_rule_daxian_sihua') || 'book';
-          const siHuaRuleText = storedDaXianType === 'book' ? '依紫微斗數全書(由命宮起干，男女順逆行)' : '依大限本宮之宮干';
+            siHuaRuleText = storedDaXianType === 'book' ? '依紫微斗數全書(由命宮起干，男女順逆行)' : '依大限本宮之宮干';
 
-          // 🌟 獨家秘訣 1：找出命主星所在的宮位，供空宮借星使用
-          let mingZhuPalaceName = '命宮'; // 預設防呆
+          // 🌟 獨家秘訣：直接在程式碼中預先計算空宮借星，封死 AI 借錯對宮的機會
+          const EMPTY_MING_ZHU_MAP = {
+              '子': '貪狼', '丑': '巨門', '寅': '祿存', '卯': '文曲', '辰': '廉貞', '巳': '武曲',
+              '午': '破軍', '未': '武曲', '申': '廉貞', '酉': '文曲', '戌': '祿存', '亥': '巨門'
+          };
+
           if (data.grid) {
-              const mzPalace = data.grid.find(p => p.stars.some(s => s.name === data.mingZhu) || p.minorStars.some(s => s.name === data.mingZhu));
-              if (mzPalace) mingZhuPalaceName = mzPalace.name;
+              prompt += `\n【完整十二宮星曜分佈】（請嚴格依據此排盤推算三方四正與相夾）：\n`;
+              
+              data.grid.forEach(p => {
+                  const major = p.stars.map(s => s.name).join('');
+                  const minor = p.minorStars.map(s => s.name).join('、');
+                  let all = [major, minor].filter(Boolean).join('，');
+                  
+                  // 💡 判斷是否為空宮，若為空宮直接由系統強制寫入借來的星曜
+                  if (!all) {
+                      const targetStarName = EMPTY_MING_ZHU_MAP[p.zhi]; // 找出該空宮專屬的命主星
+                      // 尋找該命主星所在的宮位
+                      const sourcePalace = data.grid.find(sp => sp.stars.some(s => s.name === targetStarName) || sp.minorStars.some(s => s.name === targetStarName));
+                      
+                      if (sourcePalace) {
+                          const sMajor = sourcePalace.stars.map(s => s.name).join('');
+                          const sMinor = sourcePalace.minorStars.map(s => s.name).join('、');
+                          const sAll = [sMajor, sMinor].filter(Boolean).join('，');
+                          
+                          // 將借來的星曜直接寫成死資料餵給 AI，加上強烈警告
+                          all = `空宮 (⚠️ 系統強制指令：絕對禁止借對宮！依本派秘訣，${p.zhi}宮必須借命主星「${targetStarName}」，故強制完全借用【${sourcePalace.name}】的星曜：${sAll})`;
+                      } else {
+                          all = '空宮';
+                      }
+                  }
+                  
+                  const dx = p.daXian ? `大限 ${p.daXian}` : '無大限';
+                  prompt += `- ${p.zhi}宮【${p.name}】(宮干:${p.gan})：${dx}，星曜：${all}\n`;
+              });
+
+              if (data.formations && data.formations.length > 0) {
+                  prompt += `\n【命局特殊格局】：${data.formations.join('、')}\n`;
+                  prompt += `⚠️ 請在「原局總論」中，詳細解析上述特殊格局對命主的影響。\n`;
+              }
           }
           
-          prompt += `\n⚠️ 【本派特有空宮借星法則（極重要）】：\n`;
-          prompt += `若遇「空宮」（定義：無十四正曜、無左右魁鉞昌曲、無火鈴羊陀空劫、無祿存視為空宮），絕對不可借對宮星曜！必須直接借用「命主星」所在宮位的所有星曜。\n`;
-          prompt += `空子宮: 命主星貪狼，空亥丑宮: 命主星巨門，空寅戌宮: 命主星祿存，空卯酉宮: 命主星文曲，空辰申宮: 命主星廉貞，空巳未宮: 命主星武曲，空午宮: 命主星破軍，因此推算時，所有空宮一律借用「該宮位的命主星」的星曜組合來論斷！\n`;
-
           // 🌟 獨家秘訣 2：提前由系統算出前 3 個大限的天干，塞給 AI 封死它算錯的機會
           prompt += `\n【人生頭30年之大限四化天干（極重要）】：\n`;
           if (data.grid) {
@@ -182,17 +214,17 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
                           const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
                           const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
                           const steps = isClockwise ? (currentDaXian.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - currentDaXian.zhiIdx + 12) % 12;
-                          const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
-                          daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
-                      }
-
-                      const sfIdx = [currentDaXian.zhiIdx, (currentDaXian.zhiIdx + 4) % 12, (currentDaXian.zhiIdx + 8) % 12, (currentDaXian.zhiIdx + 6) % 12];
-                      const sfNames = sfIdx.map(idx => data.grid.find(p => p.zhiIdx === idx).name).join('、');
-
-                      prompt += `當前大限：走【${currentDaXian.name}】(歲數 ${currentDaXian.daXian})，星曜：${daXianStars}\n`;
-                      prompt += `當前大限四化天干：【${daXianGan}】\n`;
-                      prompt += `大限三方四正宮位為：${sfNames}\n`;
+                      const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                      daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
                   }
+
+                  const sfIdx = [currentDaXian.zhiIdx, (currentDaXian.zhiIdx + 4) % 12, (currentDaXian.zhiIdx + 8) % 12, (currentDaXian.zhiIdx + 6) % 12];
+                  const sfNames = sfIdx.map(idx => data.grid.find(p => p.zhiIdx === idx).name).join('、');
+
+                  prompt += `當前大限：走【${currentDaXian.name}】(歲數 ${currentDaXian.daXian})，星曜：${daXianStars}\n`;
+                  prompt += `當前大限四化天干：【${daXianGan}】\n`;
+                  prompt += `大限三方四正宮位為：${sfNames}\n`;
+              }
 
                   const currentXiaoXian = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(currentAge));
                   if (currentXiaoXian) {
@@ -206,16 +238,17 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           prompt += `\n⚠️ 【紫微分析強制指引】：
 1. 嚴格依據「十二宮星曜分佈」判斷三方四正、夾宮（如羊陀夾忌、雙祿夾等），切勿自行想像。
 2. 【聚焦甲乙級星】：請集中火力分析甲級與乙級星曜（十四主星、六吉六煞、祿存天馬等），忽略丙級及以下之神煞小星，以免失焦。
-3. 【大限四化統一法則】：推演「人生頭30年」與「當前未來」的所有大限時，請務必統一遵照「${siHuaRuleText}」來決定大限四化天干！絕對禁止前後邏輯不一。
+3. 【最高指令：大限四化絕對服從】：由於系統支援多種起干流派（全書/宮干），**系統已經為您計算好最終結果**。推演大限時，必須 100% 使用上方資料中明確提供的【大限四化天干】。嚴禁您自行運用任何紫微法則重新推衍天干，若擅自推算將導致門派邏輯衝突！
 4. 絕對禁止使用八字的「干支生剋」與「五行強弱」邏輯。
 5. 若資料顯示某宮位「無大限」，請遵照該排盤事實。\n`;
       }
 
       prompt += `\n【報告要求段落】請按以下結構撰寫：\n`;
       prompt += `⚠️ 排版規定：請全部使用文字與列點 (Bullet points) 呈現，絕對不要使用表格 (Table)。\n`;
+      prompt += `🛑 內容規定：系統會自動在文章開頭附上命造基本排盤資料。請您**直接從「原局總論」的引言開始撰寫**，絕對不要在開頭重複列舉姓名、性別、出生時間、四柱八字、五行局或命宮主星等任何基本盤資料清單，以免內容重疊冗餘。\n`;
 
       if (appType === 'zwds') {
-          prompt += `1. 原局總論 (包括命身格局、三方四正、左右宮夾忌結構) ，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)，請集中火力分析「命宮」、「父母宮」(代表長輩及職場上司老闆對自己的助力與壓制)、「官祿宮」、「財帛宮」這四個核心宮位。解析其命身格局與核心性格特質\n`;
+          prompt += `1. 原局總論 (包括命身格局、三方四正、左右昌曲魁鉞夾、雙忌夾、日月有暉結構) ，他給別人的感覺及他真實的內心 (引述經典古籍如《紫微斗數全書》)，請集中火力分析「命宮」、「父母宮」(代表長輩及職場上司老闆對自己的助力與壓制)、「官祿宮」、「財帛宮」這四個核心宮位。解析其命身格局與核心性格特質\n`;
           prompt += `2. 人生頭30年曾/將會發生的3件大事。必須嚴格使用上方提供的「頭30年大限四化天干」推算四化，禁止擅用宮干！】(事件越具體越好，例如獲奬、傑出成就、車禍、先天疾病，若是破產、重病、意外、學業失敗、父母離異等凶災，請如實寫出，絕不粉飾太平，並提供化解與心態建議)\n`;
           if (isChildBeforeDaYun) {
               prompt += `3. 天賦潛力與未來事業財富格局分析 (注意：命主尚且年幼，此段請務必將焦點放在「天賦潛能開發、才華發展與父母未來的栽培方向」)\n`;
@@ -224,7 +257,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               prompt += `6. 近期歲限大勢詳述：由於命主尚未起運（處於童限），請將近期歲限（流年）的分析重點絕對集中於「學業發展、讀書運勢、童年成長經歷與父母教養注意事項」上，禁止提及職場升遷、事業投資等不符合年齡的內容。\n`;
               prompt += `7. 開運與幸運色/吉方建議，幼童適合的運動建議\n`;
           } else {
-              prompt += `3. 天賦事業與財富格局分析，第一桶金如何獲得 (從三方四正、左右宮夾忌及四化引動分析，中肯評估格局，給予務實的投資與避險建議)\n`;
+              prompt += `3. 天賦事業與財富格局分析，第一桶金如何獲得 (從三方四正、左右昌曲魁鉞夾、雙忌夾、日月有暉及四化引動分析，中肯評估格局，給予務實的投資與避險建議)\n`;
               prompt += `4. 感情婚姻與伴侶特質 (中肯評估，若有桃花或刑剋請直言，並提供相處解方)\n`;
               prompt += `5. 疾厄與養生建議\n`;
               prompt += `6. 當前大限與前後3年歲限(流年)運勢詳述。【重要：遵照「${siHuaRuleText}」來決定大限四化天干！】\n`;
@@ -249,12 +282,11 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           }
       }
 
-      try {
           const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyyTTv2RWkwSjogD8W46UFIGMNZMnn6tpAQTwhpfUwN5SeQ8NzQvThwY-AttTkClEII/exec"; 
 
           // 建立 AbortController 以設定 5min 超時
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 300000);
+const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
 
           const response = await fetch(GAS_PROXY_URL, {
                 method: 'POST',
@@ -262,14 +294,12 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
                 body: JSON.stringify({ prompt: prompt, token: userToken }),
                 signal: controller.signal // 將 signal 綁定到 fetch 請求
           });
-            
-          // 成功取得回應後，清除計時器
-          clearTimeout(timeoutId);
 
           if (!response.ok) throw new Error(`網路請求失敗，狀態碼：${response.status}`);
           
           // 🌟 1. 先以純文字讀取，避免 Google 回傳 HTML 導致程式崩潰
           const rawText = await response.text();
+          clearTimeout(timeoutId);
           console.log("後端原始回傳內容:", rawText); // Debug 用：可在瀏覽器 F12 主控台查看後端到底傳了什麼
           
           let result;
@@ -333,8 +363,20 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       } catch (error) {
           console.error("AI 錯誤詳細資訊:", error);
           
-          alert("⚠️ AI 伺服器目前大塞車！\n\n您的付款紀錄已經安全保存（已解鎖）。\n系統先為您提供【經典精華版命盤析論】，您可以稍後隨時點擊按鈕，免費重試生成完整的深度命書！");
+          // 🌟 判斷是否為我們設定的超時，或瀏覽器原生的 AbortError
+          const isTimeout = error.name === 'AbortError' || error.message.includes('aborted') || error.message.includes('上限');
+          const displayMsg = isTimeout ? "AI 伺服器運算時間過長（超過5.5分鐘），已達到瀏覽器連線上限。" : error.message;
           
+          // 🌟 1. 攔截 API 致命錯誤 (Token無效、網路阻擋、GAS未正確部署)
+          if (!isTimeout && (error.message.includes("無效") || error.message.includes("fetch") || error.message.includes("格式異常"))) {
+              alert(`❌ 連線或授權失敗：\n${displayMsg}\n\n(提示：請確認您的 Google Apps Script 是否已設為「所有人」皆可存取，或 Token 狀態)`);
+              setIsAnalyzing(false);
+              setProgress(0);
+              return; // 🛑 致命錯誤直接中斷，不產出假命書
+          }
+          
+          // 🌟 2. 真的是超時或運算異常，才顯示塞車並提供精華版
+          alert(`⚠️ 運算異常或伺服器大塞車！\n\n系統除錯訊息：${displayMsg}\n\n您的付款紀錄已經安全保存（已解鎖）。系統先為您提供精華版，可稍後重試！`);
           // ==========================================
           // 🌟 離線保底假 AI 命書 (精華版 Template)
           // ==========================================
@@ -359,7 +401,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           
           if (appType === 'bazi' && data.bazi) {
               const dayGan = data.bazi.dayGan;
-              const wuxing = utils.WUXING_MAP[dayGan] || '';
+              const wuxing = (WUXING_MAP && WUXING_MAP[dayGan]) || '';
               
               // 十干滴天髓古賦
               const poemMap = {
@@ -494,91 +536,37 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       }
   };
 
-  const handleDownloadPdf = () => {
+  const handleShare = async () => {
       if (!analysisResult) return;
-      setIsGeneratingPdf(true);
+      
+      const cleanText = analysisResult.replace(/#/g, '').replace(/\*\*/g, '');
+      const shareData = {
+          title: `${data.name || '未命名'} 命書`,
+          text: cleanText
+      };
 
-      if (!window.html2pdf) {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-          script.onload = () => executePdfGeneration();
-          document.body.appendChild(script);
+      if (navigator.share) {
+          try {
+              await navigator.share(shareData);
+          } catch (err) {
+              if (err.name !== 'AbortError') handleCopyText();
+          }
       } else {
-          executePdfGeneration();
+          handleCopyText();
+          alert("您的裝置不支援原生分享，已自動為您複製全文！");
       }
   };
 
-  const executePdfGeneration = () => {
-      if (!analysisResult) return setIsGeneratingPdf(false);
-
-      let htmlContent = `
-      <div style="font-family: 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif; padding: 0; color: #222; line-height: 1.8; font-size: 15px; word-break: break-word; letter-spacing: 0.5px; text-align: justify; width: 100%; box-sizing: border-box;">
-          <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #ccc; page-break-inside: avoid; break-inside: avoid; display: block; margin-bottom: 20px;">
-              <h2 style="margin: 0 0 10px 0; color: #000;">【${data.name || '未命名'}】專屬深度流年批命書</h2>
-              <div style="font-size: 13px; color: #666;">生成時間：${new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
-          </div>
-      `;
-
-      let h3Count = 0; // 🌟 用來追蹤大章節的數量
-
-      analysisResult.split('\n').forEach(line => {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === '---' || trimmed === '***' || trimmed === '___') return;
-          
-          // 🌟 核心防斬斷：使用 display: block 和 padding，徹底避免引擎高度計算錯誤
-          let styleStr = "page-break-inside: avoid !important; break-inside: avoid !important; display: block; width: 100%; box-sizing: border-box; ";
-          let contentHtml = '';
-          
-          if (line.startsWith('## ')) {
-              h3Count++;
-              // 🌟 智能換頁：遇到第二個以上的「大章節(##)」時，自動強制從新的一頁開始！
-              if (h3Count > 1) {
-                  styleStr += "page-break-before: always; break-before: page; ";
-              }
-              // 將 margin 改為 padding
-              styleStr += "color: #000; padding-top: 24px; padding-bottom: 12px; font-size: 18px; border-bottom: 1px solid #ddd; font-weight: bold;";
-              contentHtml = line.replace(/^#{2,3}\s/, '');
-          } else if (line.startsWith('**▶')) {
-              styleStr += "font-weight: bold; color: #1890ff; padding-top: 16px; padding-bottom: 8px; font-size: 16px;";
-              contentHtml = line.replace(/\*\*/g, '');
-          } else if (line.startsWith('**【') && line.endsWith('】**')) {
-              styleStr += "font-weight: bold; color: #008080; padding-top: 20px; padding-bottom: 10px; font-size: 17px; border-bottom: 2px dashed #008080;";
-              contentHtml = line.replace(/\*\*/g, '');
-          } else if (line.startsWith('- ') || line.startsWith('* ')) {
-              const content = line.substring(2);
-              const parts = content.split('**');
-              let formatted = parts.map((part, idx) => idx % 2 === 1 ? `<b style="color: #333;">${part}</b>` : part).join('');
-              styleStr += "padding-left: 12px; padding-bottom: 8px;";
-              contentHtml = `• ${formatted}`;
-          } else {
-              const boldParts = line.split('**');
-              let formatted = boldParts.map((part, idx) => idx % 2 === 1 ? `<strong style="color: #d9363e;">${part}</strong>` : part).join('');
-              styleStr += "padding-bottom: 14px;";
-              contentHtml = formatted; 
-          }
-          
-          htmlContent += `<div style="${styleStr}">${contentHtml}</div>`;
-      });
-
-      htmlContent += `</div>`;
-
-      const opt = {
-          // 🌟 [上, 右, 下, 左]：明確給予底部 20mm 的安全區，確保引擎提早換頁
-          margin:       [15, 15, 20, 15], 
-          filename:     `${data.name || '未命名'}_深度流年批命書.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true, letterRendering: true }, 
-          // 🌟 單純依賴 css 斷頁指令與 avoid-all
-          pagebreak:    { mode: ['css', 'avoid-all'] }, 
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      window.html2pdf().set(opt).from(htmlContent).save().then(() => {
-          setIsGeneratingPdf(false);
-      }).catch(err => {
-          console.error('PDF 生成失敗', err);
-          setIsGeneratingPdf(false);
-      });
+  // 🌟 一鍵複製到剪貼簿 (備用)
+  const handleCopyText = async () => {
+      if (!analysisResult) return;
+      try {
+          const cleanText = analysisResult.replace(/#/g, '').replace(/\*\*/g, '');
+          await navigator.clipboard.writeText(cleanText);
+          alert("✅ 命書已成功複製！");
+      } catch (err) {
+          alert("❌ 複製失敗，請手動選取文字複製。");
+      }
   };
 
   return (
@@ -606,7 +594,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
               {appType === 'zwds' ? '希夷仰觀天上星，作為斗數推人命...' : '子平造化察元機，五行生剋論枯榮...'}
           </div>
           <div style={{ width: '80%', margin: '20px auto 0', backgroundColor: '#e0e0e0', borderRadius: '8px', height: '10px', overflow: 'hidden' }}>
-             <div style={{ height: '100%', backgroundColor: THEME.teal, width: `${progress}%`, transition: 'width 0.5s ease-in-out' }}></div>
+             <div style={{ height: '100%', backgroundColor: THEME.red, width: `${progress}%`, transition: 'width 0.5s ease-in-out' }}></div>
           </div>
           <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '8px' }}>{Math.round(progress)}%</div>
 
@@ -616,18 +604,32 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
              <button 
-                 onClick={handleDownloadPdf}
-                 disabled={isGeneratingPdf}
+                 onClick={handleCopyText}
                  style={{ 
                      display: 'flex', alignItems: 'center', gap: '6px', 
-                     padding: '8px 16px', backgroundColor: isGeneratingPdf ? THEME.gray : THEME.black, 
+                     padding: '8px 16px', backgroundColor: THEME.white, 
+                     color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '6px', 
+                     fontSize: '14px', cursor: 'pointer', 
+                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                 }}
+             >
+                 <Copy size={16} />
+                 複製
+             </button>
+             
+             {/* 原生分享按鈕 */}
+             <button 
+                 onClick={handleShare}
+                 style={{ 
+                     display: 'flex', alignItems: 'center', gap: '6px', 
+                     padding: '8px 16px', backgroundColor: THEME.black, 
                      color: THEME.white, border: 'none', borderRadius: '6px', 
-                     fontSize: '14px', cursor: isGeneratingPdf ? 'wait' : 'pointer', 
+                     fontSize: '14px', cursor: 'pointer', 
                      fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                  }}
              >
-                 {isGeneratingPdf ? <RefreshCw size={16} className="spin" /> : <Download size={16} />}
-                 {isGeneratingPdf ? '處理中...' : '下載命書 (PDF)'}
+                 <Share2 size={16} />
+                 分享
              </button>
           </div>
 
@@ -644,7 +646,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
             {analysisResult.split('\n').map((line, i) => {
               const trimmed = line.trim();
               if (trimmed === '---' || trimmed === '***' || trimmed === '___') return null;
-              if (line.startsWith('### ') || line.startsWith('## ')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/^#{2,3}\s/, '')}</h3>;
+              if (line.match(/^#{2,4}\s/)) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/^#{2,4}\s/, '')}</h3>;
               if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
               if (line.startsWith('**【') && line.endsWith('】**')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.teal, marginTop: '20px', marginBottom: '10px', fontSize: '17px', borderBottom: `2px dashed ${THEME.teal}`, paddingBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
               
