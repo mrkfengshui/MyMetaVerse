@@ -41,6 +41,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 
 // 集中管理版本歷史紀錄
 const VERSION_HISTORY = [
+    { version: "v4.1", date: "2026-11-01", changes: ["修正大限四化Bug"] },
     { version: "v4.0", date: "2026-10-29", changes: ["新增AI命書"] },
     { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },
     { version: "v2.0", date: "2026-08-01", changes: ["支援運勢評分與流日排盤"] },
@@ -1171,7 +1172,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         const isMale = chartData.genderText === '男';
                         const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
                         const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
-                        daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                        const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                        daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
                     }
                 }
             }
@@ -1310,7 +1312,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         const isMale = chartData.genderText === '男';
                         const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
                         const steps = isClockwise ? (g[dIdx].zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - g[dIdx].zhiIdx + 12) % 12;
-                        fuzzyDaXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                        const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                        fuzzyDaXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
                     }
                 }
             }
@@ -1546,7 +1549,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     </div>
                     
                     {/* 🌟 電腦版改為 3欄2列 以節省高度 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '2px 10px', fontSize: isMobile ? '11px' : '14px', textAlign: 'left', width: '60%', paddingLeft: isMobile ? '20px' : '10px', color: THEME.gray }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '2px 10px', fontSize: isMobile ? '11px' : '14px', textAlign: 'left', width: isMobile ? 'auto' : '60%', paddingLeft: isMobile ? '20px' : '10px', color: THEME.gray }}>
                             <div>命主: {chartData.mingZhu}</div> 
                             <div>身主: {chartData.shenZhu}</div>
                             <div>五行: {chartData.bureau}</div> 

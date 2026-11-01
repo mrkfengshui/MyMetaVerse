@@ -14,8 +14,28 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
   const [userToken, setUserToken] = useState('');
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        let interval;
+        if (isAnalyzing) {
+            setProgress(0); // 開始時歸零
+            interval = setInterval(() => {
+                setProgress(prev => {
+                    const step = Math.random() * 2 + 0.5; // 確保每次至少增加 0.5~2.5
+                    return prev + step >= 95 ? 95 : prev + step; // 最高停在 95%
+                });
+            }, 500);
+        } else {
+            setProgress(0); // 結束時歸零
+        }
+        return () => {
+            if (interval) clearInterval(interval); // 組件卸載或狀態改變時清除計時器，防止卡死
+        };
+    }, [isAnalyzing]);
 
     const handleGenerateAIReport = async (overrideWuxing = null) => {
+      setProgress(0);
       setIsAnalyzing(true);
       
       let isChildBeforeDaYun = false; 
@@ -103,7 +123,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           
           prompt += `\n⚠️ 【本派特有空宮借星法則（極重要）】：\n`;
           prompt += `若遇「空宮」（定義：無十四正曜、無左右魁鉞昌曲、無火鈴羊陀空劫、無祿存視為空宮），絕對不可借對宮星曜！必須直接借用「命主星」所在宮位的所有星曜。\n`;
-          prompt += `本造命主星為【${data.mingZhu}】（位於${mingZhuPalaceName}），因此推算時，所有空宮一律借用「${mingZhuPalaceName}」的星曜組合來論斷！\n`;
+          prompt += `空子宮: 命主星貪狼，空亥丑宮: 命主星巨門，空寅戌宮: 命主星祿存，空卯酉宮: 命主星文曲，空辰申宮: 命主星廉貞，空巳未宮: 命主星武曲，空午宮: 命主星破軍，因此推算時，所有空宮一律借用「該宮位的命主星」的星曜組合來論斷！\n`;
 
           // 🌟 獨家秘訣 2：提前由系統算出前 3 個大限的天干，塞給 AI 封死它算錯的機會
           prompt += `\n【人生頭30年之大限四化天干（極重要）】：\n`;
@@ -118,7 +138,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
                       const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
                       const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
                       const steps = isClockwise ? (dx.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - dx.zhiIdx + 12) % 12;
-                      dxGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                      const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                      dxGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
                   }
                   prompt += `- ${dx.daXian} 歲大限：走【${dx.name}】，大限四化天干必須使用【${dxGan}】\n`;
               });
@@ -161,7 +182,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
                           const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
                           const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
                           const steps = isClockwise ? (currentDaXian.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - currentDaXian.zhiIdx + 12) % 12;
-                          daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + steps) % 10];
+                          const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                          daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
                       }
 
                       const sfIdx = [currentDaXian.zhiIdx, (currentDaXian.zhiIdx + 4) % 12, (currentDaXian.zhiIdx + 8) % 12, (currentDaXian.zhiIdx + 6) % 12];
@@ -230,9 +252,9 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
       try {
           const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyyTTv2RWkwSjogD8W46UFIGMNZMnn6tpAQTwhpfUwN5SeQ8NzQvThwY-AttTkClEII/exec"; 
 
-          // 建立 AbortController 以設定 60 秒超時
+          // 建立 AbortController 以設定 5min 超時
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 60000);
+          const timeoutId = setTimeout(() => controller.abort(), 300000);
 
           const response = await fetch(GAS_PROXY_URL, {
                 method: 'POST',
@@ -430,6 +452,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
       } finally {
           setIsAnalyzing(false);
+          setProgress(0);
       }
   };
 
@@ -582,7 +605,12 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
           <div style={{ fontSize: '16px', fontWeight: 'bold', color: THEME.teal, marginTop: '16px' }}>
               {appType === 'zwds' ? '希夷仰觀天上星，作為斗數推人命...' : '子平造化察元機，五行生剋論枯榮...'}
           </div>
-          <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '8px' }}>請稍候，可能需要 4~5 分鐘，請先去泡杯咖啡</div>
+          <div style={{ width: '80%', margin: '20px auto 0', backgroundColor: '#e0e0e0', borderRadius: '8px', height: '10px', overflow: 'hidden' }}>
+             <div style={{ height: '100%', backgroundColor: THEME.teal, width: `${progress}%`, transition: 'width 0.5s ease-in-out' }}></div>
+          </div>
+          <div style={{ fontSize: '12px', color: THEME.gray, marginTop: '8px' }}>{Math.round(progress)}%</div>
+
+          <div style={{ fontSize: '13px', color: THEME.gray, marginTop: '16px' }}>請稍候，可能需要 4~5 分鐘，請先去泡杯咖啡</div>
         </div>
       ) : analysisResult ? (
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
