@@ -324,7 +324,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
           }
                     
           // 🌟 核心新增：自動在命書最開頭注入「命造基本盤」資訊
-          let chartHeader = `### 📜 命造基本盤\n\n`;
+          let chartHeader = `### 命造基本盤\n\n`;
           chartHeader += `- **姓名**：${data.name || '未命名'} (${data.genderText})\n`;
           
           // 處理西曆字串，防呆處理
@@ -369,7 +369,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
           
           // 🌟 1. 攔截 API 致命錯誤 (Token無效、網路阻擋、GAS未正確部署)
           if (!isTimeout && (error.message.includes("無效") || error.message.includes("fetch") || error.message.includes("格式異常"))) {
-              alert(`❌ 連線或授權失敗：\n${displayMsg}\n\n(提示：請確認您的 Google Apps Script 是否已設為「所有人」皆可存取，或 Token 狀態)`);
+              alert(`❌ 連線或授權失敗：\n${displayMsg}`);
               setIsAnalyzing(false);
               setProgress(0);
               return; // 🛑 致命錯誤直接中斷，不產出假命書
@@ -481,7 +481,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
               }
           }
           
-          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「當前大限」及「歲限大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成 AI 命書】按鈕即可免費重新運算！\n`;
+          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「當前大限」及「歲限大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成個人專屬 AI 深度流年命書】按鈕即可免費重新運算！\n`;
 
           // 🌟 將精華版顯示在畫面上，但不存入最終資料庫
           setAnalysisResult(fallbackText);
@@ -499,18 +499,21 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
   };
 
   const handlePurchasePoints = () => {
-      // window.open('https://your-stripe-payment-link.com', '_blank');
-      alert("系統測試中，暫未開放購買。");
+    const paymentUrl = 'https://buy.stripe.com/eVq6oH2dTfrH9py4971VK00'; 
+    window.open(paymentUrl, '_blank');
+    // alert("系統測試中，暫未開放購買。");
   };
 
   const handleTokenSubmit = () => {
       if (!userToken) return alert("請輸入您的授權碼 (Token)");
+      if (userToken.length < 6) {
+          return alert("❌ 授權碼格式不正確，請重新確認！");
+      }
       
       // 暫時攔截 Token 提交，不發送給後端
-      alert("系統測試中，暫停 Token 驗證服務。");
-      
-      // setShowTokenInput(false);
-      // handleGenerateAIReport();
+      // alert("系統測試中，暫停 Token 驗證服務。");
+      setShowTokenInput(false);
+      handleGenerateAIReport();
   };
 
   const handlePasswordUnlock = (e) => {
@@ -563,7 +566,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
       try {
           const cleanText = analysisResult.replace(/#/g, '').replace(/\*\*/g, '');
           await navigator.clipboard.writeText(cleanText);
-          alert("✅ 命書已成功複製！");
+          alert("✅ 個人專屬 AI 深度流年命書已成功複製！");
       } catch (err) {
           alert("❌ 複製失敗，請手動選取文字複製。");
       }
@@ -574,7 +577,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.teal}`, paddingLeft: '8px', fontSize: '15px' }}>
-            AI 深度流年批命書
+            個人專屬 AI 深度流年命書
           </h4>
           {!isPaid && (
             <Lock 
@@ -639,7 +642,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
             border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>
-                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】專屬深度流年命書</h2>
+                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】個人專屬 AI 深度流年命書</h2>
                 <div style={{ fontSize: '13px', color: '#666' }}>生成時間：{new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
             </div>
 
@@ -668,7 +671,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
             <div style={{ fontSize: '14px', color: THEME.gray, marginBottom: '20px', lineHeight: '1.6' }}>
                 若之前因伺服器繁忙未能顯示，或您尚未生成命書，<br/>請點擊下方按鈕開始運算（不會再次扣款）。
             </div>
-            <button onClick={() => handleGenerateAIReport()} style={{ padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>開始生成 AI 命書</button>
+            <button onClick={() => handleGenerateAIReport()} style={{ padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>開始生成個人專屬 AI 深度流年命書</button>
         </div>
       ) : (
         <div style={{ padding: '10px 0' }}>
@@ -677,7 +680,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
             </div>
 
             <div style={{ backgroundColor: '#fafafa', border: '1px dashed #ccc', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖 AI 深度流年命書，您將獲得：</div>
+                <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>解鎖個人專屬 AI 深度流年命書，您將獲得：</div>
                 <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
                 <li>由最先進 AI 語言模型為您客製化批命</li>
                 <li>透視原局性格、財富格局與事業發展方向</li>

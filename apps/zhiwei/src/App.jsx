@@ -1481,7 +1481,9 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
 
                 width: '100%',           
                 maxWidth: '900px',       
-                margin: '0 auto'         
+                margin: '0 auto',
+                overflowX: 'hidden',
+                overscrollBehaviorX: 'none'        
                 }}>
 
                 {/* 第一列 (巳 午 未 申) */}
