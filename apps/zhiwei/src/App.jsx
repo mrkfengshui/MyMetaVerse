@@ -1465,7 +1465,17 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     const mingIdx = useMemo(() => chartData.grid.findIndex(p => p.name === '命宮'), [chartData.grid]);
 
     return (
-        <div style={{ padding: '8px', flex: 1, overflowY: 'auto', backgroundColor: THEME.bg, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ 
+            padding: '8px', 
+            flex: 1, 
+            overflowY: 'auto', 
+            overflowX: 'hidden',     // 鎖死 X 軸
+            boxSizing: 'border-box', // 確保 padding 不會撐破 100% 寬度
+            maxWidth: '100vw',       // 最大不可超過螢幕寬度
+            backgroundColor: THEME.bg, 
+            display: 'flex', 
+            flexDirection: 'column' 
+        }}>
             <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
