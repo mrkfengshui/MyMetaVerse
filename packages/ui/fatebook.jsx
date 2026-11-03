@@ -635,52 +635,45 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
           {/* 四個按鈕的佈局 */}
           <div style={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end', 
-              alignItems: 'center',
-              gap: '8px', 
-              marginBottom: '16px',
-              overflowX: 'auto', // 確保手機螢幕較窄時能保持單行不跑版
-              WebkitOverflowScrolling: 'touch',
-              paddingBottom: '4px' // 預留一點空間給可能的捲軸
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr 1fr 1.3fr', // 最後一個按鈕字比較多，稍微給多一點點空間
+              gap: '6px', 
+              display: 'flex',              // 改用 flex 排列最靈活
+              justifyContent: 'flex-end',   // 內容全部向右靠齊
+              marginLeft: 'auto',
+              marginBottom: '16px'
           }}>
              <button 
                  onClick={handleCopyText}
                  style={{ 
-                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
-                     padding: '8px 12px', backgroundColor: THEME.white, 
-                     color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '6px', 
-                     fontSize: '13px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                     whiteSpace: 'nowrap', flexShrink: 0
+                     height: '24px', padding: '0 4px', fontSize: '11px', 
+                     backgroundColor: THEME.white, color: THEME.blue, 
+                     border: `1px solid ${THEME.blue}`, borderRadius: '4px', 
+                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                  }}
              >
-                 <Copy size={16} /> 複製
+                 <Copy size={12} /> 複製
              </button>
              
              <button 
                  onClick={handleShare}
                  style={{ 
-                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
-                     padding: '8px 12px', backgroundColor: THEME.black, 
-                     color: THEME.white, border: 'none', borderRadius: '6px', 
-                     fontSize: '13px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                     whiteSpace: 'nowrap', flexShrink: 0
+                     height: '24px', padding: '0 4px', fontSize: '11px', 
+                     backgroundColor: THEME.black, color: 'white', 
+                     border: 'none', borderRadius: '4px', 
+                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                  }}
              >
-                 <Share2 size={16} /> 分享 / 儲存
+                 <Share2 size={12} /> 分享
              </button>
 
              <button 
                  onClick={handleRefund}
                  style={{ 
-                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
-                     padding: '8px 12px', backgroundColor: THEME.bgGray, 
-                     color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '6px', 
-                     fontSize: '13px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                     whiteSpace: 'nowrap', flexShrink: 0
+                     height: '24px', padding: '0 4px', fontSize: '11px', 
+                     backgroundColor: THEME.bgGray, color: THEME.gray, 
+                     border: `1px solid ${THEME.border}`, borderRadius: '4px', 
+                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
                  }}
              >
                  退款申訴
@@ -689,15 +682,13 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
              <button 
                  onClick={handleRewrite}
                  style={{ 
-                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
-                     padding: '8px 12px', backgroundColor: '#fffbe6', 
-                     color: '#d46b08', border: `1px solid #ffe58f`, borderRadius: '6px', 
-                     fontSize: '13px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                     whiteSpace: 'nowrap', flexShrink: 0
+                     height: '24px', padding: '0 2px', fontSize: '11px', 
+                     backgroundColor: '#fffbe6', color: '#d46b08', 
+                     border: '1px solid #ffe58f', borderRadius: '4px', 
+                     cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
                  }}
              >
-                 重新撰寫 (需扣 Token)
+                 重寫(需Token)
              </button>
           </div>
 
