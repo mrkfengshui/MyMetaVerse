@@ -286,13 +286,15 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
 
           // 建立 AbortController 以設定 5min 超時
           const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
+const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
+
+          const tokenToSend = userToken || 'mrk888';
 
           const response = await fetch(GAS_PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ prompt: prompt, token: userToken }),
-                signal: controller.signal // 將 signal 綁定到 fetch 請求
+                body: JSON.stringify({ prompt: prompt, token: tokenToSend }),
+                signal: controller.signal 
           });
 
           if (!response.ok) throw new Error(`網路請求失敗，狀態碼：${response.status}`);
@@ -385,7 +387,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
           fallbackText += `*在此之前，系統先為您提供本地大數據萃取的**【經典精華版析論】**：*\n\n`;
           
           // 🌟 讓離線版也能顯示命造基本盤
-          let chartHeader = `### 📜 命造基本盤\n\n`;
+          let chartHeader = `### 命造基本盤\n\n`;
           chartHeader += `- **姓名**：${data.name || '未命名'} (${data.genderText})\n`;
           chartHeader += `- **農曆**：${data.lunarDateStr || data.lunarDate}\n`;
           if (appType === 'bazi' && data.bazi) {
@@ -481,7 +483,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
               }
           }
           
-          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「當前大限」及「歲限大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成個人專屬 AI 深度流年命書】按鈕即可免費重新運算！\n`;
+          fallbackText += `> 💡 **溫馨提醒**：以上為本地智能生成的精華版命書。關於您的詳細「一生大事」、「當前大限」及「歲限大勢」等深度分析，請於網路順暢時，再次點擊下方【開始生成個人專屬深度流年命書】按鈕即可免費重新運算！\n`;
 
           // 🌟 將精華版顯示在畫面上，但不存入最終資料庫
           setAnalysisResult(fallbackText);
@@ -543,8 +545,11 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
       if (!analysisResult) return;
       
       const cleanText = analysisResult.replace(/#/g, '').replace(/\*\*/g, '');
+      const appNameStr = appType === 'zwds' ? '紫微斗數' : '八字';
+      const fileName = `${data.name || '未命名'}_${appNameStr}個人專屬深度流年命書`;
+
       const shareData = {
-          title: `${data.name || '未命名'} 命書`,
+          title: fileName,
           text: cleanText
       };
 
@@ -560,15 +565,38 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
       }
   };
 
-  // 🌟 一鍵複製到剪貼簿 (備用)
+  // 🌟 一鍵複製到剪貼簿
   const handleCopyText = async () => {
       if (!analysisResult) return;
       try {
           const cleanText = analysisResult.replace(/#/g, '').replace(/\*\*/g, '');
           await navigator.clipboard.writeText(cleanText);
-          alert("✅ 個人專屬 AI 深度流年命書已成功複製！");
+          alert("✅ 個人專屬深度流年命書已成功複製！");
       } catch (err) {
           alert("❌ 複製失敗，請手動選取文字複製。");
+      }
+  };
+
+  const handleRefund = () => {
+      const appNameStr = appType === 'zwds' ? '紫微斗數' : '八字';
+      const subject = encodeURIComponent(`【退款申訴】${data.name || '未命名'} - ${appNameStr}命書`);
+      const body = encodeURIComponent(`您好，\n\n我希望申請退款。\n\n命盤資料：\n姓名：${data.name || '未命名'}\n性別：${data.genderText}\n出生時間：${data.solarDateStr || ''}\n\n退款原因：\n(請在此填寫原因，無合理原因將不獲考慮)`);
+      window.location.href = `mailto:mail@mrkfengshui.com?subject=${subject}&body=${body}`;
+  };
+
+  const handleRewrite = () => {
+      if(window.confirm("重新撰寫命書將會覆蓋當前結果，並且需要重新輸入 Token 扣點。確定要繼續嗎？")) {
+          // 1. 清除畫面的 UI 狀態
+          setAnalysisResult(null);
+          setIsPaid(false);
+          setShowTokenInput(true);
+
+          // 2. 徹底清除底層資料庫的舊命書紀錄，防止塞車安全存檔時「舊資料復活」
+          data.aiReport = null;
+          data.isPaid = false; 
+          
+          // 3. 立即觸發存檔，同步更新到本地書籤
+          if (onSave) onSave(data, true);
       }
   };
 
@@ -605,34 +633,71 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
         </div>
       ) : analysisResult ? (
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+          {/* 四個按鈕的佈局 */}
+          <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              alignItems: 'center',
+              gap: '8px', 
+              marginBottom: '16px',
+              overflowX: 'auto', // 確保手機螢幕較窄時能保持單行不跑版
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: '4px' // 預留一點空間給可能的捲軸
+          }}>
              <button 
                  onClick={handleCopyText}
                  style={{ 
-                     display: 'flex', alignItems: 'center', gap: '6px', 
-                     padding: '8px 16px', backgroundColor: THEME.white, 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
+                     padding: '8px 12px', backgroundColor: THEME.white, 
                      color: THEME.blue, border: `1px solid ${THEME.blue}`, borderRadius: '6px', 
-                     fontSize: '14px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                     fontSize: '13px', cursor: 'pointer', 
+                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                     whiteSpace: 'nowrap', flexShrink: 0
                  }}
              >
-                 <Copy size={16} />
-                 複製
+                 <Copy size={16} /> 複製
              </button>
              
-             {/* 原生分享按鈕 */}
              <button 
                  onClick={handleShare}
                  style={{ 
-                     display: 'flex', alignItems: 'center', gap: '6px', 
-                     padding: '8px 16px', backgroundColor: THEME.black, 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
+                     padding: '8px 12px', backgroundColor: THEME.black, 
                      color: THEME.white, border: 'none', borderRadius: '6px', 
-                     fontSize: '14px', cursor: 'pointer', 
-                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                     fontSize: '13px', cursor: 'pointer', 
+                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                     whiteSpace: 'nowrap', flexShrink: 0
                  }}
              >
-                 <Share2 size={16} />
-                 分享
+                 <Share2 size={16} /> 分享 / 儲存
+             </button>
+
+             <button 
+                 onClick={handleRefund}
+                 style={{ 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
+                     padding: '8px 12px', backgroundColor: THEME.bgGray, 
+                     color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '6px', 
+                     fontSize: '13px', cursor: 'pointer', 
+                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                     whiteSpace: 'nowrap', flexShrink: 0
+                 }}
+             >
+                 退款申訴
+             </button>
+
+             <button 
+                 onClick={handleRewrite}
+                 style={{ 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
+                     padding: '8px 12px', backgroundColor: '#fffbe6', 
+                     color: '#d46b08', border: `1px solid #ffe58f`, borderRadius: '6px', 
+                     fontSize: '13px', cursor: 'pointer', 
+                     fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                     whiteSpace: 'nowrap', flexShrink: 0
+                 }}
+             >
+                 重新撰寫 (需扣 Token)
              </button>
           </div>
 
@@ -642,7 +707,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
             border: `1px solid ${THEME.border}`, maxHeight: '700px', overflowY: 'auto'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>
-                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】個人專屬 AI 深度流年命書</h2>
+                <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】個人專屬深度流年命書</h2>
                 <div style={{ fontSize: '13px', color: '#666' }}>生成時間：{new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
             </div>
 
@@ -671,7 +736,7 @@ const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間�
             <div style={{ fontSize: '14px', color: THEME.gray, marginBottom: '20px', lineHeight: '1.6' }}>
                 若之前因伺服器繁忙未能顯示，或您尚未生成命書，<br/>請點擊下方按鈕開始運算（不會再次扣款）。
             </div>
-            <button onClick={() => handleGenerateAIReport()} style={{ padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>開始生成個人專屬 AI 深度流年命書</button>
+            <button onClick={() => handleGenerateAIReport()} style={{ padding: '12px 32px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>開始生成個人專屬深度流年命書</button>
         </div>
       ) : (
         <div style={{ padding: '10px 0' }}>
