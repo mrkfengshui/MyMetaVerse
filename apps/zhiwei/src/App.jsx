@@ -1478,7 +1478,6 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 height: isMobile ? 'calc(100dvh - 165px)' : 'calc(100vh - 180px)',
                 minHeight: isMobile ? 'auto' : '500px', // 給電腦版一個最小高度防呆
                 flex: 'none',
-
                 width: '100%',           
                 maxWidth: '900px',       
                 margin: '0 auto',
