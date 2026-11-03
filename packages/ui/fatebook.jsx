@@ -634,63 +634,82 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
       ) : analysisResult ? (
         <div style={{ animation: 'fadeIn 0.5s ease' }}>
           {/* 四個按鈕的佈局 */}
-          <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr 1fr 1.3fr', // 最後一個按鈕字比較多，稍微給多一點點空間
-              gap: '6px', 
-              display: 'flex',              // 改用 flex 排列最靈活
-              justifyContent: 'flex-end',   // 內容全部向右靠齊
-              marginLeft: 'auto',
-              marginBottom: '16px'
-          }}>
-             <button 
-                 onClick={handleCopyText}
-                 style={{ 
-                     height: '24px', padding: '0 4px', fontSize: '11px', 
-                     backgroundColor: THEME.white, color: THEME.blue, 
-                     border: `1px solid ${THEME.blue}`, borderRadius: '4px', 
-                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
-                 }}
-             >
-                 <Copy size={12} /> 複製
-             </button>
-             
-             <button 
-                 onClick={handleShare}
-                 style={{ 
-                     height: '24px', padding: '0 4px', fontSize: '11px', 
-                     backgroundColor: THEME.black, color: 'white', 
-                     border: 'none', borderRadius: '4px', 
-                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
-                 }}
-             >
-                 <Share2 size={12} /> 分享
-             </button>
+          {analysisResult && analysisResult.includes('AI 深度運算排隊中') ? (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginLeft: 'auto' }}>
+                 <button 
+                     onClick={() => {
+                         setUserToken(''); // 清空原本已用過的 Token，讓系統自動改用 mrk888 免費重試
+                         handleGenerateAIReport();
+                     }}
+                     style={{ 
+                         height: '24px', padding: '0 6px', fontSize: '11px', 
+                         backgroundColor: '#fffbe6', color: '#d46b08', 
+                         border: '1px solid #ffe58f', borderRadius: '4px', 
+                         cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
+                     }}
+                 >
+                     <RefreshCw size={12} /> 重試
+                 </button>
+              </div>
+          ) : (
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr 1fr 1.3fr', // 最後一個按鈕字比較多，稍微給多一點點空間
+                    gap: '6px', 
+                    display: 'flex',              // 改用 flex 排列最靈活
+                    justifyContent: 'flex-end',   // 內容全部向右靠齊
+                    marginLeft: 'auto',
+                    marginBottom: '16px'
+                }}>
+                    <button 
+                        onClick={handleCopyText}
+                        style={{ 
+                            height: '24px', padding: '0 4px', fontSize: '11px', 
+                            backgroundColor: THEME.white, color: THEME.blue, 
+                            border: `1px solid ${THEME.blue}`, borderRadius: '4px', 
+                            cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <Copy size={12} /> 複製
+                    </button>
+                    
+                    <button 
+                        onClick={handleShare}
+                        style={{ 
+                            height: '24px', padding: '0 4px', fontSize: '11px', 
+                            backgroundColor: THEME.black, color: 'white', 
+                            border: 'none', borderRadius: '4px', 
+                            cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <Share2 size={12} /> 分享
+                    </button>
 
-             <button 
-                 onClick={handleRefund}
-                 style={{ 
-                     height: '24px', padding: '0 4px', fontSize: '11px', 
-                     backgroundColor: THEME.bgGray, color: THEME.gray, 
-                     border: `1px solid ${THEME.border}`, borderRadius: '4px', 
-                     cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
-                 }}
-             >
-                 退款申訴
-             </button>
+                    <button 
+                        onClick={handleRefund}
+                        style={{ 
+                            height: '24px', padding: '0 4px', fontSize: '11px', 
+                            backgroundColor: THEME.bgGray, color: THEME.gray, 
+                            border: `1px solid ${THEME.border}`, borderRadius: '4px', 
+                            cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
+                        }}
+                    >
+                        退款申訴
+                    </button>
 
-             <button 
-                 onClick={handleRewrite}
-                 style={{ 
-                     height: '24px', padding: '0 2px', fontSize: '11px', 
-                     backgroundColor: '#fffbe6', color: '#d46b08', 
-                     border: '1px solid #ffe58f', borderRadius: '4px', 
-                     cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
-                 }}
-             >
-                 重寫(需Token)
-             </button>
-          </div>
+                    <button 
+                        onClick={handleRewrite}
+                        style={{ 
+                            height: '24px', padding: '0 2px', fontSize: '11px', 
+                            backgroundColor: '#fffbe6', color: '#d46b08', 
+                            border: '1px solid #ffe58f', borderRadius: '4px', 
+                            cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
+                        }}
+                    >
+                        重寫(需Token)
+                    </button>
+                </div>
+            )}
 
           <div id="fatebook-content" style={{ 
             backgroundColor: THEME.bgGray, padding: '24px', borderRadius: '8px',
