@@ -1882,7 +1882,11 @@ export default function ZwdsApp() {
       <AppHeader title={APP_NAME} logoChar={{ main: '紫', sub: '微' }} />
 
       {/* ✅ 內容滾動區 */}
-      <div ref={contentRef} style={COMMON_STYLES.contentArea}>
+      <div ref={contentRef} style={{ 
+          ...COMMON_STYLES.contentArea, 
+          overflowX: 'hidden', 
+          overscrollBehaviorX: 'none' 
+      }}>
           {view === 'input' && (
             <>
                 <ZwdsInput onCalculate={handleCalculate} initialData={editingData} />

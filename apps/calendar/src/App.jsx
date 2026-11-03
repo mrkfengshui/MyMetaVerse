@@ -403,7 +403,7 @@ PRODID:-//MrkFengshui//CalendarApp//TW
 BEGIN:VEVENT
 DTSTART;VALUE=DATE:${dateString}
 DTEND;VALUE=DATE:${nextDateString}
-SUMMARY:擇日: ${lunarStr} ${ganZhiStr}日
+SUMMARY:${ganZhiStr}日 ${lunarStr}
 DESCRIPTION:您在「甯博進氣萬年曆」中儲存的擇日書籤。
 BEGIN:VALARM
 TRIGGER:-P1D
@@ -481,12 +481,12 @@ const downloadAllICS = async (bookmarksData) => {
         const nextDateString = `${nYear}${nMonth}${nDay}`;
 
         // 嘗試取得農曆資訊作為標題
-        let summary = `擇日: ${targetDateStr}`;
+        let summary = targetDateStr; 
         try {
             if (window.Solar) {
                 const solar = window.Solar.fromYmd(year, parseInt(month, 10), parseInt(day, 10));
                 const lunar = solar.getLunar();
-                summary = `擇日: ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${lunar.getDayInGanZhi()}日`;
+                summary = `${lunar.getDayInGanZhi()}日 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
             }
         } catch(e) {}
 
