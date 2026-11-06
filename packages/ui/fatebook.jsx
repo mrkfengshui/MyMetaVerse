@@ -638,7 +638,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginLeft: 'auto' }}>
                  <button 
                      onClick={() => {
-                         setUserToken(''); // 清空原本已用過的 Token，讓系統自動改用 mrk888 免費重試
+                         setUserToken('retry_pro'); // 👈 改為傳送專屬的重試暗號
                          handleGenerateAIReport();
                      }}
                      style={{ 
