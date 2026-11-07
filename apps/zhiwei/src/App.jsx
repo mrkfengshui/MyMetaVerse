@@ -869,14 +869,21 @@ const PalaceGrid = ({
         const showBrightness = (isMajor || FORCE_TOP_STARS.includes(s.name));
 
         return (
-            <div key={`${isTop?'t':'b'}-${idx}`} style={{ writingMode: 'vertical-rl', textOrientation: 'upright', display: 'flex', alignItems: 'right', margin: '0 -0.5px', lineHeight: 1 }}>
-                <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px' }}>
+            <div key={`${isTop?'t':'b'}-${idx}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 1px' }}>
+                <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px', lineHeight: 1 }}>
                     {starBrightness || ' '}
                 </span>
-                <span style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize }}>
-                    {s.name}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'row', marginTop: '1px', gap: '1px' }}>
+                
+                {/* 物理直排法：將字串拆解為單字強制疊加 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {s.name.split('').map((char, cIdx) => (
+                        <span key={cIdx} style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize, lineHeight: 1.1 }}>
+                            {char}
+                        </span>
+                    ))}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '2px', gap: '1px' }}>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.red, lineHeight: 1, display: huaYear ? 'block' : 'none' }}>{huaYear}</span>
                     {showDa && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.blue, lineHeight: 1, display: huaDa ? 'block' : 'none' }}>{huaDa}</span>}
                     {showXiao && <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'green', lineHeight: 1, display: huaXiao ? 'block' : 'none' }}>{huaXiao}</span>}
@@ -898,7 +905,6 @@ const PalaceGrid = ({
                         color: age === currentAge ? THEME.red : '#888', 
                         border: age === currentAge ? `1px solid ${THEME.red}` : 'none', 
                         borderRadius: '50%', 
-                        // 🌟 電腦版放大圓圈寬度與字體
                         minWidth: '13px',
                         fontSize: isMobile ? '10px' : '11px', 
                         textAlign: 'center', 
@@ -907,6 +913,15 @@ const PalaceGrid = ({
                 ))}
             </div>
         ));
+    };
+
+    const renderXianName = (name, color, bgColor) => {
+        if (!name) return null;
+        return (
+            <div style={{ fontSize: '10px', color, fontWeight: 'bold', backgroundColor: bgColor, padding: '2px 1px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {name.split('').map((c, i) => <span key={i} style={{ lineHeight: 1.1 }}>{c}</span>)}
+            </div>
+        );
     };
 
     let topStarsFontSize = '11px';
@@ -1019,21 +1034,24 @@ const PalaceGrid = ({
                     {showLiuYue && liuYueName && <div style={{ fontSize: '10px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
                     {showLiuRi && liuRiName && <div style={{ fontSize: '10px', color: THEME.orange, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: '#fff1f0' }}>{liuRiName}</div>}
                 </div>
-
             </div>
 
             {/* 右下角的長生博士 (長生在上方，博士在下方，強制寬度為1em達到絕對直排) */}
             <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', zIndex: 2 }}>
                 {palace.changSheng12 && (
-                    <div style={{ fontSize: '12px', color: COLORS.geng, width: '1em', wordBreak: 'break-all', lineHeight: 1.1, textAlign: 'center' }}>
-                        {palace.changSheng12}
+                    <div style={{ fontSize: '12px', color: COLORS.geng, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1 }}>
+                        {palace.changSheng12.split('').map((c, i) => <span key={i}>{c}</span>)}
                     </div>
                 )}
                 {palace.doctor12 && (
-                    <div style={{ fontSize: '12px', color: COLORS.jia, width: '1em', wordBreak: 'break-all', lineHeight: 1.1, textAlign: 'center' }}>
-                        {palace.doctor12}
+                    <div style={{ fontSize: '12px', color: COLORS.jia, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1 }}>
+                        {palace.doctor12.split('').map((c, i) => <span key={i}>{c}</span>)}
                     </div>
                 )}
+            </div>
+
+            <div style={{ position: 'absolute', top: 2, left: '24px', right: 2, display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap', alignContent: 'flex-start', gap: '1px', pointerEvents: 'none' }}>
+                {topStars.map((s, i) => renderStar(s, i, true, topStarsFontSize))}
             </div>
 
             {/* --- 1. 主星區域 (Top) --- */}
@@ -1054,34 +1072,13 @@ const PalaceGrid = ({
             </div>
 
             {/* --- 2. 雜曜區域 (Bottom) --- */}
-            <div style={{ 
-                position: 'absolute', 
-                bottom: '50px', // ★ 固定底部位置，避開長生十二神
-                left: '18px', 
-                right: 2, 
-                display: 'flex', 
-                flexDirection: 'row', 
-                flexWrap: 'wrap-reverse', // ★ 讓多出的星星往上長
-                alignContent: 'flex-end', 
-                alignItems: 'flex-end',   
-                gap: '0px',
-                pointerEvents: 'none'
-            }}>
-                {/* 傳入計算好的 bottomStarsFontSize */}
+            <div style={{ position: 'absolute', bottom: '50px', left: '18px', right: 2, display: 'flex', flexDirection: 'row', flexWrap: 'wrap-reverse', alignContent: 'flex-end', alignItems: 'flex-end', gap: '0px', pointerEvents: 'none' }}>
                 {bottomStars.map((s, i) => renderStar(s, i, false, bottomStarsFontSize))}
             </div>
             
-            {/* 中間下方的小限年齡 */}
             <div style={{ position: 'absolute', bottom: 2, left: '32px', right: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {renderXiaoXianAges()}
-                
-                <div style={{ 
-                    fontSize: isMobile ? '9px' : '13px', 
-                    color: isDaXian ? THEME.red : THEME.black, 
-                    fontWeight: isDaXian ? 'bold' : 'normal', 
-                    marginTop: '1px',
-                    whiteSpace: 'nowrap'
-                }}>
+                <div style={{ fontSize: isMobile ? '9px' : '13px', color: isDaXian ? THEME.red : THEME.black, fontWeight: isDaXian ? 'bold' : 'normal', marginTop: '1px', whiteSpace: 'nowrap' }}>
                     {palace.daXian || '\u00A0'}
                 </div>
             </div>
@@ -1100,7 +1097,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
-    const [layerMode, setLayerMode] = useState(0); 
+    const [layerMode, setLayerMode] = useState(0);
+    const originalLayerRef = useRef(0);
     const [showScorePanel, setShowScorePanel] = useState(false);
 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -1476,7 +1474,8 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             display: 'flex', 
             flexDirection: 'column' 
         }}>
-            <div style={{ 
+        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '10px', borderRadius: '12px' }}>
+            <div style={{
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
                 gridTemplateRows: 'repeat(4, minmax(0, 1fr))',
@@ -1600,7 +1599,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                 {renderCell(10)}
                 {/* 第四列 (寅 丑 子 亥) */}
                 {renderCell(2)} {renderCell(1)} {renderCell(0)} {renderCell(11)}
-            </div>
+            </div></div>
             <div style={{ marginTop: '1px', textAlign: 'center', fontSize: '10px', color: THEME.gray, paddingBottom: '1px' }}>排盤依據明朝紫微斗數全書</div>
             {/* AI 算命分析區塊 (綁定 ID 供按鈕滾動跳轉) */}
             <div id="ai-analysis-section">
@@ -1609,6 +1608,19 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     THEME={THEME}
                     appType="zwds"
                     onSave={onSave}
+                    // 🌟 截圖前：偷偷切換到歲限盤，並給系統 0.5 秒重新繪製畫面
+                    onBeforeCapture={async () => {
+                        originalLayerRef.current = layerMode; // 記住客人現在看哪裡
+                        if (layerMode !== 2) {
+                            setLayerMode(2);                  // 強制切換到歲限盤
+                            await new Promise(resolve => setTimeout(resolve, 500)); // 暫停等畫面畫完
+                        }
+                    }}
+                    
+                    // 🌟 截圖後：神不知鬼不覺切回客人原本看的盤
+                    onAfterCapture={() => {
+                        setLayerMode(originalLayerRef.current);
+                    }}
                 />
             </div>
             

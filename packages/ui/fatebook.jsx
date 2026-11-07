@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
-export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave }) => {
+export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, onBeforeCapture, onAfterCapture }) => {
   const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(data.aiReport || null);
   const [isPaid, setIsPaid] = useState(data.isPaid || !!data.aiReport || false);
-  
+  const [chartImage, setChartImage] = useState(data.chartImage || null);
+
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [customWuxing, setCustomWuxing] = useState([]);
   
@@ -33,14 +35,34 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave })
         };
     }, [isAnalyzing]);
 
-    const handleGenerateAIReport = async (overrideWuxing = null) => {
+    const handleGenerateAIReport = async () => {
       setProgress(0);
       setIsAnalyzing(true);
       
       let isChildBeforeDaYun = false;
       let siHuaRuleText = '';
       
-      try {
+      let currentChartImage = chartImage;
+      if (!currentChartImage) {
+          try {
+              // 1. 通知外部準備截圖 (例如紫微斗數切換歲限盤)
+              if (onBeforeCapture) await onBeforeCapture();
+              
+              const chartElement = document.getElementById('chart-capture-area');
+              if (chartElement) {
+                  const canvas = await html2canvas(chartElement, { scale: 2, useCORS: true });
+                  currentChartImage = canvas.toDataURL('image/jpeg', 0.85);
+                  setChartImage(currentChartImage); // 更新元件內部狀態
+              }
+          } catch (err) {
+              console.error("排盤截圖失敗，將略過截圖功能:", err);
+          } finally {
+              // 2. 無論截圖成功失敗，務必通知外部還原畫面
+              if (onAfterCapture) onAfterCapture();
+          }
+      }
+
+        try {
       // 🌟 1. 動態切換大師人設
       const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
       let prompt = `你現在是一位專業、客觀且具備深厚玄學素養的${masterName}大師。\n`;
@@ -358,6 +380,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           setIsPaid(true);
 
           data.aiReport = finalReport;
+          data.chartImage = currentChartImage;
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
           if (onSave) onSave(data, true);
@@ -588,6 +611,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
       if(window.confirm("重新撰寫命書將會覆蓋當前結果，並且需要重新輸入 Token 扣點。確定要繼續嗎？")) {
           // 1. 清除畫面的 UI 狀態
           setAnalysisResult(null);
+          setChartImage(null);
           setIsPaid(false);
           setShowTokenInput(true);
 
@@ -720,6 +744,13 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
                 <h2 style={{ margin: '0 0 10px 0' }}>【{data.name || '未命名'}】個人專屬深度流年命書</h2>
                 <div style={{ fontSize: '13px', color: '#666' }}>生成時間：{new Date().toLocaleDateString()} | ©許甯博風水命理館</div>
             </div>
+
+            {/* 在命書最上方顯示剛才截圖的排盤 */}
+            {chartImage && (
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <img src={chartImage} alt="命盤截圖" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #ddd', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                </div>
+            )}
 
             {analysisResult.split('\n').map((line, i) => {
               const trimmed = line.trim();

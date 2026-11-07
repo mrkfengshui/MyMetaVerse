@@ -1113,7 +1113,31 @@ const PillarCard = ({
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
-   const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(0);
+   
+   // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
+   const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
+       if (!data || !data.daYuns || data.isManual) return 0;
+       const currentYear = new Date().getFullYear();
+       const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
+       if (foundIndex !== -1) return foundIndex;
+       return currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1;
+   });
+
+   // 🌟 2. 當切換不同客人的命盤 (data 改變) 時，重新為新客人定位當前大運
+   useEffect(() => {
+       if (data && data.daYuns && !data.isManual) {
+           const currentYear = new Date().getFullYear();
+           const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
+           if (foundIndex !== -1) {
+               setSelectedDaYunIndex(foundIndex);
+           } else {
+               // 如果客人還沒起運，選第 1 個；如果老人家超過最後一個大運，選最後 1 個
+               setSelectedDaYunIndex(currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1);
+           }
+       } else {
+           setSelectedDaYunIndex(0);
+       }
+   }, [data]);
 
    // 新增時辰微調處理函數
    const handleHourAdjust = (delta) => {
@@ -2119,35 +2143,39 @@ return (
             ) : null}
 
         </div>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <PillarCard 
-                title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} 
-                kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
-                {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
-            />
-            <PillarCard 
-                title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
-                kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
-                huaQi={data.meta.isHuaQi}
-                {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
-            />
-            <PillarCard 
-                title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
-                kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
-                {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
-            />
-            <PillarCard 
-                title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
-                kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
-                {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
-            />
+        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '10px -10px 10px -10px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                <PillarCard 
+                    title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} 
+                    kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
+                    {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                />
+                <PillarCard 
+                    title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
+                    kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
+                    huaQi={data.meta.isHuaQi}
+                    {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
+                />
+                <PillarCard 
+                    title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
+                    kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
+                    {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                />
+                <PillarCard 
+                    title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
+                    kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
+                    {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
+                />
+            </div>
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
+                {/* 🌟 改為呼叫最新的單一 Grid */}
+                {renderDaYunGrid()}
+            </div>
+            <div style={{ padding: '0 10px' }}>
+                {renderLiuNianGrid()}
+            </div>
         </div>
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-           <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
-           {/* 🌟 改為呼叫最新的單一 Grid */}
-           {renderDaYunGrid()}
-        </div>
-        {renderLiuNianGrid()}
         {renderLiuYueGrid()}
         {renderLiuRiList()}
         {/* 五行強弱 */}
@@ -2197,7 +2225,10 @@ return (
                 getShenSha, 
                 TIANGAN, 
                 DIZHI 
-            }} 
+            }}
+            // 🌟 補上八字的空鉤子，防止 onBeforeCapture undefined 報錯
+            onBeforeCapture={async () => { return Promise.resolve(); }}
+            onAfterCapture={() => {}}
         />
         <ShenShaModal 
                 config={shenShaModalConfig} 
