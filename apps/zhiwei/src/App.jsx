@@ -1044,15 +1044,17 @@ const PalaceGrid = ({
             </div>
 
             {/* 右下角的長生博士 (長生在上方，博士在下方，強制寬度為1em達到絕對直排) */}
-            <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', zIndex: 2 }}>
+            <div style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px', zIndex: 2 }}>
                 {palace.changSheng12 && (
-                    <div style={{ fontSize: '12px', color: COLORS.geng, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1 }}>
-                        {palace.changSheng12.split('').map((c, i) => <span key={i}>{c}</span>)}
+                    <div style={{ fontSize: '12px', color: COLORS.geng, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* 🌟 修正：將 lineHeight 改為 1，並把文字緊湊疊加 */}
+                        {palace.changSheng12.split('').map((c, i) => <span key={i} style={{ lineHeight: 1 }}>{c}</span>)}
                     </div>
                 )}
                 {palace.doctor12 && (
-                    <div style={{ fontSize: '12px', color: COLORS.jia, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1 }}>
-                        {palace.doctor12.split('').map((c, i) => <span key={i}>{c}</span>)}
+                    <div style={{ fontSize: '12px', color: COLORS.jia, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* 🌟 修正：將 lineHeight 改為 1 */}
+                        {palace.doctor12.split('').map((c, i) => <span key={i} style={{ lineHeight: 1 }}>{c}</span>)}
                     </div>
                 )}
             </div>
