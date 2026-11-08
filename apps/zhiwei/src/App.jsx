@@ -772,7 +772,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
           
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>姓名</label>
-            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
+            <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
           </div>
           
           <div style={{ marginBottom: '20px' }}>
