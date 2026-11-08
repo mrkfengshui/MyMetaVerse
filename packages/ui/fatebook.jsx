@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+// import html2canvas from 'html2canvas';
 
 export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, onBeforeCapture, onAfterCapture }) => {
   const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
@@ -41,7 +41,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
       
       let isChildBeforeDaYun = false;
       let siHuaRuleText = '';
-      
+      /*
       let currentChartImage = chartImage;
       if (!currentChartImage) {
           try {
@@ -91,7 +91,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           } finally {
               if (onAfterCapture) onAfterCapture();
           }
-      }
+      } */
 
         try {
       // 🌟 1. 動態切換大師人設
