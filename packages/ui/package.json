@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.1.0",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-calendar": "^5.0.0",
