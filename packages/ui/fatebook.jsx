@@ -414,7 +414,9 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           data.chartImage = currentChartImage;
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
-          data.chartImage = currentChartImage;
+          if (currentChartImage) {
+              data.chartImage = currentChartImage; 
+          }
           if (onSave) onSave(data, true);
 
       } catch (error) {
@@ -425,11 +427,11 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           const displayMsg = isTimeout ? "AI 伺服器運算時間過長（超過5.5分鐘），已達到瀏覽器連線上限。" : error.message;
           
           // 🌟 1. 攔截 API 致命錯誤 (Token無效、網路阻擋、GAS未正確部署)
-          if (!isTimeout && (error.message.includes("無效") || error.message.includes("fetch") || error.message.includes("格式異常"))) {
+          if (!isTimeout && (error.message.includes("無效") || error.message.includes("fetch") || error.message.includes("格式異常")) && !error.message.includes("401")) {
               alert(`❌ 連線或授權失敗：\n${displayMsg}`);
               setIsAnalyzing(false);
               setProgress(0);
-              return; // 🛑 致命錯誤直接中斷，不產出假命書
+              return; // 🛑 致命錯誤直接中斷
           }
           
           // 🌟 2. 真的是超時或運算異常，才顯示塞車並提供精華版
@@ -547,7 +549,9 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           setIsPaid(true);
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
-          data.chartImage = currentChartImage;
+          if (currentChartImage) {
+              data.chartImage = currentChartImage; 
+          }
           if (onSave) onSave(data, true); 
 
       } finally {
