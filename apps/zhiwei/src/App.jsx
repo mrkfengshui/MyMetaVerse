@@ -770,12 +770,19 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: `1px solid ${THEME.border}` }}>
           <h3 style={{ margin: '0 0 20px 0', textAlign: 'center', color: THEME.black, fontSize: '18px', fontWeight: 'bold' }}>{initialData ? '修改資料' : '輸入出生資料'}</h3>
           
+          {/* 🌟 新增：付費紀錄鎖定提示 */}
+          {initialData?.isPaid && (
+              <div style={{ padding: '10px', backgroundColor: '#fff1f0', border: '1px solid #ffa39e', borderRadius: '8px', color: THEME.red, fontSize: '13px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Lock size={16} /> 此命盤已解鎖付費命書，為確保報告準確性，僅開放修改姓名。
+              </div>
+          )}
+
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>姓名</label>
             <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '16px' }} placeholder="輸入姓名" />
           </div>
           
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '20px', opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>性別</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                  <button onClick={() => handleChange('gender', '1')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${formData.gender === '1' ? THEME.blue : THEME.border}`, backgroundColor: formData.gender === '1' ? THEME.bgBlue : THEME.white, color: formData.gender === '1' ? THEME.blue : THEME.black, fontWeight: 'bold' }}>男 (乾造)</button>
@@ -783,12 +790,12 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
               </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
               <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>西元年</label> <select value={formData.year} onChange={e => handleChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select> </div>
               <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>月</label> <select value={formData.month} onChange={e => handleChange('month', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}</option>)}</select> </div>
               <div style={{ flex: 1 }}> <label style={{ fontSize: '12px', color: THEME.gray }}>日</label> <select value={formData.day} onChange={e => handleChange('day', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>{Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}</option>)}</select> </div>
           </div>
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '24px', opacity: initialData?.isPaid ? 0.6 : 1, pointerEvents: initialData?.isPaid ? 'none' : 'auto' }}>
               <label style={{ display: 'block', fontSize: '13px', color: THEME.gray, marginBottom: '6px' }}>出生時間</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ flex: 1 }}> <select value={formData.hour} onChange={e => handleChange('hour', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, background: 'white' }}>
@@ -803,7 +810,7 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
 
           <button onClick={() => onCalculate(formData)} style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
              <Sparkles size={20} />
-             {initialData ? '重新排盤' : '開始排盤'}
+             {initialData ? '儲存修改並排盤' : '開始排盤'}
           </button>
        </div>
     </div>
@@ -869,7 +876,7 @@ const PalaceGrid = ({
         const showBrightness = (isMajor || FORCE_TOP_STARS.includes(s.name));
 
         return (
-            <div key={`${isTop?'t':'b'}-${idx}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 1px' }}>
+            <div key={`${isTop?'t':'b'}-${idx}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0' }}>
                 <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px', lineHeight: 1 }}>
                     {starBrightness || ' '}
                 </span>
@@ -877,13 +884,13 @@ const PalaceGrid = ({
                 {/* 物理直排法：將字串拆解為單字強制疊加 */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {s.name.split('').map((char, cIdx) => (
-                        <span key={cIdx} style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize, lineHeight: 1.1 }}>
+                        <span key={cIdx} style={{ ...fontStyle, color, fontWeight: (isMajor || isTop) ? 'bold' : 'normal', fontSize: fontSize, lineHeight: 1 }}>
                             {char}
                         </span>
                     ))}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '2px', gap: '1px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1px', gap: '0' }}>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.red, lineHeight: 1, display: huaYear ? 'block' : 'none' }}>{huaYear}</span>
                     {showDa && <span style={{ fontSize: '10px', fontWeight: 'bold', color: THEME.blue, lineHeight: 1, display: huaDa ? 'block' : 'none' }}>{huaDa}</span>}
                     {showXiao && <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'green', lineHeight: 1, display: huaXiao ? 'block' : 'none' }}>{huaXiao}</span>}
@@ -924,14 +931,14 @@ const PalaceGrid = ({
         );
     };
 
-    let topStarsFontSize = '11px';
+    let topStarsFontSize = isMobile ? '10.5px' : '11px';
     if (topStars.length > 5) {
-        topStarsFontSize = '10px';
+        topStarsFontSize = isMobile ? '9.5px' : '10px';
     }
 
-    let bottomStarsFontSize = '10px';
-    if (bottomStars.length > 6) bottomStarsFontSize = '9px';
-    if (bottomStars.length > 8) bottomStarsFontSize = '8px';
+    let bottomStarsFontSize = isMobile ? '9.5px' : '10px';
+    if (bottomStars.length > 6) bottomStarsFontSize = isMobile ? '8.5px' : '9px';
+    if (bottomStars.length > 8) bottomStarsFontSize = isMobile ? '8px' : '8px';
 
     const getBackgroundColor = () => {
             if (highlightMode === 'target') {
@@ -1464,7 +1471,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
 
     return (
         <div style={{ 
-            padding: '8px', 
+            padding: '2px', 
             flex: 1, 
             overflowY: 'auto', 
             overflowX: 'hidden',     // 鎖死 X 軸
@@ -1474,7 +1481,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             display: 'flex', 
             flexDirection: 'column' 
         }}>
-        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '10px', borderRadius: '12px' }}>
+        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '2px', borderRadius: '12px' }}>
             <div style={{
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr 1fr 1fr', 
@@ -1508,9 +1515,9 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    padding: isMobile ? '10px' : '4px 10px', // 🌟 電腦版減少上下內距以爭取空間
+                    padding: isMobile ? '10px' : '4px 10px', 
                     zIndex: 1,
-                    overflow: 'hidden' // 🌟 防止極端壓縮時文字浮出
+                    overflow: 'hidden' 
                 }}>
                     <div style={{ fontSize: isMobile ? '24px' : '22px', fontWeight: 'bold', marginBottom: '2px' }}>{chartData.name}</div>
                     
@@ -1518,6 +1525,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1px', marginBottom: '2px' }}>
                             <div style={{ color: THEME.black, fontWeight: 'bold', fontSize: '13px', letterSpacing: '0px', whiteSpace: 'nowrap' }}>{birthDetails.bazi} </div>
                             
+                            {/* 🌟 修正：付費後隱藏時辰微調按鈕 */}
                             {!chartData.isPaid && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                 <button onClick={() => handleHourAdjust(-2)} style={{ background: 'transparent', border: 'none', outline: 'none', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronLeft size={14} style={{ transform: 'rotate(90deg)' }} /> </button>
@@ -1525,7 +1533,6 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             </div>
                             )}
                         </div>
-                        {/* 🌟 電腦版將西曆農曆並排以節省高度 */}
                         <div style={{ display: isMobile ? 'block' : 'flex', justifyContent: 'center', gap: '12px' }}>
                             <div>西曆 {birthDetails.solarStr}</div>
                             <div>農曆 {birthDetails.lunarStr}</div>
@@ -1544,7 +1551,6 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         </button>
                     </div>
 
-                    {/* 🌟 電腦版將選單與目標農曆並排以節省高度 */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
@@ -1552,13 +1558,11 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
                         </div>
                         
-                        {/* 🌟 目標農曆放下一行，移除括號並放大字體 */}
                         <div style={{ fontSize: isMobile ? '12px' : '14px', color: THEME.blue }}>
                             {targetLunarDisplay}
                         </div>
                     </div>
                     
-                    {/* 🌟 電腦版改為 3欄2列 以節省高度 */}
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '2px 10px', fontSize: isMobile ? '11px' : '14px', textAlign: 'left', width: isMobile ? 'auto' : '60%', paddingLeft: isMobile ? '20px' : '10px', color: THEME.gray }}>
                             <div>命主: {chartData.mingZhu}</div> 
                             <div>身主: {chartData.shenZhu}</div>
@@ -1568,7 +1572,6 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                             <div>虛歲: {currentAge}歲</div>
                     </div>
                     
-                    {/* 🌟 電腦版放大警告標語字體 */}
                     <div style={{ 
                         width: '100%', 
                         textAlign: 'center', 
@@ -1581,9 +1584,20 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         未入大限並無四化
                     </div>
 
-                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                    <div style={{ marginTop: 'auto', marginBottom: '6px', width: '60%' }}>
                         <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px', width: '100%' }}>
-                        <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>返回</button>
+                        
+                        {/* 🌟 修正：付費後將返回(重排)按鈕鎖死並跳出提示 */}
+                        {!chartData.isPaid ? (
+                            <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px' }}>
+                                重排
+                            </button>
+                        ) : (
+                            <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', opacity: 0.6 }}>
+                                重排
+                            </button>
+                        )}
+                        
                         <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>評分</button>
                         <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>批注</button>
                         <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>保存</button>
@@ -1941,7 +1955,17 @@ export default function ZwdsApp() {
                     bookmarks={bookmarks}
                     onSelect={openBookmark}
                     onDelete={deleteBookmark}
-                    onEdit={(b) => { setEditingData({...b.rawDate, id: b.id}); setView('input'); }}
+                    onEdit={(b) => { 
+                        setEditingData({
+                            ...b.rawDate, 
+                            id: b.id,
+                            // 🌟 關鍵修正：將紫微專屬付費屬性傳遞回輸入頁，這樣 ZwdsInput 才會觸發鎖死保護！
+                            isPaid: b.zwdsIsPaid || b.isPaid,
+                            aiReport: b.zwdsAiReport || b.aiReport,
+                            paidAt: b.zwdsPaidAt || b.paidAt
+                        }); 
+                        setView('input'); 
+                    }}
                   />
                   
                   <div style={{ marginTop: '20px' }}><Adsterra /></div>

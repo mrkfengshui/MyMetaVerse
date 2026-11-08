@@ -35,7 +35,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
         };
     }, [isAnalyzing]);
 
-    const handleGenerateAIReport = async () => {
+    const handleGenerateAIReport = async (overrideToken = null) => {
       setProgress(0);
       setIsAnalyzing(true);
       
@@ -341,7 +341,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
 
-          const tokenToSend = userToken || 'mrk888';
+          const tokenToSend = (typeof overrideToken === 'string') ? overrideToken : (userToken || 'mrk888');
 
           const response = await fetch(GAS_PROXY_URL, {
                 method: 'POST',
@@ -698,19 +698,20 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           {analysisResult && analysisResult.includes('AI 深度運算排隊中') ? (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginLeft: 'auto' }}>
                  <button 
-                     onClick={() => {
-                         setUserToken('retry_pro'); // 👈 改為傳送專屬的重試暗號
-                         handleGenerateAIReport();
-                     }}
-                     style={{ 
-                         height: '24px', padding: '0 6px', fontSize: '11px', 
-                         backgroundColor: '#fffbe6', color: '#d46b08', 
-                         border: '1px solid #ffe58f', borderRadius: '4px', 
-                         cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
-                     }}
-                 >
-                     <RefreshCw size={12} /> 重試
-                 </button>
+                 onClick={() => {
+                    const nextToken = (userToken === 'mrk888') ? 'mrk888' : 'retry_pro';
+                    setUserToken(nextToken); 
+                    handleGenerateAIReport(nextToken); // 💡 直接把正確的 Token 傳進去，避開非同步時間差
+                 }}
+                 style={{ 
+                    height: '24px', padding: '0 6px', fontSize: '11px', 
+                    backgroundColor: '#fffbe6', color: '#d46b08', 
+                    border: '1px solid #ffe58f', borderRadius: '4px', 
+                    cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap'
+                 }}
+              >
+                 <RefreshCw size={12} /> 重試
+            </button>
               </div>
           ) : (
                 <div style={{ 
