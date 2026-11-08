@@ -335,11 +335,11 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           }
       }
 
-          const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyyTTv2RWkwSjogD8W46UFIGMNZMnn6tpAQTwhpfUwN5SeQ8NzQvThwY-AttTkClEII/exec"; 
+          const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbwcaJFwOzEtjgE8q7QrN0BT2D7MQaZhImXa_hPrzBapeDCcEoRF7RhlL2M1VwuHeJws/exec"; 
 
           // 建立 AbortController 以設定 5min 超時
           const controller = new AbortController();
-const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
+          const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
 
           const tokenToSend = userToken || 'mrk888';
 
@@ -354,29 +354,29 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           
           // 🌟 1. 先以純文字讀取，避免 Google 回傳 HTML 導致程式崩潰
           const rawText = await response.text();
-          clearTimeout(timeoutId);
-          console.log("後端原始回傳內容:", rawText); // Debug 用：可在瀏覽器 F12 主控台查看後端到底傳了什麼
-          
-          let result;
-          try {
-              result = JSON.parse(rawText);
-          } catch (e) {
-              console.error("JSON 解析失敗，後端可能沒有回傳正確的 JSON:", e);
-              throw new Error("後端回傳格式異常 (可能回傳了網頁而非資料)");
-          }
-          
-          // 🛑 2. 核心防線：如果後端 GAS 說 Token 無效
-          if (result.result === "error") {
-              throw new Error(result.message || "授權碼無效或伺服器回報錯誤");
-          }
-          
-          // 🌟 3. 容錯處理：自動抓取各種可能的 AI 內文欄位
-          const aiText = result.text || result.content || result.message || result.data;
-          
-          if (!aiText) {
-              console.log("解析後的 JSON 物件:", result);
-              throw new Error("API 回傳成功，但找不到命書內容 (欄位可能不符)。");
-          }
+            clearTimeout(timeoutId);
+
+            // 1. 將變數宣告在最外層，並改名避免衝突
+            let parsedData = null; 
+
+            try {
+                parsedData = JSON.parse(rawText);
+            } catch (e) {
+                // 如果不是 JSON，直接將後端回傳的前 50 個字元拋出，方便在沒有 F12 的情況下除錯
+                throw new Error(`後端回傳格式異常。伺服器回應: ${rawText.substring(0, 50)}...`);
+            }
+
+            // 2. 使用新變數名稱進行驗證
+            if (parsedData && parsedData.result === "error") {
+                throw new Error(parsedData.message || "授權碼無效或伺服器回報錯誤");
+            }
+
+            // 3. 確保下方的 AI 文字抓取也使用新變數
+            const aiText = parsedData.text || parsedData.content || parsedData.message || parsedData.data;
+
+            if (!aiText) {
+                throw new Error("API 回傳成功，但找不到命書內容。");
+            }
                     
           // 🌟 核心新增：自動在命書最開頭注入「命造基本盤」資訊
           let chartHeader = `### 命造基本盤\n\n`;
@@ -714,7 +714,6 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
               </div>
           ) : (
                 <div style={{ 
-                    display: 'grid', 
                     gridTemplateColumns: '1fr 1fr 1fr 1.3fr', // 最後一個按鈕字比較多，稍微給多一點點空間
                     gap: '6px', 
                     display: 'flex',              // 改用 flex 排列最靈活
