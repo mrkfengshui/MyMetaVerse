@@ -45,19 +45,43 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
       let currentChartImage = chartImage;
       if (!currentChartImage) {
           try {
-              // 1. 通知外部準備截圖 (例如紫微斗數切換歲限盤)
               if (onBeforeCapture) await onBeforeCapture();
               
               const chartElement = document.getElementById('chart-capture-area');
               if (chartElement) {
-                  const canvas = await html2canvas(chartElement, { scale: 2, useCORS: true });
-                  currentChartImage = canvas.toDataURL('image/jpeg', 0.85);
-                  setChartImage(currentChartImage); // 更新元件內部狀態
+                  // 🌟 1. 紀錄當前的捲動位置，並強制將視窗與容器拉回最頂部
+                  const originalScrollY = window.scrollY;
+                  window.scrollTo(0, 0); 
+                  
+                  // 如果有父層容器(例如您的 contentArea)，也將其置頂以防萬一
+                  if (chartElement.parentElement) {
+                      chartElement.parentElement.scrollTop = 0;
+                  }
+
+                  // 🌟 2. 為了確保 DOM 有時間反應置頂動作，稍微等待 100 毫秒
+                  await new Promise(resolve => setTimeout(resolve, 100));
+
+                  // 🌟 3. 動態判斷解析度：手機用 1.5 避免撐爆記憶體，電腦維持 2
+                  const isMobile = window.innerWidth < 768;
+                  const captureScale = isMobile ? 1.5 : 2;
+
+                  const canvas = await html2canvas(chartElement, { 
+                      scale: captureScale, 
+                      useCORS: true,
+                      scrollY: -window.scrollY, // 強制修正偏移量
+                      scrollX: 0,
+                      backgroundColor: THEME?.bg || '#ffffff' // 🌟 強制填入背景色，防止透明變黑
+                  });
+                  
+                  currentChartImage = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
+                  setChartImage(currentChartImage); 
+
+                  // 🌟 4. 截圖完畢後，把畫面悄悄滾回客人剛剛看的位置
+                  window.scrollTo(0, originalScrollY);
               }
           } catch (err) {
               console.error("排盤截圖失敗，將略過截圖功能:", err);
           } finally {
-              // 2. 無論截圖成功失敗，務必通知外部還原畫面
               if (onAfterCapture) onAfterCapture();
           }
       }
