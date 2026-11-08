@@ -49,38 +49,45 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
               
               const chartElement = document.getElementById('chart-capture-area');
               if (chartElement) {
-                  // 🌟 1. 紀錄當前的捲動位置，並強制將視窗與容器拉回最頂部
-                  const originalScrollY = window.scrollY;
-                  window.scrollTo(0, 0); 
-                  
-                  // 如果有父層容器(例如您的 contentArea)，也將其置頂以防萬一
-                  if (chartElement.parentElement) {
-                      chartElement.parentElement.scrollTop = 0;
+                  // 🌟 1. 自動向上尋找「真正負責滾動」的父層容器 (解決手機截空氣的問題)
+                  let scrollParent = chartElement;
+                  while (scrollParent && scrollParent !== document.body) {
+                      const style = window.getComputedStyle(scrollParent);
+                      if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto') {
+                          break;
+                      }
+                      scrollParent = scrollParent.parentElement;
                   }
 
-                  // 🌟 2. 為了確保 DOM 有時間反應置頂動作，稍微等待 100 毫秒
-                  await new Promise(resolve => setTimeout(resolve, 100));
-
-                  // 🌟 3. 動態判斷解析度：手機用 1.5 避免撐爆記憶體，電腦維持 2
+                  // 記錄原本的捲動位置
+                  const originalScrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
+                  
+                  // 強制把容器跟視窗都推回最頂端
+                  if (scrollParent) scrollParent.scrollTop = 0;
+                  window.scrollTo(0, 0);
+                  
+                  // 🌟 2. 給予 300 毫秒緩衝，確保手機瀏覽器完成渲染與置頂
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                  
+                  // 🌟 3. 動態畫質：手機改用 1.2 倍，避免撐爆 iPhone Safari 記憶體上限
                   const isMobile = window.innerWidth < 768;
-                  const captureScale = isMobile ? 1.5 : 2;
-
                   const canvas = await html2canvas(chartElement, { 
-                      scale: captureScale, 
+                      scale: isMobile ? 1.2 : 2, 
                       useCORS: true,
-                      scrollY: -window.scrollY, // 強制修正偏移量
-                      scrollX: 0,
-                      backgroundColor: THEME?.bg || '#ffffff' // 🌟 強制填入背景色，防止透明變黑
+                      backgroundColor: THEME?.bg || '#ffffff',
+                      windowWidth: document.documentElement.offsetWidth, // 強制計算寬度
+                      windowHeight: document.documentElement.offsetHeight
                   });
                   
                   currentChartImage = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
                   setChartImage(currentChartImage); 
 
-                  // 🌟 4. 截圖完畢後，把畫面悄悄滾回客人剛剛看的位置
-                  window.scrollTo(0, originalScrollY);
+                  // 🌟 4. 截圖完畢後，神不知鬼不覺把捲動條拉回客人原本看的位置
+                  if (scrollParent) scrollParent.scrollTop = originalScrollTop;
+                  window.scrollTo(0, originalScrollTop);
               }
           } catch (err) {
-              console.error("排盤截圖失敗，將略過截圖功能:", err);
+              console.error("排盤截圖失敗:", err);
           } finally {
               if (onAfterCapture) onAfterCapture();
           }
@@ -407,6 +414,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           data.chartImage = currentChartImage;
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
+          data.chartImage = currentChartImage;
           if (onSave) onSave(data, true);
 
       } catch (error) {
@@ -539,6 +547,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
           setIsPaid(true);
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
+          data.chartImage = currentChartImage;
           if (onSave) onSave(data, true); 
 
       } finally {
