@@ -792,7 +792,7 @@ const       timeoutId = setTimeout(() => controller.abort(new Error("AI 運算�
             {analysisResult.split('\n').map((line, i) => {
               const trimmed = line.trim();
               if (trimmed === '---' || trimmed === '***' || trimmed === '___') return null;
-              if (line.startsWith('#### ') || line.startsWith('### ') || line.startsWith('## ')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/^#{2,3}\s/, '')}</h3>;
+              if (line.startsWith('#### ') || line.startsWith('### ') || line.startsWith('## ')) return <h3 key={i} style={{ color: THEME.black, marginTop: '24px', marginBottom: '12px', fontSize: '18px', borderBottom: `1px solid #ddd`, paddingBottom: '8px' }}>{line.replace(/^#+\s/, '')}</h3>;
               if (line.startsWith('**▶')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.blue, marginTop: '16px', marginBottom: '8px', fontSize: '16px' }}>{line.replace(/\*\*/g, '')}</div>;
               if (line.startsWith('**【') && line.endsWith('】**')) return <div key={i} style={{ fontWeight: 'bold', color: THEME.teal, marginTop: '20px', marginBottom: '10px', fontSize: '17px', borderBottom: `2px dashed ${THEME.teal}`, paddingBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
               
