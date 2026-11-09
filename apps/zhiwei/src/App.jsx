@@ -1587,7 +1587,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     </div>
 
                     <div style={{ marginTop: 'auto', marginBottom: '6px', width: '60%' }}>
-                        <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', width: '100%' }}>
+                        <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', width: '100%' }}>
                         
                         {/* 🌟 修正：付費後將返回(重排)按鈕鎖死並跳出提示 */}
                         {!chartData.isPaid ? (
