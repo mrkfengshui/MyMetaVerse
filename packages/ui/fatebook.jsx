@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
-// import html2canvas from 'html2canvas';
 
 export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, onBeforeCapture, onAfterCapture }) => {
   const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
@@ -41,7 +40,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
       
       let isChildBeforeDaYun = false;
       let siHuaRuleText = '';
-      /*
+
       let currentChartImage = chartImage;
       if (!currentChartImage) {
           try {
@@ -49,7 +48,20 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
               
               const chartElement = document.getElementById('chart-capture-area');
               if (chartElement) {
-                  // 🌟 1. 自動向上尋找「真正負責滾動」的父層容器 (解決手機截空氣的問題)
+                  // 🌟 終極解法：動態載入 html2canvas (完美避開 Vercel/Vite 打包報錯！)
+                  const loadHtml2Canvas = () => new Promise((resolve, reject) => {
+                      if (window.html2canvas) return resolve(window.html2canvas);
+                      const script = document.createElement('script');
+                      script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                      script.onload = () => resolve(window.html2canvas);
+                      script.onerror = reject;
+                      document.head.appendChild(script);
+                  });
+                  
+                  // 等待套件從網路下載完畢並取得實體
+                  const html2canvas = await loadHtml2Canvas();
+
+                  // 1. 自動向上尋找「真正負責滾動」的父層容器 (解決手機截空氣的問題)
                   let scrollParent = chartElement;
                   while (scrollParent && scrollParent !== document.body) {
                       const style = window.getComputedStyle(scrollParent);
@@ -66,10 +78,10 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                   if (scrollParent) scrollParent.scrollTop = 0;
                   window.scrollTo(0, 0);
                   
-                  // 🌟 2. 給予 300 毫秒緩衝，確保手機瀏覽器完成渲染與置頂
+                  // 2. 給予 300 毫秒緩衝，確保手機瀏覽器完成渲染與置頂
                   await new Promise(resolve => setTimeout(resolve, 300));
                   
-                  // 🌟 3. 動態畫質：手機改用 1.2 倍，避免撐爆 iPhone Safari 記憶體上限
+                  // 3. 動態畫質：手機改用 1.2 倍，避免撐爆 iPhone Safari 記憶體上限
                   const isMobile = window.innerWidth < 768;
                   const canvas = await html2canvas(chartElement, { 
                       scale: isMobile ? 1.2 : 2, 
@@ -82,7 +94,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                   currentChartImage = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
                   setChartImage(currentChartImage); 
 
-                  // 🌟 4. 截圖完畢後，神不知鬼不覺把捲動條拉回客人原本看的位置
+                  // 4. 截圖完畢後，神不知鬼不覺把捲動條拉回客人原本看的位置
                   if (scrollParent) scrollParent.scrollTop = originalScrollTop;
                   window.scrollTo(0, originalScrollTop);
               }
@@ -91,7 +103,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           } finally {
               if (onAfterCapture) onAfterCapture();
           }
-      } */
+      }
 
         try {
       // 🌟 1. 動態切換大師人設

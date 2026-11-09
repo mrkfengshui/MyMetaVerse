@@ -41,6 +41,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 
 // 集中管理版本歷史紀錄
 const VERSION_HISTORY = [
+    { version: "v4.2", date: "2026-11-09", changes: ["AI命書增加命圖"] },
     { version: "v4.1", date: "2026-11-01", changes: ["修正大限四化Bug"] },
     { version: "v4.0", date: "2026-10-29", changes: ["新增AI命書"] },
     { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },
@@ -926,7 +927,7 @@ const PalaceGrid = ({
         if (!name) return null;
         return (
             <div style={{ fontSize: '10px', color, fontWeight: 'bold', backgroundColor: bgColor, padding: '2px 1px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                {name.split('').map((c, i) => <span key={i} style={{ lineHeight: 1.1 }}>{c}</span>)}
+                {name.split('').map((c, i) => <span key={i} style={{ lineHeight: 0.6 }}>{c}</span>)}
             </div>
         );
     };
@@ -987,19 +988,17 @@ const PalaceGrid = ({
                             ];
                             map.forEach(item => {
                                 if (starsObj[item.k] === palaceIdx) {
+                                    // 🌟 修正：放棄 writingMode，改用 flex-column 物理直排
                                     allStars.push(
-                                        <span key={`${keyPrefix}_${item.k}`} style={{ 
-                                            writingMode: 'vertical-rl', 
-                                            textOrientation: 'upright', 
-                                            display: 'inline-block', 
-                                            fontSize: '9px', 
-                                            color, 
-                                            fontWeight: 'bold', 
-                                            lineHeight: 1, 
-                                            margin: '1px 0' 
+                                        <div key={`${keyPrefix}_${item.k}`} style={{ 
+                                            display: 'flex', 
+                                            flexDirection: 'column', 
+                                            alignItems: 'center', 
+                                            margin: '0' 
                                         }}>
-                                            {prefix}{item.n}
-                                        </span>
+                                            <span style={{ fontSize: '9px', color, fontWeight: 'bold', lineHeight: 1 }}>{prefix}</span>
+                                            <span style={{ fontSize: '9px', color, fontWeight: 'bold', lineHeight: 1 }}>{item.n}</span>
+                                        </div>
                                     );
                                 }
                             });
@@ -1029,17 +1028,32 @@ const PalaceGrid = ({
                 </div>
 
                 {/* 下半部：宮名 + 限名 (這裡使用 column-reverse 讓宮名保持在最底，限名往上堆疊) */}
-                <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: '1px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                        <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginBottom: '0px' }}>{palace.name}</div>
-                        {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: isMobile ? '10px' : '13px', borderRadius: isMobile ? '3px' : '4px', padding: isMobile ? '1px 1px' : '2px 4px', lineHeight: 1, marginBottom: '0px', marginLeft: '0px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                <div style={{
+                position: 'absolute', 
+                bottom: 2, 
+                left: 2, 
+                display: 'flex', 
+                flexDirection: 'column-reverse', 
+                alignItems: 'flex-start', 
+                gap: '1px',
+                zIndex: 2,
+                pointerEvents: 'none'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    {/* 宮名：拆解字元疊加 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '0px' }}>
+                        {palace.name.split('').map((char, cIdx) => (
+                            <span key={cIdx} style={{ ...fontStyle, lineHeight: 1, letterSpacing: '0' }}>{char}</span>
+                        ))}
                     </div>
-                    
-                    {/* 限名 (大限命宮、歲限兄弟等) */}
-                    {showDa && daXianName && <div style={{ fontSize: '10px', color: THEME.blue, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(230,247,255,0.8)' }}>{daXianName}</div>}
-                    {showXiao && xiaoXianName && <div style={{ fontSize: '10px', color: 'green', fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(246,255,237,0.8)' }}>{xiaoXianName}</div>}
-                    {showLiuYue && liuYueName && <div style={{ fontSize: '10px', color: THEME.purple, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: 'rgba(249,240,255,0.8)' }}>{liuYueName}</div>}
-                    {showLiuRi && liuRiName && <div style={{ fontSize: '10px', color: THEME.orange, fontWeight: 'bold', writingMode: 'vertical-rl', backgroundColor: '#fff1f0' }}>{liuRiName}</div>}
+                    {palace.isShen && <span style={{ backgroundColor: THEME.red, color: 'white', fontSize: isMobile ? '10px' : '13px', borderRadius: isMobile ? '3px' : '4px', padding: isMobile ? '1px 1px' : '2px 4px', lineHeight: 1, marginBottom: '0px', marginLeft: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>身</span>}
+                </div>
+                
+                {/* 限名：呼叫上方已經存在的 renderXianName 函數來實現物理直排 */}
+                {showDa && renderXianName(daXianName, THEME.blue, 'rgba(230,247,255,0.8)')}
+                {showXiao && renderXianName(xiaoXianName, 'green', 'rgba(246,255,237,0.8)')}
+                {showLiuYue && renderXianName(liuYueName, THEME.purple, 'rgba(249,240,255,0.8)')}
+                {showLiuRi && renderXianName(liuRiName, THEME.orange, '#fff1f0')}
                 </div>
             </div>
 
