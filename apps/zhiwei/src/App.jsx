@@ -1587,22 +1587,22 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     </div>
 
                     <div style={{ marginTop: 'auto', marginBottom: '6px', width: '60%' }}>
-                        <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px', width: '100%' }}>
+                        <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', width: '100%' }}>
                         
                         {/* 🌟 修正：付費後將返回(重排)按鈕鎖死並跳出提示 */}
                         {!chartData.isPaid ? (
-                            <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px' }}>
+                            <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>
                                 重排
                             </button>
                         ) : (
-                            <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', opacity: 0.6 }}>
+                            <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', opacity: 0.6, whiteSpace: 'nowrap' }}>
                                 重排
                             </button>
                         )}
                         
-                        <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>評分</button>
-                        <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>批注</button>
-                        <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>保存</button>
+                        <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>評分</button>
+                        <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>批注</button>
+                        <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>保存</button>
                     </div>
                     </div>
                 </div>
