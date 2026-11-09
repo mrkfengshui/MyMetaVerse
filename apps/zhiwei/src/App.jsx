@@ -41,7 +41,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 
 // 集中管理版本歷史紀錄
 const VERSION_HISTORY = [
-    { version: "v4.2", date: "2026-11-09", changes: ["AI命書增加命圖"] },
+    //{ version: "v4.2", date: "2026-11-09", changes: ["AI命書增加命圖"] },
     { version: "v4.1", date: "2026-11-01", changes: ["修正大限四化Bug"] },
     { version: "v4.0", date: "2026-10-29", changes: ["新增AI命書"] },
     { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },

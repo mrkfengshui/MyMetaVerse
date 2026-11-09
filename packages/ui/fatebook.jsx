@@ -40,7 +40,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
       
       let isChildBeforeDaYun = false;
       let siHuaRuleText = '';
-
+/*
       let currentChartImage = chartImage;
       if (!currentChartImage) {
           try {
@@ -104,7 +104,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
               if (onAfterCapture) onAfterCapture();
           }
       }
-
+*/
         try {
       // 🌟 1. 動態切換大師人設
       const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';

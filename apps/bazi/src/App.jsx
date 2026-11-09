@@ -38,7 +38,7 @@ import {
 const APP_NAME = "甯博八字";
 const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpETc3Z_u5Ke9hpzSkraNSCEUCLa7qBk636WOCpYV0sG9d1h/exec";
 const VERSION_HISTORY = [
-    { version: "v5.1", date: "2026-11-09", changes: ["AI命書增加命盤截圖"] },
+    //{ version: "v5.1", date: "2026-11-09", changes: ["AI命書增加命盤截圖"] },
     { version: "v5.0", date: "2026-10-25", changes: ["改善 AI 八字算命分析"] },
     { version: "v4.0", date: "2026-10-23", changes: ["與紫微斗數共用書籤系統", "新增命盤批註功能"] },
     { version: "v3.0", date: "2026-08-15", changes: ["新增 AI 八字算命分析"] },
