@@ -877,7 +877,7 @@ const PalaceGrid = ({
 
         return (
             <div key={`${isTop?'t':'b'}-${idx}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0' }}>
-                <span style={{ fontSize: '9px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px', lineHeight: 1 }}>
+                <span style={{ fontSize: '10px', color: '#999', marginBottom: '1px', visibility: (showBrightness && starBrightness) ? 'visible' : 'hidden', minHeight: '10px', lineHeight: 1 }}>
                     {starBrightness || ' '}
                 </span>
                 
@@ -973,7 +973,7 @@ const PalaceGrid = ({
                      <div style={{ ...fontStyle, writingMode: 'vertical-rl', letterSpacing: '1px', marginTop: '0px' }}>
                         {palace.gan}{palace.zhi}
                      </div>
-                     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: '36px' }}>   
+                     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: '1px', marginTop: '0px', maxWidth: isMobile ? '36px' : 'none' }}>   
                      {(() => {
                         // 1. 收集所有要顯示的流曜到一個陣列中 (扁平化)
                         const allStars = [];
