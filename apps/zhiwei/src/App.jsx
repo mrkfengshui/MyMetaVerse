@@ -41,7 +41,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzZRwy-JRkfpvrUegR_hpET
 
 // 集中管理版本歷史紀錄
 const VERSION_HISTORY = [
-    //{ version: "v4.2", date: "2026-11-09", changes: ["AI命書增加命圖"] },
+    { version: "v4.5", date: "2026-11-10", changes: ["AI命書增加命圖"] },
     { version: "v4.1", date: "2026-11-01", changes: ["修正大限四化Bug"] },
     { version: "v4.0", date: "2026-10-29", changes: ["新增AI命書"] },
     { version: "v3.0", date: "2026-10-23", changes: ["與八字共用書籤系統", "新增命盤批註功能", "運勢評分演算法升級"] },
@@ -1117,6 +1117,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     const [notesText, setNotesText] = useState('');
     useEffect(() => { setNotesText(chartData?.notes || ''); }, [chartData]);
 
+    const [isCapturing, setIsCapturing] = useState(false);
     const g = chartData.grid;
     const [focusedIndex, setFocusedIndex] = useState(() => g.findIndex(p => p.name === '命宮'));
     const [targetDate, setTargetDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1, day: new Date().getDate() });
@@ -1555,29 +1556,34 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         </div>
                     </div>
 
+                    {/* 1. 切換盤 (本命/大限/歲限...) */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', width: '100%', marginBottom: '4px', height: '22px' }}>
-                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
+                        {/* 🌟 截圖時隱藏左箭頭 */}
+                        <button onClick={() => switchLayer(-1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', visibility: isCapturing ? 'hidden' : 'visible' }}>
                             <ChevronLeft size={18} />
                         </button>
                         <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', textAlign: 'center', lineHeight: 1 }}>
                             {getLayerTitle()}
                         </span>
-                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}>
+                        {/* 🌟 截圖時隱藏右箭頭 */}
+                        <button onClick={() => switchLayer(1)} style={{ background: 'none', border: 'none', color: THEME.blue, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', visibility: isCapturing ? 'hidden' : 'visible' }}>
                             <ChevronRight size={18} />
                         </button>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
-                            <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
-                            <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                    {/* 🌟 只有在非截圖狀態下，才顯示日期選擇器 */}
+                    {!isCapturing && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                                <select value={targetDate.year} onChange={(e) => handleDateChange('year', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{yearOptions.map(y => <option key={y} value={y}>{y}年</option>)}</select>
+                                <select value={targetDate.month} onChange={(e) => handleDateChange('month', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{Array.from({length:12},(_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}</select>
+                                <select value={targetDate.day} onChange={(e) => handleDateChange('day', e.target.value)} style={{ fontSize: isMobile ? '12px' : '14px', padding: '2px 4px' }}>{daysInMonth.map(d => <option key={d} value={d}>{d}日</option>)}</select>
+                            </div>
+                            <div style={{ fontSize: isMobile ? '12px' : '14px', color: THEME.blue }}>
+                                {targetLunarDisplay}
+                            </div>
                         </div>
-                        
-                        <div style={{ fontSize: isMobile ? '12px' : '14px', color: THEME.blue }}>
-                            {targetLunarDisplay}
-                        </div>
-                    </div>
+                    )}
                     
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '2px 10px', fontSize: isMobile ? '11px' : '14px', textAlign: 'left', width: isMobile ? 'auto' : '60%', paddingLeft: isMobile ? '20px' : '10px', color: THEME.gray }}>
                             <div>命主: {chartData.mingZhu}</div> 
@@ -1600,25 +1606,27 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                         未入大限並無四化
                     </div>
 
-                    <div style={{ marginTop: 'auto', marginBottom: '6px', width: '60%' }}>
-                        <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', width: '100%' }}>
-                        
-                        {/* 🌟 修正：付費後將返回(重排)按鈕鎖死並跳出提示 */}
-                        {!chartData.isPaid ? (
-                            <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>
-                                重排
-                            </button>
-                        ) : (
-                            <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', opacity: 0.6, whiteSpace: 'nowrap' }}>
-                                重排
-                            </button>
-                        )}
-                        
-                        <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>評分</button>
-                        <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>批注</button>
-                        <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>保存</button>
-                    </div>
-                    </div>
+                    {!isCapturing && (
+                        <div style={{ marginTop: 'auto', marginBottom: '6px', width: '60%' }}>
+                            <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', width: '100%' }}>
+                            
+                            {/* 🌟 修正：付費後將返回(重排)按鈕鎖死並跳出提示 */}
+                            {!chartData.isPaid ? (
+                                <button onClick={onBack} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>
+                                    重排
+                                </button>
+                            ) : (
+                                <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.bgGray, color: THEME.gray, border: `1px solid ${THEME.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2px', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                                    重排
+                                </button>
+                            )}
+                            
+                            <button onClick={() => setShowScorePanel(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#fff7e6', color: THEME.orange, border: '1px solid #ffd591', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>評分</button>
+                            <button onClick={() => setShowNotesModal(true)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: '#f9f0ff', color: THEME.purple, border: '1px solid #d3adf7', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>批注</button>
+                            <button onClick={() => onSave(chartData)} style={{ height: '24px', padding: '0 4px', fontSize: '11px', backgroundColor: THEME.blue, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>保存</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* 第二列右 (酉) */}
@@ -1640,6 +1648,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     onSave={onSave}
                     // 🌟 截圖前：偷偷切換到歲限盤，並給系統 0.5 秒重新繪製畫面
                     onBeforeCapture={async () => {
+                        setIsCapturing(true);
                         originalLayerRef.current = layerMode; // 記住客人現在看哪裡
                         if (layerMode !== 2) {
                             setLayerMode(2);                  // 強制切換到歲限盤
@@ -1650,6 +1659,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
                     // 🌟 截圖後：神不知鬼不覺切回客人原本看的盤
                     onAfterCapture={() => {
                         setLayerMode(originalLayerRef.current);
+                        setIsCapturing(false);
                     }}
                 />
             </div>
