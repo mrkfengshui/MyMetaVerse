@@ -40,7 +40,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
       
       let isChildBeforeDaYun = false;
       let siHuaRuleText = '';
-/*
+
       let currentChartImage = chartImage;
       if (!currentChartImage) {
           try {
@@ -48,7 +48,7 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
               
               const chartElement = document.getElementById('chart-capture-area');
               if (chartElement) {
-                  // 🌟 終極解法：動態載入 html2canvas (完美避開 Vercel/Vite 打包報錯！)
+                  // 動態載入 html2canvas
                   const loadHtml2Canvas = () => new Promise((resolve, reject) => {
                       if (window.html2canvas) return resolve(window.html2canvas);
                       const script = document.createElement('script');
@@ -58,10 +58,8 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                       document.head.appendChild(script);
                   });
                   
-                  // 等待套件從網路下載完畢並取得實體
                   const html2canvas = await loadHtml2Canvas();
 
-                  // 1. 自動向上尋找「真正負責滾動」的父層容器 (解決手機截空氣的問題)
                   let scrollParent = chartElement;
                   while (scrollParent && scrollParent !== document.body) {
                       const style = window.getComputedStyle(scrollParent);
@@ -71,40 +69,51 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                       scrollParent = scrollParent.parentElement;
                   }
 
-                  // 記錄原本的捲動位置
                   const originalScrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
                   
-                  // 強制把容器跟視窗都推回最頂端
                   if (scrollParent) scrollParent.scrollTop = 0;
                   window.scrollTo(0, 0);
                   
-                  // 2. 給予 300 毫秒緩衝，確保手機瀏覽器完成渲染與置頂
-                  await new Promise(resolve => setTimeout(resolve, 300));
+                  // 給予充分緩衝時間讓 iPhone 渲染
+                  await new Promise(resolve => setTimeout(resolve, 350));
                   
-                  // 3. 動態畫質：手機改用 1.2 倍，避免撐爆 iPhone Safari 記憶體上限
                   const isMobile = window.innerWidth < 768;
+                  
+                  // 🌟 修正 1：針對 iOS 記憶體優化，手機版 scale 設為 1，並精準鎖定元素寬高
                   const canvas = await html2canvas(chartElement, { 
-                      scale: isMobile ? 1.2 : 2, 
+                      scale: isMobile ? 1 : 2, 
                       useCORS: true,
                       backgroundColor: THEME?.bg || '#ffffff',
-                      windowWidth: document.documentElement.offsetWidth, // 強制計算寬度
-                      windowHeight: document.documentElement.offsetHeight
+                      width: chartElement.offsetWidth,   // 放棄 windowWidth，改用元素實際寬度
+                      height: chartElement.offsetHeight, // 放棄 windowHeight，改用元素實際高度
+                      scrollY: 0
                   });
                   
-                  currentChartImage = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
-                  setChartImage(currentChartImage); 
+                  const dataUrl = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
+                  
+                  // 🌟 修正 2：破圖防呆機制 (攔截 iOS 的空圖片 data:, )
+                  if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 100) {
+                      console.warn("⚠️ iOS 記憶體限制導致截圖失敗，已自動隱藏破圖");
+                      currentChartImage = null;
+                      setChartImage(null);
+                  } else {
+                      currentChartImage = dataUrl;
+                      setChartImage(currentChartImage); 
+                  }
 
-                  // 4. 截圖完畢後，神不知鬼不覺把捲動條拉回客人原本看的位置
                   if (scrollParent) scrollParent.scrollTop = originalScrollTop;
                   window.scrollTo(0, originalScrollTop);
               }
           } catch (err) {
               console.error("排盤截圖失敗:", err);
+              // 確保出錯時不會殘留破圖字串
+              currentChartImage = null;
+              setChartImage(null);
           } finally {
               if (onAfterCapture) onAfterCapture();
           }
       }
-*/
+
         try {
       // 🌟 1. 動態切換大師人設
       const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
