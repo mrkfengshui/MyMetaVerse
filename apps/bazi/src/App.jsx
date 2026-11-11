@@ -990,7 +990,7 @@ const PillarCard = ({
     title, gan, zhi, naYin, dayMaster, displayMode, 
     dayZhi, yearZhi, monthZhi, colorTheme, genderText, 
     onShenShaClick, kongWangStatus,
-    refGan, refTitle, huaQi 
+    refGan, refTitle, huaQi, isCapturing
     }) => {
 
    const safeTheme = colorTheme || 'elemental';
@@ -1018,7 +1018,7 @@ const PillarCard = ({
      <div style={{ 
          flex: 1, backgroundColor: THEME.white, borderRadius: '12px', border: `1px solid ${THEME.border}`, 
          padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', 
-         boxShadow: '0 2px 4px rgba(0,0,0,0.05)', minHeight: '175px', justifyContent: 'space-between' 
+         boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)', minHeight: '175px', justifyContent: 'space-between' 
      }}>
         <div style={{ fontSize: '12px', color: THEME.gray, marginBottom: '8px' }}>{title}</div>
         
@@ -1114,7 +1114,7 @@ const PillarCard = ({
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
-   
+   const [isCapturing, setIsCapturing] = useState(false);
    // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
        if (!data || !data.daYuns || data.isManual) return 0;
@@ -1177,6 +1177,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
    const [selectedLiuRi, setSelectedLiuRi] = useState(null);
+   const originalLiuNianRef = useRef(null);
    const [showOverviewModal, setShowOverviewModal] = useState(false);
    const [relationModalContent, setRelationModalContent] = useState(null);
    const [displayMode, setDisplayMode] = useState('shiShen'); 
@@ -1587,26 +1588,25 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const renderDaYunGrid = () => {
         if (!data.daYuns) return null;
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '8px', direction: 'rtl' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
                 {data.daYuns.map((dy) => {
                     const isSelected = selectedDaYunIndex === (dy.seq - 1);
                     const displayTopRight = getTopRightItem(dy.gan);
                     const displayBottomRight = getDisplayItems(dy.gan, dy.zhi);
                     const gColor = getColor(dy.gan, 'stem'); const zColor = getColor(dy.zhi, 'branch');
                     const zhiRelations = getZhiRelations(dy.zhi);
-                    const ganRelations = getGanRelations(dy.gan); // 新增天干關係
+                    const ganRelations = getGanRelations(dy.gan);
 
                     return (
                         <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ 
                             display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', 
-                            minHeight: '115px', height: '100%', // 🌟 自動拉伸對齊
-                            boxSizing: 'border-box', padding: '8px 4px', 
+                            minHeight: '115px', height: '100%',
+                            boxSizing: 'border-box', padding: '8px 1px', 
                             backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, 
                             borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, 
                             cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative', direction: 'ltr'
                         }}>
-                            {/* 🌟 內部 2x3 Grid：取代絕對定位，完美適應內容高度 */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '4px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                                     {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
@@ -1647,12 +1647,13 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
         const targetDaYun = data.daYuns[selectedDaYunIndex];
         if (!targetDaYun || !targetDaYun.liuNians || targetDaYun.liuNians.length === 0) return null;
         return (
-            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)' }}>
                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                     <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: '15px' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
                     <span style={{ fontSize: '12px', color: THEME.gray, marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
                  </div>
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '8px', direction: 'rtl' }}>
+                 {/* 🌟 修正 1：將卡片之間的 gap 從 8px 縮小為 3px */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
                      {targetDaYun.liuNians.map((ln) => {
                          const isSelected = selectedLiuNianYear === ln.year;
                          const displayTopRight = getTopRightItem(ln.gan);
@@ -1663,13 +1664,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
 
                          return (
                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ 
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                                // 🌟 修正 2：將卡片左右內距縮小到 1px
+                                padding: '8px 1px', 
                                 backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', 
-                                minHeight: '120px', height: '100%', boxSizing: 'border-box', // 🌟 自動拉伸對齊
+                                minHeight: '120px', height: '100%', boxSizing: 'border-box',
                                 border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, 
                                 direction: 'ltr', cursor: 'pointer' 
                             }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                {/* 🌟 修正 3：將 1fr 改為 minmax(0, 1fr)，防止左右內容撐破卡片 */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '4px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                                         {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
@@ -2144,35 +2148,42 @@ return (
             ) : null}
 
         </div>
-        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '10px -10px 10px -10px' }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+       <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
                 <PillarCard 
-                    title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi} 
+                    title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi}
                     kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
+                    isCapturing={isCapturing} // 🌟 傳遞狀態
                     {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
                     huaQi={data.meta.isHuaQi}
+                    isCapturing={isCapturing} // 🌟 傳遞狀態
                     {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
+                    isCapturing={isCapturing} // 🌟 傳遞狀態
                     {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
+                    isCapturing={isCapturing} // 🌟 傳遞狀態
                     {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
                 />
             </div>
-            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            
+            {/* 🌟 修正：截圖時移除大運卡片的 boxShadow */}
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
-                {/* 🌟 改為呼叫最新的單一 Grid */}
                 {renderDaYunGrid()}
             </div>
+            
+            {/* 🌟 流年卡片的 boxShadow 修正也包含在 renderLiuNianGrid 的回傳值中了 */}
             <div style={{ padding: '0 10px' }}>
                 {renderLiuNianGrid()}
             </div>
@@ -2228,8 +2239,22 @@ return (
                 DIZHI 
             }}
             // 🌟 補上八字的空鉤子，防止 onBeforeCapture undefined 報錯
-            onBeforeCapture={async () => { return Promise.resolve(); }}
-            onAfterCapture={() => {}}
+            onBeforeCapture={async () => {
+                setIsCapturing(true); // 🌟 截圖前：開啟「截圖模式」，瞬間剝除所有陰影
+                
+                // 🌟 截圖前：記住原本狀態，並自動點選「今年的流年」展開流月盤
+                originalLiuNianRef.current = selectedLiuNianYear; 
+                setSelectedLiuNianYear(new Date().getFullYear()); 
+                
+                // 給予 0.5 秒的緩衝，讓 React 有時間把流月盤渲染出來
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }}
+            onAfterCapture={() => {
+                setIsCapturing(false); // 🌟 截圖後：恢復原狀
+                
+                // 🌟 截圖後：神不知鬼不覺地把流年恢復成客人原本點選的狀態
+                setSelectedLiuNianYear(originalLiuNianRef.current); 
+            }}
         />
         <ShenShaModal 
                 config={shenShaModalConfig} 
@@ -2240,33 +2265,36 @@ return (
         {renderOverviewModal()}
 
         {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
-        <button
-            onClick={() => setShowOverviewModal(true)}
-            style={{
-                position: 'fixed',
-                bottom: '100px',     // 避開底部導航列
-                right: '20px',
-                width: '54px',
-                height: '54px',
-                borderRadius: '27px',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)', // 帶點透明度的白底
-                color: '#999999',                             // 圖示顏色改淺灰
-                border: '2px solid #e0e0e0',                  // 外圈改為極淺的灰色
-                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',     // 陰影再進一步調淡
-                
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000,
-                cursor: 'pointer',
-                transition: 'transform 0.1s',
-            }}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-        >
-            <Eye size={24} />
-        </button>
+        {!isCapturing && (
+            <button
+                onClick={() => setShowOverviewModal(true)}
+                style={{
+                    position: 'fixed',
+                    bottom: '100px',     // 避開底部導航列
+                    right: '20px',
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '27px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 帶點透明度的白底
+                    color: '#999999',                             // 圖示顏色改淺灰
+                    border: '2px solid #e0e0e0',                  // 外圈改為極淺的灰色
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',     // 陰影再進一步調淡
+                    
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                    cursor: 'pointer',
+                    transition: 'transform 0.1s',
+                }}
+                onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
+                onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                <Eye size={24} />
+            </button>
+        )}
+
         {showNotesModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
