@@ -2288,7 +2288,7 @@ return (
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-                <Eye size={40} />
+                <Eye style={{ transform: 'scale(2)' }} />
             </button>
         )}
 
