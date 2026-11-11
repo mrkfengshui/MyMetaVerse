@@ -1114,7 +1114,7 @@ const PillarCard = ({
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
-   const [isCapturing, setIsCapturing] = useState(false);   
+   const [isCapturing, setIsCapturing] = useState(false);
    // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
        if (!data || !data.daYuns || data.isManual) return 0;
@@ -2179,7 +2179,9 @@ return (
                 <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
                 {renderDaYunGrid()}
             </div>
-            <div style={{ padding: '0' }}>
+            
+            {/* 🌟 流年卡片的 boxShadow 修正也包含在 renderLiuNianGrid 的回傳值中了 */}
+            <div style={{ padding: '0 10px' }}>
                 {renderLiuNianGrid()}
             </div>
         </div>
@@ -2236,13 +2238,19 @@ return (
             // 🌟 補上八字的空鉤子，防止 onBeforeCapture undefined 報錯
             onBeforeCapture={async () => {
                 setIsCapturing(true); // 🌟 截圖前：開啟「截圖模式」，瞬間剝除所有陰影
-                originalLiuNianRef.current = selectedLiuNianYear;
-                setSelectedLiuNianYear(new Date().getFullYear());
+                
+                // 🌟 截圖前：記住原本狀態，並自動點選「今年的流年」展開流月盤
+                originalLiuNianRef.current = selectedLiuNianYear; 
+                setSelectedLiuNianYear(new Date().getFullYear()); 
+                
+                // 給予 0.5 秒的緩衝，讓 React 有時間把流月盤渲染出來
                 await new Promise(resolve => setTimeout(resolve, 500));
             }}
             onAfterCapture={() => {
                 setIsCapturing(false); // 🌟 截圖後：恢復原狀
-                setSelectedLiuNianYear(originalLiuNianRef.current);
+                
+                // 🌟 截圖後：神不知鬼不覺地把流年恢復成客人原本點選的狀態
+                setSelectedLiuNianYear(originalLiuNianRef.current); 
             }}
         />
         <ShenShaModal 
