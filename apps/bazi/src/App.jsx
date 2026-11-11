@@ -2148,8 +2148,8 @@ return (
             ) : null}
 
         </div>
-       <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
+       <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '0', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                 <PillarCard 
                     title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi}
                     kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
@@ -2183,10 +2183,7 @@ return (
                 {renderDaYunGrid()}
             </div>
             
-            {/* 🌟 流年卡片的 boxShadow 修正也包含在 renderLiuNianGrid 的回傳值中了 */}
-            <div style={{ padding: '0 10px' }}>
-                {renderLiuNianGrid()}
-            </div>
+            {renderLiuNianGrid()}
         </div>
         {renderLiuYueGrid()}
         {renderLiuRiList()}
@@ -2291,7 +2288,7 @@ return (
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-                <Eye size={24} />
+                <Eye size={40} />
             </button>
         )}
 
