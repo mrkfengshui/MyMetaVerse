@@ -3,7 +3,7 @@
 // 
 // 本 App 使用到的共用模組 (來自 packages/ui)：
 // - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
-// - BookingSystem.jsx    : BookingSystem
+// - Appointment.jsx      : Appointment
 // - DataComponents.jsx   : BookmarkList
 // - Constants.jsx        : QIMEN_STARS_INFO, QIMEN_DOORS_INFO, QIMEN_GODS_INFO, QIMEN_YONG_SHEN, TEN_STEM_COMBINATIONS, PATTERN_INFO
 // - theme.js             : COLORS, THEME, COMMON_STYLES
@@ -16,13 +16,11 @@ import 'react-calendar/dist/Calendar.css';
 
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
-  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
+  Appointment, BottomTabBar, BookmarkList, BuyMeCoffee,
+  InstallGuide, WebBackupManager, useProtection, useBackupReminder,
   COLORS, THEME, COMMON_STYLES,
   QIMEN_STARS_INFO, QIMEN_DOORS_INFO, QIMEN_GODS_INFO, QIMEN_YONG_SHEN, TEN_STEM_COMBINATIONS, PATTERN_INFO
 } from '@my-meta/ui';
-
-import { useProtection } from '@my-meta/ui';
 
 // 2. 引入 Icon
 import { 
@@ -1468,6 +1466,16 @@ export default function QiMenApp() {
 
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
+
+  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
+  useBackupReminder();
+
+  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
+  useEffect(() => {
+      const handleJumpToSettings = () => setView('settings');
+      window.addEventListener('jump-to-settings', handleJumpToSettings);
+      return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
+  }, []);
   
   // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
   const contentRef = useRef(null);
@@ -1715,7 +1723,7 @@ export default function QiMenApp() {
             {view === 'input' && <><InputView onCalculate={handleCalculate} initialData={editingData} onOpenSearch={() => setShowSearchModal(true)} /><AdsterraNarrow /></>}
             {view === 'result' && <><ResultView data={resultData} onSave={saveBookmark} onBack={() => { setEditingData(null); setView('input'); }} onRecalculate={handleCalculate} /><AdsterraNarrow /></>}
             {view === 'bookmarks' && <div style={{ padding: '16px' }}><div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', padding: '8px', backgroundColor: THEME.white, borderRadius: '8px' }}><h2 style={{ fontWeight: 'bold', color: THEME.black, margin: 0 }}>我的占事紀錄</h2></div><BookmarkList bookmarks={bookmarks} onSelect={openBookmark} onDelete={deleteBookmark} /><div style={{ marginTop: '20px' }}><Adsterra /></div></div>}
-            {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
+            {view === 'booking' && <Appointment apiUrl={API_URL} onNavigate={() => setView('input')} />}
             {view === 'settings' && <SettingsView bookmarks={bookmarks} setBookmarks={setBookmarks} />}
         </div>
 

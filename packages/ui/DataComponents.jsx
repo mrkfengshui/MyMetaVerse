@@ -1,5 +1,5 @@
 // packages/ui/DataComponents.jsx
-import React, { useMemo } from 'react'; // 引入 useMemo
+import React, { useMemo, useEffect } from 'react'; // 引入 useMemo
 import { THEME } from './theme';
 import { Trash2, Edit3, User, Calendar, MapPin, Sparkles, Compass, BookOpen, Image as ImageIcon, Unlock } from 'lucide-react';
 
@@ -273,4 +273,51 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             })}
         </div>
     );
+};
+
+export const useBackupReminder = () => {
+    useEffect(() => {
+        const checkBackupStatus = () => {
+            try {
+                const savedBookmarks = JSON.parse(localStorage.getItem('mrk_fate_bookmarks') || '[]');
+                if (savedBookmarks.length === 0) return;
+
+                const lastBackupTime = parseInt(localStorage.getItem('mrk_last_backup_time') || '0');
+                let timeSinceLastBackup;
+                const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000; 
+                const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; 
+
+                if (lastBackupTime === 0) {
+                    const oldestRecord = savedBookmarks.reduce((oldest, current) => {
+                        const currentT = current.savedAt || current.id || Date.now();
+                        const oldestT = oldest.savedAt || oldest.id || Date.now();
+                        return currentT < oldestT ? current : oldest;
+                    }, savedBookmarks[0]);
+                    const oldestTimestamp = oldestRecord.savedAt || oldestRecord.id;
+                    timeSinceLastBackup = Date.now() - oldestTimestamp;
+                } else {
+                    timeSinceLastBackup = Date.now() - lastBackupTime;
+                }
+
+                const lastReminderTime = parseInt(localStorage.getItem('mrk_backup_reminder_time') || '0');
+                const timeSinceLastReminder = Date.now() - lastReminderTime;
+
+                if (timeSinceLastBackup > NINETY_DAYS_MS && timeSinceLastReminder > SEVEN_DAYS_MS) {
+                    const days = Math.floor(timeSinceLastBackup / (1000 * 60 * 60 * 24));
+                    const isConfirmed = window.confirm(`⚠️ 溫馨提醒：\n\n系統偵測到您已經有 ${days} 天沒有備份資料了！(目前累積 ${savedBookmarks.length} 筆紀錄)\n\n為了防止手機/瀏覽器快取意外清除導致心血遺失，強烈建議您定期【匯出】備份。\n\n現在要前往設定進行備份嗎？`);
+                    
+                    localStorage.setItem('mrk_backup_reminder_time', Date.now().toString());
+                    
+                    if (isConfirmed) {
+                        // 觸發切換到設定頁的事件 (稍後我們在各 App 接收)
+                        window.dispatchEvent(new CustomEvent('jump-to-settings'));
+                    }
+                }
+            } catch (e) {
+                console.error("備份檢查失敗", e);
+            }
+        };
+        const timer = setTimeout(checkBackupStatus, 3000);
+        return () => clearTimeout(timer);
+    }, []);
 };

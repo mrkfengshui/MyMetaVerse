@@ -3,7 +3,7 @@
 // 
 // 本 App 使用到的共用模組 (來自 packages/ui)：
 // - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
-// - BookingSystem.jsx    : BookingSystem
+// - Appointment.jsx      : Appointment
 // - DataComponents.jsx   : BookmarkList
 // - Constants.jsx        : DONG_GONG_RULES (董公擇日), XIU_INFO (二十八星宿), JIAN_CHU_INFO (建除十二神), WUTU_POEMS (烏兔太陽太陰)
 // - theme.js             : COLORS, THEME, COMMON_STYLES
@@ -16,8 +16,8 @@ import 'react-calendar/dist/Calendar.css';
 
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
-  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, useProtection,
+  Appointment, BottomTabBar, BookmarkList, BuyMeCoffee,
+  InstallGuide, WebBackupManager, useProtection, useBackupReminder,
   COLORS, THEME, COMMON_STYLES
 } from '@my-meta/ui';
 
@@ -2435,6 +2435,15 @@ export default function CalendarApp() {
 
   const [bookmarks, setBookmarks] = useState([]);
   const [view, setView] = useState('calendar');
+  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
+  useBackupReminder();
+
+  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
+  useEffect(() => {
+      const handleJumpToSettings = () => setView('settings');
+      window.addEventListener('jump-to-settings', handleJumpToSettings);
+      return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
+  }, []);
   const contentRef = useRef(null);
   const [ziHourRule, setZiHourRule] = useState('ziShi'); 
   const [timeIndex, setTimeIndex] = useState(6);
@@ -3160,7 +3169,7 @@ const selectedInfo = useMemo(() => {
         )}
         
         {view === 'booking' && (
-            <BookingSystem apiUrl={API_URL} onNavigate={() => setView('calendar')} />
+            <Appointment apiUrl={API_URL} onNavigate={() => setView('calendar')} />
         )}
       </div>
       

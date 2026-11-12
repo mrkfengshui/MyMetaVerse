@@ -1,5 +1,5 @@
 // packages/ui/index.jsx
-export * from './BookingSystem';
+export * from './Appointment';
 export * from './Constants';
 export * from './DataComponents';
 export * from './fatebook';

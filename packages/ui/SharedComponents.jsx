@@ -609,10 +609,15 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
           text: `這是您的 ${prefix} 備份檔案，請選擇儲存至 iCloud、Google Drive 或其他雲端硬碟。`,
           files: [file],
         });
+        
+        // 🌟🌟🌟 新增：分享成功後，記錄最後備份時間
+        localStorage.setItem('mrk_last_backup_time', Date.now().toString());
+        
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error('分享失敗:', error);
           downloadFile(blob, fileName);
+          // (下載成功也會在 downloadFile 裡記錄)
         }
       }
     } else {
@@ -631,6 +636,9 @@ export const WebBackupManager = ({ data, onRestore, prefix = 'APP_BACKUP' }) => 
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    // 🌟🌟🌟 新增：下載成功後，記錄最後備份時間
+    localStorage.setItem('mrk_last_backup_time', Date.now().toString());
   };
 
   // 處理檔案匯入

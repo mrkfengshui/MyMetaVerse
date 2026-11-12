@@ -3,7 +3,7 @@
 // 
 // 本 App 使用到的共用模組 (來自 packages/ui)：
 // - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
-// - BookingSystem.jsx    : BookingSystem
+// - Appointment.jsx      : Appointment
 // - DataComponents.jsx   : BookmarkList
 // - Constants.jsx        : STAR_COMBINATIONS (玄空飛星組合吉凶)
 // - theme.js             : COLORS, THEME, COMMON_STYLES
@@ -16,9 +16,9 @@ import 'react-calendar/dist/Calendar.css';
 
 import { 
   AdBanner, Adsterra, AdsterraNarrow, AppHeader, AppInfoCard, 
-  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
-  COLORS, THEME, COMMON_STYLES, useProtection,
+  Appointment, BottomTabBar, BookmarkList, BuyMeCoffee,
+  InstallGuide, WebBackupManager, useProtection, useBackupReminder,
+  COLORS, THEME, COMMON_STYLES, 
   STAR_COMBINATIONS
 } from '@my-meta/ui';
 
@@ -1753,6 +1753,16 @@ export default function FengShuiApp() {
     
     const [view, setView] = useState('input');
 
+  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
+  useBackupReminder();
+
+  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
+  useEffect(() => {
+      const handleJumpToSettings = () => setView('settings');
+      window.addEventListener('jump-to-settings', handleJumpToSettings);
+      return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
+  }, []);
+
     // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
     const contentRef = useRef(null);
     useEffect(() => {
@@ -1985,7 +1995,7 @@ export default function FengShuiApp() {
                         <div style={{ marginTop: '20px' }}><Adsterra /></div>
                     </div>
                 )}
-                {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
+                {view === 'booking' && <Appointment apiUrl={API_URL} onNavigate={() => setView('input')} />}
                 {view === 'settings' && (
                     <SettingsView 
                         bookmarks={bookmarks} setBookmarks={setBookmarks}

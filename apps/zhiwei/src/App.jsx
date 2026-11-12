@@ -3,7 +3,7 @@
 // 
 // 本 App 使用到的共用模組 (來自 packages/ui)：
 // - SharedComponents.jsx : AppHeader, BottomTabBar, InstallGuide, BuyMeCoffee, AppInfoCard, WebBackupManager, AdBanner, Adsterra, AdsterraNarrow
-// - BookingSystem.jsx    : BookingSystem
+// - Appointment.jsx      : Appointment
 // - DataComponents.jsx   : BookmarkList
 // - ScorePanel.jsx       : ScorePanel (紫微斗數運勢評分面板)
 // - theme.js             : COLORS, THEME, COMMON_STYLES
@@ -16,8 +16,8 @@ import 'react-calendar/dist/Calendar.css';
 
 import { 
   AdBanner, AppHeader, AppInfoCard, 
-  BookingSystem, BottomTabBar, BookmarkList, BuyMeCoffee, 
-  InstallGuide, WebBackupManager, 
+  Appointment, BottomTabBar, BookmarkList, BuyMeCoffee,
+  InstallGuide, WebBackupManager, useProtection, useBackupReminder,
   COLORS, THEME, COMMON_STYLES,
   Adsterra, AdsterraNarrow, ScorePanel, AiBaziAnalysis // 🌟 記得在這裡補上
 } from '@my-meta/ui';
@@ -1727,6 +1727,16 @@ export default function ZwdsApp() {
   
   // 2. 狀態管理
   const [view, setView] = useState('input');
+
+  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
+  useBackupReminder();
+
+  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
+  useEffect(() => {
+      const handleJumpToSettings = () => setView('settings');
+      window.addEventListener('jump-to-settings', handleJumpToSettings);
+      return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
+  }, []);
   
   // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
   const contentRef = useRef(null);
@@ -1999,7 +2009,7 @@ export default function ZwdsApp() {
           )}
 
           {/* ✅ 共用預約系統 */}
-          {view === 'booking' && <BookingSystem apiUrl={API_URL} onNavigate={() => setView('input')} />}
+          {view === 'booking' && <Appointment apiUrl={API_URL} onNavigate={() => setView('input')} />}
           
           {/* ✅ 共用架構設定頁 */}
           {view === 'settings' && 

@@ -31,7 +31,7 @@ const generateBookingId = () => {
 
 // --- 主組件 ---
 // 新增了 stripePubKey (公鑰) 和 checkoutApiUrl (後端API網址)
-export const BookingSystem = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl }) => {
+export const Appointment = ({ apiUrl, onNavigate, stripePubKey, checkoutApiUrl }) => {
   const [viewMode, setViewMode] = useState('book'); 
   const [step, setStep] = useState(1);
 
