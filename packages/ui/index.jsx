@@ -7,3 +7,4 @@ export * from './ScorePanel';
 export * from './SharedComponents';
 export * from './theme';
 export * from './useProtection';
+export * from './Naming';

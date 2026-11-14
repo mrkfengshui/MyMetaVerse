@@ -8,6 +8,7 @@
 // - fatebook.jsx         : AiBaziAnalysis (包含 NameCardLayout 與 AI 生成報告邏輯)
 // - theme.js             : COLORS, THEME, COMMON_STYLES
 // - useProtection.js     : useProtection
+// - Naming.jsx           : NamingSystem
 // =========================================================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -18,7 +19,7 @@ import {
   AdBanner, Adsterra, AdsterraNarrow, AiBaziAnalysis, AppHeader, AppInfoCard, 
   Appointment, BottomTabBar, BookmarkList, BuyMeCoffee,
   InstallGuide, WebBackupManager, useProtection, useBackupReminder,
-  COLORS, THEME, COMMON_STYLES
+  COLORS, THEME, COMMON_STYLES, NamingSystem
 } from '@my-meta/ui';
 
 // 2. 引入 Icon
@@ -2257,7 +2258,7 @@ return (
                 config={shenShaModalConfig} 
                 onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
             />
-            
+        <NamingSystem data={data} THEME={THEME} />
         {/* 🌟 3. 渲染綜合運勢盤 */}
         {renderOverviewModal()}
 
