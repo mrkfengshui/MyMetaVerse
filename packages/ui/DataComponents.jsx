@@ -100,54 +100,67 @@ const RecordContent = ({ data }) => {
 
 // --- 書籤列表 ---
 export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
-    if (bookmarks.length === 0) {
+    if (!Array.isArray(bookmarks) || bookmarks.length === 0) {
         return <div style={{ padding: '40px', textAlign: 'center', color: THEME.gray, fontSize: '14px' }}>暫無紀錄</div>;
     }
 
-    // 🌟 1. 動態合併紀錄：安全隔離八字與紫微的付費狀態
+    // 安全提取日期字串（徹底防止 iOS 讀到 rawDate 物件而白畫面）
+    const safeExtractDateStr = (rec) => {
+        if (!rec || typeof rec !== 'object') return '未知日期';
+        if (typeof rec.solarDate === 'string' && rec.solarDate.trim()) return rec.solarDate;
+        if (typeof rec.solarDateStr === 'string' && rec.solarDateStr.trim()) return rec.solarDateStr;
+        if (rec.rawDate && typeof rec.rawDate === 'object') {
+            const { year, month, day, hour, minute } = rec.rawDate;
+            if (year && month && day) {
+                const pad = (n) => String(n ?? 0).padStart(2, '0');
+                return `${year}-${pad(month)}-${pad(day)} ${pad(hour)}:${pad(minute)}`;
+            }
+        }
+        return '未知日期';
+    };
+
     const mergedBookmarks = useMemo(() => {
         const map = {};
         
         bookmarks.forEach(rec => {
-            const name = rec.name || rec.title || '未命名紀錄';
-            const gender = rec.genderText && rec.genderText.includes('女') ? '女' : '男';
-            const solarDate = rec.solarDate || rec.solarDateStr || rec.rawDate || '未知日期';
+            if (!rec || typeof rec !== 'object') return;
+            const name = String(rec.name || rec.title || '未命名紀錄');
+            const gender = (rec.genderText && String(rec.genderText).includes('女')) ? '女' : '男';
+            const solarDate = safeExtractDateStr(rec);
             const key = `${name}_${gender}_${solarDate}`;
             
             if (!map[key]) {
-                map[key] = { ...rec, genderText: gender, titleText: name, solarDate: solarDate };
+                // 剔除肥大的 chartImage 避免撐爆 iPhone WebView 記憶體
+                const { chartImage, baziAiReport, zwdsAiReport, aiReport, ...lightRec } = rec;
+                map[key] = { ...lightRec, genderText: gender, titleText: name, solarDate: solarDate };
             }
             
-            // 安全寫入八字專屬資料
             if (rec.appType === 'bazi' || rec.dayMaster) {
-                map[key].bazi = rec.bazi || map[key].bazi;
                 map[key].dayMaster = rec.dayMaster || map[key].dayMaster;
                 map[key].monthBranch = rec.monthBranch || map[key].monthBranch;
-                map[key].baziDesc = `${map[key].dayMaster}日元生於${map[key].monthBranch}月`;
-                // 優先讀取獨立付費 key，若無則相容舊版資料
-                map[key].baziIsPaid = rec.baziIsPaid || (rec.appType === 'bazi' ? rec.isPaid : false) || map[key].baziIsPaid;
-                map[key].baziPaidAt = Math.max(rec.baziPaidAt || 0, rec.appType === 'bazi' ? (rec.paidAt || 0) : 0, map[key].baziPaidAt || 0);
+                if (map[key].dayMaster) {
+                    map[key].baziDesc = `${map[key].dayMaster}日元生於${map[key].monthBranch || ''}月`;
+                }
+                map[key].baziIsPaid = Boolean(rec.baziIsPaid || (rec.appType === 'bazi' && rec.isPaid) || map[key].baziIsPaid);
+                map[key].baziPaidAt = Math.max(Number(rec.baziPaidAt) || 0, rec.appType === 'bazi' ? (Number(rec.paidAt) || 0) : 0, Number(map[key].baziPaidAt) || 0);
             }
             
-            // 安全寫入紫微專屬資料
             if (rec.appType === 'zwds' || rec.mingGongStars) {
                 map[key].mingGongStars = rec.mingGongStars || map[key].mingGongStars;
                 map[key].zwdsDesc = map[key].mingGongStars;
-                // 優先讀取獨立付費 key，若無則相容舊版資料
-                map[key].zwdsIsPaid = rec.zwdsIsPaid || (rec.appType === 'zwds' ? rec.isPaid : false) || map[key].zwdsIsPaid;
-                map[key].zwdsPaidAt = Math.max(rec.zwdsPaidAt || 0, rec.appType === 'zwds' ? (rec.paidAt || 0) : 0, map[key].zwdsPaidAt || 0);
+                map[key].zwdsIsPaid = Boolean(rec.zwdsIsPaid || (rec.appType === 'zwds' && rec.isPaid) || map[key].zwdsIsPaid);
+                map[key].zwdsPaidAt = Math.max(Number(rec.zwdsPaidAt) || 0, rec.appType === 'zwds' ? (Number(rec.paidAt) || 0) : 0, Number(map[key].zwdsPaidAt) || 0);
             }
             
-            if (rec.id > map[key].id) map[key].id = rec.id;
+            if (Number(rec.id) > Number(map[key].id || 0)) map[key].id = rec.id;
         });
         return Object.values(map);
     }, [bookmarks]);
 
-    // 🌟 2. 排序邏輯：針對合併後的陣列進行排序 (英文(A-Z) -> 中文(筆劃少-多) -> 符號/其他(最後))
     const sortedBookmarks = useMemo(() => {
         return [...mergedBookmarks].sort((a, b) => {
-            const nameA = a.titleText.toString();
-            const nameB = b.titleText.toString();
+            const nameA = String(a.titleText || '');
+            const nameB = String(b.titleText || '');
 
             const getType = (str) => {
                 const firstChar = str.charAt(0);
@@ -161,25 +174,25 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             const typeB = getType(nameB);
 
             if (typeA !== typeB) return typeA - typeB;
-
-            if (typeA === 0) return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
-            else if (typeA === 1) return nameA.localeCompare(nameB, 'zh-Hant-TW');
-            else return nameA.localeCompare(nameB);
+            try {
+                if (typeA === 0) return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+                if (typeA === 1) return nameA.localeCompare(nameB, 'zh-Hant');
+            } catch (e) {}
+            return nameA > nameB ? 1 : -1;
         });
     }, [mergedBookmarks]);
 
     const getSavedDate = (timestamp) => {
-        if (!timestamp) return new Date().toISOString().split('T')[0];
-        const d = new Date(timestamp);
-        return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : timestamp;
+        if (!timestamp) return '';
+        const num = Number(timestamp);
+        const d = !isNaN(num) ? new Date(num) : new Date(String(timestamp).replace(/-/g, '/'));
+        return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : String(timestamp);
     };
 
     const getDaysLeft = (paidAt) => {
         if (!paidAt) return 0;
-        const msPerDay = 24 * 60 * 60 * 1000;
-        const daysPassed = Math.floor((Date.now() - paidAt) / msPerDay);
-        const daysLeft = 365 - daysPassed;
-        return daysLeft > 0 ? daysLeft : 0;
+        const daysPassed = Math.floor((Date.now() - Number(paidAt)) / (24 * 60 * 60 * 1000));
+        return Math.max(0, 365 - daysPassed);
     };
     
     const rowStyle = { fontSize: '13px', color: THEME.gray, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' };
@@ -187,15 +200,13 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
     return (
         <div style={{ paddingBottom: '20px' }}>
             <div style={{ padding: '8px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: THEME.gray, fontSize: '12px' }}>
-                <span>已儲存 {sortedBookmarks.length} 筆紀錄 (已合併重複對象)</span>
+                <span>已儲存 {sortedBookmarks.length} 筆紀錄</span>
             </div>
             
             {sortedBookmarks.map((b, i) => {
                 const TitleIcon = (b.facing || b.mountain) ? MapPin : User; 
                 const subText = b.genderText ? `(${b.genderText})` : '';
-                const daysLeft = getDaysLeft(b.paidAt);
-                
-                const rawLunar = b.lunarDateStr || b.lunarDate || b.lunarString || '';
+                const rawLunar = String(b.lunarDateStr || b.lunarDate || b.lunarString || '');
                 const safeLunarStr = rawLunar.replace(/闰/g, '閏').replace(/冬/g, '十一').replace(/腊/g, '十二');
 
                 return (
@@ -206,13 +217,10 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                     }}>
                     <div style={{ flex: 1, paddingRight: '10px' }}>
-                        
-                        {/* 標題與解鎖標籤 */}
-                        <div style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px', color: THEME.black }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px', color: THEME.black, flexWrap: 'wrap' }}>
                             <TitleIcon size={16} color={THEME.blue} />
-                            {b.titleText} 
+                            <span>{String(b.titleText || '未命名')}</span>
                             <span style={{ fontSize: '12px', color: THEME.gray, fontWeight: 'normal' }}>{subText}</span>
-                            {/* 🌟 2. 獨立顯示【八字】解鎖標籤 (綠色系) */}
                             {b.baziIsPaid && (
                                 <span style={{ 
                                     display: 'inline-flex', alignItems: 'center', gap: '4px',
@@ -224,8 +232,6 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                                     <Unlock size={10} /> 八字解鎖 ({getDaysLeft(b.baziPaidAt)}天)
                                 </span>
                             )}
-
-                            {/* 🌟 3. 獨立顯示【紫微】解鎖標籤 (紫色系) */}
                             {b.zwdsIsPaid && (
                                 <span style={{ 
                                     display: 'inline-flex', alignItems: 'center', gap: '4px',
@@ -239,15 +245,14 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                             )}
                         </div>
                         
-                        {/* 🌟 4. 動態渲染雙系統摘要 */}
-                        {b.facing || b.jianChu ? (
+                        {(b.facing || b.jianChu) ? (
                             <RecordContent data={b} />
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-                                <div style={{ ...rowStyle, marginTop: 0 }}><span>西曆 {b.solarDate}</span></div>
+                                <div style={{ ...rowStyle, marginTop: 0 }}><span>西曆 {String(b.solarDate || '')}</span></div>
                                 {safeLunarStr && <div style={{ ...rowStyle, marginTop: 0 }}><span>農曆 {safeLunarStr}</span></div>}
-                                {b.baziDesc && <div style={{ ...rowStyle, marginTop: '2px', paddingLeft: '2px' }}><span style={{ color: THEME.blue, fontWeight: '500' }}>{b.baziDesc}</span></div>}
-                                {b.zwdsDesc && <div style={{ ...rowStyle, marginTop: '2px', paddingLeft: '2px' }}><span style={{ color: THEME.purple, fontWeight: '500' }}>{b.zwdsDesc}</span></div>}
+                                {b.baziDesc && <div style={{ ...rowStyle, marginTop: '2px', paddingLeft: '2px' }}><span style={{ color: THEME.blue, fontWeight: '500' }}>{String(b.baziDesc)}</span></div>}
+                                {b.zwdsDesc && <div style={{ ...rowStyle, marginTop: '2px', paddingLeft: '2px' }}><span style={{ color: THEME.purple, fontWeight: '500' }}>{String(b.zwdsDesc)}</span></div>}
                             </div>
                         )}
                         <div style={{ fontSize: '11px', color: '#bbb', marginTop: '6px', textAlign: 'right', width: '100%' }}>
@@ -255,7 +260,6 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                         </div>
                     </div>
                     
-                    {/* 操作按鈕 */}
                     <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                         {onEdit && (
                             <button onClick={(e) => { e.stopPropagation(); onEdit(b); }} style={{ padding: '8px', backgroundColor: THEME.bgBlue, border: 'none', borderRadius: '50%', color: THEME.blue, cursor: 'pointer' }}>
