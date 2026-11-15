@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, RefreshCw, Sparkles } from 'lucide-react';
+import { ChevronUp, ChevronDown, RefreshCw, Sparkles, SearchCheck } from 'lucide-react';
 
 // =========================================================================
 // 81 數理吉凶字典
@@ -62,29 +62,191 @@ const getWxLabel = (num) => {
     return '水';
 };
 
+// 提取有效的中文單姓（若為空、未命名、或純英文/非中文開頭，則回傳空字串進入筆名/藝名模式）
+const extractValidSurname = (rawName) => {
+    const trimmed = String(rawName || '').trim();
+    if (!trimmed || trimmed === '未命名' || trimmed === '未命名紀錄') return '';
+    const firstChar = trimmed.charAt(0);
+    // 僅當首字為中文字時視為姓氏
+    return /[\u4e00-\u9fa5]/.test(firstChar) ? firstChar : '';
+};
+
+export const EvaluateNameCard = ({ evalData, THEME }) => {
+    if (!evalData || !evalData.charInfos) return null;
+
+    const { fullName, mode, charInfos, favoredWuxing = [] } = evalData;
+    const blue = THEME?.blue || "#0984e3";
+    const red = THEME?.red || "#d63031";
+    const green = THEME?.green || "#27ae60";
+
+    // 依姓名結構計算各格數理
+    let grids = []; // [{ label, strokes, desc, lucky }]
+    let givenChars = []; // 用來檢驗喜用神的名字用字（不含姓氏）
+
+    if (mode === '2char_pen') {
+        const [c1, c2] = charInfos;
+        const total = c1.strokes + c2.strokes;
+        const wai = c2.strokes + 1;
+        grids = [
+            { label: '總格（主運）', strokes: total },
+            { label: '外格（輔運）', strokes: wai }
+        ];
+        givenChars = [c1, c2];
+    } else if (mode === '2char_surname') {
+        const [s, c1] = charInfos;
+        grids = [
+            { label: '天格（祖運）', strokes: s.strokes + 1, ignoreLucky: true },
+            { label: '人格（主運）', strokes: s.strokes + c1.strokes },
+            { label: '地格（前運）', strokes: c1.strokes + 1 },
+            { label: '外格（輔運）', strokes: 2 },
+            { label: '總格（後運）', strokes: s.strokes + c1.strokes }
+        ];
+        givenChars = [c1];
+    } else if (mode === '4char_compound') {
+        const [s1, s2, c1, c2] = charInfos;
+        grids = [
+            { label: '天格（祖運）', strokes: s1.strokes + s2.strokes, ignoreLucky: true },
+            { label: '人格（主運）', strokes: s2.strokes + c1.strokes },
+            { label: '地格（前運）', strokes: c1.strokes + c2.strokes },
+            { label: '外格（輔運）', strokes: s1.strokes + c2.strokes },
+            { label: '總格（後運）', strokes: s1.strokes + s2.strokes + c1.strokes + c2.strokes }
+        ];
+        givenChars = [c1, c2];
+    } else {
+        // 3char 標準單姓雙名
+        const [s, c1, c2] = charInfos;
+        grids = [
+            { label: '天格（祖運）', strokes: s.strokes + 1, ignoreLucky: true },
+            { label: '人格（主運）', strokes: s.strokes + c1.strokes },
+            { label: '地格（前運）', strokes: c1.strokes + c2.strokes },
+            { label: '外格（輔運）', strokes: c2.strokes + 1 },
+            { label: '總格（後運）', strokes: s.strokes + c1.strokes + c2.strokes }
+        ];
+        givenChars = [c1, c2];
+    }
+
+    // 計算核心四格（排除天格）的吉數比例
+    const coreGrids = grids.filter(g => !g.ignoreLucky);
+    const luckyCount = coreGrids.filter(g => isLucky(g.strokes)).length;
+    const totalCore = coreGrids.length;
+
+    // 檢驗喜用神匹配度
+    const matchedWxCount = givenChars.filter(c => favoredWuxing.includes(c.wuxing)).length;
+
+    // 綜合吉凶總評
+    let verdictTitle = '';
+    let verdictColor = '';
+    let verdictBg = '';
+    if (luckyCount === totalCore && matchedWxCount === givenChars.length) {
+        verdictTitle = '🏆 上上大吉（數理全吉 ＋ 喜用神全中）';
+        verdictColor = '#16a34a';
+        verdictBg = '#f0fdf4';
+    } else if (luckyCount === totalCore) {
+        verdictTitle = '🌟 數理大吉（核心五格皆吉）';
+        verdictColor = '#0284c7';
+        verdictBg = '#f0f9ff';
+    } else if (luckyCount >= Math.ceil(totalCore / 2)) {
+        verdictTitle = '⚖️ 吉凶參半（部分數理帶凶，建議斟酌）';
+        verdictColor = '#d97706';
+        verdictBg = '#fffbeb';
+    } else {
+        verdictTitle = '⚠️ 數理偏凶（核心格數多凶，建議改名）';
+        verdictColor = '#dc2626';
+        verdictBg = '#fef2f2';
+    }
+
+    return (
+        <div style={{
+            border: `2px solid ${verdictColor}`,
+            padding: '18px', borderRadius: '12px', backgroundColor: '#fafafa', marginTop: '16px'
+        }}>
+            {/* 總評橫幅 */}
+            <div style={{ backgroundColor: verdictBg, color: verdictColor, fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', borderRadius: '8px', marginBottom: '14px', textAlign: 'center' }}>
+                「{fullName}」鑑定結果：{verdictTitle}
+            </div>
+
+            {/* 單字筆畫與喜用神分析 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', padding: '12px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #eee', marginBottom: '14px' }}>
+                {charInfos.map((info, idx) => {
+                    const isGiven = givenChars.includes(info);
+                    const isWxMatch = isGiven && favoredWuxing.includes(info.wuxing);
+                    return (
+                        <div key={idx} style={{ textAlign: 'center', minWidth: '72px' }}>
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: blue }}>{info.char}</div>
+                            <div style={{ fontSize: '12px', color: '#555' }}>{info.strokes} 畫 · 屬{info.wuxing}</div>
+                            {isGiven && favoredWuxing.length > 0 && (
+                                <div style={{
+                                    marginTop: '4px', fontSize: '11px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '10px',
+                                    backgroundColor: isWxMatch ? '#dcfce7' : '#fee2e2',
+                                    color: isWxMatch ? '#15803d' : '#b91c1c'
+                                }}>
+                                    {isWxMatch ? '✔ 補喜用神' : '✘ 非喜用神'}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* 五格數理明細 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', marginBottom: '14px' }}>
+                {grids.map((g, i) => {
+                    const lucky = isLucky(g.strokes);
+                    const color = g.ignoreLucky ? '#555' : (lucky ? green : red);
+                    return (
+                        <div key={i} style={{ backgroundColor: '#fff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #eee' }}>
+                            <strong style={{ color }}>{g.label}：{g.strokes} 畫（{getWxLabel(g.strokes)}）</strong>
+                            <div style={{ color: '#555', fontSize: '12px', marginTop: '2px' }}>
+                                {EIGHTY_ONE_ATTR[g.strokes] || '待查'}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* 名字用字釋義 */}
+            <div style={{ paddingTop: '12px', borderTop: '1px dashed #ccc', fontSize: '13px', color: '#444', lineHeight: '1.6' }}>
+                <div style={{ color: '#8e44ad', fontWeight: 'bold', fontSize: '14px', marginBottom: '6px' }}>📜 用字釋義與典故</div>
+                {givenChars.map((c, idx) => (
+                    <div key={idx} style={{ marginBottom: '8px' }}>
+                        <strong style={{ color: '#000' }}>「{c.char}」</strong>
+                        <span style={{ color: '#888', fontSize: '12px' }}>（五行屬{c.wuxing}{c.tone ? ` · ${c.tone}聲` : ''}）</span>：
+                        {c.desc}
+                        {c.selectedPoem && <div style={{ color: '#000', marginTop: '2px' }}>{c.selectedPoem}</div>}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // =========================================================================
-// 姓名學卡片元件 (直接讀取 GAS 回傳的物件結構)
+// 姓名學卡片元件 (同時支援「正式三字名」與「無姓氏雙字筆名/藝名」)
 // =========================================================================
-export const NameCardLayout = ({ surname, surnameStrokes, c1Data, c2Data, THEME }) => {
+export const NameCardLayout = ({ surname, surnameStrokes, isPenName, c1Data, c2Data, THEME }) => {
     if (!c1Data || !c2Data) return null;
 
     const char1 = c1Data.char;
     const char2 = c2Data.char;
-    const s0 = Number(surnameStrokes) || 10;
     const s1 = Number(c1Data.strokes) || 10;
     const s2 = Number(c2Data.strokes) || 10;
+    const penMode = isPenName || !surname;
 
+    const green = THEME?.green || "#27ae60"; 
+    const blue = THEME?.blue || "#0984e3";  
+    const red = THEME?.red || "#d63031";
+
+    const penTotal = s1 + s2;
+    const penWai = s2 + 1;
+    const isPenLucky = isLucky(penTotal) && isLucky(penWai);
+
+    const s0 = Number(surnameStrokes) || 10;
     const tian = s0 + 1;
     const ren = s0 + s1;
     const di = s1 + s2;
     const wai = s2 + 1;
     const zong = s0 + s1 + s2;
-
-    const isOverallLucky = isLucky(ren) && isLucky(zong) && isLucky(di);
-    
-    const green = THEME?.green || "#27ae60"; 
-    const blue = THEME?.blue || "#0984e3";  
-    const red = THEME?.red || "#d63031";
+    const isOverallLucky = penMode ? isPenLucky : (isLucky(ren) && isLucky(zong) && isLucky(di) && isLucky(wai));
 
     return (
         <div style={{
@@ -93,59 +255,82 @@ export const NameCardLayout = ({ surname, surnameStrokes, c1Data, c2Data, THEME 
         }}>
             {isOverallLucky && (
                 <div style={{ background:'#f6ffed', color:'#52c41a', fontWeight:'bold', fontSize:'13px', padding:'4px 8px', borderRadius:'4px', marginBottom:'12px', display:'inline-block' }}>
-                    🌟 三才五格俱佳組合
+                    {penMode ? '🌟 筆名／藝名雙字大吉組合' : '🌟 三才五格俱佳組合'}
                 </div>
             )}
             
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                <div style={{ position: 'relative', width: '220px', height: '200px', margin: '0 auto' }}>
-                    <svg width="220" height="200" style={{ position: 'absolute', top: 0, left: 0 }}>
-                        <path d="M 75 25 Q 55 25 55 85 Q 55 145 75 145" fill="transparent" stroke={green} strokeWidth="1" />
-                        <path d="M 105 25 Q 125 25 125 45 Q 125 65 105 65" fill="transparent" stroke={green} strokeWidth="1" />
-                        <path d="M 105 65 Q 125 65 125 85 Q 125 105 105 105" fill="transparent" stroke={green} strokeWidth="1" />
-                        <path d="M 105 105 Q 125 105 125 125 Q 125 145 105 145" fill="transparent" stroke={green} strokeWidth="1" />
-                        <line x1="30" y1="165" x2="190" y2="165" stroke={green} strokeWidth="1" />
-                    </svg>
-                    
-                    <div style={{ position: 'absolute', left: '10px', top: '75px', textAlign: 'center', width: '40px' }}>
-                        <div style={{ fontSize: '11px', color: '#000' }}>外格 <span style={{color: red}}>{wai}</span></div>
-                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(wai)}</div>
+            {penMode ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', padding: '12px', backgroundColor: '#fff', borderRadius: '10px', border: '1px solid #eee' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: blue }}>{char1}</div>
+                            <div style={{ fontSize: '12px', color: red }}>{s1} 畫 · {c1Data.wuxing}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: blue }}>{char2}</div>
+                            <div style={{ fontSize: '12px', color: red }}>{s2} 畫 · {c2Data.wuxing}</div>
+                        </div>
+                        <div style={{ borderLeft: '1px dashed #ddd', paddingLeft: '20px', textAlign: 'left' }}>
+                            <div style={{ fontSize: '13px', color: '#333' }}>總畫數：<strong style={{ color: red }}>{penTotal} 畫</strong>（{getWxLabel(penTotal)}）</div>
+                            <div style={{ fontSize: '13px', color: '#333', marginTop: '4px' }}>外格數：<strong style={{ color: red }}>{penWai} 畫</strong>（{getWxLabel(penWai)}）</div>
+                        </div>
                     </div>
-                    <div style={{ position: 'absolute', left: '85px', top: '15px', fontSize: '12px', color: red }}>1</div>
-                    <div style={{ position: 'absolute', left: '80px', top: '48px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{surname}</div>
-                    <div style={{ position: 'absolute', left: '105px', top: '56px', fontSize: '11px', color: red }}>{s0}</div>
-                    <div style={{ position: 'absolute', left: '80px', top: '88px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{char1}</div>
-                    <div style={{ position: 'absolute', left: '105px', top: '96px', fontSize: '11px', color: red }}>{s1}</div>
-                    <div style={{ position: 'absolute', left: '80px', top: '128px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{char2}</div>
-                    <div style={{ position: 'absolute', left: '105px', top: '136px', fontSize: '11px', color: red }}>{s2}</div>
 
-                    <div style={{ position: 'absolute', left: '130px', top: '35px', width: '60px' }}>
-                        <div style={{ fontSize: '11px', color: '#000' }}>天格 <span style={{color: red}}>{tian}</span></div>
-                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(tian)}</div>
-                    </div>
-                    <div style={{ position: 'absolute', left: '130px', top: '75px', width: '60px' }}>
-                        <div style={{ fontSize: '11px', color: '#000' }}>人格 <span style={{color: red}}>{ren}</span></div>
-                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(ren)}</div>
-                    </div>
-                    <div style={{ position: 'absolute', left: '130px', top: '115px', width: '60px' }}>
-                        <div style={{ fontSize: '11px', color: '#000' }}>地格 <span style={{color: red}}>{di}</span></div>
-                        <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(di)}</div>
-                    </div>
-                    <div style={{ position: 'absolute', left: 0, top: '175px', width: '220px', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ fontSize: '12px', color: '#000' }}><span style={{color: red}}>{zong}</span> 總格</div>
-                        <div style={{ fontSize: '14px', color: green }}>{getWxLabel(zong)}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', width: '100%' }}>
+                        <div><strong style={{color: isLucky(penTotal)?blue:red}}>總格 ({penTotal}畫) 主運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[penTotal] || '待查'}</span></div>
+                        <div><strong style={{color: isLucky(penWai)?blue:red}}>外格 ({penWai}畫) 輔運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[penWai] || '待查'}</span></div>
                     </div>
                 </div>
+            ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                    <div style={{ position: 'relative', width: '220px', height: '200px', margin: '0 auto' }}>
+                        <svg width="220" height="200" style={{ position: 'absolute', top: 0, left: 0 }}>
+                            <path d="M 75 25 Q 55 25 55 85 Q 55 145 75 145" fill="transparent" stroke={green} strokeWidth="1" />
+                            <path d="M 105 25 Q 125 25 125 45 Q 125 65 105 65" fill="transparent" stroke={green} strokeWidth="1" />
+                            <path d="M 105 65 Q 125 65 125 85 Q 125 105 105 105" fill="transparent" stroke={green} strokeWidth="1" />
+                            <path d="M 105 105 Q 125 105 125 125 Q 125 145 105 145" fill="transparent" stroke={green} strokeWidth="1" />
+                            <line x1="30" y1="165" x2="190" y2="165" stroke={green} strokeWidth="1" />
+                        </svg>
+                        
+                        <div style={{ position: 'absolute', left: '10px', top: '75px', textAlign: 'center', width: '40px' }}>
+                            <div style={{ fontSize: '11px', color: '#000' }}>外格 <span style={{color: red}}>{wai}</span></div>
+                            <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(wai)}</div>
+                        </div>
+                        <div style={{ position: 'absolute', left: '85px', top: '15px', fontSize: '12px', color: red }}>1</div>
+                        <div style={{ position: 'absolute', left: '80px', top: '48px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{surname}</div>
+                        <div style={{ position: 'absolute', left: '105px', top: '56px', fontSize: '11px', color: red }}>{s0}</div>
+                        <div style={{ position: 'absolute', left: '80px', top: '88px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{char1}</div>
+                        <div style={{ position: 'absolute', left: '105px', top: '96px', fontSize: '11px', color: red }}>{s1}</div>
+                        <div style={{ position: 'absolute', left: '80px', top: '128px', fontSize: '20px', color: blue, fontWeight: 'bold' }}>{char2}</div>
+                        <div style={{ position: 'absolute', left: '105px', top: '136px', fontSize: '11px', color: red }}>{s2}</div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', width: '100%' }}>
-                    <div><strong style={{color: isLucky(ren)?blue:red}}>人格 ({ren}畫) 主運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[ren] || '待查'}</span></div>
-                    <div><strong style={{color: isLucky(di)?blue:red}}>地格 ({di}畫) 前運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[di] || '待查'}</span></div>
-                    <div><strong style={{color: isLucky(wai)?blue:red}}>外格 ({wai}畫) 輔運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[wai] || '待查'}</span></div>
-                    <div><strong style={{color: isLucky(zong)?blue:red}}>總格 ({zong}畫) 後運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[zong] || '待查'}</span></div>
+                        <div style={{ position: 'absolute', left: '130px', top: '35px', width: '60px' }}>
+                            <div style={{ fontSize: '11px', color: '#000' }}>天格 <span style={{color: red}}>{tian}</span></div>
+                            <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(tian)}</div>
+                        </div>
+                        <div style={{ position: 'absolute', left: '130px', top: '75px', width: '60px' }}>
+                            <div style={{ fontSize: '11px', color: '#000' }}>人格 <span style={{color: red}}>{ren}</span></div>
+                            <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(ren)}</div>
+                        </div>
+                        <div style={{ position: 'absolute', left: '130px', top: '115px', width: '60px' }}>
+                            <div style={{ fontSize: '11px', color: '#000' }}>地格 <span style={{color: red}}>{di}</span></div>
+                            <div style={{ fontSize: '13px', color: green, marginTop: '2px' }}>{getWxLabel(di)}</div>
+                        </div>
+                        <div style={{ position: 'absolute', left: 0, top: '175px', width: '220px', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ fontSize: '12px', color: '#000' }}><span style={{color: red}}>{zong}</span> 總格</div>
+                            <div style={{ fontSize: '14px', color: green }}>{getWxLabel(zong)}</div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', width: '100%' }}>
+                        <div><strong style={{color: isLucky(ren)?blue:red}}>人格 ({ren}畫) 主運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[ren] || '待查'}</span></div>
+                        <div><strong style={{color: isLucky(di)?blue:red}}>地格 ({di}畫) 前運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[di] || '待查'}</span></div>
+                        <div><strong style={{color: isLucky(wai)?blue:red}}>外格 ({wai}畫) 輔運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[wai] || '待查'}</span></div>
+                        <div><strong style={{color: isLucky(zong)?blue:red}}>總格 ({zong}畫) 後運：</strong><br/><span style={{color: '#555'}}>{EIGHTY_ONE_ATTR[zong] || '待查'}</span></div>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* 字義與詩詞尋源 */}
             <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #ccc', fontSize: '13px', color: '#444', lineHeight: '1.6' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span style={{ color: '#8e44ad', fontWeight: 'bold', fontSize: '15px' }}>📜 典籍字義與藏頭詩</span>
@@ -158,21 +343,13 @@ export const NameCardLayout = ({ surname, surnameStrokes, c1Data, c2Data, THEME 
                     <strong style={{color:'#000', fontSize:'15px'}}>「{char1}」</strong>
                     <span style={{color:'#888', fontSize:'12px'}}>（五行屬{c1Data.wuxing}{c1Data.tone ? ` · ${c1Data.tone}聲` : ''}）</span>：
                     {c1Data.desc}
-                    {c1Data.selectedPoem && (
-                        <div style={{color:'#000', marginTop:'4px'}}>
-                            {c1Data.selectedPoem}
-                        </div>
-                    )}
+                    {c1Data.selectedPoem && <div style={{color:'#000', marginTop:'4px'}}>{c1Data.selectedPoem}</div>}
                 </div>
                 <div>
                     <strong style={{color:'#000', fontSize:'15px'}}>「{char2}」</strong>
                     <span style={{color:'#888', fontSize:'12px'}}>（五行屬{c2Data.wuxing}{c2Data.tone ? ` · ${c2Data.tone}聲` : ''}）</span>：
                     {c2Data.desc}
-                    {c2Data.selectedPoem && (
-                        <div style={{color:'#000', marginTop:'4px'}}>
-                            {c2Data.selectedPoem}
-                        </div>
-                    )}
+                    {c2Data.selectedPoem && <div style={{color:'#000', marginTop:'4px'}}>{c2Data.selectedPoem}</div>}
                 </div>
             </div>
         </div>
@@ -185,22 +362,62 @@ export const NameCardLayout = ({ surname, surnameStrokes, c1Data, c2Data, THEME 
 export const NamingSystem = ({ data, THEME }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [wuxing, setWuxing] = useState([]);
+    const [customName, setCustomName] = useState(''); // 🌟 新增：用戶輸入的名字欄位
+    const [evalResult, setEvalResult] = useState(null); // 🌟 新增：吉凶鑑定結果
     const [names, setNames] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isEvaluating, setIsEvaluating] = useState(false);
 
     const NAMING_API_URL = "https://script.google.com/macros/s/AKfycbymuvIeoUhfU7h9erh2yCaWQkFDG_2DpDGll-dcHuvrckYHTMt9O4nQtjitIoky2Qq9/exec";
     const greenColor = THEME?.green || '#27ae60';
+    const validSurname = extractValidSurname(data?.name);
 
     const toggleWuxing = (wx) => {
         if (wuxing.includes(wx)) setWuxing(wuxing.filter(w => w !== wx));
         else setWuxing([...wuxing, wx]);
     };
 
-    const handleGenerate = async () => {
-        if (!(data?.name) || data?.name === '未命名') {
-            alert('請先在輸入頁填寫真實的姓氏！');
+    // 🌟 新增：評定用戶輸入的名字吉凶
+    const handleEvaluateName = async () => {
+        const trimmed = customName.trim();
+        if (!trimmed) {
+            alert('請先輸入要評定的中文名字或筆名！');
             return;
         }
+
+        setIsEvaluating(true);
+        setEvalResult(null);
+
+        try {
+            const response = await fetch(NAMING_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'evaluateName',
+                    fullName: trimmed,
+                    wuxing: wuxing
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                if (result.data.error) {
+                    alert(result.data.error);
+                } else {
+                    setEvalResult(result.data);
+                }
+            } else {
+                alert(result.message || '評定失敗，請稍後再試。');
+            }
+        } catch (error) {
+            console.error("評定失敗:", error);
+            alert('連線至起名伺服器失敗，請檢查網路或稍後再試。');
+        } finally {
+            setIsEvaluating(false);
+        }
+    };
+
+    // 自動篩選吉名
+    const handleGenerate = async () => {
         if (wuxing.length === 0) {
             alert('請至少選擇一個喜用神五行！');
             return;
@@ -208,9 +425,6 @@ export const NamingSystem = ({ data, THEME }) => {
 
         setIsLoading(true);
         setNames([]);
-        
-        const surnameChar = (data?.name || '陳').charAt(0);
-        // 傳遞性別給 GAS 過濾男女用字 (1=男, 0=女)
         const genderStr = data?.gender === '1' ? '男' : (data?.gender === '0' ? '女' : '');
 
         try {
@@ -219,7 +433,7 @@ export const NamingSystem = ({ data, THEME }) => {
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({
                     action: 'generateNames',
-                    surname: surnameChar,
+                    surname: validSurname,
                     wuxing: wuxing,
                     gender: genderStr
                 })
@@ -240,8 +454,6 @@ export const NamingSystem = ({ data, THEME }) => {
         }
     };
 
-    const displaySurname = (data?.name && data.name !== '未命名') ? data.name.charAt(0) : '陳';
-
     return (
         <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <div 
@@ -250,7 +462,7 @@ export const NamingSystem = ({ data, THEME }) => {
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <h4 style={{ margin: '0', borderLeft: `4px solid ${greenColor}`, paddingLeft: '8px', fontSize: '15px' }}>
-                        改名 (測試中,結果未必理想)
+                        改名 (測試中)
                     </h4>
                 </div>
                 {isOpen ? <ChevronUp size={20} color={THEME.gray} /> : <ChevronDown size={20} color={THEME.gray} />}
@@ -258,8 +470,8 @@ export const NamingSystem = ({ data, THEME }) => {
 
             {isOpen && (
                 <div style={{ marginTop: '16px', animation: 'fadeIn 0.3s ease' }}>
-                    <div style={{ marginBottom: '16px', fontSize: '13px', color: THEME.gray }}>
-                        請手動選擇喜用神五行，系統將從康熙字典中為「{displaySurname}」姓配對大吉名字。
+                    <div style={{ marginBottom: '12px', fontSize: '13px', color: THEME.gray }}>
+                        步驟 1：請選擇喜用神五行：
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
@@ -268,7 +480,7 @@ export const NamingSystem = ({ data, THEME }) => {
                                 key={wx} 
                                 onClick={() => toggleWuxing(wx)} 
                                 style={{ 
-                                    padding: '6px 12px', borderRadius: '8px', fontSize: '14px', 
+                                    padding: '6px 14px', borderRadius: '8px', fontSize: '14px', 
                                     border: `1px solid ${wuxing.includes(wx) ? greenColor : THEME.border}`, 
                                     backgroundColor: wuxing.includes(wx) ? '#f6ffed' : THEME.bg, 
                                     color: wuxing.includes(wx) ? greenColor : THEME.black, 
@@ -279,6 +491,51 @@ export const NamingSystem = ({ data, THEME }) => {
                                 {wx}
                             </button>
                         ))}
+                    </div>
+
+                    {/* 🌟 新增：自填名字評定吉凶區塊 */}
+                    <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '10px', border: `1px solid ${THEME.border}`, marginBottom: '16px' }}>
+                        <div style={{ fontSize: '13px', color: THEME.black, fontWeight: 'bold', marginBottom: '8px' }}>
+                            自訂姓名 / 藝名 / 筆名吉凶鑑定（選填）：
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                type="text"
+                                value={customName}
+                                onChange={(e) => setCustomName(e.target.value)}
+                                placeholder="輸入2~4字中文名（如：陳大文）"
+                                maxLength={4}
+                                style={{
+                                    flex: 1, padding: '10px 12px', borderRadius: '8px',
+                                    border: `1px solid ${THEME.border}`, fontSize: '14px',
+                                    backgroundColor: '#fff'
+                                }}
+                            />
+                            <button
+                                onClick={handleEvaluateName}
+                                disabled={isEvaluating}
+                                style={{
+                                    padding: '0 16px', backgroundColor: THEME.blue || '#0984e3', color: 'white',
+                                    borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', border: 'none',
+                                    display: 'flex', alignItems: 'center', gap: '6px',
+                                    cursor: isEvaluating ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {isEvaluating ? <RefreshCw size={16} className="spin" /> : <SearchCheck size={16} />}
+                                {isEvaluating ? '鑑定中...' : '評定吉凶'}
+                            </button>
+                        </div>
+
+                        {/* 顯示評定結果 */}
+                        {evalResult && <EvaluateNameCard evalData={evalResult} THEME={THEME} />}
+                    </div>
+
+                    {/* 原本的自動配對按鈕 */}
+                    <div style={{ fontSize: '13px', color: THEME.gray, marginBottom: '10px' }}>
+                        {validSurname 
+                            ? `或讓系統直接從康熙字典中為「${validSurname}」姓配對大吉名字：`
+                            : `或讓系統直接從康熙字典中配對兩字大吉筆名／藝名：`
+                        }
                     </div>
 
                     <button 
@@ -292,7 +549,7 @@ export const NamingSystem = ({ data, THEME }) => {
                         }}
                     >
                         {isLoading ? <RefreshCw size={18} className="spin" /> : <Sparkles size={18} />} 
-                        {isLoading ? '配對中...' : '開始篩選吉名'}
+                        {isLoading ? '配對中...' : (validSurname ? '開始篩選吉名' : '開始篩選兩字筆名／藝名')}
                     </button>
 
                     {names.length > 0 && (
@@ -301,8 +558,9 @@ export const NamingSystem = ({ data, THEME }) => {
                             {names.map((item, i) => (
                                 <NameCardLayout 
                                     key={i}
-                                    surname={item.surname || displaySurname}
+                                    surname={item.surname ?? validSurname}
                                     surnameStrokes={item.surnameStrokes || 10}
+                                    isPenName={item.isPenName || !validSurname}
                                     c1Data={item.char1}
                                     c2Data={item.char2}
                                     THEME={THEME}
