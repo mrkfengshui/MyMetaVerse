@@ -809,7 +809,15 @@ const ZwdsInput = ({ onCalculate, initialData }) => {
               </div>
           </div>
 
-          <button onClick={() => onCalculate(formData)} style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
+          <button 
+            onClick={() => {
+              const formattedName = String(formData.name || '')
+                .trim()
+                .replace(/[a-zA-Z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+              onCalculate({ ...formData, name: formattedName });
+            }} 
+            style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}
+          >
              <Sparkles size={20} />
              {initialData ? '儲存修改並排盤' : '開始排盤'}
           </button>
@@ -1836,11 +1844,14 @@ export default function ZwdsApp() {
      } catch(e) { console.error(e); alert('計算異常: ' + e.message); }
   };
   
+  const formatName = (str) => String(str || '未命名').trim().replace(/\b[a-zA-Z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
   const saveBookmark = async (data, silent = false) => {
       try {
+          const formattedName = formatName(data.name);
           const dataToSave = {
               id: data.id || Date.now(),
-              name: data.name,
+              name: formattedName, //
               genderText: data.genderText,
               solarDate: data.solarDateStr,
               lunarDate: data.lunarDateStr,

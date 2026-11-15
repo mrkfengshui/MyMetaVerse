@@ -978,9 +978,17 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
               )}
           </div>
 
-          <button onClick={handleStartCalculate} style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
-            <Sparkles size={20} />
-            {initialData ? '儲存修改並排盤' : '開始排盤'}
+          <button 
+            onClick={() => {
+              const formattedName = String(formData.name || '')
+                .trim()
+                .replace(/[a-zA-Z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+              onCalculate({ ...formData, name: formattedName });
+            }} 
+            style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}
+          >
+             <Sparkles size={20} />
+             {initialData ? '儲存修改並排盤' : '開始排盤'}
           </button>
        </div>
     );

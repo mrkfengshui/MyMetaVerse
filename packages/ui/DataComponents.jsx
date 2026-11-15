@@ -98,6 +98,13 @@ const RecordContent = ({ data }) => {
     );
 };
 
+const formatEnglishName = (str) => {
+    if (!str) return '';
+    return String(str)
+        .trim()
+        .replace(/\b[a-zA-Z]+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+};
+
 // --- 書籤列表 ---
 export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
     if (!Array.isArray(bookmarks) || bookmarks.length === 0) {
@@ -124,15 +131,16 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
         
         bookmarks.forEach(rec => {
             if (!rec || typeof rec !== 'object') return;
-            const name = String(rec.name || rec.title || '未命名紀錄');
+            // 🌟 套用首字母大寫格式化 (讓 "john doe" 與 "John Doe" 也能自動合併成同一筆)
+            const rawName = String(rec.name || rec.title || '未命名紀錄');
+            const name = formatEnglishName(rawName);
             const gender = (rec.genderText && String(rec.genderText).includes('女')) ? '女' : '男';
             const solarDate = safeExtractDateStr(rec);
             const key = `${name}_${gender}_${solarDate}`;
             
             if (!map[key]) {
-                // 剔除肥大的 chartImage 避免撐爆 iPhone WebView 記憶體
                 const { chartImage, baziAiReport, zwdsAiReport, aiReport, ...lightRec } = rec;
-                map[key] = { ...lightRec, genderText: gender, titleText: name, solarDate: solarDate };
+                map[key] = { ...lightRec, name: name, genderText: gender, titleText: name, solarDate: solarDate };
             }
             
             if (rec.appType === 'bazi' || rec.dayMaster) {
