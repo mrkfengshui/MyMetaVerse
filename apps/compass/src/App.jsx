@@ -1750,18 +1750,7 @@ export default function FengShuiApp() {
     const [period, setPeriod] = useState(9);
     const [gregYear, setGregYear] = useState(new Date().getFullYear());
     const [gregMonth, setGregMonth] = useState(new Date().getMonth() + 1);
-    
     const [view, setView] = useState('input');
-
-  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
-  useBackupReminder();
-
-  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
-  useEffect(() => {
-      const handleJumpToSettings = () => setView('settings');
-      window.addEventListener('jump-to-settings', handleJumpToSettings);
-      return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
-  }, []);
 
     // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
     const contentRef = useRef(null);
@@ -1771,6 +1760,21 @@ export default function FengShuiApp() {
         }
     }, [view]);
     const [bookmarks, setBookmarks] = useState([]);
+      // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
+    const handleAutoRecover = useCallback(async (recoveredBk) => {
+        setBookmarks(recoveredBk);
+        await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(recoveredBk) });
+        alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆堪察紀錄！`);
+    }, []);
+
+    useBackupReminder(bookmarks, 'fengshui_bookmarks', handleAutoRecover);
+
+    // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
+    useEffect(() => {
+        const handleJumpToSettings = () => setView('settings');
+        window.addEventListener('jump-to-settings', handleJumpToSettings);
+        return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
+    }, []);
     const [heading, setHeading] = useState(180); 
     const [isFrozen, setIsFrozen] = useState(false);
     const [chartMode, setChartMode] = useState('traditional');

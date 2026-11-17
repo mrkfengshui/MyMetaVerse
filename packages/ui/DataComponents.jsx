@@ -287,49 +287,115 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
     );
 };
 
-export const useBackupReminder = () => {
+// =========================================================================
+// 🛡️ 三重資料保護機制 (內部工具函式，不對外 export 以維持 Vite Fast Refresh)
+// =========================================================================
+const requestPersistentStorage = async () => {
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            const isPersisted = await navigator.storage.persisted();
+            if (!isPersisted) await navigator.storage.persist();
+        }
+    } catch (e) {}
+};
+
+const IDB_NAME = 'MRK_FATE_SAFE_DB';
+const IDB_STORE = 'bookmarks_mirror';
+
+const openSafeDB = () => new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+});
+
+const syncBookmarksToMirror = async (storageKey, bookmarksArray) => {
+    if (!storageKey || !Array.isArray(bookmarksArray)) return;
+    try {
+        const db = await openSafeDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(bookmarksArray, storageKey);
+    } catch (e) {}
+};
+
+const recoverBookmarksFromMirror = async (storageKey) => {
+    if (!storageKey) return [];
+    try {
+        const db = await openSafeDB();
+        return await new Promise((resolve) => {
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const req = tx.objectStore(IDB_STORE).get(storageKey);
+            req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+            req.onerror = () => resolve([]);
+        });
+    } catch (e) {
+        return [];
+    }
+};
+
+// Hook 符合 Fast Refresh 規範，可直接 export
+export const useBackupReminder = (currentBookmarks = null, storageKey = 'mrk_shared_bookmarks', onRecover = null) => {
+    const hasCheckedRef = React.useRef(false);
+
     useEffect(() => {
+        requestPersistentStorage();
+
+        // 1. 檢查底層儲存區是否真的完全遺失資料（排除剛開 App 尚未非同步載入完畢的狀態）
+        const rawLocal = localStorage.getItem(`CapacitorStorage.${storageKey}`) 
+                      || localStorage.getItem(storageKey);
+
+        if (Array.isArray(currentBookmarks) && currentBookmarks.length > 0) {
+            // 有資料時，即時同步備份到 IndexedDB 保險箱
+            syncBookmarksToMirror(storageKey, currentBookmarks);
+            hasCheckedRef.current = true;
+        } else if (
+            !hasCheckedRef.current &&
+            Array.isArray(currentBookmarks) &&
+            currentBookmarks.length === 0 &&
+            (!rawLocal || rawLocal === '[]') && // 🌟 關鍵：底層儲存區真的空了才啟動救援
+            typeof onRecover === 'function'
+        ) {
+            hasCheckedRef.current = true;
+            recoverBookmarksFromMirror(storageKey).then((mirrorBk) => {
+                if (mirrorBk.length > 0) {
+                    onRecover(mirrorBk);
+                }
+            });
+        }
+
         const checkBackupStatus = () => {
             try {
-                const savedBookmarks = JSON.parse(localStorage.getItem('mrk_fate_bookmarks') || '[]');
-                if (savedBookmarks.length === 0) return;
+                const raw = localStorage.getItem(`CapacitorStorage.${storageKey}`) 
+                         || localStorage.getItem(storageKey) 
+                         || '[]';
+                const savedBookmarks = Array.isArray(currentBookmarks) && currentBookmarks.length > 0 
+                    ? currentBookmarks 
+                    : JSON.parse(raw);
+                
+                if (!Array.isArray(savedBookmarks) || savedBookmarks.length === 0) return;
 
                 const lastBackupTime = parseInt(localStorage.getItem('mrk_last_backup_time') || '0');
-                let timeSinceLastBackup;
-                const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000; 
-                const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; 
+                const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+                const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
-                if (lastBackupTime === 0) {
-                    const oldestRecord = savedBookmarks.reduce((oldest, current) => {
-                        const currentT = current.savedAt || current.id || Date.now();
-                        const oldestT = oldest.savedAt || oldest.id || Date.now();
-                        return currentT < oldestT ? current : oldest;
-                    }, savedBookmarks[0]);
-                    const oldestTimestamp = oldestRecord.savedAt || oldestRecord.id;
-                    timeSinceLastBackup = Date.now() - oldestTimestamp;
-                } else {
-                    timeSinceLastBackup = Date.now() - lastBackupTime;
-                }
+                const timeSinceLastBackup = lastBackupTime === 0 
+                    ? THIRTY_DAYS_MS + 1000 
+                    : (Date.now() - lastBackupTime);
 
                 const lastReminderTime = parseInt(localStorage.getItem('mrk_backup_reminder_time') || '0');
-                const timeSinceLastReminder = Date.now() - lastReminderTime;
-
-                if (timeSinceLastBackup > NINETY_DAYS_MS && timeSinceLastReminder > SEVEN_DAYS_MS) {
-                    const days = Math.floor(timeSinceLastBackup / (1000 * 60 * 60 * 24));
-                    const isConfirmed = window.confirm(`⚠️ 溫馨提醒：\n\n系統偵測到您已經有 ${days} 天沒有備份資料了！(目前累積 ${savedBookmarks.length} 筆紀錄)\n\n為了防止手機/瀏覽器快取意外清除導致心血遺失，強烈建議您定期【匯出】備份。\n\n現在要前往設定進行備份嗎？`);
-                    
+                if (timeSinceLastBackup > THIRTY_DAYS_MS && (Date.now() - lastReminderTime) > THREE_DAYS_MS) {
+                    const isConfirmed = window.confirm(
+                        `🛡️ 資料安全提醒：\n\n您目前累積了 ${savedBookmarks.length} 筆紀錄，且近期尚未匯出備份檔。\n\n為防止設備系統更新或清理快取導致資料遺失，強烈建議立即前往「設定」匯出備份檔保存至 iCloud。\n\n現在前往備份嗎？`
+                    );
                     localStorage.setItem('mrk_backup_reminder_time', Date.now().toString());
-                    
                     if (isConfirmed) {
-                        // 觸發切換到設定頁的事件 (稍後我們在各 App 接收)
                         window.dispatchEvent(new CustomEvent('jump-to-settings'));
                     }
                 }
-            } catch (e) {
-                console.error("備份檢查失敗", e);
-            }
+            } catch (e) {}
         };
-        const timer = setTimeout(checkBackupStatus, 3000);
+
+        const timer = setTimeout(checkBackupStatus, 2500);
         return () => clearTimeout(timer);
-    }, []);
+    }, [currentBookmarks, storageKey, onRecover]);
 };

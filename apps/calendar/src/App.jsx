@@ -2436,7 +2436,13 @@ export default function CalendarApp() {
   const [bookmarks, setBookmarks] = useState([]);
   const [view, setView] = useState('calendar');
   // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
-  useBackupReminder();
+  const handleAutoRecover = useCallback(async (recoveredBk) => {
+    setBookmarks(recoveredBk);
+    await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(recoveredBk) });
+    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
+  }, []);
+
+  useBackupReminder(bookmarks, 'mrk_shared_bookmarks', handleAutoRecover);
 
   // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
   useEffect(() => {

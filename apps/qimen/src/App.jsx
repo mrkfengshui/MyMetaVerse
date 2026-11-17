@@ -1467,17 +1467,12 @@ export default function QiMenApp() {
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
 
-  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
-  useBackupReminder();
-
-  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
   useEffect(() => {
       const handleJumpToSettings = () => setView('settings');
       window.addEventListener('jump-to-settings', handleJumpToSettings);
       return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
   }, []);
   
-  // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
   const contentRef = useRef(null);
   useEffect(() => {
       if (contentRef.current) {
@@ -1487,6 +1482,13 @@ export default function QiMenApp() {
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
+  const handleAutoRecover = useCallback(async (recoveredBk) => {
+    setBookmarks(recoveredBk);
+    await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(recoveredBk) });
+    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆占事紀錄！`);
+  }, []);
+
+  useBackupReminder(bookmarks, 'qimen_bookmarks', handleAutoRecover);
 
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);

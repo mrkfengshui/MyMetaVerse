@@ -1736,17 +1736,12 @@ export default function ZwdsApp() {
   // 2. 狀態管理
   const [view, setView] = useState('input');
 
-  // 🌟 1. 呼叫備份提醒 (5 個 App 都要加)
-  useBackupReminder();
-
-  // 🌟 2. 監聽彈窗按了「確定」後，自動切換到設定頁
   useEffect(() => {
       const handleJumpToSettings = () => setView('settings');
       window.addEventListener('jump-to-settings', handleJumpToSettings);
       return () => window.removeEventListener('jump-to-settings', handleJumpToSettings);
   }, []);
   
-  // 🌟 讓 contentArea 的 Scroll 參考，用以切換頁面時自動置頂
   const contentRef = useRef(null);
   useEffect(() => {
       if (contentRef.current) {
@@ -1756,6 +1751,14 @@ export default function ZwdsApp() {
   const [resultData, setResultData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
+
+  const handleAutoRecover = useCallback(async (recoveredBk) => {
+    setBookmarks(recoveredBk);
+    await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(recoveredBk) });
+    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
+  }, []);
+
+  useBackupReminder(bookmarks, 'mrk_shared_bookmarks', handleAutoRecover);
   
   // App 專屬狀態
   const [siHuaRules, setSiHuaRules] = useState(DEFAULT_SI_HUA);
