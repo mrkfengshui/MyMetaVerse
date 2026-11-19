@@ -1008,7 +1008,7 @@ const PillarCard = ({
     title, gan, zhi, naYin, dayMaster, displayMode, 
     dayZhi, yearZhi, monthZhi, colorTheme, genderText, 
     onShenShaClick, kongWangStatus,
-    refGan, refTitle, huaQi, isCapturing
+    refGan, refTitle, huaQi, isCapturing, isDesktop
     }) => {
 
    const safeTheme = colorTheme || 'elemental';
@@ -1065,7 +1065,7 @@ const PillarCard = ({
             
             {/* 🌟 變通星向右移 (加大 marginLeft) */}
             {displayMode === 'shiShen' && displayTopRight && (
-                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '6px', fontSize: '14px', color: '#888', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '6px', fontSize: isDesktop ? '17px' : '14px', color: '#888', whiteSpace: 'nowrap' }}>
                     {displayTopRight}
                 </div>
             )}
@@ -1088,7 +1088,7 @@ const PillarCard = ({
                     right: '100%',            // 對齊主字的左邊緣並向外推
                     bottom: '0px',            // 對齊主字的底部
                     marginRight: '6px',       // 與主字保持安全距離，絕對不會疊加
-                    fontSize: '11px', 
+                    fontSize: isDesktop ? '13px' : '11px', 
                     color: '#ffffff',       
                     backgroundColor: '#a3a3a3', // 稍微調柔和一點的灰色
                     borderRadius: '4px',    
@@ -1111,12 +1111,12 @@ const PillarCard = ({
                     <ShenShaVerticalList 
                         items={shenShas}
                         onClick={(fullList) => onShenShaClick && onShenShaClick(`${gan}${zhi} (${title})`, fullList)}
-                        fontSize="11px"
+                        fontSize={isDesktop ? '11px' : '14px'}
                         maxItems={2}
                     />
                 ) : (
                     displayBottomRight.length > 0 ? displayBottomRight.map((item, idx) => (
-                        <span key={idx} style={{ writingMode: 'horizontal-tb', fontSize: '14px', lineHeight: '1.2', color: '#888', display: 'block', marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                        <span key={idx} style={{ writingMode: 'horizontal-tb', fontSize: isDesktop ? '17px' : '14px', lineHeight: '1.2', color: '#888', display: 'block', marginBottom: '2px', whiteSpace: 'nowrap' }}>
                             {item}
                         </span>
                     )) : null
@@ -1133,6 +1133,12 @@ const PillarCard = ({
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
    const [isCapturing, setIsCapturing] = useState(false);
+   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+   useEffect(() => {
+       const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+       window.addEventListener('resize', handleResize);
+       return () => window.removeEventListener('resize', handleResize);
+   }, []);
    // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
        if (!data || !data.daYuns || data.isManual) return 0;
