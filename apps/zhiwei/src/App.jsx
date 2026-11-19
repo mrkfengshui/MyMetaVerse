@@ -1731,7 +1731,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
 export default function ZwdsApp() {
   // 1. 安全保護 & 載入檢查
   // useProtection(['mrkfengshui.com', 'localhost']);
-  const isAuthorized = useProtection([]);
+  const isAuthorized = useProtection([]); // test
   const libStatus = useLunarScript();
   
   // 2. 狀態管理
