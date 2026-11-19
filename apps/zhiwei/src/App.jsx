@@ -400,7 +400,8 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     const tianChuMap = [5, 6, 0, 5, 6, 8, 2, 6, 9, 11];
     gridPalaces[tianChuMap[yearGanIdx]].minorStars.push('天廚');
 
-    const poSuiMap = {0:1, 1:5, 2:7, 3:9, 4:1, 5:5, 6:7, 7:9, 8:1, 9:5, 10:7, 11:9};
+    // 子午卯酉(0,6,3,9)在巳(5)，寅申巳亥(2,8,5,11)在酉(9)，辰戌丑未(4,10,1,7)在丑(1)
+    const poSuiMap = {0:5, 1:1, 2:9, 3:5, 4:1, 5:9, 6:5, 7:1, 8:9, 9:5, 10:1, 11:9};
     gridPalaces[poSuiMap[yearZhiIdx]].minorStars.push('破碎');
 
     const tianGuanMap = [7, 4, 5, 2, 3, 9, 11, 9, 10, 6];
@@ -415,10 +416,11 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     gridPalaces[feiLianShift[yearZhiIdx]].minorStars.push('蜚廉');
 
     let guChenLoc = 0; let guaSuLoc = 0;
-    if ([11, 0, 1].includes(yearZhiIdx)) { guChenLoc = 2; guaSuLoc = 10; }
-    else if ([2, 3, 4].includes(yearZhiIdx)) { guChenLoc = 5; guaSuLoc = 1; }
-    else if ([5, 6, 7].includes(yearZhiIdx)) { guChenLoc = 8; guaSuLoc = 4; }
-    else { guChenLoc = 11; guaSuLoc = 7; }
+    // 安孤辰、寡宿星訣：正二三月巳(5)丑(1)，四五六月申(8)辰(4)，七八九月亥(11)未(7)，十月以後寅(2)戌(10)
+    if ([1, 2, 3].includes(lunarMonth)) { guChenLoc = 5; guaSuLoc = 1; }
+    else if ([4, 5, 6].includes(lunarMonth)) { guChenLoc = 8; guaSuLoc = 4; }
+    else if ([7, 8, 9].includes(lunarMonth)) { guChenLoc = 11; guaSuLoc = 7; }
+    else { guChenLoc = 2; guaSuLoc = 10; }
     gridPalaces[guChenLoc].minorStars.push('孤辰');
     gridPalaces[guaSuLoc].minorStars.push('寡宿');
 
@@ -441,8 +443,7 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     gridPalaces[(mingIndex + yearZhiIdx) % 12].minorStars.push('天才');
     gridPalaces[(shenIndex + yearZhiIdx) % 12].minorStars.push('天壽');
 
-    const nianJieMap = {0:10, 1:10, 2:8, 3:8, 4:6, 5:6, 6:4, 7:4, 8:2, 9:2, 10:0, 11:0};
-    gridPalaces[nianJieMap[yearZhiIdx]].minorStars.push('解神');
+    gridPalaces[(10 - yearZhiIdx + 12) % 12].minorStars.push('解神');
 
     const tianYueMap = [10, 5, 4, 2, 7, 3, 11, 7, 2, 6, 10, 2];
     gridPalaces[tianYueMap[(lunarMonth - 1) % 12]].minorStars.push('天月');
@@ -455,7 +456,7 @@ const calculateZwdsResult = (formData, rulesConfig, config = { mingHasDaXian: fa
     gridPalaces[(youBiLoc - (lunarDay - 1) + 120) % 12].minorStars.push('八座');
 
     // 恩光天貴必須在 wenChangLoc 定義之後
-    gridPalaces[(wenChangLoc + (lunarDay - 1)) % 12].minorStars.push('恩光');
+    gridPalaces[(wenChangLoc - (lunarDay - 1) + 36) % 12].minorStars.push('恩光');
     gridPalaces[(wenQuLoc + (lunarDay - 1)) % 12].minorStars.push('天貴');
 
     gridPalaces[(4 + yearZhiIdx) % 12].minorStars.push('龍池');
@@ -1117,8 +1118,7 @@ const PalaceGrid = ({
     );
 };
 
-const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianStartType = 'xiao_xian', onCalculate }) => {
-    const [chartData, setChartData] = useState(data);
+const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianStartType = 'xiao_xian', ziHourRule = 'ziShi', onCalculate }) => {    const [chartData, setChartData] = useState(data);
     useEffect(() => { setChartData(data); }, [data]);
 
     const [showNotesModal, setShowNotesModal] = useState(false);
@@ -1158,12 +1158,18 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
 
     const birthDetails = useMemo(() => {
             try {
-                const solar = window.Solar.fromYmdHms(parseInt(chartData.rawDate.year), parseInt(chartData.rawDate.month), parseInt(chartData.rawDate.day), parseInt(chartData.rawDate.hour), parseInt(chartData.rawDate.minute), 0);
+                let _y = parseInt(chartData.rawDate.year), _m = parseInt(chartData.rawDate.month), _d = parseInt(chartData.rawDate.day), _h = parseInt(chartData.rawDate.hour);
+                if (_h >= 23 && ziHourRule === 'ziShi') {
+                    const dt = new Date(_y, _m - 1, _d);
+                    dt.setDate(dt.getDate() + 1);
+                    _y = dt.getFullYear(); _m = dt.getMonth() + 1; _d = dt.getDate(); _h = 0;
+                }
+                const solar = window.Solar.fromYmdHms(_y, _m, _d, _h, parseInt(chartData.rawDate.minute), 0);
                 const lunar = solar.getLunar();
                 let monthName = lunar.getMonthInChinese().replace('闰', '閏').replace('冬', '十一').replace('腊', '十二');
                 return { bazi: `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}時`, solarStr: `${chartData.rawDate.year}/${chartData.rawDate.month}/${chartData.rawDate.day}`, lunarStr: `${lunar.getYearInGanZhi()}年 ${monthName}月${lunar.getDayInChinese()}` };
             } catch (e) { return { bazi: '', solarStr: '', lunarStr: '' }; }
-        }, [chartData.rawDate]);
+        }, [chartData.rawDate, ziHourRule]);
         
     const resultParams = useMemo(() => {
         try {
@@ -1990,7 +1996,8 @@ export default function ZwdsApp() {
                     onSave={saveBookmark} 
                     daXianSiHuaType={daXianSiHuaType}
                     liuNianStartType={liuNianStartType}
-                    onCalculate={handleCalculate} // 🌟 記得加上這行！
+                    ziHourRule={ziHourRule}
+                    onCalculate={handleCalculate}
                 />
                 <AdsterraNarrow />
             </>
