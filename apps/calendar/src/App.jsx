@@ -2423,8 +2423,6 @@ const YearMonthPicker = ({ visible, onClose, onConfirm, initialDate }) => {
 export default function CalendarApp() {
   // 全局啟用保護機制
   const isAuthorized = useProtection([]);
-  if (!isAuthorized) return null;
-
   const libStatus = useLunarScript();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -2439,7 +2437,7 @@ export default function CalendarApp() {
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
     await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(recoveredBk) });
-    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
+    alert(`系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
   }, []);
 
   useBackupReminder(bookmarks, 'mrk_shared_bookmarks', handleAutoRecover);
@@ -3036,6 +3034,7 @@ const selectedInfo = useMemo(() => {
     });
   }, [bookmarks, libStatus]);
 
+  if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入中...</div>;
   if (libStatus === 'error') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入失敗</div>;
 

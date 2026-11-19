@@ -1764,7 +1764,7 @@ export default function FengShuiApp() {
     const handleAutoRecover = useCallback(async (recoveredBk) => {
         setBookmarks(recoveredBk);
         await Preferences.set({ key: 'fengshui_bookmarks', value: JSON.stringify(recoveredBk) });
-        alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆堪察紀錄！`);
+        alert(`系統已自動從安全保險箱救回 ${recoveredBk.length} 筆堪察紀錄！`);
     }, []);
 
     useBackupReminder(bookmarks, 'fengshui_bookmarks', handleAutoRecover);

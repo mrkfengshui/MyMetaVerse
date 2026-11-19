@@ -352,7 +352,7 @@ export const useBackupReminder = (currentBookmarks = null, storageKey = 'mrk_sha
             !hasCheckedRef.current &&
             Array.isArray(currentBookmarks) &&
             currentBookmarks.length === 0 &&
-            (!rawLocal || rawLocal === '[]') && // 🌟 關鍵：底層儲存區真的空了才啟動救援
+            (!rawLocal) && // 🌟 關鍵：底層儲存區真的空了才啟動救援
             typeof onRecover === 'function'
         ) {
             hasCheckedRef.current = true;
@@ -385,7 +385,7 @@ export const useBackupReminder = (currentBookmarks = null, storageKey = 'mrk_sha
                 const lastReminderTime = parseInt(localStorage.getItem('mrk_backup_reminder_time') || '0');
                 if (timeSinceLastBackup > THIRTY_DAYS_MS && (Date.now() - lastReminderTime) > THREE_DAYS_MS) {
                     const isConfirmed = window.confirm(
-                        `🛡️ 資料安全提醒：\n\n您目前累積了 ${savedBookmarks.length} 筆紀錄，且近期尚未匯出備份檔。\n\n為防止設備系統更新或清理快取導致資料遺失，強烈建議立即前往「設定」匯出備份檔保存至 iCloud。\n\n現在前往備份嗎？`
+                        `資料安全提醒：\n\n您目前累積了 ${savedBookmarks.length} 筆紀錄，且近期尚未匯出備份檔。\n\n為防止設備系統更新或清理快取導致資料遺失，強烈建議立即前往「設定」匯出備份檔保存至 iCloud。\n\n現在前往備份嗎？`
                     );
                     localStorage.setItem('mrk_backup_reminder_time', Date.now().toString());
                     if (isConfirmed) {

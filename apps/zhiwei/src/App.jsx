@@ -1731,6 +1731,7 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
 export default function ZwdsApp() {
   // 1. 安全保護 & 載入檢查
   // useProtection(['mrkfengshui.com', 'localhost']);
+  const isAuthorized = useProtection([]);
   const libStatus = useLunarScript();
   
   // 2. 狀態管理
@@ -1755,7 +1756,7 @@ export default function ZwdsApp() {
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
     await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(recoveredBk) });
-    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
+    alert(`系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
   }, []);
 
   useBackupReminder(bookmarks, 'mrk_shared_bookmarks', handleAutoRecover);
@@ -1955,6 +1956,7 @@ export default function ZwdsApp() {
       }
   };
 
+  if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入斗數星曆...</div>;
   if (libStatus === 'error') return <div style={{ padding: 20, textAlign: 'center' }}>載入失敗，請檢查網路連線後重新整理。</div>;
 

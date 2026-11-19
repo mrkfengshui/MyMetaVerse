@@ -1462,8 +1462,6 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
 export default function QiMenApp() {
   // 全局啟用保護機制
   const isAuthorized = useProtection([]);
-  if (!isAuthorized) return null;
-
   const libStatus = useLunarScript();
   const [view, setView] = useState('input');
 
@@ -1485,7 +1483,7 @@ export default function QiMenApp() {
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
     await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(recoveredBk) });
-    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆占事紀錄！`);
+    alert(`系統已自動從安全保險箱救回 ${recoveredBk.length} 筆占事紀錄！`);
   }, []);
 
   useBackupReminder(bookmarks, 'qimen_bookmarks', handleAutoRecover);
@@ -1716,6 +1714,7 @@ export default function QiMenApp() {
   const saveBookmark = async (data) => { const title = prompt("請輸入紀錄名稱", `${data.lunarDateStr.split(' ')[2]}占`); if (!title) return; const newEntry = { id: data.id, name: title, solarDate: data.solarDateStr, lunarString: data.lunarDateStr, rawDate: data.rawDate, type: 'qimen' }; const newBk = [newEntry, ...bookmarks]; setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); alert('已儲存'); };
   const deleteBookmark = async (id) => { if (!confirm('確定刪除？')) return; const newBk = bookmarks.filter(b => b.id !== id); setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); };
 
+  if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入曆法數據...</div>;
 
   return (

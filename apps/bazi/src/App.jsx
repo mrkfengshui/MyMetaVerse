@@ -861,18 +861,22 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
   };
 
   const handleStartCalculate = () => {    
+    const formattedName = String(formData.name || '')
+      .trim()
+      .replace(/[a-zA-Z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
     if (inputType === 'ganzhi') {
-        const fakeDate = { ...formData, manualInput: manualPillars, isManual: true };
+        const fakeDate = { ...formData, name: formattedName, manualInput: manualPillars, isManual: true };
         onCalculate(fakeDate);
     } else {
-        let finalSolarData = formData;
+        let finalSolarData = { ...formData, name: formattedName };
         if (inputType === 'lunar') {
              try {
                 const y = parseInt(lunarData.year); const m = parseInt(lunarData.month); const d = parseInt(lunarData.day); const h = parseInt(lunarData.hour); 
                 const monthVal = lunarData.isLeap ? -Math.abs(m) : Math.abs(m);
                 const lunar = window.Lunar.fromYmdHms(y, monthVal, d, h, 0, 0);
                 const solar = lunar.getSolar();
-                finalSolarData = { ...formData, year: solar.getYear(), month: solar.getMonth(), day: solar.getDay(), hour: solar.getHour(), minute: solar.getMinute() };
+                finalSolarData = { ...finalSolarData, year: solar.getYear(), month: solar.getMonth(), day: solar.getDay(), hour: solar.getHour(), minute: solar.getMinute() };
             } catch(e) { alert("日期轉換失敗"); return; }
         }
         onCalculate(finalSolarData);
@@ -979,17 +983,22 @@ const BaziInput = ({ onCalculate, initialData, colorTheme }) => {
           </div>
 
           <button 
-            onClick={() => {
-              const formattedName = String(formData.name || '')
-                .trim()
-                .replace(/[a-zA-Z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-              onCalculate({ ...formData, name: formattedName });
-            }} 
+            onClick={handleStartCalculate} 
             style={{ width: '100%', padding: '14px', backgroundColor: THEME.blue, color: 'white', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}
           >
              <Sparkles size={20} />
              {initialData ? '儲存修改並排盤' : '開始排盤'}
           </button>
+
+          <GanZhiModalPicker 
+             title={modalConfig.pillar === 'year' ? '年柱' : modalConfig.pillar === 'month' ? '月柱' : modalConfig.pillar === 'day' ? '日柱' : '時柱'}
+             isOpen={modalConfig.isOpen}
+             onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+             initialGan={modalConfig.pillar ? manualPillars[modalConfig.pillar].gan : '甲'}
+             initialZhi={modalConfig.pillar ? manualPillars[modalConfig.pillar].zhi : '子'}
+             onConfirm={handlePickerConfirm}
+             colorTheme={colorTheme}
+          />
        </div>
     );
 };
@@ -2332,9 +2341,7 @@ return (
 // =========================================================================
 export default function BaziApp() {
   // 全局啟用保護機制
-  const isAuthorized = useProtection([]);
-  if (!isAuthorized) return null;
-  
+  const isAuthorized = useProtection([]);  
   const libStatus = useLunarScript();
   
   // 2. 狀態管理
@@ -2359,7 +2366,7 @@ export default function BaziApp() {
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
     await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(recoveredBk) });
-    alert(`🛡️ 系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
+    alert(`系統已自動從安全保險箱救回 ${recoveredBk.length} 筆命盤紀錄！`);
   }, []);
 
   useBackupReminder(bookmarks, 'mrk_shared_bookmarks', handleAutoRecover);
@@ -2468,8 +2475,7 @@ export default function BaziApp() {
                     
                     // 正式寫入手機儲存空間
                     setBookmarks(currentBookmarks); 
-                    await Preferences.set({ key: 'bazi_bookmarks', value: JSON.stringify(currentBookmarks) });
-
+                    await Preferences.set({ key: 'mrk_shared_bookmarks', value: JSON.stringify(currentBookmarks) });
                     setTimeout(() => {
                         alert("✅ 付款成功！千字命書已為您解鎖。\n\n系統已自動為您將此命盤更新至「紀錄」中，日後可隨時免費重看！");
                     }, 600);
@@ -2636,6 +2642,7 @@ export default function BaziApp() {
       }
   };
 
+  if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入命理數據庫...</div>;
   if (libStatus === 'error') return <div style={{ padding: 20, textAlign: 'center' }}>載入失敗，請檢查網路連線後重新整理。</div>;
 
