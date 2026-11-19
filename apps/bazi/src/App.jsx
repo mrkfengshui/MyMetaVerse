@@ -151,7 +151,8 @@ const SHEN_SHA_INFO = {
 // 統一處理：垂直文字、最多顯示 N 個、點擊事件、字體大小控制
 const ShenShaVerticalList = ({ items, onClick, maxItems = 2, fontSize = '10px', cursor = 'pointer' }) => {
     // 1. 截斷邏輯
-    const visibleItems = (items.length > maxItems) ? items.slice(0, maxItems) : items;
+    const hasMore = items.length > maxItems;
+    const visibleItems = hasMore ? items.slice(0, maxItems) : items;
 
     // 2. 處理點擊 (傳回完整列表 items 給外層)
     const handleClick = (e) => {
@@ -173,7 +174,8 @@ const ShenShaVerticalList = ({ items, onClick, maxItems = 2, fontSize = '10px', 
                         fontSize: fontSize, 
                         letterSpacing: '1px', 
                         lineHeight: '1.1', 
-                        color: '#888', 
+                        color: hasMore ? THEME.purple : '#888', // 🌟 超過 2 個時變紫色，<= 2 個維持灰色 (#888)[cite: 21]
+                        fontWeight: hasMore ? 'bold' : 'normal',
                         cursor: cursor
                     }}
                 >
@@ -183,8 +185,6 @@ const ShenShaVerticalList = ({ items, onClick, maxItems = 2, fontSize = '10px', 
         </div>
     );
 };
-
-
 
 // 神煞詳情 Modal
 const ShenShaModal = ({ config, onClose }) => {
@@ -1612,7 +1612,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const renderDaYunGrid = () => {
         if (!data.daYuns) return null;
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: isDesktop ? '8px' : '3px', direction: 'rtl' }}>
                 {data.daYuns.map((dy) => {
                     const isSelected = selectedDaYunIndex === (dy.seq - 1);
                     const displayTopRight = getTopRightItem(dy.gan);
@@ -1624,39 +1624,39 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                     return (
                         <div key={dy.seq} onClick={() => setSelectedDaYunIndex(dy.seq - 1)} style={{ 
                             display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', 
-                            minHeight: '115px', height: '100%',
-                            boxSizing: 'border-box', padding: '8px 1px', 
+                            minHeight: isDesktop ? '140px' : '115px', height: '100%',
+                            boxSizing: 'border-box', padding: isDesktop ? '12px 4px' : '8px 1px', 
                             backgroundColor: isSelected ? THEME.bgBlue : THEME.bgGray, 
                             borderRadius: '8px', border: isSelected ? `2px solid ${THEME.blue}` : `2px solid ${THEME.border}`, 
                             cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative', direction: 'ltr'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '4px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '6px' : '4px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                    {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
+                                    <span style={{ fontSize: isDesktop ? '24px' : '18px', fontWeight: 'bold', color: gColor }}>{dy.gan}</span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
-                                    {displayTopRight && <span style={{ fontSize: '12px', color: THEME.gray }}>{displayTopRight}</span>}
+                                    {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '12px', color: THEME.gray }}>{displayTopRight}</span>}
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                                    {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                    {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
+                                    <span style={{ fontSize: isDesktop ? '24px' : '18px', fontWeight: 'bold', color: zColor }}>{dy.zhi}</span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                     {displayMode === 'shenSha' ? (
-                                        <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)} fontSize="10px" />
+                                        <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                     ) : (
-                                        displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                        displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                     )}
                                 </div>
                             </div>
                             <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}</div>
-                                <div style={{ fontSize: '10px', color: THEME.gray }}>{dy.startYear}</div>
+                                <div style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.black, fontWeight: 'bold' }}>{dy.startAge}</div>
+                                <div style={{ fontSize: isDesktop ? '13px' : '10px', color: THEME.gray }}>{dy.startYear}</div>
                             </div>
                         </div>
                     );
@@ -1673,11 +1673,10 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
         return (
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)' }}>
                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                    <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: '15px' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
-                    <span style={{ fontSize: '12px', color: THEME.gray, marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
+                    <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.purple}`, paddingLeft: '8px', fontSize: isDesktop ? '17px' : '15px' }}>{targetDaYun.gan}{targetDaYun.zhi}大運 - 流年</h4>
+                    <span style={{ fontSize: isDesktop ? '14px' : '12px', color: THEME.gray, marginLeft: '8px' }}>({targetDaYun.startAge}-{targetDaYun.startAge + 9}歲)</span>
                  </div>
-                 {/* 🌟 修正 1：將卡片之間的 gap 從 8px 縮小為 3px */}
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridAutoRows: '1fr', gap: isDesktop ? '8px' : '3px', direction: 'rtl' }}>
                      {targetDaYun.liuNians.map((ln) => {
                          const isSelected = selectedLiuNianYear === ln.year;
                          const displayTopRight = getTopRightItem(ln.gan);
@@ -1689,41 +1688,39 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                          return (
                             <div key={ln.year} onClick={() => setSelectedLiuNianYear(ln.year)} style={{ 
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                                // 🌟 修正 2：將卡片左右內距縮小到 1px
-                                padding: '8px 1px', 
+                                padding: isDesktop ? '12px 4px' : '8px 1px', 
                                 backgroundColor: isSelected ? THEME.bgRed : THEME.bgGray, borderRadius: '8px', 
-                                minHeight: '120px', height: '100%', boxSizing: 'border-box',
+                                minHeight: isDesktop ? '145px' : '120px', height: '100%', boxSizing: 'border-box',
                                 border: isSelected ? `2px solid ${THEME.red}` : `2px solid ${THEME.border}`, 
                                 direction: 'ltr', cursor: 'pointer' 
                             }}>
-                                {/* 🌟 修正 3：將 1fr 改為 minmax(0, 1fr)，防止左右內容撐破卡片 */}
-                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '4px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '6px' : '4px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
+                                        <span style={{ fontSize: isDesktop ? '25px' : '20px', fontWeight: 'bold', color: gColor }}>{ln.gan}</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
-                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
+                                        {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
+                                        <span style={{ fontSize: isDesktop ? '25px' : '20px', fontWeight: 'bold', color: zColor }}>{ln.zhi}</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)} fontSize="10px" />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                         ) : (
-                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
                                     </div>
                                 </div>
                                 <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}</div>
-                                    <div style={{ fontSize: '10px', color: THEME.gray }}>{ln.year}</div>
+                                    <div style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.black, fontWeight: 'bold' }}>{ln.age}</div>
+                                    <div style={{ fontSize: isDesktop ? '13px' : '10px', color: THEME.gray }}>{ln.year}</div>
                                 </div>
                              </div>
                          );
@@ -1731,91 +1728,90 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                  </div>
             </div>
         );
-   };
+    };
 
-   // 🌟 3. 流月
-   const renderLiuYueGrid = () => {
-       if (!selectedLiuNianYear) return null;
-       const targetDaYun = data.daYuns[selectedDaYunIndex];
-       const lnData = targetDaYun.liuNians.find(l => l.year === selectedLiuNianYear);
-       if(!lnData) return null;
-       const liuYues = getLiuYueData(lnData.gan, lnData.zhi, lnData.year);
-       
-       const renderTitle = () => {
-           if (selectedLiuYue) {
-               return (
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                       <span style={{ fontSize: '15px', fontWeight: 'bold', color: THEME.black }}>{lnData.gan}{lnData.zhi}流年 {selectedLiuYue.gan}{selectedLiuYue.zhi}月</span>
-                       <span style={{ fontSize: '13px', color: THEME.blue }}><span style={{ marginRight: '12px' }}>{selectedLiuYue.jieInfo}</span><span>{selectedLiuYue.qiInfo}</span></span>
-                   </div>
-               );
-           } else {
-               return <h4 style={{ margin: '0', fontSize: '15px' }}>{lnData.gan}{lnData.zhi}流年 - 流月</h4>;
-           }
-       };
+    // 🌟 3. 流月
+    const renderLiuYueGrid = () => {
+        if (!selectedLiuNianYear) return null;
+        const targetDaYun = data.daYuns[selectedDaYunIndex];
+        const lnData = targetDaYun.liuNians.find(l => l.year === selectedLiuNianYear);
+        if(!lnData) return null;
+        const liuYues = getLiuYueData(lnData.gan, lnData.zhi, lnData.year);
+        
+        const renderTitle = () => {
+            if (selectedLiuYue) {
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: isDesktop ? '17px' : '15px', fontWeight: 'bold', color: THEME.black }}>{lnData.gan}{lnData.zhi}流年 {selectedLiuYue.gan}{selectedLiuYue.zhi}月</span>
+                        <span style={{ fontSize: isDesktop ? '15px' : '13px', color: THEME.blue }}><span style={{ marginRight: '12px' }}>{selectedLiuYue.jieInfo}</span><span>{selectedLiuYue.qiInfo}</span></span>
+                    </div>
+                );
+            } else {
+                return <h4 style={{ margin: '0', fontSize: isDesktop ? '17px' : '15px' }}>{lnData.gan}{lnData.zhi}流年 - 流月</h4>;
+            }
+        };
 
-       return (
-           <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', height: '44px', boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
-                   {renderTitle()}
-                   <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px' }}><X size={18} /></button>
-                </div>
-                {/* 🌟 核心修正：repeat(6, minmax(0, 1fr)) 強制絕對平分，絕不撐開外框 */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gridAutoRows: '1fr', gap: '3px', direction: 'rtl' }}>
-                    {liuYues.map((ly) => {
-                        const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
-                        const displayTopRight = getTopRightItem(ly.gan);
-                        const displayBottomRight = getDisplayItems(ly.gan, ly.zhi);
-                        const gColor = getColor(ly.gan, 'stem'); const zColor = getColor(ly.zhi, 'branch');
-                        const zhiRelations = getZhiRelations(ly.zhi);
-                        const ganRelations = getGanRelations(ly.gan);
+        return (
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: isDesktop ? '16px' : '12px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', minHeight: '44px', boxSizing: 'border-box', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px' }}>
+                    {renderTitle()}
+                    <button onClick={() => setSelectedLiuNianYear(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px', cursor: 'pointer' }}><X size={18} /></button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gridAutoRows: '1fr', gap: isDesktop ? '8px' : '3px', direction: 'rtl' }}>
+                        {liuYues.map((ly) => {
+                            const isSelected = selectedLiuYue && selectedLiuYue.seq === ly.seq;
+                            const displayTopRight = getTopRightItem(ly.gan);
+                            const displayBottomRight = getDisplayItems(ly.gan, ly.zhi);
+                            const gColor = getColor(ly.gan, 'stem'); const zColor = getColor(ly.zhi, 'branch');
+                            const zhiRelations = getZhiRelations(ly.zhi);
+                            const ganRelations = getGanRelations(ly.gan);
 
-                        return (
-                            <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)} style={{ 
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 2px', 
-                                backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, borderRadius: '8px', 
-                                border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
-                                minHeight: '115px', height: '100%', boxSizing: 'border-box', direction: 'ltr',
-                                cursor: 'pointer', transition: 'all 0.2s', minWidth: 0 // 🌟 強制允許內容縮小
-                            }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '1px', rowGap: '2px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: 0 }}>
-                                        {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                            return (
+                                <div key={ly.seq} onClick={() => setSelectedLiuYue(ly)} style={{ 
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isDesktop ? '10px 4px' : '6px 2px', 
+                                    backgroundColor: isSelected ? '#fff7e6' : THEME.bgOrange, borderRadius: '8px', 
+                                    border: isSelected ? `2px solid ${THEME.orange}` : `2px solid ${THEME.border}`, 
+                                    minHeight: isDesktop ? '140px' : '115px', height: '100%', boxSizing: 'border-box', direction: 'ltr',
+                                    cursor: 'pointer', transition: 'all 0.2s', minWidth: 0
+                                }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '4px' : '2px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: 0 }}>
+                                            {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: isDesktop ? '22px' : '18px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px', minWidth: 0 }}>
+                                            {displayTopRight && <span style={{ fontSize: isDesktop ? '13px' : '9px', color: THEME.gray, padding: '0 1px', borderRadius: '2px', whiteSpace: 'nowrap' }}>{displayTopRight}</span>}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: 0 }}>
+                                            {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: isDesktop ? '22px' : '18px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', minWidth: 0 }}>
+                                            {displayMode === 'shenSha' ? (
+                                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize={isDesktop ? '12px' : '9px'} />
+                                            ) : (
+                                                displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '9px', lineHeight: '1.1', color: '#888', whiteSpace: 'nowrap' }}>{item}</span>)
+                                            )}
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '18px', fontWeight: 'bold', color: gColor }}>{ly.gan}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px', minWidth: 0 }}>
-                                        {displayTopRight && <span style={{ fontSize: '9px', color: THEME.gray, padding: '0 1px', borderRadius: '2px', whiteSpace: 'nowrap' }}>{displayTopRight}</span>}
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: 0 }}>
-                                        {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '18px', fontWeight: 'bold', color: zColor }}>{ly.zhi}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', minWidth: 0 }}>
-                                        {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize="9px" />
-                                        ) : (
-                                            displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: '9px', lineHeight: '1.1', color: '#888', whiteSpace: 'nowrap' }}>{item}</span>)
-                                        )}
+                                    <div style={{ marginTop: 'auto', paddingTop: '4px', textAlign: 'center', width: '100%', overflow: 'hidden' }}>
+                                        <div style={{ fontSize: isDesktop ? '13px' : '10px', color: THEME.black, fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.dateStr}</div>
+                                        <div style={{ fontSize: isDesktop ? '12px' : '9px', color: THEME.gray, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.name}</div>
                                     </div>
                                 </div>
-                                <div style={{ marginTop: 'auto', paddingTop: '4px', textAlign: 'center', width: '100%', overflow: 'hidden' }}>
-                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.dateStr}</div>
-                                    <div style={{ fontSize: '9px', color: THEME.gray, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ly.name}</div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-           </div>
-       );
-   };
+                            );
+                        })}
+                    </div>
+            </div>
+        );
+    };
 
-   // 🌟 4. 流日
-   const renderLiuRiList = () => {
+    // 🌟 4. 流日
+    const renderLiuRiList = () => {
        const scrollRef = useRef(null);
        if (!selectedLiuYue) return null;
        const liuRis = getLiuRiData();
@@ -1826,12 +1822,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
        return (
            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.green || '#4caf50'}`, paddingLeft: '8px', fontSize: '15px' }}>{selectedLiuYue.gan}{selectedLiuYue.zhi}月 - 流日</h4>
+                   <h4 style={{ margin: '0', borderLeft: `4px solid ${THEME.green || '#4caf50'}`, paddingLeft: '8px', fontSize: isDesktop ? '17px' : '15px' }}>{selectedLiuYue.gan}{selectedLiuYue.zhi}月 - 流日</h4>
                    <button onClick={() => setSelectedLiuYue(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: THEME.gray, fontSize: '12px', padding: '4px', cursor: 'pointer' }}><X size={18} /></button>
                </div>
                <div ref={scrollRef} onWheel={handleWheel} style={{ 
-                   display: 'flex', direction: 'rtl', overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', gap: '6px', paddingBottom: '12px',
-                   alignItems: 'stretch' // 🌟 確保所有流日卡片等高
+                   display: 'flex', direction: 'rtl', overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', gap: isDesktop ? '10px' : '6px', paddingBottom: '12px',
+                   alignItems: 'stretch'
                }}>
                    {liuRis.map((day, idx) => {
                        const isSelected = selectedLiuRi === idx;
@@ -1843,38 +1839,38 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
 
                        return (
                            <div key={idx} onClick={() => setSelectedLiuRi(idx)} style={{ 
-                               direction: 'ltr', flex: '0 0 auto', width: '64px',
-                               display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px', 
+                               direction: 'ltr', flex: '0 0 auto', width: isDesktop ? '84px' : '64px',
+                               display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isDesktop ? '12px 6px' : '8px 4px', 
                                backgroundColor: isSelected ? '#f0fff4' : THEME.bgGray, borderRadius: '8px', 
                                border: isSelected ? `2px solid ${THEME.green || '#4caf50'}` : `2px solid ${THEME.border}`, 
-                               minHeight: '115px', height: 'auto', cursor: 'pointer', transition: 'all 0.2s'
+                               minHeight: isDesktop ? '140px' : '115px', height: 'auto', cursor: 'pointer', transition: 'all 0.2s'
                            }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '2px', rowGap: isDesktop ? '6px' : '4px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                        {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
+                                        <span style={{ fontSize: isDesktop ? '25px' : '20px', fontWeight: 'bold', color: gColor }}>{day.gan}</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
-                                        {displayTopRight && <span style={{ fontSize: '11px', color: THEME.gray }}>{displayTopRight}</span>}
+                                        {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.gray }}>{displayTopRight}</span>}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                                        {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                                        {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
+                                        <span style={{ fontSize: isDesktop ? '25px' : '20px', fontWeight: 'bold', color: zColor }}>{day.zhi}</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)} fontSize="10px" />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                         ) : (
-                                            displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                            displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
                                     </div>
                                 </div>
                                <div style={{ marginTop: 'auto', paddingTop: '6px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold' }}>{day.dateStr}</div>
+                                    <div style={{ fontSize: isDesktop ? '13px' : '10px', color: THEME.black, fontWeight: 'bold' }}>{day.dateStr}</div>
                                </div>
                            </div>
                        );
@@ -1929,17 +1925,17 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                         direction: 'ltr', minWidth: 0, 
                         display: 'flex', flexDirection: 'column', alignItems: 'center', 
                         backgroundColor: THEME.bgGray, borderRadius: '8px', 
-                        padding: '10px 4px', // 🌟 稍微縮減上下內距，增加左右內距
+                        padding: isDesktop ? '10px 4px' : '8px 4px',
                         border: `1px solid ${THEME.border}`, 
-                        maxHeight: '125px',  // 🌟 從 145px 降到 125px，讓卡片不要那麼高
-                        height: '100%', 
+                        boxSizing: 'border-box',
+                        height: 'auto', // 🌟 改為 auto，讓卡片縮細貼合內容，不會被撐大
                         cursor: hasRelations ? 'pointer' : 'default' 
                 }}>
-                    <div style={{ fontSize: '12px', color: THEME.blue, marginBottom: '6px', fontWeight: 'bold' }}>{p.title}</div>
+                    <div style={{ fontSize: isDesktop ? '13px' : '12px', color: THEME.blue, marginBottom: '4px', fontWeight: 'bold' }}>{p.title}</div>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: '2px', rowGap: '4px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', columnGap: isDesktop ? '4px' : '2px', rowGap: isDesktop ? '4px' : '3px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                            {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                            {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '12px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                             {p.huaQi && (
@@ -1948,8 +1944,8 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     bottom: '100%', 
                                     left: '50%', 
                                     transform: 'translateX(-50%)', 
-                                    marginBottom: '-4px',
-                                    fontSize: '9px',     
+                                    marginBottom: '-2px',
+                                    fontSize: isDesktop ? '10px' : '9px',     
                                     fontWeight: 'bold', 
                                     color: THEME.purple, 
                                     letterSpacing: '1px',
@@ -1959,26 +1955,28 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     化氣格
                                 </div>
                             )}
-                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: gColor }}>{d.gan}</span>
+                            <span style={{ fontSize: isDesktop ? '24px' : '20px', fontWeight: 'bold', color: gColor, lineHeight: 1.1 }}>{d.gan}</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
-                            {displayTopRight && <span style={{ fontSize: '10px', color: THEME.gray }}>{displayTopRight}</span>}
+                            {displayTopRight && <span style={{ fontSize: isDesktop ? '12px' : '10px', color: THEME.gray }}>{displayTopRight}</span>}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                            {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
+                            {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '12px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
-                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: zColor }}>{d.zhi}</span>
-                            <div style={{ paddingTop: '4px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '10px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.2' }}>{p.sub1 || '\u00A0'}</div>
-                                <div style={{ fontSize: '10px', color: THEME.gray, lineHeight: '1.2' }}>{p.sub2 || '\u00A0'}</div>
-                            </div>
+                            <span style={{ fontSize: isDesktop ? '24px' : '20px', fontWeight: 'bold', color: zColor, lineHeight: 1.1 }}>{d.zhi}</span>
+                            {!p.isOriginal && (
+                                <div style={{ paddingTop: '4px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: isDesktop ? '12px' : '10px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.2' }}>{p.sub1 || '\u00A0'}</div>
+                                    <div style={{ fontSize: isDesktop ? '11px' : '10px', color: THEME.gray, lineHeight: '1.2' }}>{p.sub2 || '\u00A0'}</div>
+                                </div>
+                            )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                             {displayMode === 'shenSha' ? (
-                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)} fontSize="10px" />
+                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)} fontSize={isDesktop ? '12px' : '10px'} />
                             ) : (
-                                displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: '10px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
+                                displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.15', color: '#888' }}>{item}</span>)
                             )}
                         </div>
                     </div>
@@ -1996,28 +1994,27 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                 
                 <div className="no-scrollbar" style={{ 
                     backgroundColor: '#fff', borderRadius: '16px', 
-                    padding: '24px', // 🌟 將 Modal 的內距從 16px 加大到 24px，增加外圍呼吸空間
+                    padding: isDesktop ? '20px' : '16px',
                     width: '100%', 
-                    maxWidth: '560px', // 🌟 稍微加寬，讓格子有空間展開
+                    maxWidth: isDesktop ? '520px' : '420px', // 🌟 縮小整體彈窗寬度
                     display: 'flex', flexDirection: 'column', gap: '16px', 
                     boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                     maxHeight: '90vh', overflowY: 'auto', 
                     boxSizing: 'border-box'
                 }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '8px' }}>
-                        <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
+                        <h3 style={{ margin: '0', fontSize: isDesktop ? '17px' : '16px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
                         <button onClick={() => setShowOverviewModal(false)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
                     </div>
 
                     <div style={{ 
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(4, 1fr)', 
-                        gridTemplateRows: fortunePillars.length > 0 ? '1fr 1fr' : '1fr', 
-                        gap: '12px', // 🌟 將卡片之間的間距從 8px 加大到 12px
-                        direction: 'rtl', position: 'relative',
-                        flexGrow: 1 
+                        columnGap: isDesktop ? '10px' : '8px',
+                        rowGap: isDesktop ? '18px' : '14px', // 🌟 明確拉開上下兩排的垂直距離
+                        alignItems: 'stretch',
+                        direction: 'rtl', position: 'relative'
                     }}>
-                        
                         {originalPillars.map((p, idx) => renderCard(p, `orig-${idx}`))}
                         {fortunePillars.map((p, idx) => renderCard(p, `fort-${idx}`))}
                     </div>
