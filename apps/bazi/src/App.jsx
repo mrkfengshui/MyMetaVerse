@@ -129,7 +129,7 @@ const toTraditional = (str) => {
 
 // 神煞解釋
 const SHEN_SHA_INFO = {
-    '貴人': '天乙貴人：最強吉星，主逢凶化吉，遇難呈祥，有貴人提拔，解災救難。',
+    '天乙': '天乙貴人：最強吉星，主逢凶化吉，遇難呈祥，有貴人提拔，解災救難。',
     '驛馬': '驛馬：主奔波走動，出國，搬家，變動，職業變遷，心意不定。',
     '桃花': '桃花：主人緣佳，異性緣重，情感豐富，也有風流、多情之意。',
     '祿神': '祿神：主財祿豐足，食祿，福氣，性格剛毅，有爵祿之貴。',
@@ -146,6 +146,9 @@ const SHEN_SHA_INFO = {
     '天喜': '天喜：主喜慶之事，開心，人緣好，利結婚生子，心情愉快。',
     '紅鸞': '紅鸞：主婚姻喜慶，異性緣佳，早年利婚緣，人見人愛。',
     '將星': '將星：主有領導能力，掌權，有威望，事業成功，能文能武。',
+    '十靈': '十靈日：主聰明靈慧，領悟力極強，對神秘學、宗教、藝術有天賦，直覺敏銳。',
+    '天醫': '天醫：主健康、醫藥、慈善、宗教。命帶天醫者適合從事醫療、保健、心理或命理助人工作，若無吉星相扶則易有疾病。',
+    '太極': '太極貴人：主聰明好學，喜文史哲學與宗教玄學，為人正直，做事有始有終，遇難有貴人暗中相助。',
 };
 
 // 統一處理：垂直文字、最多顯示 N 個、點擊事件、字體大小控制
@@ -269,18 +272,37 @@ const getShiShen = (dayGan, targetGan) => {
   return '';
 };
 
-const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意] 新增 monthZhi 參數
+const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => {
     if (!zhi) return [];
     const list = [];
-    
-    // --- 輔助：地支三合/三會/對沖查詢 ---
-    const isSanHe = (z, group) => group.includes(z);
-    
-    // 1. 天乙貴人 (日干)
-    const tianYiMap = { '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'], '乙': ['子', '申'], '己': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'], '壬': ['巳', '卯'], '癸': ['巳', '卯'], '辛': ['午', '寅'] };
-    if (tianYiMap[dayGan]?.includes(zhi)) list.push('貴人');
+    const dzIdx = DIZHI.indexOf(zhi);
+    const yzIdx = DIZHI.indexOf(yearZhi);
+    const mzIdx = DIZHI.indexOf(monthZhi);
 
-    // 2. 驛馬 (年支/日支) - 申子辰馬在寅...
+    // 1. 天乙貴人 (最高優先級)
+    const tianYiMap = { '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'], '乙': ['子', '申'], '己': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'], '壬': ['巳', '卯'], '癸': ['巳', '卯'], '辛': ['午', '寅'] };
+    if (tianYiMap[dayGan]?.includes(zhi)) list.push('天乙');
+
+    // 2. 天德貴人 & 月德貴人
+    const tianDeMap = { '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛', '午': '亥', '未': '甲', '申': '癸', '酉': '寅', '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚' };
+    const tdVal = tianDeMap[monthZhi];
+    if (tdVal === gan || tdVal === zhi) list.push('天德');
+
+    let ydGan = '';
+    if (['寅','午','戌'].includes(monthZhi)) ydGan = '丙';
+    else if (['申','子','辰'].includes(monthZhi)) ydGan = '壬';
+    else if (['亥','卯','未'].includes(monthZhi)) ydGan = '甲';
+    else if (['巳','酉','丑'].includes(monthZhi)) ydGan = '庚';
+    if (gan === ydGan) list.push('月德');
+
+    // 3. 祿神 & 羊刃
+    const luMap = {'甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子'};
+    if (luMap[dayGan] === zhi) list.push('祿神');
+
+    const yangRenMap = {'甲':'卯','乙':'辰','丙':'午','丁':'未','戊':'午','己':'未','庚':'酉','辛':'戌','壬':'子','癸':'丑'};
+    if (yangRenMap[dayGan] === zhi) list.push('羊刃');
+
+    // 4. 驛馬 & 桃花
     const getYiMa = (base) => {
         if (['申', '子', '辰'].includes(base)) return '寅';
         if (['寅', '午', '戌'].includes(base)) return '申';
@@ -290,7 +312,6 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     };
     if (zhi === getYiMa(dayZhi) || zhi === getYiMa(yearZhi)) list.push('驛馬');
 
-    // 3. 桃花 (咸池) (年支/日支)
     const getTaoHua = (base) => {
         if (['申', '子', '辰'].includes(base)) return '酉';
         if (['寅', '午', '戌'].includes(base)) return '卯';
@@ -300,48 +321,27 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     };
     if (zhi === getTaoHua(dayZhi) || zhi === getTaoHua(yearZhi)) list.push('桃花');
 
-    // 4. 祿神 (日干)
-    const luMap = {'甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子'};
-    if (luMap[dayGan] === zhi) list.push('祿神');
-
-    // 5. 羊刃 (日干)
-    const yangRenMap = {'甲':'卯','乙':'辰','丙':'午','丁':'未','戊':'午','己':'未','庚':'酉','辛':'戌','壬':'子','癸':'丑'};
-    if (yangRenMap[dayGan] === zhi) list.push('羊刃');
-
-    // 6. 文昌 (日干)
+    // 5. 文昌、太極貴人、十靈日
     const wenChangMap = {'甲':'巳','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉','庚':'亥','辛':'子','壬':'寅','癸':'卯'};
     if (wenChangMap[dayGan] === zhi) list.push('文昌');
 
-    // 7. 天德貴人 (月支) 
-    // 正丁二坤(申)中, 三壬四辛同, 五亥六甲上, 七癸八寅逢, 九丙十居乙, 子巳丑庚中
-    const tianDeMap = { 
-        '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛', '午': '亥', '未': '甲', 
-        '申': '癸', '酉': '寅', '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚' 
+    const taiJiMap = {
+        '甲': ['子', '午'], '乙': ['子', '午'],
+        '丙': ['卯', '酉'], '丁': ['卯', '酉'],
+        '戊': ['辰', '戌', '丑', '未'], '己': ['辰', '戌', '丑', '未'],
+        '庚': ['寅', '亥'], '辛': ['寅', '亥'],
+        '壬': ['巳', '申'], '癸': ['巳', '申']
     };
-    const tdVal = tianDeMap[monthZhi];
-    if (tdVal === gan || tdVal === zhi) list.push('天德');
+    if (taiJiMap[dayGan]?.includes(zhi)) list.push('太極');
 
-    // 8. 月德貴人 (月支) 
-    // 寅午戌月在丙, 申子辰月在壬, 亥卯未月在甲, 巳酉丑月在庚
-    let ydGan = '';
-    if (['寅','午','戌'].includes(monthZhi)) ydGan = '丙';
-    else if (['申','子','辰'].includes(monthZhi)) ydGan = '壬';
-    else if (['亥','卯','未'].includes(monthZhi)) ydGan = '甲';
-    else if (['巳','酉','丑'].includes(monthZhi)) ydGan = '庚';
-    if (gan === ydGan) list.push('月德');
+    const shiLingDays = ['甲辰', '乙亥', '丙辰', '丁酉', '戊午', '庚戌', '庚寅', '辛亥', '壬寅', '癸未'];
+    if (gan === dayGan && zhi === dayZhi && shiLingDays.includes(gan + zhi)) list.push('十靈');
 
-    // 9. 龍德 (年支) 
-    // 龍德在太歲後八位 (對沖前一位)
-    const dzIdx = DIZHI.indexOf(zhi);
-    const yzIdx = DIZHI.indexOf(yearZhi);
-    if ((yzIdx + 8) % 12 === dzIdx) list.push('龍德');
+    // 6. 紅鸞 & 天喜
+    if ((3 - yzIdx + 12) % 12 === dzIdx) list.push('紅鸞');
+    if ((9 - yzIdx + 12) % 12 === dzIdx) list.push('天喜');
 
-    // 10. 金輿 (日干) 
-    // 甲龍(辰)乙蛇(巳)丙戊馬(未), 丁己猴(申)歌, 庚犬(戌)辛豬(亥), 壬牛(丑)癸虎(寅)
-    const jinYuMap = {'甲':'辰','乙':'巳','丙':'未','戊':'未','丁':'申','己':'申','庚':'戌','辛':'亥','壬':'丑','癸':'寅'};
-    if (jinYuMap[dayGan] === zhi) list.push('金輿');
-
-    // 11. 華蓋 (年支/日支) - 三合墓庫 
+    // 7. 華蓋、孤辰、寡宿
     const getHuaGai = (base) => {
         if (['寅','午','戌'].includes(base)) return '戌';
         if (['申','子','辰'].includes(base)) return '辰';
@@ -351,8 +351,6 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     };
     if (zhi === getHuaGai(dayZhi) || zhi === getHuaGai(yearZhi)) list.push('華蓋');
 
-    // 12. 孤辰、寡宿 (年支) 
-    // 亥子丑(北): 孤寅寡戌; 寅卯辰(東): 孤巳寡丑; 巳午未(南): 孤申寡辰; 申酉戌(西): 孤亥寡未
     let gu = '', gua = '';
     if (['亥','子','丑'].includes(yearZhi)) { gu = '寅'; gua = '戌'; }
     else if (['寅','卯','辰'].includes(yearZhi)) { gu = '巳'; gua = '丑'; }
@@ -361,21 +359,7 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     if (zhi === gu) list.push('孤辰');
     if (zhi === gua) list.push('寡宿');
 
-    // 13. 學士 (日干) 
-    // 甲子, 乙午, 丙申, 丁酉, 戊申, 己酉, 庚亥, 辛子, 壬寅, 癸卯
-    const xueShiMap = {'甲':'子','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉','庚':'亥','辛':'子','壬':'寅','癸':'卯'};
-    if (xueShiMap[dayGan] === zhi) list.push('學士');
-
-    // 14. 天喜 (年支) 
-    // 紅鸞對沖之支 (酉上起子逆數? No. 紅鸞: 子年見卯... 天喜是對宮)
-    // 簡易算: 天喜 index = (酉(9) - 年支index + 12) % 12
-    if ((9 - yzIdx + 12) % 12 === dzIdx) list.push('天喜');
-
-    // 15. 紅鸞 (年支) 
-    // 卯上起子逆數: 子年見卯, 丑年見寅... => Index = (3 - 年支 + 12) % 12
-    if ((3 - yzIdx + 12) % 12 === dzIdx) list.push('紅鸞');
-
-    // 16. 將星 (年支/日支) - 三合中神 
+    // 8. 輔助吉星 (將星、金輿、天醫、龍德、學士)
     const getJiangXing = (base) => {
         if (['寅','午','戌'].includes(base)) return '午';
         if (['申','子','辰'].includes(base)) return '子';
@@ -385,7 +369,17 @@ const getShenSha = (gan, zhi, dayGan, dayZhi, yearZhi, monthZhi) => { // [注意
     };
     if (zhi === getJiangXing(dayZhi) || zhi === getJiangXing(yearZhi)) list.push('將星');
 
-    return [...new Set(list)]; // 去除重複 (例如年日支查到同一個神煞)
+    const jinYuMap = {'甲':'辰','乙':'巳','丙':'未','戊':'未','丁':'申','己':'申','庚':'戌','辛':'亥','壬':'丑','癸':'寅'};
+    if (jinYuMap[dayGan] === zhi) list.push('金輿');
+
+    if (mzIdx !== -1 && (mzIdx - 1 + 12) % 12 === dzIdx) list.push('天醫');
+
+    if ((yzIdx + 8) % 12 === dzIdx) list.push('龍德');
+
+    const xueShiMap = {'甲':'子','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉','庚':'亥','辛':'子','壬':'寅','癸':'卯'};
+    if (xueShiMap[dayGan] === zhi) list.push('學士');
+
+    return [...new Set(list)];
 };
 
 // === 🌟 新增：化氣格嚴格判定演算法 ===
@@ -1065,7 +1059,7 @@ const PillarCard = ({
             
             {/* 🌟 變通星向右移 (加大 marginLeft) */}
             {displayMode === 'shiShen' && displayTopRight && (
-                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '6px', fontSize: isDesktop ? '17px' : '14px', color: '#888', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: '100%', marginLeft: '6px', fontSize: isDesktop ? '14px' : '12px', color: '#888', whiteSpace: 'nowrap' }}>
                     {displayTopRight}
                 </div>
             )}
@@ -1110,13 +1104,13 @@ const PillarCard = ({
                 {displayMode === 'shenSha' ? (
                     <ShenShaVerticalList 
                         items={shenShas}
-                        onClick={(fullList) => onShenShaClick && onShenShaClick(`${gan}${zhi} (${title})`, fullList)}
-                        fontSize={isDesktop ? '11px' : '14px'}
+                        onClick={(fullList) => onShenShaClick && onShenShaClick(`${gan}${zhi}${title}`, fullList)}
+                        fontSize={isDesktop ? '13px' : '11px'}
                         maxItems={2}
                     />
                 ) : (
                     displayBottomRight.length > 0 ? displayBottomRight.map((item, idx) => (
-                        <span key={idx} style={{ writingMode: 'horizontal-tb', fontSize: isDesktop ? '17px' : '14px', lineHeight: '1.2', color: '#888', display: 'block', marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                        <span key={idx} style={{ writingMode: 'horizontal-tb', fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.2', color: '#888', display: 'block', marginBottom: '2px', whiteSpace: 'nowrap' }}>
                             {item}
                         </span>
                     )) : null
@@ -1494,42 +1488,44 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
         const getRelationDetails = (targetGan, targetZhi) => {
             const baziGans = Array.from(new Set([data.bazi.yearGan, data.bazi.monthGan, data.bazi.dayGan, data.bazi.timeGan].filter(Boolean)));
             const baziZhis = Array.from(new Set([data.bazi.yearZhi, data.bazi.monthZhi, data.bazi.dayZhi, data.bazi.timeZhi].filter(Boolean)));
-            const details = new Set(); 
+            const ganDetails = new Set(); 
+            const zhiDetails = new Set(); 
             
             // 判定化神是否成功的核心邏輯
             const checkHua = (huaWx) => {
                 const monthWx = WUXING_MAP[data.bazi.monthZhi];
-                
                 const KE_MAP = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
-                
-                if (KE_MAP[monthWx] === huaWx) {
-                    return '(合而不化)';
-                }
-
+                if (KE_MAP[monthWx] === huaWx) return '(合而不化)';
                 const allGans = [data.bazi.yearGan, data.bazi.monthGan, data.bazi.dayGan, data.bazi.timeGan, targetGan];
                 const hasGan = allGans.some(gan => WUXING_MAP[gan] === huaWx);
                 return (monthWx === huaWx || hasGan) ? '(成化)' : '(合而不化)';
             };
 
-            // --- 天干解析 ---
+            // --- 天干解析 (存入 ganDetails) ---
             const GAN_HE = [
-                { pair: ['甲','己'], wx: '土' }, { pair: ['乙','庚'], wx: '金' },
-                { pair: ['丙','辛'], wx: '水' }, { pair: ['丁','壬'], wx: '木' },
-                { pair: ['戊','癸'], wx: '火' }
+                { pair: ['甲','己'], wx: '土', desc: '中正之合，主合作牽絆、人際協調與新機遇' },
+                { pair: ['乙','庚'], wx: '金', desc: '仁義之合，主果斷決策、合作結盟或牽制' },
+                { pair: ['丙','辛'], wx: '水', desc: '威制之合，主感情異性緣、合作或受掣肘' },
+                { pair: ['丁','壬'], wx: '木', desc: '淫匿之合，主情緣波動、思緒多變或合作' },
+                { pair: ['戊','癸'], wx: '火', desc: '無情之合，主表面和合、利益結合或牽絆' }
             ];
             const GAN_CHONG = {'甲':'庚', '庚':'甲', '乙':'辛', '辛':'乙', '丙':'壬', '壬':'丙', '丁':'癸', '癸':'丁'};
 
-            GAN_HE.forEach(({pair, wx}) => {
+            GAN_HE.forEach(({pair, wx, desc}) => {
                 if (pair.includes(targetGan)) {
                     const other = pair.find(g => g !== targetGan);
-                    if (baziGans.includes(other)) details.add(`天干與「${other}」五合${wx} ${checkHua(wx)}`);
+                    if (baziGans.includes(other)) {
+                        ganDetails.add(`天干與「${other}」五合${wx} ${checkHua(wx)}\n${desc}`);
+                    }
                 }
             });
             baziGans.forEach(bg => {
-                if (GAN_CHONG[targetGan] === bg) details.add(`天干與「${bg}」相沖`);
+                if (GAN_CHONG[targetGan] === bg) {
+                    ganDetails.add(`天干與「${bg}」相沖\n主外在衝突、變動、意見不合或決策轉折`);
+                }
             });
 
-            // --- 地支解析 ---
+            // --- 地支解析 (存入 zhiDetails) ---
             const CHONG = {'子':'午','午':'子', '丑':'未','未':'丑', '寅':'申','申':'寅', '卯':'酉','酉':'卯', '辰':'戌','戌':'辰', '巳':'亥','亥':'巳'};
             const HAI = {'子':'未','未':'子', '丑':'午','午':'丑', '寅':'巳','巳':'寅', '卯':'辰','辰':'卯', '申':'亥','亥':'申', '酉':'戌','戌':'酉'};
             const PO = {'子':'酉','酉':'子', '丑':'辰','辰':'丑', '寅':'亥','亥':'寅', '卯':'午','午':'卯', '巳':'申','申':'巳', '未':'戌','戌':'未'};
@@ -1550,62 +1546,74 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             LIU_HE.forEach(({pair, wx}) => {
                 if (pair.includes(targetZhi)) {
                     const other = pair.find(z => z !== targetZhi);
-                    if (baziZhis.includes(other)) details.add(`地支與「${other}」六合${wx} ${checkHua(wx)}`);
+                    if (baziZhis.includes(other)) {
+                        zhiDetails.add(`地支與「${other}」六合${wx} ${checkHua(wx)}\n主人際和合、貴人暗助、感情升溫或事務牽絆`);
+                    }
                 }
             });
             SAN_HE.forEach(({group, wx}) => {
                 if (group.includes(targetZhi)) {
                     const others = group.filter(z => z !== targetZhi);
-                    if (others.every(z => baziZhis.includes(z))) details.add(`地支與「${others.join('、')}」三合${wx}局 ${checkHua(wx)}`);
+                    if (others.every(z => baziZhis.includes(z))) {
+                        zhiDetails.add(`地支與「${others.join('、')}」三合${wx}局 ${checkHua(wx)}\n力量凝聚，主團隊合作、資源整合或局勢大幅轉變`);
+                    }
                 }
             });
             SAN_HUI.forEach(({group, wx}) => {
                 if (group.includes(targetZhi)) {
                     const others = group.filter(z => z !== targetZhi);
-                    if (others.every(z => baziZhis.includes(z))) details.add(`地支與「${others.join('、')}」三會${wx}方局 ${checkHua(wx)}`);
+                    if (others.every(z => baziZhis.includes(z))) {
+                        zhiDetails.add(`地支與「${others.join('、')}」三會${wx}方局 ${checkHua(wx)}\n同氣相聚力量極強，主同輩助力或該五行氣場爆發`);
+                    }
                 }
             });
-            // 🌟 1. 事前判定：檢查當前命盤與運勢是否湊齊了完整的三刑
+
+            // 檢查三刑
             const allZhis = new Set([targetZhi, ...baziZhis]);
             const isFullWuEn = allZhis.has('寅') && allZhis.has('申') && allZhis.has('巳');
             const isFullShiShi = allZhis.has('丑') && allZhis.has('戌') && allZhis.has('未');
 
-            // 🌟 2. 滿編觸發：若湊齊三刑，直接將對象合併成一句顯示
             if (isFullWuEn && ['寅', '巳', '申'].includes(targetZhi)) {
-                // 抓出原局中參與三刑的其他地支
                 const others = ['寅', '巳', '申'].filter(z => z !== targetZhi && baziZhis.includes(z));
-                if (others.length > 0) details.add(`地支與「${others.join('、')}」無恩之刑`);
+                if (others.length > 0) {
+                    zhiDetails.add(`地支與「${others.join('、')}」無恩之刑\n動盪較劇，主付出無回報、是非爭執、交通或筋骨損傷`);
+                }
             }
             if (isFullShiShi && ['丑', '戌', '未'].includes(targetZhi)) {
                 const others = ['丑', '戌', '未'].filter(z => z !== targetZhi && baziZhis.includes(z));
-                if (others.length > 0) details.add(`地支與「${others.join('、')}」恃勢之刑`);
+                if (others.length > 0) {
+                    zhiDetails.add(`地支與「${others.join('、')}」恃勢之刑\n主固執己見、壓力暗生、六親疏離或腸胃脾土不適`);
+                }
             }
 
-            // 🌟 3. 處理其他刑沖破害
+            // 處理其他刑沖破害
             baziZhis.forEach(bz => {
-                if (CHONG[targetZhi] === bz) details.add(`地支與「${bz}」相沖`);
-                if (HAI[targetZhi] === bz) details.add(`地支與「${bz}」相害`);
-                if (PO[targetZhi] === bz) details.add(`地支與「${bz}」相破`);
+                if (CHONG[targetZhi] === bz) {
+                    zhiDetails.add(`地支與「${bz}」相沖\n主變動奔波、環境轉換、衝擊突破或人事不穩`);
+                }
+                if (HAI[targetZhi] === bz) {
+                    zhiDetails.add(`地支與「${bz}」相害\n主小人暗損、背後是非、猜忌誤會或事倍功半`);
+                }
+                if (PO[targetZhi] === bz) {
+                    zhiDetails.add(`地支與「${bz}」相破\n主內部損耗、計畫受阻、器物損壞或關係出現裂痕`);
+                }
                 
-                // 子卯：無禮之刑 (只需兩字即成立)
                 if ((targetZhi === '子' && bz === '卯') || (targetZhi === '卯' && bz === '子')) {
-                    details.add(`地支與「${bz}」無禮之刑`);
-                }
-                // 寅申巳：如果沒有湊齊滿編 (!isFullWuEn)，才單獨顯示一般的相刑
-                else if (!isFullWuEn && ((targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)))) {
-                    details.add(`地支與「${bz}」相刑`);
-                }
-                // 丑戌未：如果沒有湊齊滿編 (!isFullShiShi)，才單獨顯示一般的相刑
-                else if (!isFullShiShi && ((targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)))) {
-                    details.add(`地支與「${bz}」相刑`);
-                }
-                // 辰午酉亥：自刑 (同字相見)
-                else if (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi)) {
-                    details.add(`地支與「${bz}」自刑`);
+                    zhiDetails.add(`地支與「${bz}」無禮之刑\n主人際失和、感情糾紛、口舌是非或以下犯上`);
+                } else if (!isFullWuEn && ((targetZhi === '寅' && ['巳', '申'].includes(bz)) || (targetZhi === '巳' && ['寅', '申'].includes(bz)) || (targetZhi === '申' && ['寅', '巳'].includes(bz)))) {
+                    zhiDetails.add(`地支與「${bz}」相刑\n主內心糾結、行事受阻、壓力或身體微恙`);
+                } else if (!isFullShiShi && ((targetZhi === '丑' && ['戌', '未'].includes(bz)) || (targetZhi === '戌' && ['丑', '未'].includes(bz)) || (targetZhi === '未' && ['丑', '戌'].includes(bz)))) {
+                    zhiDetails.add(`地支與「${bz}」相刑\n主固執壓抑、人際隔閡或事務阻滯`);
+                } else if (targetZhi === bz && ['辰', '午', '酉', '亥'].includes(targetZhi)) {
+                    zhiDetails.add(`地支與「${bz}」自刑\n主自我糾結、鑽牛角尖、庸人自擾或情緒內耗`);
                 }
             });
             
-            return Array.from(details).join('\n'); 
+            // 🌟 組合輸出：若同時有天干與地支互動，中間插入 '---' 分隔線標記
+            const ganStr = Array.from(ganDetails).join('\n\n');
+            const zhiStr = Array.from(zhiDetails).join('\n\n');
+            if (ganStr && zhiStr) return `${ganStr}\n---\n${zhiStr}`;
+            return ganStr || zhiStr;
         };
 
     // 🌟 1. 大運 (整合為單一 Grid，確保上下兩排絕對等高)
@@ -1631,7 +1639,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                             cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative', direction: 'ltr'
                         }}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '6px' : '4px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                <div 
+                                    onClick={(e) => {
+                                        if (ganRelations) {
+                                            e.stopPropagation();
+                                            const details = getRelationDetails(dy.gan, dy.zhi);
+                                            if (details) setRelationModalContent(`${dy.gan}${dy.zhi}大運\n${details}`);
+                                        }
+                                    }}
+                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', cursor: ganRelations ? 'pointer' : 'default' }}
+                                >
                                     {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1640,7 +1657,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
                                     {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '12px', color: THEME.gray }}>{displayTopRight}</span>}
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                <div 
+                                    onClick={(e) => {
+                                        if (zhiRelations) {
+                                            e.stopPropagation();
+                                            const details = getRelationDetails(dy.gan, dy.zhi);
+                                            if (details) setRelationModalContent(`${dy.gan}${dy.zhi}大運\n${details}`);
+                                        }
+                                    }}
+                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', cursor: zhiRelations ? 'pointer' : 'default' }}
+                                >
                                     {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -1648,7 +1674,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                     {displayMode === 'shenSha' ? (
-                                        <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi} (大運)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
+                                        <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${dy.gan}${dy.zhi}大運`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                     ) : (
                                         displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                     )}
@@ -1695,7 +1721,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                 direction: 'ltr', cursor: 'pointer' 
                             }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '6px' : '4px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    <div 
+                                        onClick={(e) => {
+                                            if (ganRelations) {
+                                                e.stopPropagation();
+                                                const details = getRelationDetails(ln.gan, ln.zhi);
+                                                if (details) setRelationModalContent(`${ln.gan}${ln.zhi}流年\n${details}`);
+                                            }
+                                        }}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', cursor: ganRelations ? 'pointer' : 'default' }}
+                                    >
                                         {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1704,7 +1739,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
                                         {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.gray, padding: '0 1px', borderRadius: '2px' }}>{displayTopRight}</span>}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                    <div 
+                                        onClick={(e) => {
+                                            if (zhiRelations) {
+                                                e.stopPropagation();
+                                                const details = getRelationDetails(ln.gan, ln.zhi);
+                                                if (details) setRelationModalContent(`${ln.gan}${ln.zhi}流年\n${details}`);
+                                            }
+                                        }}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', cursor: zhiRelations ? 'pointer' : 'default' }}
+                                    >
                                         {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -1712,7 +1756,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi} (流年)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ln.gan}${ln.zhi}流年`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                         ) : (
                                             displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
@@ -1775,7 +1819,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     cursor: 'pointer', transition: 'all 0.2s', minWidth: 0
                                 }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '1px', rowGap: isDesktop ? '4px' : '2px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: 0 }}>
+                                        <div 
+                                            onClick={(e) => {
+                                                if (ganRelations) {
+                                                    e.stopPropagation();
+                                                    const details = getRelationDetails(ly.gan, ly.zhi);
+                                                    if (details) setRelationModalContent(`${ly.gan}${ly.zhi}流月\n${details}`);
+                                                }
+                                            }}
+                                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: 0, cursor: ganRelations ? 'pointer' : 'default' }}
+                                        >
                                             {ganRelations && ganRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1784,7 +1837,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px', minWidth: 0 }}>
                                             {displayTopRight && <span style={{ fontSize: isDesktop ? '13px' : '9px', color: THEME.gray, padding: '0 1px', borderRadius: '2px', whiteSpace: 'nowrap' }}>{displayTopRight}</span>}
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: 0 }}>
+                                        <div 
+                                            onClick={(e) => {
+                                                if (zhiRelations) {
+                                                    e.stopPropagation();
+                                                    const details = getRelationDetails(ly.gan, ly.zhi);
+                                                    if (details) setRelationModalContent(`${ly.gan}${ly.zhi}流月\n${details}`);
+                                                }
+                                            }}
+                                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: 0, cursor: zhiRelations ? 'pointer' : 'default' }}
+                                        >
                                             {zhiRelations && zhiRelations.split('').map((char, idx) => <span key={idx} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -1792,7 +1854,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', minWidth: 0 }}>
                                             {displayMode === 'shenSha' ? (
-                                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi} (流月)`, fullList)} fontSize={isDesktop ? '12px' : '9px'} />
+                                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${ly.gan}${ly.zhi}流月`, fullList)} fontSize={isDesktop ? '12px' : '9px'} />
                                             ) : (
                                                 displayBottomRight.map((item, idx) => <span key={idx} style={{ fontSize: isDesktop ? '13px' : '9px', lineHeight: '1.1', color: '#888', whiteSpace: 'nowrap' }}>{item}</span>)
                                             )}
@@ -1846,7 +1908,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                minHeight: isDesktop ? '140px' : '115px', height: 'auto', cursor: 'pointer', transition: 'all 0.2s'
                            }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gridTemplateRows: 'auto auto', width: '100%', flexGrow: 1, columnGap: isDesktop ? '4px' : '2px', rowGap: isDesktop ? '6px' : '4px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    <div 
+                                        onClick={(e) => {
+                                            if (ganRelations) {
+                                                e.stopPropagation();
+                                                const details = getRelationDetails(day.gan, day.zhi);
+                                                if (details) setRelationModalContent(`${day.gan}${day.zhi}流日\n${details}`);
+                                            }
+                                        }}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', cursor: ganRelations ? 'pointer' : 'default' }}
+                                    >
                                         {ganRelations && ganRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1855,7 +1926,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '2px' }}>
                                         {displayTopRight && <span style={{ fontSize: isDesktop ? '14px' : '11px', color: THEME.gray }}>{displayTopRight}</span>}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                                    <div 
+                                        onClick={(e) => {
+                                            if (zhiRelations) {
+                                                e.stopPropagation();
+                                                const details = getRelationDetails(day.gan, day.zhi);
+                                                if (details) setRelationModalContent(`${day.gan}${day.zhi}流日\n${details}`);
+                                            }
+                                        }}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', cursor: zhiRelations ? 'pointer' : 'default' }}
+                                    >
                                         {zhiRelations && zhiRelations.split('').map((char, i) => <span key={i} style={{ fontSize: isDesktop ? '13px' : '11px', lineHeight: '1.1', color: THEME.red, fontWeight: 'bold' }}>{char}</span>)}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -1863,7 +1943,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                                         {displayMode === 'shenSha' ? (
-                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi} (流日)`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
+                                            <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${day.gan}${day.zhi}流日`, fullList)} fontSize={isDesktop ? '13px' : '10px'} />
                                         ) : (
                                             displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: isDesktop ? '14px' : '11px', lineHeight: '1.1', color: '#888' }}>{item}</span>)
                                         )}
@@ -1920,8 +2000,12 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             const zColor = getColor(d.zhi, 'branch');
 
             return (
-                <div key={idx} onClick={() => { if (hasRelations) { const details = getRelationDetails(d.gan, d.zhi); if (details) setRelationModalContent(details); } }}
-                    style={{ 
+                <div key={idx} onClick={() => { 
+                    if (hasRelations) { 
+                        const details = getRelationDetails(d.gan, d.zhi); 
+                        if (details) setRelationModalContent(`${d.gan}${d.zhi}${p.title}\n${details}`); 
+                    } 
+                }}style={{ 
                         direction: 'ltr', minWidth: 0, 
                         display: 'flex', flexDirection: 'column', alignItems: 'center', 
                         backgroundColor: THEME.bgGray, borderRadius: '8px', 
@@ -1974,7 +2058,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                             {displayMode === 'shenSha' ? (
-                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi} (${p.title})`, fullList)} fontSize={isDesktop ? '12px' : '10px'} />
+                                <ShenShaVerticalList items={displayBottomRight} onClick={(fullList) => openShenShaModal(`${d.gan}${d.zhi}${p.title}`, fullList)} fontSize={isDesktop ? '12px' : '10px'} />
                             ) : (
                                 displayBottomRight.map((item, i) => <span key={i} style={{ fontSize: isDesktop ? '12px' : '10px', lineHeight: '1.15', color: '#888' }}>{item}</span>)
                             )}
@@ -2019,21 +2103,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                         {fortunePillars.map((p, idx) => renderCard(p, `fort-${idx}`))}
                     </div>
                 </div>
-
-                {/* 互動詳情彈窗 */}
-                {relationModalContent && (
-                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1600, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
-                        <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '16px', width: '80%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
-                                <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動</h3>
-                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
-                            </div>
-                            <div style={{ textAlign: 'center', padding: '10px 0', fontSize: '16px', color: THEME.black, fontWeight: 'bold', lineHeight: '1.8' }}>
-                                {relationModalContent.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };
@@ -2174,26 +2243,30 @@ return (
                 <PillarCard 
                     title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi}
                     kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
-                    isCapturing={isCapturing} // 🌟 傳遞狀態
+                    isCapturing={isCapturing}
+                    isDesktop={isDesktop} // 🌟 補上這行
                     {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
                     huaQi={data.meta.isHuaQi}
-                    isCapturing={isCapturing} // 🌟 傳遞狀態
+                    isCapturing={isCapturing}
+                    isDesktop={isDesktop} // 🌟 補上這行
                     {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
-                    isCapturing={isCapturing} // 🌟 傳遞狀態
+                    isCapturing={isCapturing}
+                    isDesktop={isDesktop} // 🌟 補上這行
                     {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
                 />
                 <PillarCard 
                     title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
                     kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
-                    isCapturing={isCapturing} // 🌟 傳遞狀態
+                    isCapturing={isCapturing}
+                    isDesktop={isDesktop} // 🌟 補上這行
                     {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
                 />
             </div>
@@ -2281,6 +2354,38 @@ return (
         <NamingSystem data={data} THEME={THEME} />
         {/* 🌟 3. 渲染綜合運勢盤 */}
         {renderOverviewModal()}
+        {/* 互動詳情彈窗 */}
+            {relationModalContent && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                    <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
+                            <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動詳解</h3>
+                            <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
+                        </div>
+                        <div style={{ textAlign: 'left', padding: '4px 0', fontSize: '14px', color: THEME.black, lineHeight: '1.5' }}>
+                            {relationModalContent.split('\n').map((line, i) => {
+                                if (line === '---') {
+                                    return <div key={i} style={{ height: '1px', backgroundColor: THEME.border, margin: '12px 0' }} />;
+                                }
+                                const isHeader = i === 0;
+                                const isRelationTitle = line.startsWith('天干與') || line.startsWith('地支與');
+                                const isDesc = line.trim() !== '' && !isHeader && !isRelationTitle;
+                                return (
+                                    <div key={i} style={{ 
+                                        fontWeight: isDesc ? 'normal' : 'bold', 
+                                        color: isHeader ? THEME.black : (isDesc ? '#888888' : THEME.black),
+                                        marginTop: (isRelationTitle && i > 1) ? '8px' : (isRelationTitle ? '6px' : '0'),
+                                        fontSize: isHeader ? '16px' : (isDesc ? '13px' : '15px'),
+                                        textAlign: isHeader ? 'center' : 'left'
+                                    }}>
+                                        {line || '\u00A0'}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
 
         {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
         {!isCapturing && (
