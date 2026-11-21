@@ -199,11 +199,15 @@ const ShenShaModal = ({ config, onClose }) => {
             backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
             backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s'
         }} onClick={onClose}>
-            <div style={{
-                width: '85%', maxWidth: '340px', backgroundColor: '#fff', borderRadius: '16px',
-                padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
-                maxHeight: '70vh', overflowY: 'auto', position: 'relative'
-            }} onClick={e => e.stopPropagation()}>
+            <div 
+                data-modal-content="true"
+                style={{
+                    width: '85%', maxWidth: '340px', backgroundColor: '#fff', borderRadius: '16px',
+                    padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
+                    maxHeight: '70vh', overflowY: 'auto', overscrollBehavior: 'contain', position: 'relative'
+                }} 
+                onClick={e => e.stopPropagation()}
+            >
                 
                 {/* 標題列 */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
