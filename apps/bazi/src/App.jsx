@@ -205,7 +205,6 @@ const ShenShaModal = ({ config, onClose }) => {
         >
             <div 
                 data-modal-content="true"
-                onTouchMove={(e) => e.stopPropagation()} // 🌟 允許彈窗內部自己滑動
                 style={{
                     width: '85%', maxWidth: '340px', backgroundColor: '#fff', borderRadius: '16px',
                     padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
@@ -2431,7 +2430,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                         >
                             <div 
                                 data-modal-content="true"
-                                onTouchMove={(e) => e.stopPropagation()} // 🌟 允許彈窗內部自己滑動
                                 style={{ 
                                     backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', 
                                     display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
@@ -2506,7 +2504,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                 >
                     <div 
                         data-modal-content="true"
-                        onTouchMove={(e) => e.stopPropagation()} // 🌟 允許文字框內部滑動
                         style={{ 
                             backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', 
                             display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', 
