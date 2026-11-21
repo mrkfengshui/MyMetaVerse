@@ -695,8 +695,8 @@ const SettingsView = ({
 
       {/* 版本歷史彈窗 */}
       {showVersionHistory && (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
-              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+            <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
                       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
                       <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
@@ -2130,68 +2130,8 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
     const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
-    const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
-
-    useEffect(() => {
-        if (!isAnyModalOpen) return;
-
-        let startY = 0;
-
-        // 🌟 自動檢查彈窗內容是否真的需要捲動，若不需捲動直接設為 hidden
-        const modalContents = document.querySelectorAll('[data-modal-content="true"]');
-        modalContents.forEach(el => {
-            if (el.scrollHeight <= el.clientHeight + 2) {
-                el.style.overflowY = 'hidden';
-            } else {
-                el.style.overflowY = 'auto';
-            }
-        });
-
-        const handleTouchStart = (e) => {
-            if (e.touches && e.touches.length > 0) {
-                startY = e.touches[0].clientY;
-            }
-        };
-
-        const preventBgScroll = (e) => {
-            const modalContent = e.target.closest('[data-modal-content="true"]');
-            
-            // 1. 手指在框外滑動 -> 直接阻擋
-            if (!modalContent) {
-                e.preventDefault();
-                return;
-            }
-
-            // 2. 框內內容不需捲動 -> 直接阻擋
-            if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
-                e.preventDefault();
-                return;
-            }
-
-            // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
-            const currentY = e.touches[0].clientY;
-            const isPullingDown = currentY > startY;
-            const isPushingUp = currentY < startY;
-
-            const isAtTop = modalContent.scrollTop <= 0;
-            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
-
-            if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
-                e.preventDefault();
-            }
-        };
-
-        document.addEventListener('touchstart', handleTouchStart, { passive: true });
-        document.addEventListener('touchmove', preventBgScroll, { passive: false });
-
-        return () => {
-            document.removeEventListener('touchstart', handleTouchStart);
-            document.removeEventListener('touchmove', preventBgScroll);
-        };
-    }, [isAnyModalOpen, shenShaModalConfig, relationModalContent, showOverviewModal, showNotesModal]);
-
     return (
-    <div style={{ flex: 1, overflowY: isAnyModalOpen ? 'hidden' : 'auto', padding: '16px', backgroundColor: THEME.bg }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
             {/* Header 區塊開始 */}
             <div style={{ 
                 backgroundColor: THEME.white, 
@@ -2848,6 +2788,65 @@ export default function BaziApp() {
           alert('讀取失敗，資料可能已損壞'); 
       }
   };
+
+  // 🌟 全局防背景滑動（涵蓋神煞、干支互動、綜合盤、批注、設定頁版本更新紀錄）
+  useEffect(() => {
+      let startY = 0;
+
+      const updateModalOverflow = () => {
+          const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+          modalContents.forEach(el => {
+              if (el.scrollHeight <= el.clientHeight + 2) {
+                  el.style.overflowY = 'hidden';
+              } else {
+                  el.style.overflowY = 'auto';
+              }
+          });
+      };
+
+      const handleTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+              startY = e.touches[0].clientY;
+              updateModalOverflow();
+          }
+      };
+
+      const preventBgScroll = (e) => {
+          const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+          if (activeModals.length === 0) return;
+
+          const modalContent = e.target.closest('[data-modal-content="true"]');
+
+          if (!modalContent) {
+              e.preventDefault();
+              return;
+          }
+
+          if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
+              e.preventDefault();
+              return;
+          }
+
+          const currentY = e.touches[0].clientY;
+          const isPullingDown = currentY > startY;
+          const isPushingUp = currentY < startY;
+
+          const isAtTop = modalContent.scrollTop <= 0;
+          const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
+
+          if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+              e.preventDefault();
+          }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+      return () => {
+          document.removeEventListener('touchstart', handleTouchStart);
+          document.removeEventListener('touchmove', preventBgScroll);
+      };
+  }, []);
 
   if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入命理數據庫...</div>;
