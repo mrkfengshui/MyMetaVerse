@@ -2080,16 +2080,20 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 `}</style>
                 
-                <div className="no-scrollbar" style={{ 
-                    backgroundColor: '#fff', borderRadius: '16px', 
-                    padding: isDesktop ? '20px' : '16px',
-                    width: '100%', 
-                    maxWidth: isDesktop ? '520px' : '420px', // 🌟 縮小整體彈窗寬度
-                    display: 'flex', flexDirection: 'column', gap: '16px', 
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    maxHeight: '90vh', overflowY: 'auto', 
-                    boxSizing: 'border-box'
-                }} onClick={e => e.stopPropagation()}>
+                <div 
+                    data-modal-content="true"
+                    className="no-scrollbar" 
+                    style={{ 
+                        backgroundColor: '#fff', borderRadius: '16px', 
+                        padding: isDesktop ? '20px' : '16px',
+                        width: '100%', maxWidth: isDesktop ? '520px' : '420px',
+                        display: 'flex', flexDirection: 'column', gap: '16px', 
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                        maxHeight: '90vh', overflowY: 'auto', overscrollBehavior: 'contain',
+                        boxSizing: 'border-box'
+                    }} 
+                    onClick={e => e.stopPropagation()}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '8px' }}>
                         <h3 style={{ margin: '0', fontSize: isDesktop ? '17px' : '16px', fontWeight: 'bold', color: THEME.black }}>綜合運勢盤</h3>
                         <button onClick={() => setShowOverviewModal(false)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
@@ -2366,7 +2370,15 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
 
                     return (
                         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
-                            <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                            <div 
+                                data-modal-content="true"
+                                style={{ 
+                                    backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', 
+                                    display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
+                                    maxHeight: '75vh', overflowY: 'auto', overscrollBehavior: 'contain' 
+                                }} 
+                                onClick={e => e.stopPropagation()}
+                            >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
                                     <h3 style={{ margin: '0', fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{modalTitle}</h3>
                                     <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
