@@ -1126,103 +1126,103 @@ const PillarCard = ({
 
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
-   const [isCapturing, setIsCapturing] = useState(false);
-   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
-   useEffect(() => {
-       const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-       window.addEventListener('resize', handleResize);
-       return () => window.removeEventListener('resize', handleResize);
-   }, []);
-   // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
-   const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
-       if (!data || !data.daYuns || data.isManual) return 0;
-       const currentYear = new Date().getFullYear();
-       const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
-       if (foundIndex !== -1) return foundIndex;
-       return currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1;
-   });
+    const [isCapturing, setIsCapturing] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    // 🌟 1. 初始化時自動比對西元年，找出「當前大運」的 Index
+    const [selectedDaYunIndex, setSelectedDaYunIndex] = useState(() => {
+        if (!data || !data.daYuns || data.isManual) return 0;
+        const currentYear = new Date().getFullYear();
+        const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
+        if (foundIndex !== -1) return foundIndex;
+        return currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1;
+    });
 
-   // 🌟 2. 當切換不同客人的命盤 (data 改變) 時，重新為新客人定位當前大運
-   useEffect(() => {
-       if (data && data.daYuns && !data.isManual) {
-           const currentYear = new Date().getFullYear();
-           const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
-           if (foundIndex !== -1) {
-               setSelectedDaYunIndex(foundIndex);
-           } else {
-               // 如果客人還沒起運，選第 1 個；如果老人家超過最後一個大運，選最後 1 個
-               setSelectedDaYunIndex(currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1);
-           }
-       } else {
-           setSelectedDaYunIndex(0);
-       }
-   }, [data]);
+    // 🌟 2. 當切換不同客人的命盤 (data 改變) 時，重新為新客人定位當前大運
+    useEffect(() => {
+        if (data && data.daYuns && !data.isManual) {
+            const currentYear = new Date().getFullYear();
+            const foundIndex = data.daYuns.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.startYear + 9);
+            if (foundIndex !== -1) {
+                setSelectedDaYunIndex(foundIndex);
+            } else {
+                // 如果客人還沒起運，選第 1 個；如果老人家超過最後一個大運，選最後 1 個
+                setSelectedDaYunIndex(currentYear < data.daYuns[0].startYear ? 0 : data.daYuns.length - 1);
+            }
+        } else {
+            setSelectedDaYunIndex(0);
+        }
+    }, [data]);
 
-   // 新增時辰微調處理函數
-   const handleHourAdjust = (delta) => {
-       if (data.isManual) {
-           alert('干支排盤模式無法微調時辰，請回到輸入頁手動修改。');
-           return;
-       }
-       
-       if (!onCalculate) {
-           alert('錯誤：請檢查 BaziApp 中是否有把 onCalculate={handleCalculate} 傳給 BaziResult！');
-           return;
-       }
+    // 新增時辰微調處理函數
+    const handleHourAdjust = (delta) => {
+        if (data.isManual) {
+            alert('干支排盤模式無法微調時辰，請回到輸入頁手動修改。');
+            return;
+        }
+        
+        if (!onCalculate) {
+            alert('錯誤：請檢查 BaziApp 中是否有把 onCalculate={handleCalculate} 傳給 BaziResult！');
+            return;
+        }
 
-       const current = data.rawDate;
-       // 強制將所有變數轉為整數，避免 Date 計算錯誤
-       const y = parseInt(current.year);
-       const m = parseInt(current.month) - 1; // JS 的月份是 0-11
-       const d = parseInt(current.day);
-       const h = parseInt(current.hour) || 0;
-       const min = parseInt(current.minute) || 0;
+        const current = data.rawDate;
+        // 強制將所有變數轉為整數，避免 Date 計算錯誤
+        const y = parseInt(current.year);
+        const m = parseInt(current.month) - 1; // JS 的月份是 0-11
+        const d = parseInt(current.day);
+        const h = parseInt(current.hour) || 0;
+        const min = parseInt(current.minute) || 0;
 
-       const dt = new Date(y, m, d, h, min);
-       dt.setHours(dt.getHours() + delta);
-       
-       const newFormData = { 
-           ...current, 
-           year: dt.getFullYear(), 
-           month: dt.getMonth() + 1, 
-           day: dt.getDate(), 
-           hour: dt.getHours(), 
-           minute: dt.getMinutes() 
-       };
-       
-       onCalculate(newFormData);
-   };
-   const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
-   const [selectedLiuYue, setSelectedLiuYue] = useState(null);
-   const [selectedLiuRi, setSelectedLiuRi] = useState(null);
-   const originalLiuNianRef = useRef(null);
-   const [showOverviewModal, setShowOverviewModal] = useState(false);
-   const [relationModalContent, setRelationModalContent] = useState(null);
-   const [displayMode, setDisplayMode] = useState('shiShen'); 
-   const [showNotesModal, setShowNotesModal] = useState(false);
-   const [notesText, setNotesText] = useState('');
-   useEffect(() => { setNotesText(data?.notes || ''); }, [data]);
+        const dt = new Date(y, m, d, h, min);
+        dt.setHours(dt.getHours() + delta);
+        
+        const newFormData = { 
+            ...current, 
+            year: dt.getFullYear(), 
+            month: dt.getMonth() + 1, 
+            day: dt.getDate(), 
+            hour: dt.getHours(), 
+            minute: dt.getMinutes() 
+        };
+        
+        onCalculate(newFormData);
+    };
+    const [selectedLiuNianYear, setSelectedLiuNianYear] = useState(null); 
+    const [selectedLiuYue, setSelectedLiuYue] = useState(null);
+    const [selectedLiuRi, setSelectedLiuRi] = useState(null);
+    const originalLiuNianRef = useRef(null);
+    const [showOverviewModal, setShowOverviewModal] = useState(false);
+    const [relationModalContent, setRelationModalContent] = useState(null);
+    const [displayMode, setDisplayMode] = useState('shiShen'); 
+    const [showNotesModal, setShowNotesModal] = useState(false);
+    const [notesText, setNotesText] = useState('');
+    useEffect(() => { setNotesText(data?.notes || ''); }, [data]);
 
-   const safeTheme = colorTheme || 'elemental';
-   useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
-   useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
-   useEffect(() => { setSelectedLiuRi(null); }, [selectedLiuYue]);
-   if (!data) return null;
+    const safeTheme = colorTheme || 'elemental';
+    useEffect(() => { setSelectedLiuNianYear(null); }, [selectedDaYunIndex]);
+    useEffect(() => { setSelectedLiuYue(null); }, [selectedLiuNianYear]);
+    useEffect(() => { setSelectedLiuRi(null); }, [selectedLiuYue]);
+    if (!data) return null;
 
-   // 輔助：切換模式邏輯
-   const toggleMode = (mode) => {
-       if (displayMode === mode) {
-           setDisplayMode('shiShen'); // 如果點選當前模式，則關閉(回到預設變通星)
-       } else {
-           setDisplayMode(mode); // 否則切換到該模式
-       }
-   };
+    // 輔助：切換模式邏輯
+    const toggleMode = (mode) => {
+        if (displayMode === mode) {
+            setDisplayMode('shiShen'); // 如果點選當前模式，則關閉(回到預設變通星)
+        } else {
+            setDisplayMode(mode); // 否則切換到該模式
+        }
+    };
 
-   const refGan = data.meta?.refGan || data.bazi.dayGan;
-   const liJiRule = data.meta?.liJiRule || 'day';
-   const refTitle = liJiRule === 'year' ? '年柱' : '日柱';
+    const refGan = data.meta?.refGan || data.bazi.dayGan;
+    const liJiRule = data.meta?.liJiRule || 'day';
+    const refTitle = liJiRule === 'year' ? '年柱' : '日柱';
 
-   const getDisplayItems = (gan, zhi) => {
+    const getDisplayItems = (gan, zhi) => {
         if (displayMode === 'zangGan') return ZHI_HIDDEN[zhi] || [];
         // 🌟 神煞與十神判斷都帶入 refGan
         if (displayMode === 'shenSha') return getShenSha(gan, zhi, refGan, data.bazi.dayZhi, data.bazi.yearZhi, data.bazi.monthZhi);
@@ -1236,138 +1236,138 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
         return getShiShen(refGan, gan); // 🌟 改為 refGan
     };
 
-   const getColor = (char, type) => {
-       if (safeTheme !== 'elemental') return '#555555'; 
-       return type === 'stem' ? (STEM_COLORS[char] || '#555555') : (BRANCH_COLORS[char] || '#555555');
-   };
+    const getColor = (char, type) => {
+        if (safeTheme !== 'elemental') return '#555555'; 
+        return type === 'stem' ? (STEM_COLORS[char] || '#555555') : (BRANCH_COLORS[char] || '#555555');
+    };
 
-   const getLiuYueData = (yearGan, yearZhi, year) => {
-       const yearGanIdx = TIANGAN.indexOf(yearGan);
-       if (yearGanIdx === -1) return [];
-       const startGanIdx = (yearGanIdx % 5) * 2 + 2; 
-       const months = [];
-       const JIE_QI_NAMES = ["立春", "驚蟄", "清明", "立夏", "芒種", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
-       
-       // 輔助函式：格式化日期時間 (例如: 2/4 16:20)
-       const formatTime = (solarObj) => {
-           const M = solarObj.getMonth();
-           const D = solarObj.getDay();
-           const h = String(solarObj.getHour()).padStart(2, '0');
-           const m = String(solarObj.getMinute()).padStart(2, '0');
-           return `${M}月${D}日 ${h}:${m}`;
-       };
+    const getLiuYueData = (yearGan, yearZhi, year) => {
+        const yearGanIdx = TIANGAN.indexOf(yearGan);
+        if (yearGanIdx === -1) return [];
+        const startGanIdx = (yearGanIdx % 5) * 2 + 2; 
+        const months = [];
+        const JIE_QI_NAMES = ["立春", "驚蟄", "清明", "立夏", "芒種", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
+        
+        // 輔助函式：格式化日期時間 (例如: 2/4 16:20)
+        const formatTime = (solarObj) => {
+            const M = solarObj.getMonth();
+            const D = solarObj.getDay();
+            const h = String(solarObj.getHour()).padStart(2, '0');
+            const m = String(solarObj.getMinute()).padStart(2, '0');
+            return `${M}月${D}日 ${h}:${m}`;
+        };
 
-       for(let i=0; i<12; i++) {
-           const ganIdx = (startGanIdx + i) % 10;
-           const zhiIdx = (2 + i) % 12; 
-           let searchYear = parseInt(year), searchMonth = i + 2; 
-           if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
-           
-           let dateStr = `${searchMonth}月`; 
-           let jieInfo = '';
-           let qiInfo = '';
+        for(let i=0; i<12; i++) {
+            const ganIdx = (startGanIdx + i) % 10;
+            const zhiIdx = (2 + i) % 12; 
+            let searchYear = parseInt(year), searchMonth = i + 2; 
+            if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
+            
+            let dateStr = `${searchMonth}月`; 
+            let jieInfo = '';
+            let qiInfo = '';
 
-           try {
-               if (window.Solar) {
-                   // 鎖定每月15號，確保位於節與氣之間
-                   const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
-                   const lunar = solarCheck.getLunar();
-                   
-                   // 1. 抓取「節」(月頭)
-                   const prevJie = lunar.getPrevJieQi(true); 
-                   // 2. 抓取「氣」(月中) - 15號的下一個節氣通常就是中氣
-                   const nextQi = lunar.getNextJieQi(true);
+            try {
+                if (window.Solar) {
+                    // 鎖定每月15號，確保位於節與氣之間
+                    const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
+                    const lunar = solarCheck.getLunar();
+                    
+                    // 1. 抓取「節」(月頭)
+                    const prevJie = lunar.getPrevJieQi(true); 
+                    // 2. 抓取「氣」(月中) - 15號的下一個節氣通常就是中氣
+                    const nextQi = lunar.getNextJieQi(true);
 
-                   if (prevJie && toTraditional(prevJie.getName()) === JIE_QI_NAMES[i]) {
-                       const solarJie = prevJie.getSolar();
-                       // 格式
-                       dateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
-                       // 詳細資訊
-                       jieInfo = `${toTraditional(prevJie.getName())} ${formatTime(solarJie)}`;
-                   }
-                   
-                   if (nextQi) {
-                       qiInfo = `${toTraditional(nextQi.getName())} ${formatTime(nextQi.getSolar())}`;
-                   }
-               }
-           } catch (e) { console.warn("節氣計算錯誤", e);
-           }
-           
-           months.push({ 
-               seq: i + 1, 
-               name: JIE_QI_NAMES[i], // 節氣名 (如: 立春)
-               dateStr: dateStr,      // 列表顯示用 (如: 4/2)
-               jieInfo: jieInfo,      // 詳細節資訊 (如: 立春 2/4 16:20)
-               qiInfo: qiInfo,        // 詳細氣資訊 (如: 雨水 2/19 12:00)
-               gan: TIANGAN[ganIdx] || '', 
-               zhi: DIZHI[zhiIdx] || '', 
-               ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), 
-               zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] 
-           });
-       }
-       return months;
-   };
+                    if (prevJie && toTraditional(prevJie.getName()) === JIE_QI_NAMES[i]) {
+                        const solarJie = prevJie.getSolar();
+                        // 格式
+                        dateStr = `${solarJie.getMonth()}/${solarJie.getDay()}`;
+                        // 詳細資訊
+                        jieInfo = `${toTraditional(prevJie.getName())} ${formatTime(solarJie)}`;
+                    }
+                    
+                    if (nextQi) {
+                        qiInfo = `${toTraditional(nextQi.getName())} ${formatTime(nextQi.getSolar())}`;
+                    }
+                }
+            } catch (e) { console.warn("節氣計算錯誤", e);
+            }
+            
+            months.push({ 
+                seq: i + 1, 
+                name: JIE_QI_NAMES[i], // 節氣名 (如: 立春)
+                dateStr: dateStr,      // 列表顯示用 (如: 4/2)
+                jieInfo: jieInfo,      // 詳細節資訊 (如: 立春 2/4 16:20)
+                qiInfo: qiInfo,        // 詳細氣資訊 (如: 雨水 2/19 12:00)
+                gan: TIANGAN[ganIdx] || '', 
+                zhi: DIZHI[zhiIdx] || '', 
+                ganGod: getShiShen(data.bazi.dayGan, TIANGAN[ganIdx]), 
+                zhiHidden: ZHI_HIDDEN[DIZHI[zhiIdx]] || [] 
+            });
+        }
+        return months;
+    };
 
-   const getLiuRiData = () => {
-       if (!selectedLiuYue || !selectedLiuNianYear || !window.Solar) return [];
-       const days = [];
-       
-       // 1. 定義節氣白名單 (只找「節」，跳過「氣」)
-       const JIE_NAMES_CN = ["立春", "惊蛰", "清明", "立夏", "芒种", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
+    const getLiuRiData = () => {
+        if (!selectedLiuYue || !selectedLiuNianYear || !window.Solar) return [];
+        const days = [];
+        
+        // 1. 定義節氣白名單 (只找「節」，跳過「氣」)
+        const JIE_NAMES_CN = ["立春", "惊蛰", "清明", "立夏", "芒种", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"];
 
-       try {
-           // 2. 推算流月參考時間點 (該月15號)
-           let searchMonth = selectedLiuYue.seq + 1;
-           let searchYear = parseInt(selectedLiuNianYear);
-           if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
+        try {
+            // 2. 推算流月參考時間點 (該月15號)
+            let searchMonth = selectedLiuYue.seq + 1;
+            let searchYear = parseInt(selectedLiuNianYear);
+            if (searchMonth > 12) { searchMonth -= 12; searchYear += 1; }
 
-           const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
-           const lunar = solarCheck.getLunar();
-           
-           // 3. 獲取本月起點 (節)
-           const currentJie = lunar.getPrevJieQi(false); 
+            const solarCheck = window.Solar.fromYmd(searchYear, searchMonth, 15);
+            const lunar = solarCheck.getLunar();
+            
+            // 3. 獲取本月起點 (節)
+            const currentJie = lunar.getPrevJieQi(false); 
 
-           // 4. 尋找下一個真正的「節」 (排除中氣)
-           let nextJie = lunar.getNextJieQi(true); 
-           while (nextJie && !JIE_NAMES_CN.includes(nextJie.getName())) {
-               // 如果是中氣(如春分)，往後推 1 天繼續找，直到找到下一個節(如清明)
-               nextJie = nextJie.getSolar().next(1).getLunar().getNextJieQi(true);
-           }
+            // 4. 尋找下一個真正的「節」 (排除中氣)
+            let nextJie = lunar.getNextJieQi(true); 
+            while (nextJie && !JIE_NAMES_CN.includes(nextJie.getName())) {
+                // 如果是中氣(如春分)，往後推 1 天繼續找，直到找到下一個節(如清明)
+                nextJie = nextJie.getSolar().next(1).getLunar().getNextJieQi(true);
+            }
 
-           if (currentJie && nextJie) {
-               let iterSolar = currentJie.getSolar();
-               
-               // 【核心修正】：將結束時間轉為單純的日期字串 "2026-04-05"
-               // 這樣可以完全忽略時分秒帶來的誤差
-               const endDateStr = nextJie.getSolar().toYmd();
-               
-               // 5. 執行迴圈：只要「當前日期」不等於「下個節氣日期」，就繼續
-               // 這樣 4/4 (不等於 4/5) 會被執行，而 4/5 (等於 4/5) 會停止
-               while (iterSolar.toYmd() !== endDateStr) {
-                   
-                   const iterLunar = iterSolar.getLunar();
-                   const dGanZhi = iterLunar.getDayInGanZhi();
-                   
-                   days.push({
-                       dateStr: `${iterSolar.getMonth()}/${iterSolar.getDay()}`,
-                       gan: dGanZhi.charAt(0),
-                       zhi: dGanZhi.charAt(1),
-                       ganGod: getShiShen(data.bazi.dayGan, dGanZhi.charAt(0)),
-                       zhiHidden: ZHI_HIDDEN[dGanZhi.charAt(1)] || [] 
-                   });
-                   
-                   // 往後推一天
-                   iterSolar = iterSolar.next(1);
+            if (currentJie && nextJie) {
+                let iterSolar = currentJie.getSolar();
+                
+                // 【核心修正】：將結束時間轉為單純的日期字串 "2026-04-05"
+                // 這樣可以完全忽略時分秒帶來的誤差
+                const endDateStr = nextJie.getSolar().toYmd();
+                
+                // 5. 執行迴圈：只要「當前日期」不等於「下個節氣日期」，就繼續
+                // 這樣 4/4 (不等於 4/5) 會被執行，而 4/5 (等於 4/5) 會停止
+                while (iterSolar.toYmd() !== endDateStr) {
+                    
+                    const iterLunar = iterSolar.getLunar();
+                    const dGanZhi = iterLunar.getDayInGanZhi();
+                    
+                    days.push({
+                        dateStr: `${iterSolar.getMonth()}/${iterSolar.getDay()}`,
+                        gan: dGanZhi.charAt(0),
+                        zhi: dGanZhi.charAt(1),
+                        ganGod: getShiShen(data.bazi.dayGan, dGanZhi.charAt(0)),
+                        zhiHidden: ZHI_HIDDEN[dGanZhi.charAt(1)] || [] 
+                    });
+                    
+                    // 往後推一天
+                    iterSolar = iterSolar.next(1);
 
-                   // 安全斷路器 (防止極端錯誤)
-                   if (days.length > 40) break;
-               }
-           }
-       } catch (e) {
-           console.error("流日計算錯誤", e);
-       }
-       return days;
-   };
+                    // 安全斷路器 (防止極端錯誤)
+                    if (days.length > 40) break;
+                }
+            }
+        } catch (e) {
+            console.error("流日計算錯誤", e);
+        }
+        return days;
+    };
 
     // 1. 新增 State
     const [shenShaModalConfig, setShenShaModalConfig] = useState({ isOpen: false, title: '', items: [] });
@@ -2114,339 +2114,368 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
        return counts;
     };   
 
-   const firstRow = data.daYuns ? data.daYuns.slice(0, 5) : [];
-   const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
-   const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
+    const firstRow = data.daYuns ? data.daYuns.slice(0, 5) : [];
+    const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
+    const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
-return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
-        {/* Header 區塊開始 */}
-        <div style={{ 
-            backgroundColor: THEME.white, 
-            borderRadius: '12px', 
-            padding: '16px', 
-            marginBottom: '16px', 
-            border: `1px solid ${THEME.border}`, 
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            display: 'flex',           
-            flexDirection: 'column'    // 垂直排列：上方內容 vs 下方起運
-        }}>
-            
-            {/* --- 上半部區域 (資料 + 按鈕) --- */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    return (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
+            {/* Header 區塊開始 */}
+            <div style={{ 
+                backgroundColor: THEME.white, 
+                borderRadius: '12px', 
+                padding: '16px', 
+                marginBottom: '16px', 
+                border: `1px solid ${THEME.border}`, 
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                display: 'flex',           
+                flexDirection: 'column'    // 垂直排列：上方內容 vs 下方起運
+            }}>
                 
-                {/* 1. 左側：姓名與日期資訊 (佔用剩餘空間) */}
-                <div style={{ flex: 1, marginRight: '12px' }}>
-                    {/* 姓名行 */}
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black, marginBottom: '6px' }}>
-                        {data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span>
-                    </div>
+                {/* --- 上半部區域 (資料 + 按鈕) --- */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     
-                    {/* 日期資訊 */}
-                    {data.isManual ? ( 
-                        <div style={{ fontSize: '13px', color: THEME.gray }}></div> 
-                    ) : ( 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}> 
-                            <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
-                                        農曆 {data.lunarDate} 
+                    {/* 1. 左側：姓名與日期資訊 (佔用剩餘空間) */}
+                    <div style={{ flex: 1, marginRight: '12px' }}>
+                        {/* 姓名行 */}
+                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: THEME.black, marginBottom: '6px' }}>
+                            {data.name} <span style={{ fontSize: '14px', color: THEME.gray, fontWeight: 'normal' }}>({data.genderText})</span>
+                        </div>
+                        
+                        {/* 日期資訊 */}
+                        {data.isManual ? ( 
+                            <div style={{ fontSize: '13px', color: THEME.gray }}></div> 
+                        ) : ( 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}> 
+                                <div style={{ fontSize: '13px', color: THEME.gray }}>西曆 {data.solarDate}</div> 
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div style={{ fontSize: '13px', color: THEME.purple, fontWeight: '500', lineHeight: '1' }}>
+                                            農曆 {data.lunarDate} 
+                                        </div>
+                                        {/* 🌟 修正：付費後隱藏時辰微調按鈕 */}
+                                        {!data.isPaid && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                                <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
+                                            </div>
+                                        )}
                                     </div>
-                                    {/* 🌟 修正：付費後隱藏時辰微調按鈕 */}
-                                    {!data.isPaid && (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <button onClick={() => handleHourAdjust(2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="下個時辰"> <ChevronLeft size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                            <button onClick={() => handleHourAdjust(-2)} style={{ background: 'white', border: `1px solid ${THEME.border}`, borderRadius:'3px', padding:'0px 4px', cursor: 'pointer', color: THEME.gray, display: 'flex', alignItems: 'center', height: '14px', lineHeight: 0 }} title="上個時辰"> <ChevronRight size={10} style={{ transform: 'rotate(90deg)' }} /> </button>
-                                        </div>
-                                    )}
-                                </div>
-                            {/* 節氣天數 */}
-                            {data.jieQiSpan && (
-                                <div style={{ fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
-                                    ({data.jieQiSpan})
-                                </div>
-                            )}
-                            <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', marginTop: '1px' }}>
-                                日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}
+                                {/* 節氣天數 */}
+                                {data.jieQiSpan && (
+                                    <div style={{ fontSize: '11px', color: THEME.dark, fontWeight: 'bold' }}>
+                                        ({data.jieQiSpan})
+                                    </div>
+                                )}
+                                <div style={{ fontSize: '13px', color: THEME.gray, fontWeight: '500', marginTop: '1px' }}>
+                                    日空: {data.meta.dayKongWang.join('')} 年空: {data.meta.yearKongWang.join('')}
+                                </div> 
                             </div> 
-                        </div> 
-                    )}
+                        )}
+                    </div>
+
+                    {/* 2. 右側：按鈕集中區 (改為 2 欄 Grid 避免擠壓左側日期) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', flexShrink: 0 }}>
+                        {/* 第一排 */}
+                        <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <Edit3 size={13} /> 批注 
+                        </button>
+                        {!data.isPaid ? (
+                            <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                                <RefreshCw size={13} /> 重排 
+                            </button>
+                        ) : (
+                            <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center', opacity: 0.6 }}> 
+                                <Lock size={13} /> 重排 
+                            </button>
+                        )}
+                        
+                        {/* 第二排 */}
+                        <button 
+                            onClick={() => toggleMode('zangGan')} 
+                            style={{ 
+                                ...btnStyle, 
+                                backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
+                                color: displayMode === 'zangGan' ? 'white' : THEME.gray,
+                                justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
+                            }}>
+                            {displayMode === 'zangGan' ? <Eye size={13}/> : <EyeOff size={13}/>} 藏干
+                        </button>
+                        <button 
+                            onClick={() => toggleMode('shenSha')} 
+                            style={{ 
+                                ...btnStyle, 
+                                backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
+                                color: displayMode === 'shenSha' ? 'white' : THEME.gray,
+                                justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
+                            }}>
+                            {displayMode === 'shenSha' ? <Eye size={13}/> : <EyeOff size={13}/>} 神煞
+                        </button>
+
+                        {/* 第三排：左邊留空，讓「保存」精準落在「神煞」下方 */}
+                        <div></div>
+                        <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
+                            <Bookmark size={13} /> 保存 
+                        </button>
+                    </div>
                 </div>
 
-                {/* 2. 右側：按鈕集中區 (改為 2 欄 Grid 避免擠壓左側日期) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', flexShrink: 0 }}>
-                    {/* 第一排 */}
-                    <button onClick={() => setShowNotesModal(true)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                        <Edit3 size={13} /> 批注 
-                    </button>
-                    {!data.isPaid ? (
-                        <button onClick={onBack} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                            <RefreshCw size={13} /> 重排 
-                        </button>
-                    ) : (
-                        <button onClick={() => alert('此紀錄已付費解鎖命書，無法重新排盤以防資料錯亂。如需測算其他時辰，請新增一筆紀錄。')} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center', opacity: 0.6 }}> 
-                            <Lock size={13} /> 重排 
-                        </button>
-                    )}
-                    
-                    {/* 第二排 */}
-                    <button 
-                        onClick={() => toggleMode('zangGan')} 
-                        style={{ 
-                            ...btnStyle, 
-                            backgroundColor: displayMode === 'zangGan' ? THEME.black : THEME.bgGray,
-                            color: displayMode === 'zangGan' ? 'white' : THEME.gray,
-                            justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
-                        }}>
-                        {displayMode === 'zangGan' ? <Eye size={13}/> : <EyeOff size={13}/>} 藏干
-                    </button>
-                    <button 
-                        onClick={() => toggleMode('shenSha')} 
-                        style={{ 
-                            ...btnStyle, 
-                            backgroundColor: displayMode === 'shenSha' ? THEME.purple : THEME.bgGray,
-                            color: displayMode === 'shenSha' ? 'white' : THEME.gray,
-                            justifyContent: 'center', padding: '6px 10px', minWidth: '60px'
-                        }}>
-                        {displayMode === 'shenSha' ? <Eye size={13}/> : <EyeOff size={13}/>} 神煞
-                    </button>
-
-                    {/* 第三排：左邊留空，讓「保存」精準落在「神煞」下方 */}
-                    <div></div>
-                    <button onClick={() => onSave(data)} style={{ ...btnStyle, padding: '6px 10px', minWidth: '60px', justifyContent: 'center' }}> 
-                        <Bookmark size={13} /> 保存 
-                    </button>
-                </div>
-            </div>
-
-            {/* --- 下半部區域：起運資訊 (獨立一行，寬度 100%) --- */}
-            {data.yunInfo ? ( 
-                <div style={{ 
-                    fontSize: '13px', 
-                    color: THEME.blue, 
-                    fontWeight: 'bold',
-                    marginTop: '1px',              // 與上方拉開距離
-                    paddingTop: '1px',             // 增加內距
-                    width: '100%',
-                    lineHeight: '1'
-                }}>
-                    {data.yunInfo.detail}
-                    <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-                        (西曆 {data.yunInfo.startDate} 起運)
-                    </span>
-                </div> 
-            ) : null}
-
-        </div>
-       <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '0', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                <PillarCard 
-                    title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi}
-                    kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
-                    isCapturing={isCapturing}
-                    isDesktop={isDesktop} // 🌟 補上這行
-                    {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
-                />
-                <PillarCard 
-                    title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
-                    kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
-                    huaQi={data.meta.isHuaQi}
-                    isCapturing={isCapturing}
-                    isDesktop={isDesktop} // 🌟 補上這行
-                    {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
-                />
-                <PillarCard 
-                    title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
-                    kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
-                    isCapturing={isCapturing}
-                    isDesktop={isDesktop} // 🌟 補上這行
-                    {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
-                />
-                <PillarCard 
-                    title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
-                    kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
-                    isCapturing={isCapturing}
-                    isDesktop={isDesktop} // 🌟 補上這行
-                    {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
-                />
-            </div>
-            
-            {/* 🌟 修正：截圖時移除大運卡片的 boxShadow */}
-            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
-                {renderDaYunGrid()}
-            </div>
-            
-            {renderLiuNianGrid()}
-        </div>
-        {renderLiuYueGrid()}
-        {renderLiuRiList()}
-        {/* 五行強弱 */}
-        <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
-            {(() => { 
-                const wxCounts = calculateWuXingStrength(); 
-                const order = ['木', '火', '土', '金', '水']; 
-                return ( 
+                {/* --- 下半部區域：起運資訊 (獨立一行，寬度 100%) --- */}
+                {data.yunInfo ? ( 
                     <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(5, 1fr)',
-                        gap: '4px'
-                    }}> 
-                        {order.map(elm => ( 
-                            <div key={elm} style={{ 
-                                padding: '8px 2px',
-                                backgroundColor: THEME.bgGray, 
-                                borderRadius: '8px', 
-                                fontSize: '13px', 
-                                display: 'flex', 
-                                flexDirection: 'row',
-                                alignItems: 'center', 
-                                justifyContent: 'center',
-                                whiteSpace: 'nowrap'
-                            }}> 
-                                <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}: </span>
-                                <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
-                                    {wxCounts[elm]}
-                                </span> 
-                            </div> 
-                        ))} 
+                        fontSize: '13px', 
+                        color: THEME.blue, 
+                        fontWeight: 'bold',
+                        marginTop: '1px',              // 與上方拉開距離
+                        paddingTop: '1px',             // 增加內距
+                        width: '100%',
+                        lineHeight: '1'
+                    }}>
+                        {data.yunInfo.detail}
+                        <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
+                            (西曆 {data.yunInfo.startDate} 起運)
+                        </span>
                     </div> 
-                ); 
-            })()}
-        </div>
-        {/* --- Gemini AI 算命分析 --- */}
-        <AiBaziAnalysis 
-            data={data} 
-            THEME={THEME}
-            appType="bazi"
-            onSave={onSave}
-            utils={{ 
-                WUXING_MAP, 
-                ZHI_HIDDEN, 
-                getShiShen, 
-                getShenSha, 
-                TIANGAN, 
-                DIZHI 
-            }}
-            // 🌟 補上八字的空鉤子，防止 onBeforeCapture undefined 報錯
-            onBeforeCapture={async () => {
-                setIsCapturing(true); // 🌟 截圖前：開啟「截圖模式」，瞬間剝除所有陰影
-                
-                // 🌟 截圖前：記住原本狀態，並自動點選「今年的流年」展開流月盤
-                originalLiuNianRef.current = selectedLiuNianYear; 
-                setSelectedLiuNianYear(new Date().getFullYear()); 
-                
-                // 給予 0.5 秒的緩衝，讓 React 有時間把流月盤渲染出來
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }}
-            onAfterCapture={() => {
-                setIsCapturing(false); // 🌟 截圖後：恢復原狀
-                
-                // 🌟 截圖後：神不知鬼不覺地把流年恢復成客人原本點選的狀態
-                setSelectedLiuNianYear(originalLiuNianRef.current); 
-            }}
-        />
-        <ShenShaModal 
-                config={shenShaModalConfig} 
-                onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
-            />
-        <NamingSystem data={data} THEME={THEME} />
-        {/* 🌟 3. 渲染綜合運勢盤 */}
-        {renderOverviewModal()}
-        {/* 互動詳情彈窗 */}
-            {relationModalContent && (() => {
-                const lines = relationModalContent.split('\n');
-                const modalTitle = lines[0]; // 第一行作為頂部標題 (例如：甲子大運)
-                const bodyLines = lines.slice(1); // 其餘行作為內文
+                ) : null}
 
-                return (
-                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
-                        <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
-                                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{modalTitle}</h3>
-                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
-                            </div>
-                            <div style={{ textAlign: 'left', padding: '4px 0', fontSize: '14px', color: THEME.black, lineHeight: '1.5' }}>
-                                {bodyLines.map((line, i) => {
-                                    if (line === '---') {
-                                        return <div key={i} style={{ height: '1px', backgroundColor: THEME.border, margin: '12px 0' }} />;
-                                    }
-                                    const isRelationTitle = line.startsWith('天干與') || line.startsWith('地支與');
-                                    const isDesc = line.trim() !== '' && !isRelationTitle;
-                                    return (
-                                        <div key={i} style={{ 
-                                            fontWeight: isDesc ? 'normal' : 'bold', 
-                                            color: isDesc ? '#888888' : THEME.black,
-                                            marginTop: (isRelationTitle && i > 0) ? '8px' : '0',
-                                            fontSize: isDesc ? '13px' : '15px',
-                                            textAlign: 'left'
-                                        }}>
-                                            {line || '\u00A0'}
-                                        </div>
-                                    );
-                                })}
+            </div>
+        <div id="chart-capture-area" style={{ backgroundColor: THEME.bg, padding: '0', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <PillarCard 
+                        title="時柱" gan={data.bazi.timeGan} zhi={data.bazi.timeZhi}
+                        kongWangStatus={getKongWangStatus(data.bazi.timeZhi)}
+                        isCapturing={isCapturing}
+                        isDesktop={isDesktop} // 🌟 補上這行
+                        {...{naYin:data.naYin.time, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                    />
+                    <PillarCard 
+                        title="日柱" gan={data.bazi.dayGan} zhi={data.bazi.dayZhi} 
+                        kongWangStatus={getKongWangStatus(data.bazi.dayZhi)}
+                        huaQi={data.meta.isHuaQi}
+                        isCapturing={isCapturing}
+                        isDesktop={isDesktop} // 🌟 補上這行
+                        {...{naYin:data.naYin.day, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'day' ? data.genderText : null, onShenShaClick:openShenShaModal}}
+                    />
+                    <PillarCard 
+                        title="月柱" gan={data.bazi.monthGan} zhi={data.bazi.monthZhi} 
+                        kongWangStatus={getKongWangStatus(data.bazi.monthZhi)}
+                        isCapturing={isCapturing}
+                        isDesktop={isDesktop} // 🌟 補上這行
+                        {...{naYin:data.naYin.month, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, onShenShaClick:openShenShaModal}}
+                    />
+                    <PillarCard 
+                        title="年柱" gan={data.bazi.yearGan} zhi={data.bazi.yearZhi} 
+                        kongWangStatus={getKongWangStatus(data.bazi.yearZhi)}
+                        isCapturing={isCapturing}
+                        isDesktop={isDesktop} // 🌟 補上這行
+                        {...{naYin:data.naYin.year, refGan: refGan, refTitle: refTitle, displayMode, dayZhi:data.bazi.dayZhi, yearZhi:data.bazi.yearZhi, monthZhi:data.bazi.monthZhi, colorTheme, genderText: liJiRule === 'year' ? data.genderText : null, onShenShaClick:openShenShaModal}}
+                    />
+                </div>
+                
+                {/* 🌟 修正：截圖時移除大運卡片的 boxShadow */}
+                <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: isCapturing ? 'none' : '0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.blue}`, paddingLeft: '8px', fontSize: '15px' }}>大運</h4>
+                    {renderDaYunGrid()}
+                </div>
+                
+                {renderLiuNianGrid()}
+            </div>
+            {renderLiuYueGrid()}
+            {renderLiuRiList()}
+            {/* 五行強弱 */}
+            <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
+                {(() => { 
+                    const wxCounts = calculateWuXingStrength(); 
+                    const order = ['木', '火', '土', '金', '水']; 
+                    return ( 
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(5, 1fr)',
+                            gap: '4px'
+                        }}> 
+                            {order.map(elm => ( 
+                                <div key={elm} style={{ 
+                                    padding: '8px 2px',
+                                    backgroundColor: THEME.bgGray, 
+                                    borderRadius: '8px', 
+                                    fontSize: '13px', 
+                                    display: 'flex', 
+                                    flexDirection: 'row',
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    whiteSpace: 'nowrap'
+                                }}> 
+                                    <span style={{ color: THEME.gray, fontSize: '12px', marginBottom: '2px' }}>{elm}: </span>
+                                    <span style={{ fontWeight: 'bold', fontSize: '15px', color: wxCounts[elm] > 2 ? THEME.red : THEME.black }}>
+                                        {wxCounts[elm]}
+                                    </span> 
+                                </div> 
+                            ))} 
+                        </div> 
+                    ); 
+                })()}
+            </div>
+            {/* --- Gemini AI 算命分析 --- */}
+            <AiBaziAnalysis 
+                data={data} 
+                THEME={THEME}
+                appType="bazi"
+                onSave={onSave}
+                utils={{ 
+                    WUXING_MAP, 
+                    ZHI_HIDDEN, 
+                    getShiShen, 
+                    getShenSha, 
+                    TIANGAN, 
+                    DIZHI 
+                }}
+                // 🌟 補上八字的空鉤子，防止 onBeforeCapture undefined 報錯
+                onBeforeCapture={async () => {
+                    setIsCapturing(true); // 🌟 截圖前：開啟「截圖模式」，瞬間剝除所有陰影
+                    
+                    // 🌟 截圖前：記住原本狀態，並自動點選「今年的流年」展開流月盤
+                    originalLiuNianRef.current = selectedLiuNianYear; 
+                    setSelectedLiuNianYear(new Date().getFullYear()); 
+                    
+                    // 給予 0.5 秒的緩衝，讓 React 有時間把流月盤渲染出來
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }}
+                onAfterCapture={() => {
+                    setIsCapturing(false); // 🌟 截圖後：恢復原狀
+                    
+                    // 🌟 截圖後：神不知鬼不覺地把流年恢復成客人原本點選的狀態
+                    setSelectedLiuNianYear(originalLiuNianRef.current); 
+                }}
+            />
+            <ShenShaModal 
+                    config={shenShaModalConfig} 
+                    onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
+                />
+            <NamingSystem data={data} THEME={THEME} />
+            {/* 🌟 3. 渲染綜合運勢盤 */}
+            {renderOverviewModal()}
+            {/* 互動詳情彈窗 */}
+                {relationModalContent && (() => {
+                    const lines = relationModalContent.split('\n');
+                    const modalTitle = lines[0]; // 第一行作為頂部標題 (例如：甲子大運)
+                    const bodyLines = lines.slice(1); // 其餘行作為內文
+
+                    return (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                            <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
+                                    <h3 style={{ margin: '0', fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{modalTitle}</h3>
+                                    <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
+                                </div>
+                                <div style={{ textAlign: 'left', padding: '4px 0', fontSize: '14px', color: THEME.black, lineHeight: '1.5' }}>
+                                    {bodyLines.map((line, i) => {
+                                        if (line === '---') {
+                                            return <div key={i} style={{ height: '1px', backgroundColor: THEME.border, margin: '12px 0' }} />;
+                                        }
+                                        const isRelationTitle = line.startsWith('天干與') || line.startsWith('地支與');
+                                        const isDesc = line.trim() !== '' && !isRelationTitle;
+                                        return (
+                                            <div key={i} style={{ 
+                                                fontWeight: isDesc ? 'normal' : 'bold', 
+                                                color: isDesc ? '#888888' : THEME.black,
+                                                marginTop: (isRelationTitle && i > 0) ? '8px' : '0',
+                                                fontSize: isDesc ? '13px' : '15px',
+                                                textAlign: 'left'
+                                            }}>
+                                                {line || '\u00A0'}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                );
-            })()}
+                    );
+                })()}
 
-        {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
-        {!isCapturing && (
-            <button
-                onClick={() => setShowOverviewModal(true)}
-                style={{
-                    position: 'fixed',
-                    bottom: '100px',     // 避開底部導航列
-                    right: '20px',
-                    width: '54px',
-                    height: '54px',
-                    borderRadius: '27px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 帶點透明度的白底
-                    color: '#999999',                             // 圖示顏色改淺灰
-                    border: '2px solid #e0e0e0',                  // 外圈改為極淺的灰色
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',     // 陰影再進一步調淡
-                    
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                    cursor: 'pointer',
-                    transition: 'transform 0.1s',
-                }}
-                onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
-                onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            >
-                <Eye style={{ transform: 'scale(2)' }} />
-            </button>
-        )}
+            {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
+            {!isCapturing && (
+                <button
+                    onClick={() => setShowOverviewModal(true)}
+                    style={{
+                        position: 'fixed',
+                        bottom: '100px',     // 避開底部導航列
+                        right: '20px',
+                        width: '54px',
+                        height: '54px',
+                        borderRadius: '27px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', // 帶點透明度的白底
+                        color: '#999999',                             // 圖示顏色改淺灰
+                        border: '2px solid #e0e0e0',                  // 外圈改為極淺的灰色
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.05)',     // 陰影再進一步調淡
+                        
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                        cursor: 'pointer',
+                        transition: 'transform 0.1s',
+                    }}
+                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
+                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <Eye style={{ transform: 'scale(2)' }} />
+                </button>
+            )}
 
-        {showNotesModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
-                    <textarea 
-                        value={notesText} 
-                        onChange={e => setNotesText(e.target.value)}
-                        placeholder="在此輸入批注或重點..."
-                        style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
-                    />
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-                        <button onClick={() => setShowNotesModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.bgGray, color: THEME.gray, cursor: 'pointer' }}>取消</button>
-                        <button onClick={() => { 
-                            const updatedData = { ...data, notes: notesText };
-                            data.notes = notesText; // 同步目前物件
-                            onSave(updatedData); // 觸發儲存
-                            setShowNotesModal(false);
-                        }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存批注</button>
+            {showNotesModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
+                        <textarea 
+                            value={notesText} 
+                            onChange={e => setNotesText(e.target.value)}
+                            placeholder="在此輸入批注或重點..."
+                            style={{ width: '100%', height: '150px', padding: '12px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '14px', resize: 'none', boxSizing: 'border-box' }}
+                        />
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button onClick={() => setShowNotesModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.bgGray, color: THEME.gray, cursor: 'pointer' }}>取消</button>
+                            <button onClick={() => { 
+                                const updatedData = { ...data, notes: notesText };
+                                data.notes = notesText; // 同步目前物件
+                                onSave(updatedData); // 觸發儲存
+                                setShowNotesModal(false);
+                            }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: THEME.blue, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>儲存批注</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
-     </div>
-   );
+            )}
+        </div>
+    );
+    const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
+
+    useEffect(() => {
+        const scrollContainers = document.querySelectorAll('[style*="overflow-y: auto"], [style*="overflowY"]');
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            scrollContainers.forEach(el => {
+                if (!el.closest('[data-modal-content="true"]')) {
+                    el.dataset.prevOverflow = el.style.overflowY;
+                    el.style.overflowY = 'hidden';
+                }
+            });
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+            scrollContainers.forEach(el => {
+                if (el.dataset.prevOverflow !== undefined) {
+                    el.style.overflowY = el.dataset.prevOverflow;
+                    delete el.dataset.prevOverflow;
+                }
+            });
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [isAnyModalOpen]);
 };
 
 // =========================================================================
