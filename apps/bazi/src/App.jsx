@@ -2132,22 +2132,51 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
     const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
+
     useEffect(() => {
         if (!isAnyModalOpen) return;
 
+        let startY = 0;
+
+        const handleTouchStart = (e) => {
+            if (e.touches && e.touches.length > 0) {
+                startY = e.touches[0].clientY;
+            }
+        };
+
         const preventBgScroll = (e) => {
             const modalContent = e.target.closest('[data-modal-content="true"]');
+            
+            // 1. 手指在框外滑動 -> 直接阻擋
             if (!modalContent) {
                 e.preventDefault();
                 return;
             }
+
+            // 2. 框內內容不需捲動（文字很少） -> 直接阻擋
             if (modalContent.scrollHeight <= modalContent.clientHeight) {
+                e.preventDefault();
+                return;
+            }
+
+            // 3. 框內內容可以捲動，但已滑到「最頂部還往下拉」或「最底部還往上推」 -> 阻擋邊界穿透
+            const currentY = e.touches[0].clientY;
+            const isPullingDown = currentY > startY; // 手指向下拖（頁面往上捲）
+            const isPushingUp = currentY < startY;   // 手指向上推（頁面往下捲）
+
+            const isAtTop = modalContent.scrollTop <= 0;
+            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 1;
+
+            if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
                 e.preventDefault();
             }
         };
 
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
         document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
         return () => {
+            document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', preventBgScroll);
         };
     }, [isAnyModalOpen]);
