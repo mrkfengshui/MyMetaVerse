@@ -194,13 +194,18 @@ const ShenShaModal = ({ config, onClose }) => {
     if (!config.isOpen) return null;
     
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000,
-            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
-            backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s'
-        }} onClick={onClose}>
+        <div 
+            onTouchMove={(e) => e.preventDefault()} // 🌟 攔截背景滑動
+            style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000,
+                backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s'
+            }} 
+            onClick={onClose}
+        >
             <div 
                 data-modal-content="true"
+                onTouchMove={(e) => e.stopPropagation()} // 🌟 允許彈窗內部自己滑動
                 style={{
                     width: '85%', maxWidth: '340px', backgroundColor: '#fff', borderRadius: '16px',
                     padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
@@ -2385,9 +2390,14 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                     const bodyLines = lines.slice(1); // 其餘行作為內文
 
                     return (
-                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                        <div 
+                            onTouchMove={(e) => e.preventDefault()} // 🌟 攔截背景滑動
+                            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} 
+                            onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}
+                        >
                             <div 
                                 data-modal-content="true"
+                                onTouchMove={(e) => e.stopPropagation()} // 🌟 允許彈窗內部自己滑動
                                 style={{ 
                                     backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', 
                                     display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
@@ -2456,9 +2466,13 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             )}
 
             {showNotesModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div 
+                    onTouchMove={(e) => e.preventDefault()} // 🌟 攔截背景滑動
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                >
                     <div 
                         data-modal-content="true"
+                        onTouchMove={(e) => e.stopPropagation()} // 🌟 允許文字框內部滑動
                         style={{ 
                             backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', 
                             display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', 
@@ -2814,7 +2828,8 @@ export default function BaziApp() {
             ref={contentRef} 
             style={{ 
                 ...COMMON_STYLES.contentArea, 
-                overflowY: isModalOpen ? 'hidden' : 'auto' 
+                overflowY: isModalOpen ? 'hidden' : 'auto',
+                touchAction: isModalOpen ? 'none' : 'auto'
             }}
         >
           {view === 'input' && (
