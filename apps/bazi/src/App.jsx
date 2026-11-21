@@ -2132,18 +2132,23 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
     const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
-
     useEffect(() => {
-        if (isAnyModalOpen) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
+        if (!isAnyModalOpen) return;
+
+        const preventBgScroll = (e) => {
+            const modalContent = e.target.closest('[data-modal-content="true"]');
+            if (!modalContent) {
+                e.preventDefault();
+                return;
+            }
+            if (modalContent.scrollHeight <= modalContent.clientHeight) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('touchmove', preventBgScroll, { passive: false });
         return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
+            document.removeEventListener('touchmove', preventBgScroll);
         };
     }, [isAnyModalOpen]);
 
@@ -2528,7 +2533,6 @@ export default function BaziApp() {
   const [baziData, setBaziData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
@@ -2820,34 +2824,27 @@ export default function BaziApp() {
         @font-face { font-family: '青柳隷書SIMO2_T'; src: url('/fonts/AoyagiReishoSIMO2_T.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
       `}</style>
       
-      {/* ✅ 2. 共用 Header */}
-      <AppHeader title={APP_NAME} logoChar={{ main: '八', sub: '字' }} />
+        {/* ✅ 2. 共用 Header */}
+        <AppHeader title={APP_NAME} logoChar={{ main: '八', sub: '字' }} />
 
-      {/* ✅ 3. 內容滾動區 */}
-      <div 
-            ref={contentRef} 
-            style={{ 
-                ...COMMON_STYLES.contentArea, 
-                overflowY: isModalOpen ? 'hidden' : 'auto',
-                touchAction: isModalOpen ? 'none' : 'auto'
-            }}
-        >
-          {view === 'input' && (
-            <>
-              <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
-                  <div style={{ marginTop: '20px' }}><AdsterraNarrow /></div>
-            </>
-          )}
+        {/* ✅ 3. 內容滾動區 */}
+        <div ref={contentRef} style={COMMON_STYLES.contentArea}>
+            {view === 'input' && (
+                <>
+                <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
+                    <div style={{ marginTop: '20px' }}><AdsterraNarrow /></div>
+                </>
+            )}
           
-          {view === 'result' && (
-            <>
-              <BaziResult 
-                  data={baziData} 
-                  onBack={() => { setEditingData(null); setView('input'); }} 
-                  onSave={saveBookmark} 
-                  colorTheme={colorTheme} 
-                  onCalculate={handleCalculate} // <--- 確認這行有加！
-              />
+            {view === 'result' && (
+                <>
+                <BaziResult 
+                    data={baziData} 
+                    onBack={() => { setEditingData(null); setView('input'); }} 
+                    onSave={saveBookmark} 
+                    colorTheme={colorTheme} 
+                    onCalculate={handleCalculate}
+                />
               <AdsterraNarrow />
             </>
           )}
