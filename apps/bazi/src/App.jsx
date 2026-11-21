@@ -2137,6 +2137,16 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
 
         let startY = 0;
 
+        // 🌟 自動檢查彈窗內容是否真的需要捲動，若不需捲動直接設為 hidden
+        const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+        modalContents.forEach(el => {
+            if (el.scrollHeight <= el.clientHeight + 2) {
+                el.style.overflowY = 'hidden';
+            } else {
+                el.style.overflowY = 'auto';
+            }
+        });
+
         const handleTouchStart = (e) => {
             if (e.touches && e.touches.length > 0) {
                 startY = e.touches[0].clientY;
@@ -2152,19 +2162,19 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                 return;
             }
 
-            // 2. 框內內容不需捲動（文字很少） -> 直接阻擋
-            if (modalContent.scrollHeight <= modalContent.clientHeight) {
+            // 2. 框內內容不需捲動 -> 直接阻擋
+            if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
                 e.preventDefault();
                 return;
             }
 
-            // 3. 框內內容可以捲動，但已滑到「最頂部還往下拉」或「最底部還往上推」 -> 阻擋邊界穿透
+            // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
             const currentY = e.touches[0].clientY;
-            const isPullingDown = currentY > startY; // 手指向下拖（頁面往上捲）
-            const isPushingUp = currentY < startY;   // 手指向上推（頁面往下捲）
+            const isPullingDown = currentY > startY;
+            const isPushingUp = currentY < startY;
 
             const isAtTop = modalContent.scrollTop <= 0;
-            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 1;
+            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
 
             if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
                 e.preventDefault();
@@ -2178,7 +2188,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', preventBgScroll);
         };
-    }, [isAnyModalOpen]);
+    }, [isAnyModalOpen, shenShaModalConfig, relationModalContent, showOverviewModal, showNotesModal]);
 
     return (
     <div style={{ flex: 1, overflowY: isAnyModalOpen ? 'hidden' : 'auto', padding: '16px', backgroundColor: THEME.bg }}>
