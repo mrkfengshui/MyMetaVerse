@@ -2355,37 +2355,42 @@ return (
         {/* 🌟 3. 渲染綜合運勢盤 */}
         {renderOverviewModal()}
         {/* 互動詳情彈窗 */}
-            {relationModalContent && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
-                    <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
-                            <h3 style={{ margin: '0', fontSize: '16px', fontWeight: 'bold', color: THEME.black }}>干支互動詳解</h3>
-                            <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
-                        </div>
-                        <div style={{ textAlign: 'left', padding: '4px 0', fontSize: '14px', color: THEME.black, lineHeight: '1.5' }}>
-                            {relationModalContent.split('\n').map((line, i) => {
-                                if (line === '---') {
-                                    return <div key={i} style={{ height: '1px', backgroundColor: THEME.border, margin: '12px 0' }} />;
-                                }
-                                const isHeader = i === 0;
-                                const isRelationTitle = line.startsWith('天干與') || line.startsWith('地支與');
-                                const isDesc = line.trim() !== '' && !isHeader && !isRelationTitle;
-                                return (
-                                    <div key={i} style={{ 
-                                        fontWeight: isDesc ? 'normal' : 'bold', 
-                                        color: isHeader ? THEME.black : (isDesc ? '#888888' : THEME.black),
-                                        marginTop: (isRelationTitle && i > 1) ? '8px' : (isRelationTitle ? '6px' : '0'),
-                                        fontSize: isHeader ? '16px' : (isDesc ? '13px' : '15px'),
-                                        textAlign: isHeader ? 'center' : 'left'
-                                    }}>
-                                        {line || '\u00A0'}
-                                    </div>
-                                );
-                            })}
+            {relationModalContent && (() => {
+                const lines = relationModalContent.split('\n');
+                const modalTitle = lines[0]; // 第一行作為頂部標題 (例如：甲子大運)
+                const bodyLines = lines.slice(1); // 其餘行作為內文
+
+                return (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2100, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s', padding: '16px' }} onClick={(e) => { e.stopPropagation(); setRelationModalContent(null); }}>
+                        <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '20px', width: '88%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '10px' }}>
+                                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: 'bold', color: THEME.black }}>{modalTitle}</h3>
+                                <button onClick={() => setRelationModalContent(null)} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={22} color={THEME.gray} /></button>
+                            </div>
+                            <div style={{ textAlign: 'left', padding: '4px 0', fontSize: '14px', color: THEME.black, lineHeight: '1.5' }}>
+                                {bodyLines.map((line, i) => {
+                                    if (line === '---') {
+                                        return <div key={i} style={{ height: '1px', backgroundColor: THEME.border, margin: '12px 0' }} />;
+                                    }
+                                    const isRelationTitle = line.startsWith('天干與') || line.startsWith('地支與');
+                                    const isDesc = line.trim() !== '' && !isRelationTitle;
+                                    return (
+                                        <div key={i} style={{ 
+                                            fontWeight: isDesc ? 'normal' : 'bold', 
+                                            color: isDesc ? '#888888' : THEME.black,
+                                            marginTop: (isRelationTitle && i > 0) ? '8px' : '0',
+                                            fontSize: isDesc ? '13px' : '15px',
+                                            textAlign: 'left'
+                                        }}>
+                                            {line || '\u00A0'}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
         {/* 🌟 4. 懸浮按鈕 (FAB) - 點擊開啟運勢盤 */}
         {!isCapturing && (
