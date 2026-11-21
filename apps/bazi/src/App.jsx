@@ -1109,7 +1109,7 @@ const PillarCard = ({
                     <ShenShaVerticalList 
                         items={shenShas}
                         onClick={(fullList) => onShenShaClick && onShenShaClick(`${gan}${zhi}${title}`, fullList)}
-                        fontSize={isDesktop ? '13px' : '11px'}
+                        fontSize={isDesktop ? '14px' : '12px'}
                         maxItems={2}
                     />
                 ) : (
@@ -2126,8 +2126,24 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const secondRow = data.daYuns ? data.daYuns.slice(5, 10) : [];
     const btnStyle = { padding: '8px 12px', backgroundColor: THEME.bgGray, borderRadius: '20px', border: 'none', color: THEME.gray, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' };
 
+    const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
+
+    useEffect(() => {
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [isAnyModalOpen]);
+
     return (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: THEME.bg }}>
+    <div style={{ flex: 1, overflowY: isAnyModalOpen ? 'hidden' : 'auto', padding: '16px', backgroundColor: THEME.bg }}>
             {/* Header 區塊開始 */}
             <div style={{ 
                 backgroundColor: THEME.white, 
@@ -2441,7 +2457,14 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
 
             {showNotesModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                    <div 
+                        data-modal-content="true"
+                        style={{ 
+                            backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', 
+                            display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', 
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overscrollBehavior: 'contain' 
+                        }}
+                    >
                         <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
                         <textarea 
                             value={notesText} 
@@ -2463,35 +2486,6 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             )}
         </div>
     );
-    const isAnyModalOpen = shenShaModalConfig.isOpen || Boolean(relationModalContent) || showOverviewModal || showNotesModal;
-
-    useEffect(() => {
-        const scrollContainers = document.querySelectorAll('[style*="overflow-y: auto"], [style*="overflowY"]');
-        if (isAnyModalOpen) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-            scrollContainers.forEach(el => {
-                if (!el.closest('[data-modal-content="true"]')) {
-                    el.dataset.prevOverflow = el.style.overflowY;
-                    el.style.overflowY = 'hidden';
-                }
-            });
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-            scrollContainers.forEach(el => {
-                if (el.dataset.prevOverflow !== undefined) {
-                    el.style.overflowY = el.dataset.prevOverflow;
-                    delete el.dataset.prevOverflow;
-                }
-            });
-        }
-
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [isAnyModalOpen]);
 };
 
 // =========================================================================
@@ -2520,6 +2514,7 @@ export default function BaziApp() {
   const [baziData, setBaziData] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingData, setEditingData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAutoRecover = useCallback(async (recoveredBk) => {
     setBookmarks(recoveredBk);
@@ -2815,7 +2810,13 @@ export default function BaziApp() {
       <AppHeader title={APP_NAME} logoChar={{ main: '八', sub: '字' }} />
 
       {/* ✅ 3. 內容滾動區 */}
-      <div ref={contentRef} style={COMMON_STYLES.contentArea}>
+      <div 
+            ref={contentRef} 
+            style={{ 
+                ...COMMON_STYLES.contentArea, 
+                overflowY: isModalOpen ? 'hidden' : 'auto' 
+            }}
+        >
           {view === 'input' && (
             <>
               <BaziInput onCalculate={handleCalculate} initialData={editingData} colorTheme={colorTheme} />
