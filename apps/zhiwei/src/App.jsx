@@ -728,8 +728,8 @@ const SettingsView = ({
 
       {/* 版本歷史彈窗 */}
       {showVersionHistory && (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
-              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
+                <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
                       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
                       <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
@@ -1500,68 +1500,6 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     // 取得命宮 Index
     const mingIdx = useMemo(() => chartData.grid.findIndex(p => p.name === '命宮'), [chartData.grid]);
 
-    // 當「運勢評分」或「命例批注」浮動視窗開啟時，鎖定背景命盤滑動
-    const isAnyModalOpen = showScorePanel || showNotesModal;
-
-    useEffect(() => {
-        if (!isAnyModalOpen) return;
-
-        let startY = 0;
-
-        // 自動檢查彈窗內容是否真的需要捲動，若不需捲動直接設為 hidden
-        const modalContents = document.querySelectorAll('[data-modal-content="true"]');
-        modalContents.forEach(el => {
-            if (el.scrollHeight <= el.clientHeight + 2) {
-                el.style.overflowY = 'hidden';
-            } else {
-                el.style.overflowY = 'auto';
-            }
-        });
-
-        const handleTouchStart = (e) => {
-            if (e.touches && e.touches.length > 0) {
-                startY = e.touches[0].clientY;
-            }
-        };
-
-        const preventBgScroll = (e) => {
-            // 同時支援帶有 data-modal-content="true" 的彈窗，以及共用元件 ScorePanel 的滾動區
-            const modalContent = e.target.closest('[data-modal-content="true"]') || e.target.closest('[style*="overflow-y: auto"], [style*="overflowY"]');
-            
-            // 1. 手指在框外滑動 -> 直接阻擋
-            if (!modalContent || modalContent === document.body || modalContent === document.documentElement) {
-                e.preventDefault();
-                return;
-            }
-
-            // 2. 框內內容不需捲動 -> 直接阻擋
-            if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
-                e.preventDefault();
-                return;
-            }
-
-            // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
-            const currentY = e.touches[0].clientY;
-            const isPullingDown = currentY > startY;
-            const isPushingUp = currentY < startY;
-
-            const isAtTop = modalContent.scrollTop <= 0;
-            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
-
-            if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
-                e.preventDefault();
-            }
-        };
-
-        document.addEventListener('touchstart', handleTouchStart, { passive: true });
-        document.addEventListener('touchmove', preventBgScroll, { passive: false });
-
-        return () => {
-            document.removeEventListener('touchstart', handleTouchStart);
-            document.removeEventListener('touchmove', preventBgScroll);
-        };
-    }, [isAnyModalOpen, showScorePanel, showNotesModal]);
-
     return (
         <div style={{ 
             padding: '2px', 
@@ -2027,6 +1965,69 @@ export default function ZwdsApp() {
       }
   };
 
+  // 🌟 全局防背景滑動（涵蓋評分面板、命例批注、設定頁版本更新紀錄）
+  useEffect(() => {
+      let startY = 0;
+
+      const updateModalOverflow = () => {
+          const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+          modalContents.forEach(el => {
+              if (el.scrollHeight <= el.clientHeight + 2) {
+                  el.style.overflowY = 'hidden';
+              } else {
+                  el.style.overflowY = 'auto';
+              }
+          });
+      };
+
+      const handleTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+              startY = e.touches[0].clientY;
+              updateModalOverflow();
+          }
+      };
+
+      const preventBgScroll = (e) => {
+          // 同時支援 data-modal-content="true" 與共用元件 ScorePanel 的滾動區
+          const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+          const scoreScroll = e.target.closest('[style*="overflow-y: auto"], [style*="overflowY"]');
+          const isScorePanelOpen = Boolean(document.querySelector('[style*="z-index: 1500"], [style*="zIndex: 1500"]') && scoreScroll && scoreScroll !== contentRef.current);
+
+          if (activeModals.length === 0 && !isScorePanelOpen) return;
+
+          const modalContent = e.target.closest('[data-modal-content="true"]') || (scoreScroll !== contentRef.current ? scoreScroll : null);
+
+          if (!modalContent || modalContent === document.body || modalContent === document.documentElement) {
+              e.preventDefault();
+              return;
+          }
+
+          if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
+              e.preventDefault();
+              return;
+          }
+
+          const currentY = e.touches[0].clientY;
+          const isPullingDown = currentY > startY;
+          const isPushingUp = currentY < startY;
+
+          const isAtTop = modalContent.scrollTop <= 0;
+          const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
+
+          if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+              e.preventDefault();
+          }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+      return () => {
+          document.removeEventListener('touchstart', handleTouchStart);
+          document.removeEventListener('touchmove', preventBgScroll);
+      };
+  }, []);
+  
   if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入斗數星曆...</div>;
   if (libStatus === 'error') return <div style={{ padding: 20, textAlign: 'center' }}>載入失敗，請檢查網路連線後重新整理。</div>;
