@@ -1500,6 +1500,68 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
     // 取得命宮 Index
     const mingIdx = useMemo(() => chartData.grid.findIndex(p => p.name === '命宮'), [chartData.grid]);
 
+    // 當「運勢評分」或「命例批注」浮動視窗開啟時，鎖定背景命盤滑動
+    const isAnyModalOpen = showScorePanel || showNotesModal;
+
+    useEffect(() => {
+        if (!isAnyModalOpen) return;
+
+        let startY = 0;
+
+        // 自動檢查彈窗內容是否真的需要捲動，若不需捲動直接設為 hidden
+        const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+        modalContents.forEach(el => {
+            if (el.scrollHeight <= el.clientHeight + 2) {
+                el.style.overflowY = 'hidden';
+            } else {
+                el.style.overflowY = 'auto';
+            }
+        });
+
+        const handleTouchStart = (e) => {
+            if (e.touches && e.touches.length > 0) {
+                startY = e.touches[0].clientY;
+            }
+        };
+
+        const preventBgScroll = (e) => {
+            // 同時支援帶有 data-modal-content="true" 的彈窗，以及共用元件 ScorePanel 的滾動區
+            const modalContent = e.target.closest('[data-modal-content="true"]') || e.target.closest('[style*="overflow-y: auto"], [style*="overflowY"]');
+            
+            // 1. 手指在框外滑動 -> 直接阻擋
+            if (!modalContent || modalContent === document.body || modalContent === document.documentElement) {
+                e.preventDefault();
+                return;
+            }
+
+            // 2. 框內內容不需捲動 -> 直接阻擋
+            if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
+                e.preventDefault();
+                return;
+            }
+
+            // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
+            const currentY = e.touches[0].clientY;
+            const isPullingDown = currentY > startY;
+            const isPushingUp = currentY < startY;
+
+            const isAtTop = modalContent.scrollTop <= 0;
+            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
+
+            if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+        return () => {
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', preventBgScroll);
+        };
+    }, [isAnyModalOpen, showScorePanel, showNotesModal]);
+
     return (
         <div style={{ 
             padding: '2px', 
@@ -1706,7 +1768,10 @@ const ZwdsResult = ({ data, onBack, onSave, daXianSiHuaType = 'book', liuNianSta
             )}
             {showNotesModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                    <div 
+                        data-modal-content="true"
+                        style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '12px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overscrollBehavior: 'contain' }}
+                    >
                         <h3 style={{ margin: 0, fontSize: '16px', color: THEME.black }}>命例批注</h3>
                         <textarea 
                             value={notesText} 
