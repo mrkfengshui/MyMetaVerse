@@ -1135,6 +1135,20 @@ const PillarCard = ({
 // --- BaziResult (八字結果) ---
 const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
     const [isCapturing, setIsCapturing] = useState(false);
+    const [isNamingUnlocked, setIsNamingUnlocked] = useState(() => {
+        return localStorage.getItem('mrk_admin_naming_unlocked') === 'true';
+    });
+    const handleUnlockNaming = () => {
+        const pwd = window.prompt("請輸入管理員密碼以永久開啟改名系統：");
+        if (!pwd) return;
+        if (pwd === "mrk888") {
+            localStorage.setItem('mrk_admin_naming_unlocked', 'true');
+            setIsNamingUnlocked(true);
+            alert("🔓 管理員驗證成功！已為此裝置永久開啟「改名系統」。");
+        } else {
+            alert("❌ 密碼錯誤！");
+        }
+    };
     const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -2295,7 +2309,19 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
             {renderLiuRiList()}
             {/* 五行強弱 */}
             <div style={{ backgroundColor: THEME.white, borderRadius: '12px', padding: '16px', border: `1px solid ${THEME.border}`, marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <h4 style={{ margin: '0 0 12px 0', borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>五行強弱</h4>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                    <h4 style={{ margin: 0, borderLeft: `4px solid ${THEME.orange}`, paddingLeft: '8px', fontSize: '15px' }}>
+                        五行強弱
+                    </h4>
+                    {/* ✅ 隱形解鎖觸發區：緊貼「五行強弱」右邊，未解鎖時點擊彈出密碼框 */}
+                    {!isNamingUnlocked && (
+                        <div 
+                            onClick={handleUnlockNaming}
+                            style={{ width: '48px', height: '24px', cursor: 'default' }}
+                            title="Admin"
+                        />
+                    )}
+                </div>
                 {(() => { 
                     const wxCounts = calculateWuXingStrength(); 
                     const order = ['木', '火', '土', '金', '水']; 
@@ -2363,7 +2389,7 @@ const BaziResult = ({ data, onBack, onSave, colorTheme, onCalculate }) => {
                     config={shenShaModalConfig} 
                     onClose={() => setShenShaModalConfig({ ...shenShaModalConfig, isOpen: false })} 
                 />
-            <NamingSystem data={data} THEME={THEME} />
+            {isNamingUnlocked && <NamingSystem data={data} THEME={THEME} />}
             {/* 🌟 3. 渲染綜合運勢盤 */}
             {renderOverviewModal()}
             {/* 互動詳情彈窗 */}
