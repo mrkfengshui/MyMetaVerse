@@ -462,7 +462,7 @@ export const NamingSystem = ({ data, THEME }) => {
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <h4 style={{ margin: '0', borderLeft: `4px solid ${greenColor}`, paddingLeft: '8px', fontSize: '15px' }}>
-                        改名 (測試中)
+                        改名
                     </h4>
                 </div>
                 {isOpen ? <ChevronUp size={20} color={THEME.gray} /> : <ChevronDown size={20} color={THEME.gray} />}

@@ -359,113 +359,115 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                 }
             }
 
-          const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbwcaJFwOzEtjgE8q7QrN0BT2D7MQaZhImXa_hPrzBapeDCcEoRF7RhlL2M1VwuHeJws/exec"; 
+            const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbwcaJFwOzEtjgE8q7QrN0BT2D7MQaZhImXa_hPrzBapeDCcEoRF7RhlL2M1VwuHeJws/exec"; 
 
-          // 建立 AbortController 以設定 5min 超時
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
+            // 建立 AbortController 以設定 5min 超時
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(new Error("AI 運算時間過長，已超過 5 分鐘連線上限")), 330000);
 
-          const tokenToSend = (typeof overrideToken === 'string') ? overrideToken : (userToken || 'mrk888');
+            const tokenToSend = (typeof overrideToken === 'string') ? overrideToken : (userToken || 'mrk888');
 
-          const response = await fetch(GAS_PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ prompt: prompt, token: tokenToSend }),
-                signal: controller.signal 
-          });
+            const response = await fetch(GAS_PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ prompt: prompt, token: tokenToSend }),
+                    signal: controller.signal 
+            });
 
-          if (!response.ok) throw new Error(`網路請求失敗，狀態碼：${response.status}`);
-          
-          // 🌟 1. 先以純文字讀取，避免 Google 回傳 HTML 導致程式崩潰
-          const rawText = await response.text();
-            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error(`網路請求失敗，狀態碼：${response.status}`);
+            
+            // 🌟 1. 先以純文字讀取，避免 Google 回傳 HTML 導致程式崩潰
+            const rawText = await response.text();
+                clearTimeout(timeoutId);
 
-            // 1. 將變數宣告在最外層，並改名避免衝突
-            let parsedData = null; 
+                // 1. 將變數宣告在最外層，並改名避免衝突
+                let parsedData = null; 
+
+                try {
+                    parsedData = JSON.parse(rawText);
+                } catch (e) {
+                    // 如果不是 JSON，直接將後端回傳的前 50 個字元拋出，方便在沒有 F12 的情況下除錯
+                    throw new Error(`後端回傳格式異常。伺服器回應: ${rawText.substring(0, 50)}...`);
+                }
+
+                // 2. 使用新變數名稱進行驗證
+                if (parsedData && parsedData.result === "error") {
+                    throw new Error(parsedData.message || "授權碼無效或伺服器回報錯誤");
+                }
+
+                // 3. 確保下方的 AI 文字抓取也使用新變數
+                const aiText = parsedData.text || parsedData.content || parsedData.message || parsedData.data;
+
+                if (!aiText) {
+                    throw new Error("API 回傳成功，但找不到命書內容。");
+                }
+                        
+            // 🌟 核心新增：自動在命書最開頭注入「命造基本盤」資訊
+            let chartHeader = `### 命造基本盤\n\n`;
+            chartHeader += `- **姓名**：${data.name || '未命名'} (${data.genderText})\n`;
+            
+            // 處理西曆字串，防呆處理
+            let displaySolar = data.solarDateStr;
+            if (!displaySolar && data.rawDate) displaySolar = `${data.rawDate.year}/${data.rawDate.month}/${data.rawDate.day} ${data.rawDate.hour}:${data.rawDate.minute}`;
+            chartHeader += `- **西曆**：${displaySolar || '未提供'}\n`;
+            chartHeader += `- **農曆**：${data.lunarDateStr || data.lunarDate}\n`;
+            
+            // 動態判斷八字或紫微，給予專屬的排盤摘要
+            if (appType === 'bazi' && data.bazi) {
+                chartHeader += `- **八字**：【年】${data.bazi.yearGan}${data.bazi.yearZhi} 【月】${data.bazi.monthGan}${data.bazi.monthZhi} 【日】${data.bazi.dayGan}${data.bazi.dayZhi} 【時】${data.bazi.timeGan}${data.bazi.timeZhi}\n`;
+                if (data.daYuns && data.daYuns.length > 0) {
+                    chartHeader += `- **起運**：西曆 ${data.daYuns[0].startYear} 年 (虛歲 ${data.daYuns[0].startAge} 歲)\n`;
+                }
+            } else if (appType === 'zwds' && data.grid) {
+                chartHeader += `- **局數**：${data.bureau} (命主：${data.mingZhu} / 身主：${data.shenZhu})\n`;
+                chartHeader += `- **命宮**：${data.mingGongStars}\n`;
+                if (data.formations && data.formations.length > 0) {
+                    chartHeader += `- **特殊格局**：${data.formations.join('、')}\n`;
+                }
+            }
+            chartHeader += `\n`; // 換行區隔 AI 內文
+
+            // 將基本盤與 AI 產生的內文結合
+            const finalReport = chartHeader + aiText;
+            
+            // ✅ 1. 強制雙重儲存：寫入 state、寫入本機專屬保險箱、並同步通知上層書籤
+            setAnalysisResult(finalReport);
+            setIsPaid(true);
+            setProgress(100);
+            setIsAnalyzing(false); // 🌟 關鍵修正：在跳出 confirm 對話框前，立刻結束轉圈圈狀態，讓命書先渲染出來！
 
             try {
-                parsedData = JSON.parse(rawText);
-            } catch (e) {
-                // 如果不是 JSON，直接將後端回傳的前 50 個字元拋出，方便在沒有 F12 的情況下除錯
-                throw new Error(`後端回傳格式異常。伺服器回應: ${rawText.substring(0, 50)}...`);
-            }
+                localStorage.setItem(backupKey, finalReport);
+            } catch (e) {}
 
-            // 2. 使用新變數名稱進行驗證
-            if (parsedData && parsedData.result === "error") {
-                throw new Error(parsedData.message || "授權碼無效或伺服器回報錯誤");
-            }
+            data.aiReport = finalReport;
+            if (appType === 'bazi') data.baziAiReport = finalReport;
+            if (appType === 'zwds') data.zwdsAiReport = finalReport;
+            data.chartImage = currentChartImage;
+            data.isPaid = true;
+            data.paidAt = data.paidAt || Date.now();
+            if (onSave) onSave(data, true);
 
-            // 3. 確保下方的 AI 文字抓取也使用新變數
-            const aiText = parsedData.text || parsedData.content || parsedData.message || parsedData.data;
+            // ✅ 2. 等命書畫面完整顯示後，再彈出匯出備份提醒
+            setTimeout(() => {
+                const appNameStr = appType === 'zwds' ? '紫微斗數' : '八字';
+                const wantExport = window.confirm(
+                    `🎉【${data.name || '未命名'}】的${appNameStr}命書已生成並自動保存在本機！\n\n⚠️ 為防瀏覽器清理快取或數據庫異常導致遺失，強烈建議您現在立即匯出備份（透過 Email / WhatsApp 分享或儲存檔案）。\n\n是否立即匯出備份？`
+                );
+                if (wantExport) {
+                    const cleanText = finalReport.replace(/#/g, '').replace(/\*\*/g, '');
+                    const fileName = `${data.name || '未命名'}_${appNameStr}個人專屬深度流年命書`;
+                    if (navigator.share) {
+                        navigator.share({ title: fileName, text: cleanText }).catch(() => {});
+                    } else {
+                        navigator.clipboard?.writeText(cleanText);
+                        alert("✅ 命書全文已複製到剪貼簿，請直接貼上至您的 Email 或備忘錄保存！");
+                    }
+                }
+            }, 800);
 
-            if (!aiText) {
-                throw new Error("API 回傳成功，但找不到命書內容。");
-            }
-                    
-          // 🌟 核心新增：自動在命書最開頭注入「命造基本盤」資訊
-          let chartHeader = `### 命造基本盤\n\n`;
-          chartHeader += `- **姓名**：${data.name || '未命名'} (${data.genderText})\n`;
-          
-          // 處理西曆字串，防呆處理
-          let displaySolar = data.solarDateStr;
-          if (!displaySolar && data.rawDate) displaySolar = `${data.rawDate.year}/${data.rawDate.month}/${data.rawDate.day} ${data.rawDate.hour}:${data.rawDate.minute}`;
-          chartHeader += `- **西曆**：${displaySolar || '未提供'}\n`;
-          chartHeader += `- **農曆**：${data.lunarDateStr || data.lunarDate}\n`;
-          
-          // 動態判斷八字或紫微，給予專屬的排盤摘要
-          if (appType === 'bazi' && data.bazi) {
-              chartHeader += `- **八字**：【年】${data.bazi.yearGan}${data.bazi.yearZhi} 【月】${data.bazi.monthGan}${data.bazi.monthZhi} 【日】${data.bazi.dayGan}${data.bazi.dayZhi} 【時】${data.bazi.timeGan}${data.bazi.timeZhi}\n`;
-              if (data.daYuns && data.daYuns.length > 0) {
-                  chartHeader += `- **起運**：西曆 ${data.daYuns[0].startYear} 年 (虛歲 ${data.daYuns[0].startAge} 歲)\n`;
-              }
-          } else if (appType === 'zwds' && data.grid) {
-              chartHeader += `- **局數**：${data.bureau} (命主：${data.mingZhu} / 身主：${data.shenZhu})\n`;
-              chartHeader += `- **命宮**：${data.mingGongStars}\n`;
-              if (data.formations && data.formations.length > 0) {
-                  chartHeader += `- **特殊格局**：${data.formations.join('、')}\n`;
-              }
-          }
-          chartHeader += `\n`; // 換行區隔 AI 內文
-
-          // 將基本盤與 AI 產生的內文結合
-          const finalReport = chartHeader + aiText;
-          
-          // ✅ 1. 強制雙重儲存：寫入 state、寫入本機專屬保險箱、並同步通知上層書籤
-          setAnalysisResult(finalReport);
-          setIsPaid(true);
-          try {
-              localStorage.setItem(backupKey, finalReport);
-          } catch (e) {}
-
-          data.aiReport = finalReport;
-          if (appType === 'bazi') data.baziAiReport = finalReport;
-          if (appType === 'zwds') data.zwdsAiReport = finalReport;
-          data.chartImage = currentChartImage;
-          data.isPaid = true;
-          data.paidAt = data.paidAt || Date.now();
-          if (onSave) onSave(data, true);
-
-          // ✅ 2. 生成後立即彈出「強制/建議匯出備份」提醒（防止清理快取或換機遺失）
-          setTimeout(() => {
-              const appNameStr = appType === 'zwds' ? '紫微斗數' : '八字';
-              const wantExport = window.confirm(
-                  `🎉【${data.name || '未命名'}】的${appNameStr}命書已生成並自動保存在本機！\n\n⚠️ 為防瀏覽器清理快取或數據庫異常導致遺失，強烈建議您現在立即匯出備份（透過 Email / WhatsApp 分享或儲存檔案）。\n\n是否立即匯出備份？`
-              );
-              if (wantExport) {
-                  // 直接觸發你原本寫好的原生分享/複製功能，讓用戶一鍵寄去 Email 或存檔
-                  const cleanText = finalReport.replace(/#/g, '').replace(/\*\*/g, '');
-                  const fileName = `${data.name || '未命名'}_${appNameStr}個人專屬深度流年命書`;
-                  if (navigator.share) {
-                      navigator.share({ title: fileName, text: cleanText }).catch(() => {});
-                  } else {
-                      navigator.clipboard?.writeText(cleanText);
-                      alert("✅ 命書全文已複製到剪貼簿，請直接貼上至您的 Email 或備忘錄保存！");
-                  }
-              }
-          }, 600);
-
-      } catch (error) {
-          console.error("AI 錯誤詳細資訊:", error);
+        } catch (error) {
+            console.error("AI 錯誤詳細資訊:", error);
           
           // 🌟 判斷是否為我們設定的超時，或瀏覽器原生的 AbortError
           const isTimeout = error.name === 'AbortError' || error.message.includes('aborted') || error.message.includes('上限');
