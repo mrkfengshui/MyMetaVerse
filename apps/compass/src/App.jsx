@@ -470,6 +470,8 @@ const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
     
     if (!isOpen) return null;
 
+    const isSmallScreen = typeof window !== 'undefined' && window.innerHeight < 700;
+
     const handleTotalChange = (e) => {
         const val = e.target.value;
         if (val === '') { setShopTotal(''); return; }
@@ -502,38 +504,80 @@ const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
     const corridorRelation = (hasValidInput && myElementText !== '-' && corridorElementText !== '-') ? getFiveElementRelation(myElementText, corridorElementText) : null;
     const guas = ['巽', '離', '坤', '震', '中', '兌', '艮', '坎', '乾'];
 
+    const cardPadding = isSmallScreen ? '12px' : '16px';
+    const cardGap = isSmallScreen ? '10px' : '16px';
+    const resultBoxHeight = isSmallScreen ? '36px' : '44px';
+
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }} onClick={onClose}>
-            <div data-modal-content="true" style={{ background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px', padding: '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', borderBottom:'1px solid #ddd', paddingBottom:'10px'}}>
-                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#2a2a2a'}}><Briefcase size={20}/> 商戰揀舖要訣</h3>
-                    <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}><X size={24} color="#888"/></button>
+            <div data-modal-content="true" style={{ background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px', padding: isSmallScreen ? '14px' : '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: cardGap, borderBottom:'1px solid #ddd', paddingBottom: isSmallScreen ? '8px' : '10px'}}>
+                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#2a2a2a', fontSize: isSmallScreen ? '16px' : '18px'}}><Briefcase size={18}/> 商戰揀舖要訣</h3>
+                    <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer', padding: 0}}><X size={22} color="#888"/></button>
                 </div>
-                <div style={{background:'white', borderRadius:'10px', padding:'16px', marginBottom:'16px'}}>
-                    <div style={{fontSize:'15px', fontWeight:'bold', marginBottom:'12px', color:THEME.blue}}>大廈坐向 vs 舖位宮位</div>
-                    <div style={{marginBottom:'10px', fontSize:'14px'}}>大廈坐{sittingMt.name}向{facingMt.name}</div>
-                    <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'8px', marginBottom:'12px'}}>
+                
+                {/* 區塊一：大廈坐向 vs 舖位宮位 */}
+                <div style={{background:'white', borderRadius:'10px', padding: cardPadding, marginBottom: cardGap}}>
+                    <div style={{fontSize: isSmallScreen ? '14px' : '15px', fontWeight:'bold', marginBottom: isSmallScreen ? '6px' : '12px', color:THEME.blue}}>大廈坐向 vs 舖位宮位</div>
+                    <div style={{marginBottom: isSmallScreen ? '8px' : '10px', fontSize: isSmallScreen ? '13px' : '14px'}}>大廈坐{sittingMt.name}向{facingMt.name}</div>
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap: isSmallScreen ? '6px' : '8px', marginBottom: isSmallScreen ? '8px' : '12px'}}>
                         {guas.map(g => (
-                            <button key={g} onClick={() => setShopSector(g)} style={{ padding:'12px', borderRadius:'6px', border:`1px solid ${shopSector === g ? THEME.blue : '#ddd'}`, background: shopSector === g ? '#e6f7ff' : 'white', color: shopSector === g ? THEME.blue : '#2a2a2a', cursor:'pointer', fontWeight: shopSector === g ? 'bold' : 'normal', fontSize: '16px' }}>{g}</button>
+                            <button key={g} onClick={() => setShopSector(g)} style={{ padding: isSmallScreen ? '8px' : '12px', borderRadius:'6px', border:`1px solid ${shopSector === g ? THEME.blue : '#ddd'}`, background: shopSector === g ? '#e6f7ff' : 'white', color: shopSector === g ? THEME.blue : '#2a2a2a', cursor:'pointer', fontWeight: shopSector === g ? 'bold' : 'normal', fontSize: isSmallScreen ? '15px' : '16px' }}>{g}</button>
                         ))}
                     </div>
-                    {mallRelation && (
-                        <div style={{background:THEME.white, padding:'10px', borderRadius:'6px', borderLeft:`4px solid ${mallRelation.color}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                            <div style={{fontSize:'13px'}}>此舖宮位</div><div style={{fontWeight:'bold', color:mallRelation.color, fontSize:'16px'}}>{mallRelation.text}</div>
-                        </div>
-                    )}
-                </div>
-                <div style={{background:'white', borderRadius:'10px', padding:'16px', marginBottom:'16px'}}>
-                    <div style={{fontSize:'15px', fontWeight:'bold', marginBottom:'12px', color:'#722ed1'}}>舖位序號</div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'16px'}}>
-                        <div><label style={{display:'block', fontSize:'12px', color:THEME.gray, marginBottom:'4px'}}>總舖位數</label><input type="number" min="1" value={shopTotal} onChange={handleTotalChange} style={{width:'100%', padding:'12px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'16px', boxSizing: 'border-box'}}/></div>
-                        <div><label style={{display:'block', fontSize:'12px', color:THEME.gray, marginBottom:'4px'}}>心儀舖位序號</label><input type="number" min="1" max={safeTotal} value={shopIndex} onChange={handleIndexChange} style={{width:'100%', padding:'12px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'16px', boxSizing: 'border-box'}}/></div>
+                    
+                    <div style={{
+                        height: resultBoxHeight,
+                        boxSizing: 'border-box',
+                        background: mallRelation ? THEME.white : '#fafafa',
+                        padding: '0 12px',
+                        borderRadius: '6px',
+                        border: mallRelation ? `1px solid ${THEME.border}` : '1px dashed #e0e0e0',
+                        borderLeft: mallRelation ? `4px solid ${mallRelation.color}` : '1px dashed #e0e0e0',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        {mallRelation ? (
+                            <>
+                                <div style={{fontSize:'13px'}}>此舖宮位 ({shopSector}宮)</div>
+                                <div style={{fontWeight:'bold', color:mallRelation.color, fontSize: isSmallScreen ? '15px' : '16px'}}>{mallRelation.text}</div>
+                            </>
+                        ) : (
+                            <div style={{fontSize:'12px', color:'#aaa', width:'100%', textAlign:'center'}}>請點選上方舖位宮位查看吉凶</div>
+                        )}
                     </div>
-                    {hasValidInput && corridorRelation && (
-                        <div style={{background:THEME.white, padding:'10px', borderRadius:'6px', borderLeft:`4px solid ${corridorRelation.color}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                            <div style={{fontSize:'13px'}}>此舖位數</div><div style={{fontWeight:'bold', color:corridorRelation.color, fontSize:'16px'}}>{corridorRelation.text}</div>
-                        </div>
-                    )}
+                </div>
+
+                {/* 區塊二：舖位序號 */}
+                <div style={{background:'white', borderRadius:'10px', padding: cardPadding}}>
+                    <div style={{fontSize: isSmallScreen ? '14px' : '15px', fontWeight:'bold', marginBottom: isSmallScreen ? '8px' : '12px', color:'#722ed1'}}>舖位序號</div>
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: isSmallScreen ? '12px' : '20px', marginBottom: isSmallScreen ? '8px' : '12px'}}>
+                        <div><label style={{display:'block', fontSize:'12px', color:THEME.gray, marginBottom:'4px'}}>總舖位數</label><input type="number" min="1" value={shopTotal} onChange={handleTotalChange} style={{width:'100%', padding: isSmallScreen ? '8px' : '12px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'16px', boxSizing: 'border-box'}}/></div>
+                        <div><label style={{display:'block', fontSize:'12px', color:THEME.gray, marginBottom:'4px'}}>心儀舖位序號</label><input type="number" min="1" max={safeTotal} value={shopIndex} onChange={handleIndexChange} style={{width:'100%', padding: isSmallScreen ? '8px' : '12px', borderRadius:'6px', border:'1px solid #ddd', fontSize:'16px', boxSizing: 'border-box'}}/></div>
+                    </div>
+                    
+                    <div style={{
+                        height: resultBoxHeight,
+                        boxSizing: 'border-box',
+                        background: (hasValidInput && corridorRelation) ? THEME.white : '#fafafa',
+                        padding: '0 12px',
+                        borderRadius: '6px',
+                        border: (hasValidInput && corridorRelation) ? `1px solid ${THEME.border}` : '1px dashed #e0e0e0',
+                        borderLeft: (hasValidInput && corridorRelation) ? `4px solid ${corridorRelation.color}` : '1px dashed #e0e0e0',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        {hasValidInput && corridorRelation ? (
+                            <>
+                                <div style={{fontSize:'13px'}}>此舖位數</div>
+                                <div style={{fontWeight:'bold', color:corridorRelation.color, fontSize: isSmallScreen ? '15px' : '16px'}}>{corridorRelation.text}</div>
+                            </>
+                        ) : (
+                            <div style={{fontSize:'12px', color:'#aaa', width:'100%', textAlign:'center'}}>請輸入有效舖位數</div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -2020,20 +2064,24 @@ export default function FengShuiApp() {
                         }}>
                             <button onClick={() => setView('input')} style={{
                                 position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
-                                background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor:'pointer', color: THEME.blue, zIndex: 1
+                                background:'none', border:'none', display:'flex', alignItems:'center', gap:'4px', cursor: 'pointer', color: THEME.blue, zIndex: 1
                             }}>
                                 <ChevronLeft size={20}/>
                             </button>
-                            <span style={{fontWeight:'bold', color: THEME.black, fontSize: '16px'}}>排盤分析</span>
-
-                            {/* 在標題列右側加入解鎖 Icon */}
-                            <button onClick={handleUnlock} style={{
-                                position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
-                                background:'none', border:'none', display:'flex', alignItems:'center', cursor:'pointer', 
-                                color: isLoggedIn ? THEME.lightGray : THEME.lightGray, zIndex: 1
-                            }}>
-                                {isLoggedIn ? <Unlock size={16}/> : <Lock size={16}/>}
-                            </button>
+                            
+                            {/* 🌟 隱藏管理員按鈕：直接點擊「排盤分析」標題觸發密碼解鎖/鎖定，畫面上完全不顯示鎖頭圖示 */}
+                            <span 
+                                onClick={handleUnlock} 
+                                style={{
+                                    fontWeight:'bold', 
+                                    color: THEME.black, 
+                                    fontSize: '16px', 
+                                    cursor: 'default', 
+                                    userSelect: 'none'
+                                }}
+                            >
+                                排盤分析
+                            </span>
                         </div>
 
                         <ChartView 
