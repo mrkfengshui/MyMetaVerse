@@ -864,7 +864,7 @@ const DetailModal = ({ data, onClose }) => {
 
     return (
         <div style={modalStyles.overlay} onClick={onClose}>
-            <div style={modalStyles.content} onClick={e => e.stopPropagation()}>
+            <div data-modal-content="true" style={modalStyles.content} onClick={e => e.stopPropagation()}>
                 {/* 標題欄 */}
                 <div style={modalStyles.header}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1132,10 +1132,9 @@ const ResultView = ({ data, onSave, onBack, onRecalculate }) => {
                 backgroundColor: '#000', 
                 border: `2px solid ${THEME.black}`, 
                 borderRadius: '4px', 
-                aspectRatio: '1/1', 
-                marginBottom: '20px',
+                height: 'fit-content',
                 maxWidth: '500px',       // 1. 限制最大寬度 (電腦版不會超過 600px)
-                margin: '0 auto 20px',   // 2. 上0、左右自動(居中)、下20px
+                margin: '0 auto 6px',   // 2. 上0、左右自動(居中)、下6px
             }}>
                 {currentData.grid.map((cell, idx) => <PalaceCell key={idx} data={cell} patterns={currentData.patterns} extraInfo={extraInfo} onClick={(palaceData) => setSelectedPalace(palaceData)}/>)}
             </div>
@@ -1227,7 +1226,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1400 }} onClick={onClose}>
-      <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '92%', maxWidth: '380px', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '92%', maxWidth: '380px', padding: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Search size={20} color={THEME.blue}/> 搜尋奇門吉時
         </h3>
@@ -1375,7 +1374,7 @@ const SearchResultsModal = ({ visible, onClose, results, onJumpToDate }) => {
           <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}><X size={24} color={THEME.gray} /></button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div data-modal-content="true" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {currentResults.length === 0 ? (
             <div style={{ textAlign: 'center', color: THEME.gray, padding: '20px' }}>找不到相符的結果</div>
           ) : (
@@ -1432,7 +1431,7 @@ const SettingsView = ({ bookmarks, setBookmarks }) => {
             {/* 版本歷史彈窗 */}
             {showVersionHistory && (
                 <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
-                    <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                    <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
                             <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
@@ -1714,6 +1713,146 @@ export default function QiMenApp() {
   const saveBookmark = async (data) => { const title = prompt("請輸入紀錄名稱", `${data.lunarDateStr.split(' ')[2]}占`); if (!title) return; const newEntry = { id: data.id, name: title, solarDate: data.solarDateStr, lunarString: data.lunarDateStr, rawDate: data.rawDate, type: 'qimen' }; const newBk = [newEntry, ...bookmarks]; setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); alert('已儲存'); };
   const deleteBookmark = async (id) => { if (!confirm('確定刪除？')) return; const newBk = bookmarks.filter(b => b.id !== id); setBookmarks(newBk); await Preferences.set({ key: 'qimen_bookmarks', value: JSON.stringify(newBk) }); };
 
+  // 🌟 全局防背景滑動（涵蓋 DetailModal / SearchModal / SearchResultsModal / 版本紀錄）
+  useEffect(() => {
+      let startY = 0;
+
+      const updateModalOverflow = () => {
+          const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+          modalContents.forEach(el => {
+              if (el.scrollHeight <= el.clientHeight + 2) {
+                  el.style.overflowY = 'hidden';
+              } else {
+                  el.style.overflowY = 'auto';
+              }
+          });
+      };
+
+      const handleTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+              startY = e.touches[0].clientY;
+              updateModalOverflow();
+          }
+      };
+
+      const preventBgScroll = (e) => {
+          const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+          if (activeModals.length === 0) return;
+
+          const modalContent = e.target.closest('[data-modal-content="true"]');
+
+          // 1. 手指在框外滑動 -> 直接阻擋
+          if (!modalContent) {
+              e.preventDefault();
+              return;
+          }
+
+          // 2. 框內內容不需捲動 -> 直接阻擋
+          if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
+              e.preventDefault();
+              return;
+          }
+
+          // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
+          const currentY = e.touches[0].clientY;
+          const isPullingDown = currentY > startY;
+          const isPushingUp = currentY < startY;
+
+          const isAtTop = modalContent.scrollTop <= 0;
+          const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
+
+          if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+              e.preventDefault();
+          }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+      return () => {
+          document.removeEventListener('touchstart', handleTouchStart);
+          document.removeEventListener('touchmove', preventBgScroll);
+      };
+  }, []);
+
+  // 🌟 全局防背景滑動（涵蓋當日詳情、時辰選擇、跳轉日期、搜尋彈窗、搜尋結果、版本更新紀錄）
+  useEffect(() => {
+      let startY = 0;
+
+      const updateModalOverflow = () => {
+          const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+          modalContents.forEach(el => {
+              if (el.scrollHeight <= el.clientHeight + 2) {
+                  el.style.overflowY = 'hidden';
+              } else {
+                  el.style.overflowY = 'auto';
+              }
+          });
+      };
+
+      const handleTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+              startY = e.touches[0].clientY;
+              updateModalOverflow();
+          }
+      };
+
+      // 輔助：檢查手指是否正在滑動彈窗內部的子滾動區（例如斗首二十四山滾輪）
+      const findInnerScrollable = (target, modalRoot) => {
+          let el = target;
+          while (el && el !== modalRoot && el !== document.body) {
+              const style = window.getComputedStyle(el);
+              if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 2) {
+                  return el;
+              }
+              el = el.parentElement;
+          }
+          return null;
+      };
+
+      const preventBgScroll = (e) => {
+          const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+          if (activeModals.length === 0) return;
+
+          const modalContent = e.target.closest('[data-modal-content="true"]');
+
+          // 1. 手指在框外滑動 -> 直接阻擋
+          if (!modalContent) {
+              e.preventDefault();
+              return;
+          }
+
+          // 2. 優先檢查是否在操作彈窗內部的子滾動容器（如二十四山滾輪）
+          const innerScroll = findInnerScrollable(e.target, modalContent);
+          const scrollTarget = innerScroll || modalContent;
+
+          // 3. 目標容器內容不需捲動 -> 直接阻擋
+          if (scrollTarget.scrollHeight <= scrollTarget.clientHeight + 2) {
+              e.preventDefault();
+              return;
+          }
+
+          // 4. 目標容器可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
+          const currentY = e.touches[0].clientY;
+          const isPullingDown = currentY > startY;
+          const isPushingUp = currentY < startY;
+
+          const isAtTop = scrollTarget.scrollTop <= 0;
+          const isAtBottom = scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - 2;
+
+          if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+              e.preventDefault();
+          }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+      return () => {
+          document.removeEventListener('touchstart', handleTouchStart);
+          document.removeEventListener('touchmove', preventBgScroll);
+      };
+  }, []);
   if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入曆法數據...</div>;
 
