@@ -1830,7 +1830,7 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
             type="text" 
             value={keyword} 
             onChange={(e) => setKeyword(e.target.value)} 
-            placeholder="例如: 三、天赦、宜嫁娶" 
+            placeholder="例如: 理髮、天赦、太陽、宜嫁娶" 
             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }}
           />
         </div>
@@ -1844,7 +1844,12 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
               max={maxDate} 
               value={startDate} 
               onChange={(e) => setStartDate(e.target.value)} 
-              style={{ width: '100%', padding: '8px 4px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '13px', boxSizing: 'border-box', minWidth: 0 }} 
+              style={{ 
+                width: '100%', height: '38px', padding: '0 6px', borderRadius: '8px', 
+                border: `1px solid ${THEME.border}`, backgroundColor: THEME.white,
+                fontSize: '13px', boxSizing: 'border-box', minWidth: 0,
+                WebkitAppearance: 'none', appearance: 'none', textAlign: 'center'
+              }} 
             />
           </div>
           <div style={{ minWidth: 0 }}>
@@ -1855,16 +1860,21 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
               max={maxDate} 
               value={endDate} 
               onChange={(e) => setEndDate(e.target.value)} 
-              style={{ width: '100%', padding: '8px 4px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '13px', boxSizing: 'border-box', minWidth: 0 }} 
+              style={{ 
+                width: '100%', height: '38px', padding: '0 6px', borderRadius: '8px', 
+                border: `1px solid ${THEME.border}`, backgroundColor: THEME.white,
+                fontSize: '13px', boxSizing: 'border-box', minWidth: 0,
+                WebkitAppearance: 'none', appearance: 'none', textAlign: 'center'
+              }} 
             />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', backgroundColor: THEME.bgGray, color: THEME.gray, borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>取消</button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <button onClick={onClose} style={{ width: '100%', padding: '10px', backgroundColor: THEME.bgGray, color: THEME.gray, borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>取消</button>
           <button 
             onClick={() => { if(keyword.length >= 1) onSearch(keyword, startDate, endDate); else alert('請輸入最少一個字的搜尋目標'); }} 
-            style={{ flex: 1, padding: '10px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px', backgroundColor: THEME.blue, color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
           >
             確定
           </button>
