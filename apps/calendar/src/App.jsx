@@ -1835,14 +1835,28 @@ const SearchModal = ({ visible, onClose, onSearch }) => {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>開始日期</label>
-            <input type="date" min={minDate} max={maxDate} value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }} />
+            <input 
+              type="date" 
+              min={minDate} 
+              max={maxDate} 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)} 
+              style={{ width: '100%', padding: '8px 4px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '13px', boxSizing: 'border-box', minWidth: 0 }} 
+            />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: '12px', color: THEME.gray, marginBottom: '4px' }}>結束日期</label>
-            <input type="date" min={minDate} max={maxDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: `1px solid ${THEME.border}`, boxSizing: 'border-box' }} />
+            <input 
+              type="date" 
+              min={minDate} 
+              max={maxDate} 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)} 
+              style={{ width: '100%', padding: '8px 4px', borderRadius: '8px', border: `1px solid ${THEME.border}`, fontSize: '13px', boxSizing: 'border-box', minWidth: 0 }} 
+            />
           </div>
         </div>
 
@@ -1971,8 +1985,8 @@ const SettingsView = ({ ziHourRule, setZiHourRule, bookmarks, onRestore }) => {
       {/* 版本歷史彈窗 */}
       {showVersionHistory && (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
-              <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
+                <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
                       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
                       <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
                   </div>
@@ -3033,6 +3047,85 @@ const selectedInfo = useMemo(() => {
         return { id: recordId, targetDate: targetDateStr, name: targetDateStr };
     });
   }, [bookmarks, libStatus]);
+
+  // 🌟 全局防背景滑動（涵蓋當日詳情、時辰選擇、跳轉日期、搜尋彈窗、搜尋結果、版本更新紀錄）
+  useEffect(() => {
+      let startY = 0;
+
+      const updateModalOverflow = () => {
+          const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+          modalContents.forEach(el => {
+              if (el.scrollHeight <= el.clientHeight + 2) {
+                  el.style.overflowY = 'hidden';
+              } else {
+                  el.style.overflowY = 'auto';
+              }
+          });
+      };
+
+      const handleTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+              startY = e.touches[0].clientY;
+              updateModalOverflow();
+          }
+      };
+
+      // 輔助：檢查手指是否正在滑動彈窗內部的子滾動區（例如斗首二十四山滾輪）
+      const findInnerScrollable = (target, modalRoot) => {
+          let el = target;
+          while (el && el !== modalRoot && el !== document.body) {
+              const style = window.getComputedStyle(el);
+              if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 2) {
+                  return el;
+              }
+              el = el.parentElement;
+          }
+          return null;
+      };
+
+      const preventBgScroll = (e) => {
+          const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+          if (activeModals.length === 0) return;
+
+          const modalContent = e.target.closest('[data-modal-content="true"]');
+
+          // 1. 手指在框外滑動 -> 直接阻擋
+          if (!modalContent) {
+              e.preventDefault();
+              return;
+          }
+
+          // 2. 優先檢查是否在操作彈窗內部的子滾動容器（如二十四山滾輪）
+          const innerScroll = findInnerScrollable(e.target, modalContent);
+          const scrollTarget = innerScroll || modalContent;
+
+          // 3. 目標容器內容不需捲動 -> 直接阻擋
+          if (scrollTarget.scrollHeight <= scrollTarget.clientHeight + 2) {
+              e.preventDefault();
+              return;
+          }
+
+          // 4. 目標容器可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
+          const currentY = e.touches[0].clientY;
+          const isPullingDown = currentY > startY;
+          const isPushingUp = currentY < startY;
+
+          const isAtTop = scrollTarget.scrollTop <= 0;
+          const isAtBottom = scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - 2;
+
+          if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+              e.preventDefault();
+          }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+      return () => {
+          document.removeEventListener('touchstart', handleTouchStart);
+          document.removeEventListener('touchmove', preventBgScroll);
+      };
+  }, []);
 
   if (!isAuthorized) return null;
   if (libStatus === 'loading') return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入中...</div>;
