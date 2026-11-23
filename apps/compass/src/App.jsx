@@ -504,7 +504,7 @@ const CommercialView = ({ isOpen, onClose, sittingMt, facingMt }) => {
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }} onClick={onClose}>
-            <div style={{ background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px', padding: '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div data-modal-content="true" style={{ background: '#f5f5f5', width: '100%', maxWidth: '450px', borderRadius: '16px', padding: '20px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', borderBottom:'1px solid #ddd', paddingBottom:'10px'}}>
                     <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', color:'#2a2a2a'}}><Briefcase size={20}/> 商戰揀舖要訣</h3>
                     <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}><X size={24} color="#888"/></button>
@@ -569,7 +569,7 @@ const DetailModal = ({ isOpen, onClose, data, facingDaGua }) => {
             background: 'rgba(0,0,0,0.6)', zIndex: 1000,
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }} onClick={onClose}>
-            <div style={{
+            <div data-modal-content="true" style={{
                 background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px',
                 padding: '24px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                 maxHeight: '60vh', overflowY: 'auto', overscrollBehavior: 'contain'
@@ -1713,7 +1713,7 @@ const SettingsView = ({ bookmarks, setBookmarks, chartMode, setChartMode, isLogg
             {/* 版本歷史彈窗 */}
             {showVersionHistory && (
                 <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1500 }} onClick={() => setShowVersionHistory(false)}>
-                    <div style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+                    <div data-modal-content="true" style={{ backgroundColor: THEME.white, borderRadius: '16px', width: '90%', maxWidth: '380px', padding: '24px', maxHeight: '75vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${THEME.border}`, paddingBottom: '12px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>版本更新紀錄</h3>
                             <X size={24} onClick={() => setShowVersionHistory(false)} style={{ cursor: 'pointer', color: THEME.gray }} />
@@ -1868,6 +1868,67 @@ export default function FengShuiApp() {
         setView('result');
     };
 
+    // 🌟 全局防背景滑動（涵蓋商戰彈窗、宮位詳解、設定頁版本更新紀錄）
+    useEffect(() => {
+        let startY = 0;
+
+        const updateModalOverflow = () => {
+            const modalContents = document.querySelectorAll('[data-modal-content="true"]');
+            modalContents.forEach(el => {
+                if (el.scrollHeight <= el.clientHeight + 2) {
+                    el.style.overflowY = 'hidden';
+                } else {
+                    el.style.overflowY = 'auto';
+                }
+            });
+        };
+
+        const handleTouchStart = (e) => {
+            if (e.touches && e.touches.length > 0) {
+                startY = e.touches[0].clientY;
+                updateModalOverflow();
+            }
+        };
+
+        const preventBgScroll = (e) => {
+            const activeModals = document.querySelectorAll('[data-modal-content="true"]');
+            if (activeModals.length === 0) return;
+
+            const modalContent = e.target.closest('[data-modal-content="true"]');
+
+            // 1. 手指在框外滑動 -> 直接阻擋
+            if (!modalContent) {
+                e.preventDefault();
+                return;
+            }
+
+            // 2. 框內內容不需捲動 -> 直接阻擋
+            if (modalContent.scrollHeight <= modalContent.clientHeight + 2) {
+                e.preventDefault();
+                return;
+            }
+
+            // 3. 框內內容可捲動，但已滑到最頂端或最底端 -> 阻擋邊界穿透
+            const currentY = e.touches[0].clientY;
+            const isPullingDown = currentY > startY;
+            const isPushingUp = currentY < startY;
+
+            const isAtTop = modalContent.scrollTop <= 0;
+            const isAtBottom = modalContent.scrollTop + modalContent.clientHeight >= modalContent.scrollHeight - 2;
+
+            if ((isAtTop && isPullingDown) || (isAtBottom && isPushingUp)) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchmove', preventBgScroll, { passive: false });
+
+        return () => {
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', preventBgScroll);
+        };
+    }, []);
     if (!isAuthorized) return null;
     if (libStatus === 'loading') return <div style={{padding: 40, textAlign:'center'}}>載入風水曆法中...</div>;
     if (libStatus === 'error') return <div style={{padding: 40, textAlign:'center'}}>曆法載入失敗，請檢查網絡。</div>;
