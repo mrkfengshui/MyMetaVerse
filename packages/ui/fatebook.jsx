@@ -2,19 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
 
 export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, onBeforeCapture, onAfterCapture }) => {
-  const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
+    const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
+    const backupKey = `mrk_fatebook_${appType}_${data.name || 'noname'}_${data.solarDateStr || data.solarDate || ''}_${data.genderText || ''}`;
+    const localSavedReport = localStorage.getItem(backupKey);
+    const initialReport = data.aiReport || localSavedReport || null;
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(data.aiReport || null);
-  const [isPaid, setIsPaid] = useState(data.isPaid || !!data.aiReport || false);
-  const [chartImage, setChartImage] = useState(data.chartImage || null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState(initialReport);
+    const [isPaid, setIsPaid] = useState(data.isPaid || !!initialReport || false);
+    const [chartImage, setChartImage] = useState(data.chartImage || null);
 
-  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
-  const [customWuxing, setCustomWuxing] = useState([]);
-  
-  const [userToken, setUserToken] = useState('');
-  const [showTokenInput, setShowTokenInput] = useState(false);
-  const [progress, setProgress] = useState(0);
+    const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+    const [customWuxing, setCustomWuxing] = useState([]);
+    
+    const [userToken, setUserToken] = useState('');
+    const [showTokenInput, setShowTokenInput] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         let interval;
@@ -35,287 +38,287 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
     }, [isAnalyzing]);
 
     const handleGenerateAIReport = async (overrideToken = null) => {
-      setProgress(0);
-      setIsAnalyzing(true);
-      
-      let isChildBeforeDaYun = false;
-      let siHuaRuleText = '';
+        setProgress(0);
+        setIsAnalyzing(true);
+        
+        let isChildBeforeDaYun = false;
+        let siHuaRuleText = '';
 
-      let currentChartImage = chartImage;
-      if (!currentChartImage) {
-          try {
-              if (onBeforeCapture) await onBeforeCapture();
-              
-              const chartElement = document.getElementById('chart-capture-area');
-              if (chartElement) {
-                  // 動態載入 html2canvas
-                  const loadHtml2Canvas = () => new Promise((resolve, reject) => {
-                      if (window.html2canvas) return resolve(window.html2canvas);
-                      const script = document.createElement('script');
-                      script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-                      script.onload = () => resolve(window.html2canvas);
-                      script.onerror = reject;
-                      document.head.appendChild(script);
-                  });
-                  
-                  const html2canvas = await loadHtml2Canvas();
+        let currentChartImage = chartImage;
+        if (!currentChartImage) {
+            try {
+                if (onBeforeCapture) await onBeforeCapture();
+                
+                const chartElement = document.getElementById('chart-capture-area');
+                if (chartElement) {
+                    // 動態載入 html2canvas
+                    const loadHtml2Canvas = () => new Promise((resolve, reject) => {
+                        if (window.html2canvas) return resolve(window.html2canvas);
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                        script.onload = () => resolve(window.html2canvas);
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                    
+                    const html2canvas = await loadHtml2Canvas();
 
-                  let scrollParent = chartElement;
-                  while (scrollParent && scrollParent !== document.body) {
-                      const style = window.getComputedStyle(scrollParent);
-                      if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto') {
-                          break;
-                      }
-                      scrollParent = scrollParent.parentElement;
-                  }
+                    let scrollParent = chartElement;
+                    while (scrollParent && scrollParent !== document.body) {
+                        const style = window.getComputedStyle(scrollParent);
+                        if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto') {
+                            break;
+                        }
+                        scrollParent = scrollParent.parentElement;
+                    }
 
-                  const originalScrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
-                  
-                  if (scrollParent) scrollParent.scrollTop = 0;
-                  window.scrollTo(0, 0);
-                  
-                  // 給予充分緩衝時間讓 iPhone 渲染
-                  await new Promise(resolve => setTimeout(resolve, 350));
-                  
-                  const isMobile = window.innerWidth < 768;
-                  
-                  // 🌟 修正 1：針對 iOS 記憶體優化，手機版 scale 設為 1，並精準鎖定元素寬高
-                  const canvas = await html2canvas(chartElement, { 
-                      scale: isMobile ? 1 : 2, 
-                      useCORS: true,
-                      backgroundColor: THEME?.bg || '#ffffff',
-                      width: chartElement.offsetWidth,   // 放棄 windowWidth，改用元素實際寬度
-                      height: chartElement.offsetHeight, // 放棄 windowHeight，改用元素實際高度
-                      scrollY: 0
-                  });
-                  
-                  const dataUrl = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
-                  
-                  // 🌟 修正 2：破圖防呆機制 (攔截 iOS 的空圖片 data:, )
-                  if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 100) {
-                      console.warn("⚠️ iOS 記憶體限制導致截圖失敗，已自動隱藏破圖");
-                      currentChartImage = null;
-                      setChartImage(null);
-                  } else {
-                      currentChartImage = dataUrl;
-                      setChartImage(currentChartImage); 
-                  }
+                    const originalScrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
+                    
+                    if (scrollParent) scrollParent.scrollTop = 0;
+                    window.scrollTo(0, 0);
+                    
+                    // 給予充分緩衝時間讓 iPhone 渲染
+                    await new Promise(resolve => setTimeout(resolve, 350));
+                    
+                    const isMobile = window.innerWidth < 768;
+                    
+                    // 🌟 修正 1：針對 iOS 記憶體優化，手機版 scale 設為 1，並精準鎖定元素寬高
+                    const canvas = await html2canvas(chartElement, { 
+                        scale: isMobile ? 1 : 2, 
+                        useCORS: true,
+                        backgroundColor: THEME?.bg || '#ffffff',
+                        width: chartElement.offsetWidth,   // 放棄 windowWidth，改用元素實際寬度
+                        height: chartElement.offsetHeight, // 放棄 windowHeight，改用元素實際高度
+                        scrollY: 0
+                    });
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', isMobile ? 0.7 : 0.85);
+                    
+                    // 🌟 修正 2：破圖防呆機制 (攔截 iOS 的空圖片 data:, )
+                    if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 100) {
+                        console.warn("⚠️ iOS 記憶體限制導致截圖失敗，已自動隱藏破圖");
+                        currentChartImage = null;
+                        setChartImage(null);
+                    } else {
+                        currentChartImage = dataUrl;
+                        setChartImage(currentChartImage); 
+                    }
 
-                  if (scrollParent) scrollParent.scrollTop = originalScrollTop;
-                  window.scrollTo(0, originalScrollTop);
-              }
-          } catch (err) {
-              console.error("排盤截圖失敗:", err);
-              // 確保出錯時不會殘留破圖字串
-              currentChartImage = null;
-              setChartImage(null);
-          } finally {
-              if (onAfterCapture) onAfterCapture();
-          }
-      }
+                    if (scrollParent) scrollParent.scrollTop = originalScrollTop;
+                    window.scrollTo(0, originalScrollTop);
+                }
+            } catch (err) {
+                console.error("排盤截圖失敗:", err);
+                // 確保出錯時不會殘留破圖字串
+                currentChartImage = null;
+                setChartImage(null);
+            } finally {
+                if (onAfterCapture) onAfterCapture();
+            }
+        }
 
-        try {
-      // 🌟 1. 動態切換大師人設
-      const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
-      let prompt = `你現在是一位專業、客觀且具備深厚玄學素養的${masterName}大師。\n`;
-      prompt += `⚠️【大師論命核心原則（極重要）】：請保持中肯與平衡，內心推演的吉凶比例請拿捏在 7:3 或 6:4 之間，既不粉飾太平，也不要過度悲觀。若命局有凶險，請如實點出並給予避險建議與生機。請展現一代宗師的慈悲與智慧，給予真實的預測。（🛑 嚴格禁止：絕對不可在撰寫的命書中提及「吉凶比例」、「7:3」、「6:4」、「吉六凶四」等任何設定字眼，請將此原則無痕、自然地融入您的行文語氣中）。\n\n`;prompt += `請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【©許甯博風水命理館】所有。\n\n`;
+            try {
+        // 🌟 1. 動態切換大師人設
+        const masterName = appType === 'zwds' ? '陳希夷' : '徐子平';
+        let prompt = `你現在是一位專業、客觀且具備深厚玄學素養的${masterName}大師。\n`;
+        prompt += `⚠️【大師論命核心原則（極重要）】：請保持中肯與平衡，內心推演的吉凶比例請拿捏在 7:3 或 6:4 之間，既不粉飾太平，也不要過度悲觀。若命局有凶險，請如實點出並給予避險建議與生機。請展現一代宗師的慈悲與智慧，給予真實的預測。（🛑 嚴格禁止：絕對不可在撰寫的命書中提及「吉凶比例」、「7:3」、「6:4」、「吉六凶四」等任何設定字眼，請將此原則無痕、自然地融入您的行文語氣中）。\n\n`;prompt += `請根據以下資料，為我撰寫一份約 5000 字的專業命書。排版請使用 Markdown 格式，並且在結尾註明版權為【©許甯博風水命理館】所有。\n\n`;
 
-      prompt += `【基本資料】\n`;
-      prompt += `姓名：${data.name || '未命名'}\n`;
-      prompt += `性別：${data.genderText}\n`;
-      prompt += `農曆出生：${data.lunarDateStr || data.lunarDate}\n`;
-      
-      if (appType === 'bazi' && data.bazi) {
-          prompt += `八字四柱：${data.bazi.yearGan}${data.bazi.yearZhi} ${data.bazi.monthGan}${data.bazi.monthZhi} ${data.bazi.dayGan}${data.bazi.dayZhi} ${data.bazi.timeGan}${data.bazi.timeZhi}\n`;
-          prompt += `\n【日元分析特別指引】：請根據日元五行特性進行深度剖析，例如甲木參天、乙木柔弱等，並結合生肖與節氣進行生動的描述。\n`;
-          
-          if (data.daYuns && data.daYuns.length > 0) {
-              const currentYear = new Date().getFullYear();
-              const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
-              const firstYunYear = data.daYuns[0].startYear;
+        prompt += `【基本資料】\n`;
+        prompt += `姓名：${data.name || '未命名'}\n`;
+        prompt += `性別：${data.genderText}\n`;
+        prompt += `農曆出生：${data.lunarDateStr || data.lunarDate}\n`;
+        
+        if (appType === 'bazi' && data.bazi) {
+            prompt += `八字四柱：${data.bazi.yearGan}${data.bazi.yearZhi} ${data.bazi.monthGan}${data.bazi.monthZhi} ${data.bazi.dayGan}${data.bazi.dayZhi} ${data.bazi.timeGan}${data.bazi.timeZhi}\n`;
+            prompt += `\n【日元分析特別指引】：請根據日元五行特性進行深度剖析，例如甲木參天、乙木柔弱等，並結合生肖與節氣進行生動的描述。\n`;
+            
+            if (data.daYuns && data.daYuns.length > 0) {
+                const currentYear = new Date().getFullYear();
+                const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
+                const firstYunYear = data.daYuns[0].startYear;
 
-              if (currentYear < firstYunYear) {
-                  isChildBeforeDaYun = true; 
-                  prompt += `狀態：命主目前尚未入大運 (將於西曆 ${firstYunYear} 年起運)。\n`;
-                  
-                  const recentLns = [];
-                  const targetStartYear = Math.max(currentYear, birthYear); 
-                  for (let y = targetStartYear; y < targetStartYear + 4; y++) {
-                      try {
-                          const tempLunar = window.Solar.fromYmd(y, 6, 15).getLunar();
-                          recentLns.push(`${y}年(${tempLunar.getYearInGanZhi()}年)`);
-                      } catch(e){}
-                  }
-                  if (recentLns.length > 0) prompt += `近期流年：${recentLns.join('、')}\n`;
-              } else {
-                  const currentDy = data.daYuns.find(dy => currentYear >= dy.startYear && currentYear <= (dy.startYear + 9));
-                  if (currentDy) {
-                      prompt += `當前大運：【${currentDy.gan}${currentDy.zhi}】運 (起於西曆 ${currentDy.startYear} 年，虛歲 ${currentDy.startAge} 歲)\n`;
-                      const lns = currentDy.liuNians.filter(ln => ln.year >= currentYear && ln.year <= currentYear + 3);
-                      if (lns.length > 0) prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
-                  }
-              }
-          }
-          prompt += `\n⚠️ 【系統強制指令】：請務必嚴格使用上述提供的「當前大運」與「近期流年」干支與年份進行分析。絕對禁止自行重新推算起運歲數或大運干支。\n`;
+                if (currentYear < firstYunYear) {
+                    isChildBeforeDaYun = true; 
+                    prompt += `狀態：命主目前尚未入大運 (將於西曆 ${firstYunYear} 年起運)。\n`;
+                    
+                    const recentLns = [];
+                    const targetStartYear = Math.max(currentYear, birthYear); 
+                    for (let y = targetStartYear; y < targetStartYear + 4; y++) {
+                        try {
+                            const tempLunar = window.Solar.fromYmd(y, 6, 15).getLunar();
+                            recentLns.push(`${y}年(${tempLunar.getYearInGanZhi()}年)`);
+                        } catch(e){}
+                    }
+                    if (recentLns.length > 0) prompt += `近期流年：${recentLns.join('、')}\n`;
+                } else {
+                    const currentDy = data.daYuns.find(dy => currentYear >= dy.startYear && currentYear <= (dy.startYear + 9));
+                    if (currentDy) {
+                        prompt += `當前大運：【${currentDy.gan}${currentDy.zhi}】運 (起於西曆 ${currentDy.startYear} 年，虛歲 ${currentDy.startAge} 歲)\n`;
+                        const lns = currentDy.liuNians.filter(ln => ln.year >= currentYear && ln.year <= currentYear + 3);
+                        if (lns.length > 0) prompt += `近期流年：${lns.map(ln => `${ln.year}年(${ln.gan}${ln.zhi}年)`).join('、')}\n`;
+                    }
+                }
+            }
+            prompt += `\n⚠️ 【系統強制指令】：請務必嚴格使用上述提供的「當前大運」與「近期流年」干支與年份進行分析。絕對禁止自行重新推算起運歲數或大運干支。\n`;
 
-      } else if (appType === 'zwds' && data.mingGongStars) {
-          prompt += `命宮主星：${data.mingGongStars}\n`;
-          prompt += `五行局：${data.bureau}\n`;
-          prompt += `命主：${data.mingZhu}，身主：${data.shenZhu}\n`;
-          
-          if (data.grid) {
-              prompt += `\n【完整十二宮星曜分佈】（請嚴格依據此排盤推算三方四正與相夾）：\n`;
-              data.grid.forEach(p => {
-                  const major = p.stars.map(s => s.name).join('');
-                  const minor = p.minorStars.map(s => s.name).join('、');
-                  const all = [major, minor].filter(Boolean).join('，') || '空宮';
-                  const dx = p.daXian ? `大限 ${p.daXian}` : '無大限';
-                  prompt += `- ${p.zhi}宮【${p.name}】(宮干:${p.gan})：${dx}，星曜：${all}\n`;
-              });
-              if (data.formations && data.formations.length > 0) {
-                  prompt += `\n【命局特殊格局】：${data.formations.join('、')}\n`;
-                  prompt += `⚠️ 請在「原局總論」中，詳細解析上述特殊格局對命主的影響。\n`;
-              }
-          }
-          
-          const currentYear = new Date().getFullYear();
-          const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
-          const currentAge = currentYear - birthYear + 1; 
-          
-          const bureauNumMap = { '水二局': 2, '木三局': 3, '金四局': 4, '土五局': 5, '火六局': 6 };
-          const firstYunAge = bureauNumMap[data.bureau] || 2;
+        } else if (appType === 'zwds' && data.mingGongStars) {
+            prompt += `命宮主星：${data.mingGongStars}\n`;
+            prompt += `五行局：${data.bureau}\n`;
+            prompt += `命主：${data.mingZhu}，身主：${data.shenZhu}\n`;
+            
+            if (data.grid) {
+                prompt += `\n【完整十二宮星曜分佈】（請嚴格依據此排盤推算三方四正與相夾）：\n`;
+                data.grid.forEach(p => {
+                    const major = p.stars.map(s => s.name).join('');
+                    const minor = p.minorStars.map(s => s.name).join('、');
+                    const all = [major, minor].filter(Boolean).join('，') || '空宮';
+                    const dx = p.daXian ? `大限 ${p.daXian}` : '無大限';
+                    prompt += `- ${p.zhi}宮【${p.name}】(宮干:${p.gan})：${dx}，星曜：${all}\n`;
+                });
+                if (data.formations && data.formations.length > 0) {
+                    prompt += `\n【命局特殊格局】：${data.formations.join('、')}\n`;
+                    prompt += `⚠️ 請在「原局總論」中，詳細解析上述特殊格局對命主的影響。\n`;
+                }
+            }
+            
+            const currentYear = new Date().getFullYear();
+            const birthYear = parseInt(data.rawDate?.year || data.solarDateStr?.split('/')[0] || new Date().getFullYear());
+            const currentAge = currentYear - birthYear + 1; 
+            
+            const bureauNumMap = { '水二局': 2, '木三局': 3, '金四局': 4, '土五局': 5, '火六局': 6 };
+            const firstYunAge = bureauNumMap[data.bureau] || 2;
 
-          // 🌟 提取用戶的大限四化設定 (用來強制統整前後30年的四化標準)
-          const storedDaXianType = localStorage.getItem('zwds_rule_daxian_sihua') || 'book';
-            siHuaRuleText = storedDaXianType === 'book' ? '依紫微斗數全書(由命宮起干，男女順逆行)' : '依大限本宮之宮干';
+            // 🌟 提取用戶的大限四化設定 (用來強制統整前後30年的四化標準)
+            const storedDaXianType = localStorage.getItem('zwds_rule_daxian_sihua') || 'book';
+                siHuaRuleText = storedDaXianType === 'book' ? '依紫微斗數全書(由命宮起干，男女順逆行)' : '依大限本宮之宮干';
 
-          // 🌟 獨家秘訣：直接在程式碼中預先計算空宮借星，封死 AI 借錯對宮的機會
-          const EMPTY_MING_ZHU_MAP = {
-              '子': '貪狼', '丑': '巨門', '寅': '祿存', '卯': '文曲', '辰': '廉貞', '巳': '武曲',
-              '午': '破軍', '未': '武曲', '申': '廉貞', '酉': '文曲', '戌': '祿存', '亥': '巨門'
-          };
+            // 🌟 獨家秘訣：直接在程式碼中預先計算空宮借星，封死 AI 借錯對宮的機會
+            const EMPTY_MING_ZHU_MAP = {
+                '子': '貪狼', '丑': '巨門', '寅': '祿存', '卯': '文曲', '辰': '廉貞', '巳': '武曲',
+                '午': '破軍', '未': '武曲', '申': '廉貞', '酉': '文曲', '戌': '祿存', '亥': '巨門'
+            };
 
-          if (data.grid) {
-              prompt += `\n【完整十二宮星曜分佈】（請嚴格依據此排盤推算三方四正與相夾）：\n`;
-              
-              data.grid.forEach(p => {
-                  const major = p.stars.map(s => s.name).join('');
-                  const minor = p.minorStars.map(s => s.name).join('、');
-                  let all = [major, minor].filter(Boolean).join('，');
-                  
-                  // 💡 判斷是否為空宮，若為空宮直接由系統強制寫入借來的星曜
-                  if (!all) {
-                      const targetStarName = EMPTY_MING_ZHU_MAP[p.zhi]; // 找出該空宮專屬的命主星
-                      // 尋找該命主星所在的宮位
-                      const sourcePalace = data.grid.find(sp => sp.stars.some(s => s.name === targetStarName) || sp.minorStars.some(s => s.name === targetStarName));
-                      
-                      if (sourcePalace) {
-                          const sMajor = sourcePalace.stars.map(s => s.name).join('');
-                          const sMinor = sourcePalace.minorStars.map(s => s.name).join('、');
-                          const sAll = [sMajor, sMinor].filter(Boolean).join('，');
-                          
-                          // 將借來的星曜直接寫成死資料餵給 AI，加上強烈警告
-                          all = `空宮 (⚠️ 系統強制指令：絕對禁止借對宮！依本派秘訣，${p.zhi}宮必須借命主星「${targetStarName}」，故強制完全借用【${sourcePalace.name}】的星曜：${sAll})`;
-                      } else {
-                          all = '空宮';
-                      }
-                  }
-                  
-                  const dx = p.daXian ? `大限 ${p.daXian}` : '無大限';
-                  prompt += `- ${p.zhi}宮【${p.name}】(宮干:${p.gan})：${dx}，星曜：${all}\n`;
-              });
+            if (data.grid) {
+                prompt += `\n【完整十二宮星曜分佈】（請嚴格依據此排盤推算三方四正與相夾）：\n`;
+                
+                data.grid.forEach(p => {
+                    const major = p.stars.map(s => s.name).join('');
+                    const minor = p.minorStars.map(s => s.name).join('、');
+                    let all = [major, minor].filter(Boolean).join('，');
+                    
+                    // 💡 判斷是否為空宮，若為空宮直接由系統強制寫入借來的星曜
+                    if (!all) {
+                        const targetStarName = EMPTY_MING_ZHU_MAP[p.zhi]; // 找出該空宮專屬的命主星
+                        // 尋找該命主星所在的宮位
+                        const sourcePalace = data.grid.find(sp => sp.stars.some(s => s.name === targetStarName) || sp.minorStars.some(s => s.name === targetStarName));
+                        
+                        if (sourcePalace) {
+                            const sMajor = sourcePalace.stars.map(s => s.name).join('');
+                            const sMinor = sourcePalace.minorStars.map(s => s.name).join('、');
+                            const sAll = [sMajor, sMinor].filter(Boolean).join('，');
+                            
+                            // 將借來的星曜直接寫成死資料餵給 AI，加上強烈警告
+                            all = `空宮 (⚠️ 系統強制指令：絕對禁止借對宮！依本派秘訣，${p.zhi}宮必須借命主星「${targetStarName}」，故強制完全借用【${sourcePalace.name}】的星曜：${sAll})`;
+                        } else {
+                            all = '空宮';
+                        }
+                    }
+                    
+                    const dx = p.daXian ? `大限 ${p.daXian}` : '無大限';
+                    prompt += `- ${p.zhi}宮【${p.name}】(宮干:${p.gan})：${dx}，星曜：${all}\n`;
+                });
 
-              if (data.formations && data.formations.length > 0) {
-                  prompt += `\n【命局特殊格局】：${data.formations.join('、')}\n`;
-                  prompt += `⚠️ 請在「原局總論」中，詳細解析上述特殊格局對命主的影響。\n`;
-              }
-          }
-          
-          // 🌟 獨家秘訣 2：提前由系統算出前 3 個大限的天干，塞給 AI 封死它算錯的機會
-          prompt += `\n【人生頭30年之大限四化天干（極重要）】：\n`;
-          if (data.grid) {
-              const earlyDaXians = data.grid.filter(p => p.daXian).sort((a, b) => parseInt(a.daXian.split('-')[0]) - parseInt(b.daXian.split('-')[0])).slice(0, 3);
-              earlyDaXians.forEach(dx => {
-                  let dxGan = dx.gan; // 預設宮干
-                  if (storedDaXianType === 'book') {
-                      const mingPalace = data.grid.find(p => p.name === '命宮');
-                      const bYearGan = data.lunarDateStr.charAt(0);
-                      const isMale = data.genderText === '男';
-                      const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-                      const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
-                      const steps = isClockwise ? (dx.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - dx.zhiIdx + 12) % 12;
-                      const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
-                      dxGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
-                  }
-                  prompt += `- ${dx.daXian} 歲大限：走【${dx.name}】，大限四化天干必須使用【${dxGan}】\n`;
-              });
-          }
+                if (data.formations && data.formations.length > 0) {
+                    prompt += `\n【命局特殊格局】：${data.formations.join('、')}\n`;
+                    prompt += `⚠️ 請在「原局總論」中，詳細解析上述特殊格局對命主的影響。\n`;
+                }
+            }
+            
+            // 🌟 獨家秘訣 2：提前由系統算出前 3 個大限的天干，塞給 AI 封死它算錯的機會
+            prompt += `\n【人生頭30年之大限四化天干（極重要）】：\n`;
+            if (data.grid) {
+                const earlyDaXians = data.grid.filter(p => p.daXian).sort((a, b) => parseInt(a.daXian.split('-')[0]) - parseInt(b.daXian.split('-')[0])).slice(0, 3);
+                earlyDaXians.forEach(dx => {
+                    let dxGan = dx.gan; // 預設宮干
+                    if (storedDaXianType === 'book') {
+                        const mingPalace = data.grid.find(p => p.name === '命宮');
+                        const bYearGan = data.lunarDateStr.charAt(0);
+                        const isMale = data.genderText === '男';
+                        const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                        const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                        const steps = isClockwise ? (dx.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - dx.zhiIdx + 12) % 12;
+                        const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                        dxGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
+                    }
+                    prompt += `- ${dx.daXian} 歲大限：走【${dx.name}】，大限四化天干必須使用【${dxGan}】\n`;
+                });
+            }
 
-          if (currentAge < firstYunAge) {
-              isChildBeforeDaYun = true; 
-              const firstYunYear = birthYear + firstYunAge - 1;
-              prompt += `\n狀態：命主目前尚未入大限 (將於西曆 ${firstYunYear} 年，虛歲 ${firstYunAge} 歲起運)。\n`;
-              
-              if (data.grid) {
-                  prompt += `【近期歲限(小限)星曜分佈】：\n`;
-                  for (let i = 0; i < 3; i++) {
-                      const targetAge = currentAge + i;
-                      const xiaoXianPalace = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(targetAge));
-                      if (xiaoXianPalace) {
-                          const stars = xiaoXianPalace.stars.map(s => s.name).join('') || '空宮';
-                          prompt += `- 虛歲 ${targetAge} 歲 (${currentYear + i}年)：走【${xiaoXianPalace.name}】，星曜為 ${stars}\n`;
-                      }
-                  }
-              }
-          } else {
-              prompt += `\n當前流年(歲限)：${currentYear} 年 (虛歲 ${currentAge} 歲)\n`;
-              
-              if (data.grid) {
-                  const currentDaXian = data.grid.find(p => {
-                      if (!p.daXian) return false;
-                      const [start, end] = p.daXian.split('-').map(Number);
-                      return currentAge >= start && currentAge <= end;
-                  });
-                  
-                  if (currentDaXian) {
-                      const daXianStars = currentDaXian.stars.map(s => s.name).join('') || '空宮';
-                      let daXianGan = currentDaXian.gan; 
-                      
-                      if (storedDaXianType === 'book') {
-                          const mingPalace = data.grid.find(p => p.name === '命宮');
-                          const bYearGan = data.lunarDateStr.charAt(0); 
-                          const isMale = data.genderText === '男';
-                          const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-                          const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
-                          const steps = isClockwise ? (currentDaXian.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - currentDaXian.zhiIdx + 12) % 12;
-                      const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
-                      daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
-                  }
+            if (currentAge < firstYunAge) {
+                isChildBeforeDaYun = true; 
+                const firstYunYear = birthYear + firstYunAge - 1;
+                prompt += `\n狀態：命主目前尚未入大限 (將於西曆 ${firstYunYear} 年，虛歲 ${firstYunAge} 歲起運)。\n`;
+                
+                if (data.grid) {
+                    prompt += `【近期歲限(小限)星曜分佈】：\n`;
+                    for (let i = 0; i < 3; i++) {
+                        const targetAge = currentAge + i;
+                        const xiaoXianPalace = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(targetAge));
+                        if (xiaoXianPalace) {
+                            const stars = xiaoXianPalace.stars.map(s => s.name).join('') || '空宮';
+                            prompt += `- 虛歲 ${targetAge} 歲 (${currentYear + i}年)：走【${xiaoXianPalace.name}】，星曜為 ${stars}\n`;
+                        }
+                    }
+                }
+            } else {
+                prompt += `\n當前流年(歲限)：${currentYear} 年 (虛歲 ${currentAge} 歲)\n`;
+                
+                if (data.grid) {
+                    const currentDaXian = data.grid.find(p => {
+                        if (!p.daXian) return false;
+                        const [start, end] = p.daXian.split('-').map(Number);
+                        return currentAge >= start && currentAge <= end;
+                    });
+                    
+                    if (currentDaXian) {
+                        const daXianStars = currentDaXian.stars.map(s => s.name).join('') || '空宮';
+                        let daXianGan = currentDaXian.gan; 
+                        
+                        if (storedDaXianType === 'book') {
+                            const mingPalace = data.grid.find(p => p.name === '命宮');
+                            const bYearGan = data.lunarDateStr.charAt(0); 
+                            const isMale = data.genderText === '男';
+                            const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                            const isClockwise = (isMale && (TIANGAN.indexOf(bYearGan) % 2 === 0)) || (!isMale && (TIANGAN.indexOf(bYearGan) % 2 !== 0));
+                            const steps = isClockwise ? (currentDaXian.zhiIdx - mingPalace.zhiIdx + 12) % 12 : (mingPalace.zhiIdx - currentDaXian.zhiIdx + 12) % 12;
+                        const stepDir = isClockwise ? steps : -steps; // 🌟 順行加，逆行減
+                        daXianGan = TIANGAN[(TIANGAN.indexOf(mingPalace.gan) + stepDir + 100) % 10];
+                    }
 
-                  const sfIdx = [currentDaXian.zhiIdx, (currentDaXian.zhiIdx + 4) % 12, (currentDaXian.zhiIdx + 8) % 12, (currentDaXian.zhiIdx + 6) % 12];
-                  const sfNames = sfIdx.map(idx => data.grid.find(p => p.zhiIdx === idx).name).join('、');
+                    const sfIdx = [currentDaXian.zhiIdx, (currentDaXian.zhiIdx + 4) % 12, (currentDaXian.zhiIdx + 8) % 12, (currentDaXian.zhiIdx + 6) % 12];
+                    const sfNames = sfIdx.map(idx => data.grid.find(p => p.zhiIdx === idx).name).join('、');
 
-                  prompt += `當前大限：走【${currentDaXian.name}】(歲數 ${currentDaXian.daXian})，星曜：${daXianStars}\n`;
-                  prompt += `當前大限四化天干：【${daXianGan}】\n`;
-                  prompt += `大限三方四正宮位為：${sfNames}\n`;
-              }
+                    prompt += `當前大限：走【${currentDaXian.name}】(歲數 ${currentDaXian.daXian})，星曜：${daXianStars}\n`;
+                    prompt += `當前大限四化天干：【${daXianGan}】\n`;
+                    prompt += `大限三方四正宮位為：${sfNames}\n`;
+                }
 
-                  const currentXiaoXian = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(currentAge));
-                  if (currentXiaoXian) {
-                      const xiaoXianStars = currentXiaoXian.stars.map(s => s.name).join('') || '空宮';
-                      prompt += `當前歲限(小限)：走【${currentXiaoXian.name}】，星曜：${xiaoXianStars}\n`;
-                  }
-              }
-          }
-          
-          // 🌟 3. 強制性防呆指令 (加入星曜聚焦與四化統一指令)
-          prompt += `\n⚠️ 【紫微分析強制指引】：
-1. 嚴格依據「十二宮星曜分佈」判斷三方四正、夾宮（如羊陀夾忌、雙祿夾等），切勿自行想像。
-2. 【聚焦甲乙級星】：請集中火力分析甲級與乙級星曜（十四主星、六吉六煞、祿存天馬等），忽略丙級及以下之神煞小星，以免失焦。
-3. 【最高指令：大限四化絕對服從】：由於系統支援多種起干流派（全書/宮干），**系統已經為您計算好最終結果**。推演大限時，必須 100% 使用上方資料中明確提供的【大限四化天干】。嚴禁您自行運用任何紫微法則重新推衍天干，若擅自推算將導致門派邏輯衝突！
-4. 絕對禁止使用八字的「干支生剋」與「五行強弱」邏輯。
-5. 若資料顯示某宮位「無大限」，請遵照該排盤事實。\n`;
-      }
+                    const currentXiaoXian = data.grid.find(p => p.xiaoXian && p.xiaoXian.includes(currentAge));
+                    if (currentXiaoXian) {
+                        const xiaoXianStars = currentXiaoXian.stars.map(s => s.name).join('') || '空宮';
+                        prompt += `當前歲限(小限)：走【${currentXiaoXian.name}】，星曜：${xiaoXianStars}\n`;
+                    }
+                }
+            }
+            
+            // 🌟 3. 強制性防呆指令 (加入星曜聚焦與四化統一指令)
+            prompt += `\n⚠️ 【紫微分析強制指引】：
+            1. 嚴格依據「十二宮星曜分佈」判斷三方四正、夾宮（如羊陀夾忌、雙祿夾等），切勿自行想像。
+            2. 【聚焦甲乙級星】：請集中火力分析甲級與乙級星曜（十四主星、六吉六煞、祿存天馬等），忽略丙級及以下之神煞小星，以免失焦。
+            3. 【最高指令：大限四化絕對服從】：由於系統支援多種起干流派（全書/宮干），**系統已經為您計算好最終結果**。推演大限時，必須 100% 使用上方資料中明確提供的【大限四化天干】。嚴禁您自行運用任何紫微法則重新推衍天干，若擅自推算將導致門派邏輯衝突！
+            4. 絕對禁止使用八字的「干支生剋」與「五行強弱」邏輯。
+            5. 若資料顯示某宮位「無大限」，請遵照該排盤事實。\n`;
+            }
 
       prompt += `\n【報告要求段落】請按以下結構撰寫：\n`;
       prompt += `⚠️ 排版規定：請全部使用文字與列點 (Bullet points) 呈現，絕對不要使用表格 (Table)。\n`;
@@ -427,18 +430,39 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           // 將基本盤與 AI 產生的內文結合
           const finalReport = chartHeader + aiText;
           
-          // ✅ 只有當後端確實回傳了命書內容，才正式解鎖並存入手機
+          // ✅ 1. 強制雙重儲存：寫入 state、寫入本機專屬保險箱、並同步通知上層書籤
           setAnalysisResult(finalReport);
           setIsPaid(true);
+          try {
+              localStorage.setItem(backupKey, finalReport);
+          } catch (e) {}
 
           data.aiReport = finalReport;
+          if (appType === 'bazi') data.baziAiReport = finalReport;
+          if (appType === 'zwds') data.zwdsAiReport = finalReport;
           data.chartImage = currentChartImage;
           data.isPaid = true;
           data.paidAt = data.paidAt || Date.now();
-          if (currentChartImage) {
-              data.chartImage = currentChartImage; 
-          }
           if (onSave) onSave(data, true);
+
+          // ✅ 2. 生成後立即彈出「強制/建議匯出備份」提醒（防止清理快取或換機遺失）
+          setTimeout(() => {
+              const appNameStr = appType === 'zwds' ? '紫微斗數' : '八字';
+              const wantExport = window.confirm(
+                  `🎉【${data.name || '未命名'}】的${appNameStr}命書已生成並自動保存在本機！\n\n⚠️ 為防瀏覽器清理快取或數據庫異常導致遺失，強烈建議您現在立即匯出備份（透過 Email / WhatsApp 分享或儲存檔案）。\n\n是否立即匯出備份？`
+              );
+              if (wantExport) {
+                  // 直接觸發你原本寫好的原生分享/複製功能，讓用戶一鍵寄去 Email 或存檔
+                  const cleanText = finalReport.replace(/#/g, '').replace(/\*\*/g, '');
+                  const fileName = `${data.name || '未命名'}_${appNameStr}個人專屬深度流年命書`;
+                  if (navigator.share) {
+                      navigator.share({ title: fileName, text: cleanText }).catch(() => {});
+                  } else {
+                      navigator.clipboard?.writeText(cleanText);
+                      alert("✅ 命書全文已複製到剪貼簿，請直接貼上至您的 Email 或備忘錄保存！");
+                  }
+              }
+          }, 600);
 
       } catch (error) {
           console.error("AI 錯誤詳細資訊:", error);
@@ -673,9 +697,10 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           setIsPaid(false);
           setShowTokenInput(true);
 
-          // 2. 徹底清除底層資料庫的舊命書紀錄，防止塞車安全存檔時「舊資料復活」
+          // 2. 徹底清除底層資料庫與本機保險箱的舊命書紀錄
+          localStorage.removeItem(backupKey);
           data.aiReport = null;
-          data.isPaid = false; 
+          data.isPaid = false;
           
           // 3. 立即觸發存檔，同步更新到本地書籤
           if (onSave) onSave(data, true);

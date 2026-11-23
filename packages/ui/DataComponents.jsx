@@ -134,7 +134,10 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             // 🌟 套用首字母大寫格式化 (讓 "john doe" 與 "John Doe" 也能自動合併成同一筆)
             const rawName = String(rec.name || rec.title || '未命名紀錄');
             const name = formatEnglishName(rawName);
-            const gender = (rec.genderText && String(rec.genderText).includes('女')) ? '女' : '男';
+            const isPersonChart = Boolean(rec.appType === 'bazi' || rec.appType === 'zwds' || rec.dayMaster || rec.mingGongStars);
+            const gender = isPersonChart 
+                ? ((rec.genderText && String(rec.genderText).includes('女')) ? '女' : '男') 
+                : '';
             const solarDate = safeExtractDateStr(rec);
             const key = `${name}_${gender}_${solarDate}`;
             
@@ -213,7 +216,8 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             
             {sortedBookmarks.map((b, i) => {
                 const TitleIcon = (b.facing || b.mountain) ? MapPin : User; 
-                const subText = b.genderText ? `(${b.genderText})` : '';
+                const isCalendarOrFengShui = Boolean(b.facing || b.mountain || b.jianChu || b.dongGong);
+                const subText = (!isCalendarOrFengShui && b.genderText) ? `(${b.genderText})` : '';
                 const rawLunar = String(b.lunarDateStr || b.lunarDate || b.lunarString || '');
                 const safeLunarStr = rawLunar.replace(/闰/g, '閏').replace(/冬/g, '十一').replace(/腊/g, '十二');
 
@@ -344,9 +348,30 @@ export const useBackupReminder = (currentBookmarks = null, storageKey = 'mrk_sha
         const rawLocal = localStorage.getItem(`CapacitorStorage.${storageKey}`) 
                       || localStorage.getItem(storageKey);
 
+        // 在 useBackupReminder 的 useEffect 內，有資料時順便做一次舊命書自動遷移保護
         if (Array.isArray(currentBookmarks) && currentBookmarks.length > 0) {
-            // 有資料時，即時同步備份到 IndexedDB 保險箱
             syncBookmarksToMirror(storageKey, currentBookmarks);
+            
+            // 🌟 自動遷移舊書籤裡的命書到專屬保險箱，防止未來被 lightRec 覆蓋遺失
+            currentBookmarks.forEach(bk => {
+                if (!bk || typeof bk !== 'object') return;
+                const dateStr = bk.solarDateStr || bk.solarDate || '';
+                const genderStr = bk.genderText || '';
+                const nameStr = bk.name || 'noname';
+
+                const baziText = bk.baziAiReport || (bk.appType === 'bazi' ? bk.aiReport : null);
+                if (baziText) {
+                    const k = `mrk_fatebook_bazi_${nameStr}_${dateStr}_${genderStr}`;
+                    if (!localStorage.getItem(k)) localStorage.setItem(k, baziText);
+                }
+
+                const zwdsText = bk.zwdsAiReport || (bk.appType === 'zwds' ? bk.aiReport : null);
+                if (zwdsText) {
+                    const k = `mrk_fatebook_zwds_${nameStr}_${dateStr}_${genderStr}`;
+                    if (!localStorage.getItem(k)) localStorage.setItem(k, zwdsText);
+                }
+            });
+
             hasCheckedRef.current = true;
         } else if (
             !hasCheckedRef.current &&
