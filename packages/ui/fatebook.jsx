@@ -4,6 +4,7 @@ import { Lock, RefreshCw, Unlock, Copy, Share2 } from 'lucide-react';
 export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, onBeforeCapture, onAfterCapture }) => {
     const { WUXING_MAP, ZHI_HIDDEN, getShiShen, getShenSha, TIANGAN, DIZHI } = utils || {};
     const backupKey = `mrk_fatebook_${appType}_${data.name || 'noname'}_${data.solarDateStr || data.solarDate || ''}_${data.genderText || ''}`;
+    const imgBackupKey = `${backupKey}_img`;
     const localSavedReport = localStorage.getItem(backupKey);
     const initialReport = data.aiReport || localSavedReport || null;
 
@@ -96,12 +97,18 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
                     
                     // 🌟 修正 2：破圖防呆機制 (攔截 iOS 的空圖片 data:, )
                     if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 100) {
-                        console.warn("⚠️ iOS 記憶體限制導致截圖失敗，已自動隱藏破圖");
+                        console.warn("⚠️ 記憶體限制導致截圖失敗，已自動隱藏破圖");
                         currentChartImage = null;
                         setChartImage(null);
                     } else {
                         currentChartImage = dataUrl;
-                        setChartImage(currentChartImage); 
+                        setChartImage(currentChartImage);
+                        data.chartImage = currentChartImage; // 🌟 同步寫入 data 物件
+                        try {
+                            localStorage.setItem(imgBackupKey, currentChartImage); // 🌟 立刻備份截圖，即使 AI 失敗也不會遺失
+                        } catch (e) {
+                            console.warn("截圖寫入 localStorage 失敗（可能超出容量）", e);
+                        }
                     }
 
                     if (scrollParent) scrollParent.scrollTop = originalScrollTop;
@@ -699,9 +706,11 @@ export const AiBaziAnalysis = ({ data, utils, THEME, appType = 'bazi', onSave, o
           setIsPaid(false);
           setShowTokenInput(true);
 
-          // 2. 徹底清除底層資料庫與本機保險箱的舊命書紀錄
+          // 2. 徹底清除底層資料庫與本機保險箱的舊命書紀錄與截圖
           localStorage.removeItem(backupKey);
+          localStorage.removeItem(imgBackupKey); // 🌟 一併清除舊截圖快取
           data.aiReport = null;
+          data.chartImage = null;
           data.isPaid = false;
           
           // 3. 立即觸發存檔，同步更新到本地書籤

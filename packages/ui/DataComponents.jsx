@@ -142,7 +142,7 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
             const key = `${name}_${gender}_${solarDate}`;
             
             if (!map[key]) {
-                const { chartImage, baziAiReport, zwdsAiReport, aiReport, ...lightRec } = rec;
+                const { chartImage, baziChartImage, zwdsChartImage, baziAiReport, zwdsAiReport, aiReport, ...lightRec } = rec;
                 map[key] = { ...lightRec, name: name, genderText: gender, titleText: name, solarDate: solarDate };
             }
             
@@ -154,6 +154,8 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                 }
                 map[key].baziIsPaid = Boolean(rec.baziIsPaid || (rec.appType === 'bazi' && rec.isPaid) || map[key].baziIsPaid);
                 map[key].baziPaidAt = Math.max(Number(rec.baziPaidAt) || 0, rec.appType === 'bazi' ? (Number(rec.paidAt) || 0) : 0, Number(map[key].baziPaidAt) || 0);
+                // 🌟 保留八字截圖
+                map[key].baziChartImage = rec.baziChartImage || (rec.appType === 'bazi' ? rec.chartImage : null) || map[key].baziChartImage || null;
             }
             
             if (rec.appType === 'zwds' || rec.mingGongStars) {
@@ -161,6 +163,8 @@ export const BookmarkList = ({ bookmarks, onSelect, onEdit, onDelete }) => {
                 map[key].zwdsDesc = map[key].mingGongStars;
                 map[key].zwdsIsPaid = Boolean(rec.zwdsIsPaid || (rec.appType === 'zwds' && rec.isPaid) || map[key].zwdsIsPaid);
                 map[key].zwdsPaidAt = Math.max(Number(rec.zwdsPaidAt) || 0, rec.appType === 'zwds' ? (Number(rec.paidAt) || 0) : 0, Number(map[key].zwdsPaidAt) || 0);
+                // 🌟 保留紫微截圖
+                map[key].zwdsChartImage = rec.zwdsChartImage || (rec.appType === 'zwds' ? rec.chartImage : null) || map[key].zwdsChartImage || null;
             }
             
             if (Number(rec.id) > Number(map[key].id || 0)) map[key].id = rec.id;
@@ -359,16 +363,26 @@ export const useBackupReminder = (currentBookmarks = null, storageKey = 'mrk_sha
                 const genderStr = bk.genderText || '';
                 const nameStr = bk.name || 'noname';
 
+                // 八字文字 + 截圖
+                const baziKey = `mrk_fatebook_bazi_${nameStr}_${dateStr}_${genderStr}`;
                 const baziText = bk.baziAiReport || (bk.appType === 'bazi' ? bk.aiReport : null);
-                if (baziText) {
-                    const k = `mrk_fatebook_bazi_${nameStr}_${dateStr}_${genderStr}`;
-                    if (!localStorage.getItem(k)) localStorage.setItem(k, baziText);
+                if (baziText && !localStorage.getItem(baziKey)) {
+                    localStorage.setItem(baziKey, baziText);
+                }
+                const baziImg = bk.baziChartImage || (bk.appType === 'bazi' ? bk.chartImage : null);
+                if (baziImg && !localStorage.getItem(`${baziKey}_img`)) {
+                    try { localStorage.setItem(`${baziKey}_img`, baziImg); } catch (e) {}
                 }
 
+                // 紫微文字 + 截圖
+                const zwdsKey = `mrk_fatebook_zwds_${nameStr}_${dateStr}_${genderStr}`;
                 const zwdsText = bk.zwdsAiReport || (bk.appType === 'zwds' ? bk.aiReport : null);
-                if (zwdsText) {
-                    const k = `mrk_fatebook_zwds_${nameStr}_${dateStr}_${genderStr}`;
-                    if (!localStorage.getItem(k)) localStorage.setItem(k, zwdsText);
+                if (zwdsText && !localStorage.getItem(zwdsKey)) {
+                    localStorage.setItem(zwdsKey, zwdsText);
+                }
+                const zwdsImg = bk.zwdsChartImage || (bk.appType === 'zwds' ? bk.chartImage : null);
+                if (zwdsImg && !localStorage.getItem(`${zwdsKey}_img`)) {
+                    try { localStorage.setItem(`${zwdsKey}_img`, zwdsImg); } catch (e) {}
                 }
             });
 
